@@ -19,7 +19,7 @@ HEADERS = {
 
 REPLY_TABLE = {
     "使い方": "使い方は「♡推しプロフィールメーカー♡」のページにあるよ〜！かんたんっ♪",
-    'おすすめ': 'えへへ♡ いちばんのおすすめは「♡推しプロフィールメーカー♡」だよっ！',
+    "おすすめ": "えへへ♡ いちばんのおすすめは「♡推しプロフィールメーカー♡」だよっ！",
     'ねえ': 'ん〜？呼んだ〜？みりんてゃのお耳はず〜っとリスナー向き♡',
     '好き': 'えっ！？…みりんもすきかも〜っ♡',
     'ひま': 'ひまなの〜？じゃあいっしょに遊ぼっ♡',
@@ -136,13 +136,17 @@ def get_reply(text):
 def run_reply_bot():
     client = Client()
     client.login(HANDLE, APP_PASSWORD)
-    self_did = client.me.did
+    print("✅ ログイン成功！")
 
+    self_did = client.me.did
     replied = load_replied()
     notifications = client.app.bsky.notification.list_notifications().notifications
 
+    print(f"📥 通知数: {len(notifications)} 件")
+
     for note in notifications:
-        if note.reason != "mention":
+        print(f"📌 通知: reason={note.reason}, uri={note.uri}")
+        if note.reason not in ["mention", "reply"]:
             continue
 
         post_uri = note.uri
@@ -173,3 +177,7 @@ def run_reply_bot():
         except Exception as e:
             print(">>> 投稿失敗:", e)
             traceback.print_exc()
+
+# 実行時
+if __name__ == "__main__":
+    run_reply_bot()
