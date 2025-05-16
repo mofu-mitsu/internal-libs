@@ -374,8 +374,7 @@ facets = generate_facets_from_text(message, hashtags)
 
 client.send_post(
     text=message,
-    created_at=datetime.utcnow().isoformat() + "Z",
-    facets=facets if facets else None,
+    facets=facets if facets else None
 )
 
 print(f"投稿したよ: {message}")
