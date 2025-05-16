@@ -1,0 +1,28 @@
+name: Like Bluesky Bot
+
+on:
+  schedule:
+    - cron: '15 * * * *'  # 毎時15分に実行（重複しないように）
+  workflow_dispatch:  # 手動実行もOK
+
+jobs:
+  run-like-bot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+
+      - name: Install dependencies
+        run: |
+          pip install atproto python-dotenv
+
+      - name: Run Like Bot
+        env:
+          HANDLE: ${{ secrets.HANDLE }}
+          APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
+        run: |
+          python like_bot.py
