@@ -36,12 +36,12 @@ def start():
             print(f"フォロー失敗: {did} - {e}")
 
     # （※任意）フォロー解除処理
-    for did in to_unfollow:
+     for did in to_unfollow:
         try:
             client.app.bsky.graph.unfollow(repository=HANDLE, subject=did)
             print(f"フォロー解除しました: {did}")
-         except Exception as e:
-             print(f"フォロー解除失敗: {did} - {e}")
+        except Exception as e:
+            print(f"フォロー解除失敗: {did} - {e}")
 
 if __name__ == "__main__":
     start()
