@@ -1,9 +1,9 @@
-# post_once.py
 from atproto import Client
 import random
 import os
 from dotenv import load_dotenv
 from pathlib import Path
+from datetime import datetime
 
 # 環境変数読み込み
 env_path = Path('.') / '.env'
@@ -346,9 +346,36 @@ https://mofu-mitsu.github.io/orikyara-profile-maker/
 #オリキャラ #創作クラスタ""",
 ]
 
+# --- ハッシュタグから facets を生成 ---
+def generate_facets_from_text(text, hashtags):
+    facets = []
+    for tag in hashtags:
+        start = text.find(tag)
+        if start != -1:
+            facets.append({
+                "index": {
+                    "byteStart": start,
+                    "byteEnd": start + len(tag)
+                },
+                "features": [{
+                    "$type": "app.bsky.richtext.facet#tag",
+                    "tag": tag.lstrip("#")
+                }]
+            })
+    return facets
+
+# --- 投稿処理 ---
 client = Client()
 client.login(HANDLE, APP_PASSWORD)
 
 message = random.choice(POST_MESSAGES)
-client.send_post(text=message)
+hashtags = [word for word in message.split() if word.startswith("#")]
+facets = generate_facets_from_text(message, hashtags)
+
+client.send_post(
+    text=message,
+    created_at=datetime.utcnow().isoformat() + "Z",
+    facets=facets if facets else None,
+)
+
 print(f"投稿したよ: {message}")
