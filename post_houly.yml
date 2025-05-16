@@ -1,0 +1,23 @@
+name: Hourly Post
+
+on:
+  schedule:
+    - cron: "0 * * * *"  # 毎時
+
+jobs:
+  post-hourly:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    - name: Install dependencies
+      run: pip install atproto python-dotenv
+    - name: Post hourly message
+      env:
+        HANDLE: ${{ secrets.HANDLE }}
+        APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
+      run: python post_hourly.py
