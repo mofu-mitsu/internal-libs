@@ -138,3 +138,8 @@ def start():
         except Exception as e:
             print(f"LikeBot全体でエラー: {e}")
         time.sleep(600)  # ←10分ごとに巡回
+
+# --- 呼び出し ---
+if __name__ == "__main__":
+    print(f"self_did の中身: {self_did}")
+    start()
