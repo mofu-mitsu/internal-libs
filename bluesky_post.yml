@@ -1,28 +1,31 @@
-name: Bluesky Post Once
+name: Post to Bluesky Once
 
 on:
   schedule:
-    - cron: "0 * * * *"  # 毎時0分（日本時間なら9時間プラス）
-  workflow_dispatch:
+    - cron: '0 */2 * * *'  # 2時間ごとに実行（UTC）
+  workflow_dispatch:  # 手動実行もできるように
 
 jobs:
-  post-to-bluesky:
+  post:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.11'
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
 
-    - name: Install dependencies
-      run: |
-        pip install atproto python-dotenv
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
-    - name: Post to Bluesky
-      env:
-        HANDLE: ${{ secrets.HANDLE }}
-        APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
-      run: python post_once.py
+      - name: Run bot
+        env:
+          HANDLE: ${{ secrets.HANDLE }}
+          APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}  # HuggingFace使う場合
+        run: python post_once.py
