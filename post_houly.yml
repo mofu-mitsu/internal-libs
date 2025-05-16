@@ -1,23 +1,30 @@
-name: Hourly Post
+name: Bluesky Hourly Poster
 
 on:
   schedule:
-    - cron: "0 * * * *"  # 毎時
+    - cron: '0 * * * *'  # 毎時ちょうどに実行（UTC時間）
+  workflow_dispatch:  # 手動実行もできるように
 
 jobs:
-  post-hourly:
+  post:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.11'
-    - name: Install dependencies
-      run: pip install atproto python-dotenv
-    - name: Post hourly message
-      env:
-        HANDLE: ${{ secrets.HANDLE }}
-        APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
-      run: python post_hourly.py
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run hourly bot
+        env:
+          HANDLE: ${{ secrets.HANDLE }}
+          APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
+        run: python hour.py
