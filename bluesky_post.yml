@@ -1,0 +1,28 @@
+name: Bluesky Post Once
+
+on:
+  schedule:
+    - cron: "0 * * * *"  # 毎時0分（日本時間なら9時間プラス）
+  workflow_dispatch:
+
+jobs:
+  post-to-bluesky:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        pip install atproto python-dotenv
+
+    - name: Post to Bluesky
+      env:
+        HANDLE: ${{ secrets.HANDLE }}
+        APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
+      run: python post_once.py
