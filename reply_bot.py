@@ -202,9 +202,11 @@ def run_reply_bot():
         if not record or not hasattr(record, "text"):
             continue
 
+        # 🔧 元投稿が自分かチェック（get_post_thread に修正）
         if hasattr(record, "reply") and record.reply:
             try:
-                parent_post = client.app.bsky.feed.get_post(record.reply.parent.uri).post
+                post_thread = client.app.bsky.feed.get_post_thread(uri=record.reply.parent.uri)
+                parent_post = post_thread.thread.post
                 if parent_post.author.did == self_did:
                     print("🔁 元の投稿が自分なのでスキップ")
                     continue
