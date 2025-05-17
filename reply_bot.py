@@ -10,6 +10,8 @@ load_dotenv()
 HANDLE = os.environ["HANDLE"]
 APP_PASSWORD = os.environ["APP_PASSWORD"]
 HF_API_TOKEN = os.environ["HF_API_TOKEN"]
+REPLIED_JSON_URL = os.environ["REPLIED_JSON_URL"]
+GIST_TOKEN = os.environ["GIST_TOKEN"]
 
 HF_API_URL = "https://api-inference.huggingface.co/models/elyza/ELYZA-japanese-stablelm-instruct-alpha"
 HEADERS = {
@@ -94,18 +96,45 @@ REPLY_TABLE = {
     'ちゅ〜': 'え、いきなりちゅーとか……責任とってよね…っ（照）',
 }
 
-REPLIED_FILE = "replied.json"
 
+# --- Gistから読み込み ---
 def load_replied():
-    if os.path.exists(REPLIED_FILE):
-        with open(REPLIED_FILE, "r") as f:
-            return set(json.load(f))
+    try:
+        res = requests.get(REPLIED_JSON_URL)
+        if res.status_code == 200:
+            return set(json.loads(res.text))
+        else:
+            print("⚠️ Gistの読み込み失敗:", res.status_code)
+    except Exception as e:
+        print("⚠️ Gistの読み込みエラー:", e)
     return set()
 
+# --- Gistに保存 ---
 def save_replied(replied_set):
-    with open(REPLIED_FILE, "w") as f:
-        json.dump(list(replied_set), f)
+    gist_id = REPLIED_JSON_URL.split("/")[4]
+    filename = "replied.json"
+    headers = {
+        "Authorization": f"token {GIST_TOKEN}",
+        "Accept": "application/vnd.github.v3+json"
+    }
+    data = {
+        "files": {
+            filename: {
+                "content": json.dumps(list(replied_set), indent=2, ensure_ascii=False)
+            }
+        }
+    }
+    try:
+        res = requests.patch(f"https://api.github.com/gists/{gist_id}", headers=headers, json=data)
+        if res.status_code == 200:
+            print("💾 Gistに保存完了")
+        else:
+            print("⚠️ Gist保存失敗:", res.status_code, res.text)
+    except Exception as e:
+        print("⚠️ Gist保存エラー:", e)
 
+
+# --- AIで返す ---
 def generate_reply_via_api(user_input):
     prompt = f"ユーザー: {user_input}\nみりんてゃ（甘えん坊で地雷系ENFPっぽい）:"
     data = {
@@ -127,12 +156,16 @@ def generate_reply_via_api(user_input):
     except Exception:
         return "え〜ん……みりんてゃ迷子になっちゃった〜"
 
+
+# --- テンプレ or AI返し ---
 def get_reply(text):
     for keyword, reply in REPLY_TABLE.items():
         if keyword in text:
             return reply
     return generate_reply_via_api(text)
 
+
+# --- メイン処理 ---
 def run_reply_bot():
     client = Client()
     client.login(HANDLE, APP_PASSWORD)
@@ -156,7 +189,6 @@ def run_reply_bot():
         author_did = getattr(author, "did", None)
         record = getattr(note, "record", None)
 
-        # 自分自身への返信はスキップ
         if not author_handle or author_did == self_did or post_uri in replied:
             continue
         if not record or not hasattr(record, "text"):
@@ -181,6 +213,7 @@ def run_reply_bot():
             print(">>> 投稿失敗:", e)
             traceback.print_exc()
 
-# 実行時
+
+# 実行
 if __name__ == "__main__":
     run_reply_bot()
