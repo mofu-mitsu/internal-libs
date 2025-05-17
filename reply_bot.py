@@ -20,7 +20,6 @@ HEADERS = {
 }
 
 REPLY_TABLE = {
-
      "使い方": "使い方は「♡推しプロフィールメーカー♡」のページにあるよ〜！かんたんっ♪",
     "おすすめ": "えへへ♡ いちばんのおすすめは「♡推しプロフィールメーカー♡」だよっ！",
     'ねえ': 'ん〜？呼んだ〜？みりんてゃのお耳はず〜っとリスナー向き♡',
@@ -95,7 +94,6 @@ REPLY_TABLE = {
     'ㄘゅ': 'ちゅーって……もう……すき……（きゅん）',
     'ちゅー': 'え、いきなりちゅーとか……責任とってよね…っ（照）',
     'ちゅ〜': 'え、いきなりちゅーとか……責任とってよね…っ（照）',
-
 }
 
 # --- Gistから読み込み ---
@@ -138,7 +136,6 @@ def save_replied(replied_set):
 def generate_reply_via_api(user_input):
     prompt = f"ユーザー: {user_input}\nみりんてゃ（甘えん坊で地雷系ENFPっぽい）:"
     data = {
-        "model": "elyza/ELYZA-japanese-stablelm-instruct-alpha",
         "inputs": prompt,
         "parameters": {
             "max_new_tokens": 100,
@@ -147,31 +144,19 @@ def generate_reply_via_api(user_input):
             "do_sample": True
         }
     }
-
     try:
-        response = requests.post("https://api-inference.huggingface.co/", headers=HEADERS, json=data, timeout=20)
+        response = requests.post(HF_API_URL, headers=HEADERS, json=data, timeout=20)
         print("🤖 AIレスポンス:", response.text)
-
-        # 念のため「text」「generated_text」「output」どれでも対応
-        result = response.json()
-        if isinstance(result, dict):
-            if "generated_text" in result:
-                return result["generated_text"]
-            elif "text" in result:
-                return result["text"]
-            elif "output" in result:
-                return result["output"]
-            else:
-                return "（返事がよくわからなかったよ…）"
-        elif isinstance(result, list):
-            return result[0].get("generated_text", "（返事がなかったよ…）")
+        if response.status_code == 200:
+            generated = response.json()[0]["generated_text"]
+            return generated.split("みりんてゃ")[-1].strip()
         else:
-            return "（不明な形式の返事だったよ…）"
+            return "え〜ん……AIとおしゃべりできないみたい（泣）"
     except Exception:
         print("⚠️ AIレスポンスエラー:")
         traceback.print_exc()
         return "え〜ん……みりんてゃ迷子になっちゃった〜"
-        
+
 # --- テンプレ or AI返し ---
 def get_reply(text):
     for keyword, reply in REPLY_TABLE.items():
@@ -188,7 +173,7 @@ def run_reply_bot():
 
     self_did = client.me.did
     replied = load_replied()
-    notifications = client.app.bsky.notification.list_notifications(limit=50).notifications
+    notifications = client.app.bsky.notification.list_notifications().notifications
 
     print(f"📥 通知数: {len(notifications)} 件")
 
@@ -206,7 +191,6 @@ def run_reply_bot():
 
         print(f"🧾 投稿者: {author_handle}, 投稿DID: {author_did}, 自分DID: {self_did}")
 
-        # ✋ 自分自身には返信しない
         if not author_handle or not author_did:
             continue
         if author_did == self_did or author_handle == HANDLE:
@@ -218,7 +202,6 @@ def run_reply_bot():
         if not record or not hasattr(record, "text"):
             continue
 
-        # 🔍 元投稿が自分の投稿ならスキップ
         if hasattr(record, "reply") and record.reply:
             try:
                 parent_post = client.app.bsky.feed.get_post(record.reply.parent.uri).post
@@ -229,13 +212,11 @@ def run_reply_bot():
                 print("⚠️ 元投稿の取得に失敗:", e)
                 continue
 
-        # --- 返信処理 ---
         text = record.text
         print(f"💬 返信対象のテキスト: {text}")
         reply_text = get_reply(text)
         print(f"✏️ 返信内容: {reply_text}")
 
-        # リプライ参照生成
         reply_ref = None
         if hasattr(record, "reply") and record.reply:
             reply_ref = models.AppBskyFeedPost.ReplyRef(
