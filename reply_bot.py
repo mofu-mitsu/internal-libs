@@ -189,8 +189,14 @@ def run_reply_bot():
         author_did = getattr(author, "did", None)
         record = getattr(note, "record", None)
 
-        if not author_handle or author_did == self_did or post_uri in replied:
+        print(f"🧾 author_did: {author_did}, self_did: {self_did}, author_handle: {author_handle}")
+
+        # 自分自身の投稿・返信には反応しない（強化版）
+        if not author_handle or not author_did:
             continue
+        if author_did == self_did or author_handle == HANDLE or post_uri in replied:
+            continue
+
         if not record or not hasattr(record, "text"):
             continue
 
@@ -212,8 +218,3 @@ def run_reply_bot():
         except Exception as e:
             print(">>> 投稿失敗:", e)
             traceback.print_exc()
-
-
-# 実行
-if __name__ == "__main__":
-    run_reply_bot()
