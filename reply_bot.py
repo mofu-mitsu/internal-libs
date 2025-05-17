@@ -18,7 +18,7 @@ HEADERS = {
 }
 
 REPLY_TABLE = {
-    "使い方": "使い方は「♡推しプロフィールメーカー♡」のページにあるよ〜！かんたんっ♪",
+     "使い方": "使い方は「♡推しプロフィールメーカー♡」のページにあるよ〜！かんたんっ♪",
     "おすすめ": "えへへ♡ いちばんのおすすめは「♡推しプロフィールメーカー♡」だよっ！",
     'ねえ': 'ん〜？呼んだ〜？みりんてゃのお耳はず〜っとリスナー向き♡',
     '好き': 'えっ！？…みりんもすきかも〜っ♡',
@@ -146,15 +146,18 @@ def run_reply_bot():
 
     for note in notifications:
         print(f"📌 通知: reason={note.reason}, uri={note.uri}")
+
         if note.reason not in ["mention", "reply"]:
             continue
 
         post_uri = note.uri
         author = getattr(note, "author", None)
         author_handle = getattr(author, "handle", None)
+        author_did = getattr(author, "did", None)
         record = getattr(note, "record", None)
 
-        if not author_handle or author_handle == HANDLE or post_uri in replied:
+        # 自分自身への返信はスキップ
+        if not author_handle or author_did == self_did or post_uri in replied:
             continue
         if not record or not hasattr(record, "text"):
             continue
