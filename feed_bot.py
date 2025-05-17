@@ -14,11 +14,11 @@ HANDLE = os.environ['HANDLE']
 APP_PASSWORD = os.environ['APP_PASSWORD']
 
 
-# Hugging Face APIで返信を生成する関数
 def generate_reply(prompt):
-    API_URL = "https://api-inference.huggingface.co/models/rinna/japanese-gpt2-small"
+    API_URL = "https://api-inference.huggingface.co/"
     headers = {"Authorization": f"Bearer {HF_API_TOKEN}"}
     payload = {
+        "model": "rinna/japanese-gpt2-small",
         "inputs": prompt,
         "parameters": {
             "max_new_tokens": 100,
@@ -35,8 +35,15 @@ def generate_reply(prompt):
                                  json=payload,
                                  timeout=10)
         result = response.json()
-        if isinstance(result, list):
-            return result[0]["generated_text"].split("みりんてゃ「")[-1].strip()
+
+        # レスポンス形式によって分岐
+        if isinstance(result, list) and "generated_text" in result[0]:
+            # みりんてゃ風セリフだけ切り出し（例：みりんてゃ「〇〇」）
+            return result[0]["generated_text"].split("みりんてゃ「")[-1].strip("」 ")
+        elif isinstance(result, dict) and "generated_text" in result:
+            return result["generated_text"]
+        elif isinstance(result, dict) and "text" in result:
+            return result["text"]
         else:
             return "えへへ、なんかうまく考えつかなかったかも〜…"
     except Exception as e:
