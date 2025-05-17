@@ -3,7 +3,6 @@ import random
 import os
 from dotenv import load_dotenv
 from pathlib import Path
-from datetime import datetime
 
 # 環境変数読み込み
 env_path = Path('.') / '.env'
@@ -13,6 +12,9 @@ HANDLE = os.getenv('HANDLE')
 APP_PASSWORD = os.getenv('APP_PASSWORD')
 
 POST_MESSAGES = [
+    "寂しくてしんじゃいそう……なんちゃって♡\n\n#誰かに見つけてほしい",
+    "ぎゅーされたいだけの人生だった。#メンヘラ",
+    "あたしなんて、いない方がよかった……とか思ってないし♡",
     """寂しくてしんじゃいそう……なんちゃって♡ 
 
     #誰かに見つけてほしい""",
@@ -346,16 +348,18 @@ https://mofu-mitsu.github.io/orikyara-profile-maker/
 #オリキャラ #創作クラスタ""",
 ]
 
-# --- ハッシュタグから facets を生成 ---
+# facets生成（絵文字対応）
 def generate_facets_from_text(text, hashtags):
+    text_bytes = text.encode("utf-8")
     facets = []
     for tag in hashtags:
-        start = text.find(tag)
+        tag_bytes = tag.encode("utf-8")
+        start = text_bytes.find(tag_bytes)
         if start != -1:
             facets.append({
                 "index": {
                     "byteStart": start,
-                    "byteEnd": start + len(tag)
+                    "byteEnd": start + len(tag_bytes)
                 },
                 "features": [{
                     "$type": "app.bsky.richtext.facet#tag",
@@ -364,11 +368,11 @@ def generate_facets_from_text(text, hashtags):
             })
     return facets
 
-# --- 投稿処理 ---
+# 投稿
 client = Client()
 client.login(HANDLE, APP_PASSWORD)
 
-message = random.choice(POST_MESSAGES)
+message = random.choice(POST_MESSAGES).strip()
 hashtags = [word for word in message.split() if word.startswith("#")]
 facets = generate_facets_from_text(message, hashtags)
 
@@ -376,5 +380,3 @@ client.send_post(
     text=message,
     facets=facets if facets else None
 )
-
-print(f"投稿したよ: {message}")
