@@ -138,6 +138,7 @@ def save_replied(replied_set):
 def generate_reply_via_api(user_input):
     prompt = f"ユーザー: {user_input}\nみりんてゃ（甘えん坊で地雷系ENFPっぽい）:"
     data = {
+        "model": "elyza/ELYZA-japanese-stablelm-instruct-alpha",
         "inputs": prompt,
         "parameters": {
             "max_new_tokens": 100,
@@ -146,19 +147,31 @@ def generate_reply_via_api(user_input):
             "do_sample": True
         }
     }
+
     try:
-        response = requests.post(HF_API_URL, headers=HEADERS, json=data, timeout=20)
+        response = requests.post("https://api-inference.huggingface.co/", headers=HEADERS, json=data, timeout=20)
         print("🤖 AIレスポンス:", response.text)
-        if response.status_code == 200:
-            generated = response.json()[0]["generated_text"]
-            return generated.split("みりんてゃ")[-1].strip()
+
+        # 念のため「text」「generated_text」「output」どれでも対応
+        result = response.json()
+        if isinstance(result, dict):
+            if "generated_text" in result:
+                return result["generated_text"]
+            elif "text" in result:
+                return result["text"]
+            elif "output" in result:
+                return result["output"]
+            else:
+                return "（返事がよくわからなかったよ…）"
+        elif isinstance(result, list):
+            return result[0].get("generated_text", "（返事がなかったよ…）")
         else:
-            return "え〜ん……AIとおしゃべりできないみたい（泣）"
+            return "（不明な形式の返事だったよ…）"
     except Exception:
         print("⚠️ AIレスポンスエラー:")
         traceback.print_exc()
         return "え〜ん……みりんてゃ迷子になっちゃった〜"
-
+        
 # --- テンプレ or AI返し ---
 def get_reply(text):
     for keyword, reply in REPLY_TABLE.items():
