@@ -14,12 +14,12 @@ def start():
     print("フォロー管理開始！")
 
     # 自分がフォローしているユーザー一覧
-    follows = client.app.bsky.graph.get_follows(actor=HANDLE, limit=100).follows
-    following_handles = set(user.did for user in follows)
+follows = client.app.bsky.graph.get_follows(params={"actor": HANDLE, "limit": 100}).follows
+following_handles = set(user.did for user in follows)
 
-    # 自分をフォローしてくれているユーザー一覧
-    followers = client.app.bsky.graph.get_followers(actor=HANDLE, limit=100).followers
-    follower_handles = set(user.did for user in followers)
+# 自分をフォローしてくれているユーザー一覧
+followers = client.app.bsky.graph.get_followers(params={"actor": HANDLE, "limit": 100}).followers
+follower_handles = set(user.did for user in followers)
 
     # フォロバすべきユーザー
     to_follow = follower_handles - following_handles
