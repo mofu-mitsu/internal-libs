@@ -20,6 +20,7 @@ HEADERS = {
 }
 
 REPLY_TABLE = {
+
      "使い方": "使い方は「♡推しプロフィールメーカー♡」のページにあるよ〜！かんたんっ♪",
     "おすすめ": "えへへ♡ いちばんのおすすめは「♡推しプロフィールメーカー♡」だよっ！",
     'ねえ': 'ん〜？呼んだ〜？みりんてゃのお耳はず〜っとリスナー向き♡',
@@ -94,8 +95,8 @@ REPLY_TABLE = {
     'ㄘゅ': 'ちゅーって……もう……すき……（きゅん）',
     'ちゅー': 'え、いきなりちゅーとか……責任とってよね…っ（照）',
     'ちゅ〜': 'え、いきなりちゅーとか……責任とってよね…っ（照）',
-}
 
+}
 
 # --- Gistから読み込み ---
 def load_replied():
@@ -104,9 +105,9 @@ def load_replied():
         if res.status_code == 200:
             return set(json.loads(res.text))
         else:
-            print("⚠️ Gistの読み込み失敗:", res.status_code)
+            print("⚠️ Gist読み込み失敗:", res.status_code)
     except Exception as e:
-        print("⚠️ Gistの読み込みエラー:", e)
+        print("⚠️ Gist読み込みエラー:", e)
     return set()
 
 # --- Gistに保存 ---
@@ -133,7 +134,6 @@ def save_replied(replied_set):
     except Exception as e:
         print("⚠️ Gist保存エラー:", e)
 
-
 # --- AIで返す ---
 def generate_reply_via_api(user_input):
     prompt = f"ユーザー: {user_input}\nみりんてゃ（甘えん坊で地雷系ENFPっぽい）:"
@@ -148,22 +148,24 @@ def generate_reply_via_api(user_input):
     }
     try:
         response = requests.post(HF_API_URL, headers=HEADERS, json=data, timeout=20)
+        print("🤖 AIレスポンス:", response.text)
         if response.status_code == 200:
             generated = response.json()[0]["generated_text"]
             return generated.split("みりんてゃ")[-1].strip()
         else:
             return "え〜ん……AIとおしゃべりできないみたい（泣）"
     except Exception:
+        print("⚠️ AIレスポンスエラー:")
+        traceback.print_exc()
         return "え〜ん……みりんてゃ迷子になっちゃった〜"
-
 
 # --- テンプレ or AI返し ---
 def get_reply(text):
     for keyword, reply in REPLY_TABLE.items():
         if keyword in text:
+            print(f"📌 テンプレで返答: {reply}")
             return reply
     return generate_reply_via_api(text)
-
 
 # --- メイン処理 ---
 def run_reply_bot():
@@ -173,7 +175,7 @@ def run_reply_bot():
 
     self_did = client.me.did
     replied = load_replied()
-    notifications = client.app.bsky.notification.list_notifications().notifications
+    notifications = client.app.bsky.notification.list_notifications(limit=50).notifications
 
     print(f"📥 通知数: {len(notifications)} 件")
 
@@ -183,38 +185,44 @@ def run_reply_bot():
         if note.reason not in ["mention", "reply"]:
             continue
 
-        post_uri = note.uri
+        post_uri = note.uri.strip()
         author = getattr(note, "author", None)
         author_handle = getattr(author, "handle", None)
         author_did = getattr(author, "did", None)
         record = getattr(note, "record", None)
 
-        print(f"🧾 author_did: {author_did}, self_did: {self_did}, author_handle: {author_handle}")
+        print(f"🧾 投稿者: {author_handle}, 投稿DID: {author_did}, 自分DID: {self_did}")
 
-        # 自分自身の投稿・返信には反応しない（強化版）
+        # ✋ 自分自身には返信しない
         if not author_handle or not author_did:
             continue
-        if author_did == self_did or author_handle == HANDLE or post_uri in replied:
+        if author_did == self_did or author_handle == HANDLE:
+            print("🛑 自分自身への返信はスキップ")
             continue
-
+        if post_uri in replied:
+            print("🔁 既に返信済みの投稿なのでスキップ")
+            continue
         if not record or not hasattr(record, "text"):
             continue
 
-        # 🔧 自分が元の投稿者ならスキップ
+        # 🔍 元投稿が自分の投稿ならスキップ
         if hasattr(record, "reply") and record.reply:
             try:
                 parent_post = client.app.bsky.feed.get_post(record.reply.parent.uri).post
                 if parent_post.author.did == self_did:
-                    print("🔁 自分への再返信なのでスキップ")
+                    print("🔁 元の投稿が自分なのでスキップ")
                     continue
             except Exception as e:
-                print("⚠️ 返信元の取得に失敗:", e)
+                print("⚠️ 元投稿の取得に失敗:", e)
                 continue
 
+        # --- 返信処理 ---
         text = record.text
+        print(f"💬 返信対象のテキスト: {text}")
         reply_text = get_reply(text)
-        print(f">>> @{author_handle} の投稿に返信: {reply_text}")
+        print(f"✏️ 返信内容: {reply_text}")
 
+        # リプライ参照生成
         reply_ref = None
         if hasattr(record, "reply") and record.reply:
             reply_ref = models.AppBskyFeedPost.ReplyRef(
@@ -222,10 +230,16 @@ def run_reply_bot():
                 parent=getattr(record.reply, "parent", record)
             )
 
+        print("📤 返信送信中...")
         try:
             client.send_post(text=reply_text, reply_to=reply_ref)
             replied.add(post_uri)
             save_replied(replied)
+            print(f"✅ @{author_handle} に返信完了！")
         except Exception as e:
-            print(">>> 投稿失敗:", e)
+            print("⚠️ 投稿失敗:", e)
             traceback.print_exc()
+
+# --- 実行 ---
+if __name__ == "__main__":
+    run_reply_bot()
