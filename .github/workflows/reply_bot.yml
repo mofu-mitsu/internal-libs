@@ -28,5 +28,6 @@ jobs:
           APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
           HF_API_TOKEN: ${{ secrets.HF_API_TOKEN }}
           REPLIED_JSON_URL: ${{ secrets.REPLIED_JSON_URL }}  # ←これ追加！！
+          GIST_TOKEN: ${{ secrets.GIST_TOKEN }}  # ←✨これ追加！
         run: python reply_bot.py
         
