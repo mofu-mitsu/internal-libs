@@ -200,6 +200,17 @@ def run_reply_bot():
         if not record or not hasattr(record, "text"):
             continue
 
+        # 🔧 自分が元の投稿者ならスキップ
+        if hasattr(record, "reply") and record.reply:
+            try:
+                parent_post = client.app.bsky.feed.get_post(record.reply.parent.uri).post
+                if parent_post.author.did == self_did:
+                    print("🔁 自分への再返信なのでスキップ")
+                    continue
+            except Exception as e:
+                print("⚠️ 返信元の取得に失敗:", e)
+                continue
+
         text = record.text
         reply_text = get_reply(text)
         print(f">>> @{author_handle} の投稿に返信: {reply_text}")
