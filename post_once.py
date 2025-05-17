@@ -3,6 +3,7 @@ import random
 import os
 from dotenv import load_dotenv
 from pathlib import Path
+import unicodedata
 
 # 環境変数読み込み
 env_path = Path('.') / '.env'
@@ -348,7 +349,7 @@ https://mofu-mitsu.github.io/orikyara-profile-maker/
 #オリキャラ #創作クラスタ""",
 ]
 
-# facets生成（絵文字対応）
+# facets生成（絵文字対応＆バイト位置対応）
 def generate_facets_from_text(text, hashtags):
     text_bytes = text.encode("utf-8")
     facets = []
@@ -368,11 +369,16 @@ def generate_facets_from_text(text, hashtags):
             })
     return facets
 
-# 投稿
+# 文字正規化
+def normalize_text(text):
+    return unicodedata.normalize("NFKC", text).strip()
+
+# 投稿処理
 client = Client()
 client.login(HANDLE, APP_PASSWORD)
 
-message = random.choice(POST_MESSAGES).strip()
+raw_message = random.choice(POST_MESSAGES)
+message = normalize_text(raw_message)
 hashtags = [word for word in message.split() if word.startswith("#")]
 facets = generate_facets_from_text(message, hashtags)
 
