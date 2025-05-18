@@ -30,7 +30,7 @@ def like_post_if_needed(uri, cid, text):
         return
     try:
         client.app.bsky.feed.like.create(
-            repo=HANDLE,
+            repo=client.me.did,
             record={
                 "subject": {"uri": uri, "cid": cid},
                 "createdAt": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
@@ -43,7 +43,8 @@ def like_post_if_needed(uri, cid, text):
 def auto_like_timeline():
     print("📡 タイムライン巡回中...")
     try:
-        feed_items = client.app.bsky.feed.get_timeline().get("feed", [])
+        feed_res = client.app.bsky.feed.get_timeline()
+        feed_items = feed_res.feed
         for item in feed_items:
             post = item.post
             text = post.record.text
@@ -53,7 +54,7 @@ def auto_like_timeline():
 
             if author_did == self_did:
                 continue
-            if any(tag in text for tag in TARGET_HASHTAGS) or any(kw in text for kw in TARGET_KEYWORDS):
+            if any(tag in text for tag in TARGET_HASHTAGS) or any(kw in text for kw in text):
                 like_post_if_needed(uri, cid, text)
     except Exception as e:
         print(f"❌ タイムラインエラー: {e}")
@@ -82,7 +83,7 @@ def auto_like_back():
                     continue
 
                 feed_res = client.app.bsky.feed.get_author_feed({"actor": user_did, "limit": 1})
-                posts = feed_res.get("feed", [])
+                posts = feed_res.feed
                 if not posts:
                     continue
 
@@ -96,11 +97,9 @@ def auto_like_back():
 
 def start():
     print("🚀 LikeBot 起動しました")
-    while self_did:
-        auto_like_timeline()
-        auto_like_mentions()
-        auto_like_back()
-        time.sleep(600)
+    auto_like_timeline()
+    auto_like_mentions()
+    auto_like_back()
 
 if __name__ == "__main__":
     start()
