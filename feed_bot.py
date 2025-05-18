@@ -11,6 +11,9 @@ HANDLE = os.environ['HANDLE']
 APP_PASSWORD = os.environ['APP_PASSWORD']
 REPLIED_FILE = "replied_uris.json"
 
+client = Client()
+client.login(HANDLE, APP_PASSWORD)
+
 # リプライ済みURIをファイルから読み込む
 def load_replied_uris():
     if os.path.exists(REPLIED_FILE):
