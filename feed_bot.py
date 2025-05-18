@@ -130,7 +130,10 @@ def run_once():
 
         client.send_post(
             text=reply_text,
-            reply_to=models.create_reply_reference(uri=uri, cid=cid),
+            reply_ref = models.AppBskyFeedPost.ReplyRef(
+    root=models.create_strong_ref(uri=uri, cid=cid),
+    parent=models.create_strong_ref(uri=uri, cid=cid),
+    )
             facets=facets if facets else None
         )
 
