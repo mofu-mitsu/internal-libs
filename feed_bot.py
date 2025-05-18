@@ -139,14 +139,10 @@ try:
     )
 except Exception as e:
     print("⚠️ 返信エラー:", e)
-    continue
-
+else:
     replied_uris.add(uri)
     save_replied_uris(replied_uris)
     print(f"✅ 返信しました → @{author}")
-except Exception as e:
-    print("⚠️ 投稿に失敗:", e)
-    traceback.print_exc()
 
 # 🔧 エントリーポイント
 if __name__ == "__main__":
