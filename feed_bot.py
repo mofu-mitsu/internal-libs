@@ -115,10 +115,10 @@ def run_once():
         facets = generate_facets_from_text(reply_text, hashtags)
 
         client.send_post(
-            text=reply_text,
-            reply_to=models.create_reply_reference(uri=uri, cid=cid) if f"@{HANDLE}" in text else None,
-            facets=facets if facets else None
-        )
+    text=reply_text,
+    reply_to=models.create_reply_reference(uri=uri, cid=cid),
+    facets=facets if facets else None
+    )
 
         replied_uris.add(uri)
         print(f"✅ 返信しました → @{author}")
