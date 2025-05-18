@@ -25,7 +25,7 @@ def start():
 
     for did in to_follow:
         try:
-            follow_record = models.AppBskyGraphFollow.Main(
+            follow_record = models.AppBskyGraphFollow.Record(
                 subject=did,
                 created_at=client.get_current_time_iso()
             )
