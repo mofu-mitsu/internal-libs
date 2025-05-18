@@ -13,6 +13,9 @@ HF_API_TOKEN = os.environ["HF_API_TOKEN"]
 REPLIED_JSON_URL = os.environ["REPLIED_JSON_URL"]
 GIST_TOKEN = os.environ["GIST_TOKEN"]
 
+client = Client()
+client.login(HANDLE, APP_PASSWORD)
+
 HF_API_URL = "https://api-inference.huggingface.co/models/elyza/ELYZA-japanese-stablelm-instruct-alpha"
 HEADERS = {
     "Authorization": f"Bearer {HF_API_TOKEN}",
