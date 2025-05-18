@@ -7,8 +7,8 @@ HANDLE = os.environ["HANDLE"]
 APP_PASSWORD = os.environ["APP_PASSWORD"]
 
 # 🎯 いいね対象のハッシュタグとキーワード
-TARGET_HASHTAGS = ['#地雷女', '#病みかわ', '#メンヘラ', '#量産系', '#推しキャラプロフィールメーカー']
-TARGET_KEYWORDS = ['地雷', '量産', '病みかわ', 'メンヘラ', '相性診断', 'プロフィールメーカー']
+TARGET_HASHTAGS = ['#地雷女', '#病みかわ','#可愛い','#かわいい','#メンヘラ', '#量産系', '#推しキャラプロフィールメーカー']
+TARGET_KEYWORDS = ['地雷', '量産', '病みかわ','可愛い','かわいい''メンヘラ', '相性診断', 'プロフィールメーカー']
 
 client = Client()
 
