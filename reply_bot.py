@@ -16,10 +16,22 @@ GIST_TOKEN = os.environ["GIST_TOKEN"]
 client = Client()
 client.login(HANDLE, APP_PASSWORD)
 
-HF_API_URL = "https://api-inference.huggingface.co/models/elyza/ELYZA-japanese-stablelm-instruct-alpha"
+HF_API_URL = "https://api-inference.huggingface.co/"  # ← 共通URL！
+
 HEADERS = {
     "Authorization": f"Bearer {HF_API_TOKEN}",
     "Content-Type": "application/json"
+}
+
+data = {
+    "model": "elyza/ELYZA-japanese-stablelm-instruct-alpha",  # ← モデル名ここ！
+    "inputs": "ユーザー: ○○○\nみりんてゃ:",
+    "parameters": {
+        "max_new_tokens": 100,
+        "temperature": 0.8,
+        "top_p": 0.9,
+        "do_sample": True
+    }
 }
 
 REPLY_TABLE = {
