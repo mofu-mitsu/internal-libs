@@ -214,6 +214,11 @@ def run_reply_bot():
             try:
                 post_thread = client.app.bsky.feed.get_post_thread(params={"uri": record.reply.parent.uri})
                 parent_post = post_thread.thread.post
+                
+                # 👇このチェックを追加！
+                if parent_post.author.did != self_did:
+                    print("📛 自分宛のリプライではないのでスキップ")
+                    continue
 
                 if author_did == self_did:
                     print("🙈 自分の投稿への返信なのでスキップ")
