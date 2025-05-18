@@ -137,6 +137,9 @@ def run_once():
         ),
         facets=facets if facets else None
     )
+except Exception as e:
+    print("⚠️ 返信エラー:", e)
+    continue
 
     replied_uris.add(uri)
     save_replied_uris(replied_uris)
