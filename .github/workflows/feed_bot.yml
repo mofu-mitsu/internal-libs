@@ -1,29 +1,21 @@
-name: Run Feed Bot
+name: Run Bluesky Reply Bot
 
 on:
   schedule:
-    - cron: '0 * * * *'  # 毎時0分に実行
-  workflow_dispatch:
+    - cron: "*/10 * * * *"  # 10分ごと
+  workflow_dispatch:        # 手動実行も可
 
 jobs:
-  run-feed-bot:
+  reply-bot:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
-
-      - name: Install dependencies
-        run: |
-          pip install -r requirements.txt
-
-      - name: Run feed_bot.py
+          python-version: "3.10"
+      - run: pip install -r requirements.txt
+      - run: python feed_bot.py
         env:
           HANDLE: ${{ secrets.HANDLE }}
           APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
           HF_API_TOKEN: ${{ secrets.HF_API_TOKEN }}
-        run: python feed_bot.py
