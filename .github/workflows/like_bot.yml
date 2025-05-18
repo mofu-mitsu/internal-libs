@@ -27,3 +27,7 @@ jobs:
 
       - name: LikeBotを実行
         run: python like_bot.py
+        env:
+          HANDLE: ${{ secrets.HANDLE }}
+          APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
+        
