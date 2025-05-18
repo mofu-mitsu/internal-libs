@@ -128,18 +128,22 @@ def run_once():
         hashtags = [word for word in text.split() if word.startswith("#")]
         facets = generate_facets_from_text(reply_text, hashtags)
 
-        client.send_post(
-    text=reply_text,
-    reply_to=models.AppBskyFeedPost.ReplyRef(
-        root=models.create_strong_ref(uri=uri, cid=cid),
-        parent=models.create_strong_ref(uri=uri, cid=cid)
-    ),
-    facets=facets if facets else None
-)
+        try:
+    client.send_post(
+        text=reply_text,
+        reply_to=models.AppBskyFeedPost.ReplyRef(
+            root=models.create_strong_ref(uri, cid),
+            parent=models.create_strong_ref(uri, cid)
+        ),
+        facets=facets if facets else None
+    )
 
-        replied_uris.add(uri)
-        save_replied_uris(replied_uris)
-        print(f"✅ 返信しました → @{author}")
+    replied_uris.add(uri)
+    save_replied_uris(replied_uris)
+    print(f"✅ 返信しました → @{author}")
+except Exception as e:
+    print("⚠️ 投稿に失敗:", e)
+    traceback.print_exc()
 
 # 🔧 エントリーポイント
 if __name__ == "__main__":
