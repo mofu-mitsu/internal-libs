@@ -242,7 +242,10 @@ def handle_post(record):  # ← 関数の中なら
 
 # ✏️ 返信送信
 print("📤 返信送信中…")
-print(f"📮 リプライ送信先: {post_uri}")
+
+post_uri = note.uri.strip()  # ← ここで先に定義！
+print(f"📮 リプライ送信先: {post_uri}")  # ← これならOK！
+
 if reply_text:
     print(f"📤 投稿内容: {reply_text}")
 else:
