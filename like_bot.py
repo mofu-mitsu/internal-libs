@@ -1,15 +1,12 @@
 from atproto import Client
 import time
-from dotenv import load_dotenv
-from pathlib import Path
 import os
 
-env_path = Path('.') / '.env'
-load_dotenv(dotenv_path=env_path)
+# ✅ GitHub Actions の Secrets から直接環境変数を取得
+HANDLE = os.environ["HANDLE"]
+APP_PASSWORD = os.environ["APP_PASSWORD"]
 
-HANDLE = os.getenv('HANDLE')
-APP_PASSWORD = os.getenv('APP_PASSWORD')
-
+# 🎯 いいね対象のハッシュタグとキーワード
 TARGET_HASHTAGS = ['#地雷女', '#病みかわ', '#メンヘラ', '#量産系', '#推しキャラプロフィールメーカー']
 TARGET_KEYWORDS = ['地雷', '量産', '病みかわ', 'メンヘラ', '相性診断', 'プロフィールメーカー']
 
@@ -54,7 +51,7 @@ def auto_like_timeline():
 
             if author_did == self_did:
                 continue
-            if any(tag in text for tag in TARGET_HASHTAGS) or any(kw in text for kw in text):
+            if any(tag in text for tag in TARGET_HASHTAGS) or any(kw in text for kw in TARGET_KEYWORDS):
                 like_post_if_needed(uri, cid, text)
     except Exception as e:
         print(f"❌ タイムラインエラー: {e}")
