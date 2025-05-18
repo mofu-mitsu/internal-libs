@@ -124,7 +124,7 @@ def run_once():
             print(f"🤖 AI返信生成: {reply_text}")
             matched = True
 
- if not matched:
+if not matched:
     print("🚫 スキップ: 条件に合わない投稿")
     continue
     
