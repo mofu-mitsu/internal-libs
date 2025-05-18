@@ -125,9 +125,9 @@ def run_once():
             matched = True
 
  if not matched:
-            print("🚫 スキップ: 条件に合わない投稿")
-            continue
-
+    print("🚫 スキップ: 条件に合わない投稿")
+    continue
+    
         hashtags = [word for word in text.split() if word.startswith("#")]
         facets = generate_facets_from_text(reply_text, hashtags)
 
