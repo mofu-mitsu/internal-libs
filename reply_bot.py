@@ -208,8 +208,8 @@ def run_reply_bot():
         if not record or not hasattr(record, "text"):
             continue
 
-        text = record.text
-reply_text = get_reply(text)
+　　　　　text = record.text
+　　　　　reply_text = get_reply(text)
 
 # 💬 リプライ処理：reply_ref を生成
 def handle_post(record):  # ← 関数の中なら
