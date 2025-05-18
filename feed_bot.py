@@ -67,7 +67,7 @@ def generate_facets_from_text(text, hashtags):
         facets.append(facet)
     return facets
 
-# 1回だけ投稿を確認して返信する関数（GitHub Actions向け）
+# 投稿を確認して返信する関数
 def run_once():
     client = Client()
     client.login(HANDLE, APP_PASSWORD)
@@ -92,7 +92,7 @@ def run_once():
         matched = False
         reply_text = ""
 
-        # キーワード反応（部分一致・複数形対応）
+        # キーワード反応
         for keyword, response in KEYWORD_RESPONSES.items():
             if keyword in text:
                 reply_text = response
@@ -107,16 +107,13 @@ def run_once():
             print(f"🤖 AI返信生成: {reply_text}")
             matched = True
 
-        # メンションもキーワードもない → 無視
         if not matched:
-            print(f"🚫 スキップ: 条件に合わない投稿")
+            print("🚫 スキップ: 条件に合わない投稿")
             continue
 
-        # ハッシュタグ抽出＆facet生成
         hashtags = [word for word in text.split() if word.startswith("#")]
         facets = generate_facets_from_text(reply_text, hashtags)
 
-        # 投稿送信
         client.send_post(
             text=reply_text,
             reply_to=models.create_reply_reference(uri=uri, cid=cid) if f"@{HANDLE}" in text else None,
@@ -125,7 +122,7 @@ def run_once():
 
         replied_uris.add(uri)
         print(f"✅ 返信しました → @{author}")
-        if __name__ == "__main__":
+
+# 🔧 ここがミスってた！ちゃんとインデントしてね♡
+if __name__ == "__main__":
     run_once()
-
-
