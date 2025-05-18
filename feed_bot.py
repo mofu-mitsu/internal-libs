@@ -80,47 +80,46 @@ def run_once():
     replied_uris = set()
 
     # 投稿を取得
-timeline = client.app.bsky.feed.get_timeline(params={"limit": 20})
-feed = timeline.feed
+    timeline = client.app.bsky.feed.get_timeline(params={"limit": 20})
+    feed = timeline.feed
 
-for post in feed:
-    text = post.post.record.text
-    uri = post.post.uri
-    cid = post.post.cid
-    author = post.post.author.handle
+    for post in feed:
+        text = post.post.record.text
+        uri = post.post.uri
+        cid = post.post.cid
+        author = post.post.author.handle
 
-    if author == HANDLE or uri in replied_uris:
-        continue  # 自分自身や重複投稿はスキップ
+        if author == HANDLE or uri in replied_uris:
+            continue  # 自分自身や重複投稿はスキップ
 
-    # キーワード判定
-    matched = False
-    for keyword, response in KEYWORD_RESPONSES.items():
-        if keyword in text:
-            reply_text = response
-            matched = True
-            break
+        # キーワード判定
+        matched = False
+        for keyword, response in KEYWORD_RESPONSES.items():
+            if keyword in text:
+                reply_text = response
+                matched = True
+                break
 
-    # メンションされてて、キーワードがない → AI返信
-    if not matched and f"@{HANDLE}" in text:
-        prompt = f"みりんてゃは地雷系ENFPで、甘えん坊でちょっと病みかわな子。フォロワーが「{text}」って投稿したら、どう返す？\nみりんてゃ「"
-        reply_text = generate_reply(prompt)
-        print(f"🤖 AI返信生成: {reply_text}")
+        # メンションされてて、キーワードがない → AI返信
+        if not matched and f"@{HANDLE}" in text:
+            prompt = f"みりんてゃは地雷系ENFPで、甘えん坊でちょっと病みかわな子。フォロワーが「{text}」って投稿したら、どう返す？\nみりんてゃ「"
+            reply_text = generate_reply(prompt)
+            print(f"🤖 AI返信生成: {reply_text}")
 
-    # メンションなしでキーワードなし → 無視
-    if not matched and f"@{HANDLE}" not in text:
-        continue  # 反応しない
+        # メンションなしでキーワードなし → 無視
+        if not matched and f"@{HANDLE}" not in text:
+            continue  # 反応しない
 
-    # ハッシュタグ抽出
-    hashtags = [word for word in text.split() if word.startswith("#")]
-    facets = generate_facets_from_text(reply_text, hashtags)
+        # ハッシュタグ抽出
+        hashtags = [word for word in text.split() if word.startswith("#")]
+        facets = generate_facets_from_text(reply_text, hashtags)
 
-    # 返信を送信
-    client.send_post(
-        text=reply_text,
-        reply_to=models.create_reply_reference(uri=uri, cid=cid) if f"@{HANDLE}" in text else None,
-        facets=facets if facets else None
-    )
+        # 返信を送信
+        client.send_post(
+            text=reply_text,
+            reply_to=models.create_reply_reference(uri=uri, cid=cid) if f"@{HANDLE}" in text else None,
+            facets=facets if facets else None
+        )
 
-# エントリーポイント
-if __name__ == "__main__":
-    run_once()
+        replied_uris.add(uri)
+        print(f"✅ 返信しました → @{author}")
