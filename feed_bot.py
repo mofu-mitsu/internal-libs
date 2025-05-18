@@ -1,6 +1,7 @@
 from atproto import Client, models
 import requests
 import os
+import json
 from dotenv import load_dotenv
 
 # .envファイルを読み込む
@@ -8,6 +9,19 @@ load_dotenv()
 HF_API_TOKEN = os.getenv("HF_API_TOKEN")
 HANDLE = os.environ['HANDLE']
 APP_PASSWORD = os.environ['APP_PASSWORD']
+REPLIED_FILE = "replied_uris.json"
+
+# リプライ済みURIをファイルから読み込む
+def load_replied_uris():
+    if os.path.exists(REPLIED_FILE):
+        with open(REPLIED_FILE, "r") as f:
+            return set(json.load(f))
+    return set()
+
+# リプライ済みURIを保存
+def save_replied_uris(replied_uris):
+    with open(REPLIED_FILE, "w") as f:
+        json.dump(list(replied_uris), f)
 
 # Hugging Face APIで返信を生成する関数
 def generate_reply(prompt):
@@ -73,7 +87,7 @@ def run_once():
     client.login(HANDLE, APP_PASSWORD)
 
     print("📨 投稿を確認中…")
-    replied_uris = set()
+    replied_uris = load_replied_uris()
 
     timeline = client.app.bsky.feed.get_timeline(params={"limit": 20})
     feed = timeline.feed
@@ -115,14 +129,15 @@ def run_once():
         facets = generate_facets_from_text(reply_text, hashtags)
 
         client.send_post(
-    text=reply_text,
-    reply_to=models.create_reply_reference(uri=uri, cid=cid),
-    facets=facets if facets else None
-    )
+            text=reply_text,
+            reply_to=models.create_reply_reference(uri=uri, cid=cid),
+            facets=facets if facets else None
+        )
 
         replied_uris.add(uri)
+        save_replied_uris(replied_uris)
         print(f"✅ 返信しました → @{author}")
 
-# 🔧 ここがミスってた！ちゃんとインデントしてね♡
+# 🔧 エントリーポイント
 if __name__ == "__main__":
     run_once()
