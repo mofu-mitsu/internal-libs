@@ -79,40 +79,47 @@ def run_once():
     print("📨 投稿を確認中…")
     replied_uris = set()
 
-    timeline = client.app.bsky.feed.get_timeline(params={"limit": 20})
-    feed = timeline.feed
+    # 投稿を取得
+timeline = client.app.bsky.feed.get_timeline(params={"limit": 20})
+feed = timeline.feed
 
-    for post in feed:
-        text = post.post.record.text
-        uri = post.post.uri
-        cid = post.post.cid
-        author = post.post.author.handle
+for post in feed:
+    text = post.post.record.text
+    uri = post.post.uri
+    cid = post.post.cid
+    author = post.post.author.handle
 
-        if author != HANDLE and uri not in replied_uris and f"@{HANDLE}" in text:
-            matched = False
-            for keyword, response in KEYWORD_RESPONSES.items():
-                if keyword in text:
-                    print(f"✨ キーワード検出: 「{keyword}」→ {text}")
-                    reply_text = response
-                    matched = True
-                    break
+    if author == HANDLE or uri in replied_uris:
+        continue  # 自分自身や重複投稿はスキップ
 
-            if not matched:
-                prompt = f"みりんてゃは地雷系ENFPで、甘えん坊でちょっと病みかわな子。フォロワーが「{text}」って投稿したら、どう返す？\nみりんてゃ「"
-                reply_text = generate_reply(prompt)
-                print(f"🤖 AI返信生成: {reply_text}")
+    # キーワード判定
+    matched = False
+    for keyword, response in KEYWORD_RESPONSES.items():
+        if keyword in text:
+            reply_text = response
+            matched = True
+            break
 
-            hashtags = [word for word in text.split() if word.startswith("#")]
-            facets = generate_facets_from_text(reply_text, hashtags)
+    # メンションされてて、キーワードがない → AI返信
+    if not matched and f"@{HANDLE}" in text:
+        prompt = f"みりんてゃは地雷系ENFPで、甘えん坊でちょっと病みかわな子。フォロワーが「{text}」って投稿したら、どう返す？\nみりんてゃ「"
+        reply_text = generate_reply(prompt)
+        print(f"🤖 AI返信生成: {reply_text}")
 
-            client.send_post(
-                text=reply_text,
-                reply_to=models.create_reply_reference(uri=uri, cid=cid),
-                facets=facets if facets else None
-            )
+    # メンションなしでキーワードなし → 無視
+    if not matched and f"@{HANDLE}" not in text:
+        continue  # 反応しない
 
-            replied_uris.add(uri)
-            print(f"✅ 返信しました → @{author}")
+    # ハッシュタグ抽出
+    hashtags = [word for word in text.split() if word.startswith("#")]
+    facets = generate_facets_from_text(reply_text, hashtags)
+
+    # 返信を送信
+    client.send_post(
+        text=reply_text,
+        reply_to=models.create_reply_reference(uri=uri, cid=cid) if f"@{HANDLE}" in text else None,
+        facets=facets if facets else None
+    )
 
 # エントリーポイント
 if __name__ == "__main__":
