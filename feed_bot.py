@@ -126,7 +126,7 @@ def run_once():
 
 if not matched:
     print("🚫 スキップ: 条件に合わない投稿")
-    continue
+    return
 
 # 🔽 スキップしなかったときにやる処理（インデントなし！）
 hashtags = [word for word in text.split() if word.startswith("#")]
