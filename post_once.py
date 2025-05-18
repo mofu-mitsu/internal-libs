@@ -4,6 +4,7 @@ import os
 from dotenv import load_dotenv
 from pathlib import Path
 import unicodedata
+import re
 
 # 環境変数読み込み
 env_path = Path('.') / '.env'
