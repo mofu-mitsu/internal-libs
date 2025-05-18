@@ -129,13 +129,13 @@ def run_once():
         facets = generate_facets_from_text(reply_text, hashtags)
 
         client.send_post(
-            text=reply_text,
-            reply_ref = models.AppBskyFeedPost.ReplyRef(
-    root=models.create_strong_ref(uri=uri, cid=cid),
-    parent=models.create_strong_ref(uri=uri, cid=cid),
-    )
-            facets=facets if facets else None
-        )
+    text=reply_text,
+    reply_to=models.AppBskyFeedPost.ReplyRef(
+        root=models.create_strong_ref(uri=uri, cid=cid),
+        parent=models.create_strong_ref(uri=uri, cid=cid)
+    ),
+    facets=facets if facets else None
+)
 
         replied_uris.add(uri)
         save_replied_uris(replied_uris)
