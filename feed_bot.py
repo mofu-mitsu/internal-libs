@@ -124,12 +124,12 @@ def run_once():
             print(f"🤖 AI返信生成: {reply_text}")
             matched = True
 
-        if not matched:
-    print("🚫 スキップ: 条件に合わない投稿")
-    continue
+ if not matched:
+            print("🚫 スキップ: 条件に合わない投稿")
+            continue
 
-hashtags = [word for word in text.split() if word.startswith("#")]
-facets = generate_facets_from_text(reply_text, hashtags)
+        hashtags = [word for word in text.split() if word.startswith("#")]
+        facets = generate_facets_from_text(reply_text, hashtags)
 
 try:
     client.send_post(
