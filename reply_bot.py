@@ -212,32 +212,33 @@ def run_reply_bot():
 reply_text = get_reply(text)
 
 # 💬 リプライ処理：reply_ref を生成
-reply_ref = None
-if hasattr(record, "reply") and record.reply:
-    try:
-        post_thread = client.app.bsky.feed.get_post_thread(params={"uri": record.reply.parent.uri})
-        parent_post = post_thread.thread.post
+def handle_post(record):  # ← 関数の中なら
+    reply_ref = None
+    if hasattr(record, "reply") and record.reply:
+        try:
+            post_thread = client.app.bsky.feed.get_post_thread(params={"uri": record.reply.parent.uri})
+            parent_post = post_thread.thread.post
 
-        # ✅ 親投稿が自分の投稿かをチェック（正しい向きに！）
-        if parent_post.author.did == self_did:
-            print("🟢 自分の投稿に対するリプライなので返信対象！")
-        else:
-            print("📛 自分の投稿じゃないのでスキップ")
-            continue
+            if parent_post.author.did == self_did:
+                print("🟢 自分の投稿に対するリプライなので返信対象！")
+            else:
+                print("📛 自分の投稿じゃないのでスキップ")
+                return  # ← 🔁 continue じゃなくて return！
 
-        # ⛔ 自分で自分の投稿にリプしてたらスキップ
-        if author_did == self_did:
-            print("🙈 自分のリプなのでスキップ")
-            continue
+            if author_did == self_did:
+                print("🙈 自分のリプなのでスキップ")
+                return  # ← ここも return！
 
-        reply_ref = models.AppBskyFeedPost.ReplyRef(
-            root=record.reply.root,
-            parent=record.reply.parent
-        )
+            reply_ref = models.AppBskyFeedPost.ReplyRef(
+                root=record.reply.root,
+                parent=record.reply.parent
+            )
 
-    except Exception as e:
-        print("⚠️ 元投稿の取得に失敗:", e)
-        continue
+        except Exception as e:
+            print("⚠️ 元投稿の取得に失敗:", e)
+            return  # ← 例外のときも return！
+
+    return reply_ref  # 最後に返す
 
         # ✏️ 返信送信
         print("📤 返信送信中…")
