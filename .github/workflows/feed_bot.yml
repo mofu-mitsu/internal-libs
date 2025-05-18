@@ -1,4 +1,4 @@
-name: Run Bluesky Reply Bot
+name: Bluesky Feed Bot
 
 on:
   schedule:
