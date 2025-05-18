@@ -202,7 +202,10 @@ def run_reply_bot():
         if not record or not hasattr(record, "text"):
             continue
 
-        # 投稿がリプライかチェック
+# 通知取得
+notifications = client.app.bsky.notification.list_notifications()['notifications']
+
+# 投稿がリプライかチェック
 for record in notifications:  # ← このループが大事！
     if hasattr(record, "reply") and record.reply:
         try:
