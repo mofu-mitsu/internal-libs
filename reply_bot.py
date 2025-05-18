@@ -203,17 +203,16 @@ def run_reply_bot():
             continue
 
         # 🔧 元投稿が自分かチェック（get_post_thread に修正）
-for record in records:
-    if hasattr(record, "reply") and record.reply:
-        try:
-            post_thread = client.app.bsky.feed.get_post_thread(params={"uri": record.reply.parent.uri})
-            parent_post = post_thread.thread.post
-            if parent_post.author.did == self_did:
-                print("🔁 元の投稿が自分なのでスキップ")
+        if hasattr(record, "reply") and record.reply:
+            try:
+                post_thread = client.app.bsky.feed.get_post_thread(params={"uri": record.reply.parent.uri})
+                parent_post = post_thread.thread.post
+                if parent_post.author.did == self_did:
+                    print("🔁 元の投稿が自分なのでスキップ")
+                    continue
+            except Exception as e:
+                print("⚠️ 元投稿の取得に失敗:", e)
                 continue
-        except Exception as e:
-            print("⚠️ 元投稿の取得に失敗:", e)
-            continue
 
         text = record.text
         print(f"💬 返信対象のテキスト: {text}")
@@ -236,7 +235,3 @@ for record in records:
         except Exception as e:
             print("⚠️ 投稿失敗:", e)
             traceback.print_exc()
-
-# --- 実行 ---
-if __name__ == "__main__":
-    run_reply_bot()
