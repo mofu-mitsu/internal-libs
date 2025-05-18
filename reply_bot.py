@@ -235,3 +235,7 @@ def run_reply_bot():
         except Exception as e:
             print("⚠️ 投稿失敗:", e)
             traceback.print_exc()
+            
+            if __name__ == "__main__":
+    print("🤖 Reply Bot 起動中…")
+    run_reply_bot()
