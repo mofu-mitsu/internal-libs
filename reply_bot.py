@@ -209,11 +209,11 @@ def run_reply_bot():
             continue
 
         text = record.text
-        reply_text = get_reply(text)
+reply_text = get_reply(text)
 
-        # 💬 リプライ処理：reply_ref を生成
-        reply_ref = None
-        if hasattr(record, "reply") and record.reply:
+# 💬 リプライ処理：reply_ref を生成
+reply_ref = None
+if hasattr(record, "reply") and record.reply:
     try:
         post_thread = client.app.bsky.feed.get_post_thread(params={"uri": record.reply.parent.uri})
         parent_post = post_thread.thread.post
