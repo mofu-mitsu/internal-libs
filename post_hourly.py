@@ -4,13 +4,16 @@ from dotenv import load_dotenv
 from datetime import datetime
 import random
 from pathlib import Path
+import unicodedata
 
+# .env 読み込み
 env_path = Path('.') / '.env'
 load_dotenv(dotenv_path=env_path)
 
 HANDLE = os.getenv('HANDLE')
 APP_PASSWORD = os.getenv('APP_PASSWORD')
 
+# 各時間帯の投稿メッセージ
 HOUR_MESSAGES = {
     'morning': [
         "おはようのちゅ〜〜〜♡ #地雷女",
@@ -82,7 +85,7 @@ HOUR_MESSAGES = {
     ],
 }
 
-
+# 現在の時間帯を判定（JST対応）
 def get_time_period():
     hour = datetime.utcnow().hour + 9
     if 5 <= hour < 11:
@@ -94,38 +97,52 @@ def get_time_period():
     else:
         return "night"
 
+# テキスト正規化（全角などの統一）
+def normalize_text(text):
+    return unicodedata.normalize("NFKC", text).strip()
 
-# --- ハッシュタグから facets を生成 ---
+# facets生成（UTF-8バイト位置でハッシュタグ対応）
 def generate_facets_from_text(text, hashtags):
+    text_bytes = text.encode("utf-8")
     facets = []
+
     for tag in hashtags:
-        start = text.find(tag)
-        if start != -1:
+        tag_bytes = tag.encode("utf-8")
+        byte_start = text_bytes.find(tag_bytes)
+
+        if byte_start != -1:
             facets.append({
                 "index": {
-                    "byteStart": start,
-                    "byteEnd": start + len(tag)
+                    "byteStart": byte_start,
+                    "byteEnd": byte_start + len(tag_bytes)
                 },
                 "features": [{
                     "$type": "app.bsky.richtext.facet#tag",
                     "tag": tag.lstrip("#")
                 }]
             })
+
     return facets
 
-
 # --- 実行 ---
-client = Client()
-client.login(HANDLE, APP_PASSWORD)
+def post_hourly_message():
+    client = Client()
+    client.login(HANDLE, APP_PASSWORD)
 
-period = get_time_period()
-message = random.choice(HOUR_MESSAGES[period])
-hashtags = [word for word in message.split() if word.startswith("#")]
-facets = generate_facets_from_text(message, hashtags)
+    period = get_time_period()
+    raw_message = random.choice(HOUR_MESSAGES[period])
+    message = normalize_text(raw_message)
 
-client.send_post(
-    text=message,
-    facets=facets if facets else None,
-)
+    hashtags = [word for word in message.split() if word.startswith("#")]
+    facets = generate_facets_from_text(message, hashtags)
 
-print(f"[{period}] 投稿したよ: {message}")
+    client.send_post(
+        text=message,
+        facets=facets if facets else None,
+    )
+
+    print(f"[{period}] 投稿したよ: {message}")
+
+# エントリーポイント
+if __name__ == "__main__":
+    post_hourly_message()
