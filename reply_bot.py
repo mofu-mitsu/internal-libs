@@ -211,27 +211,30 @@ def run_reply_bot():
         # 💬 リプライ処理：reply_ref を生成
         reply_ref = None
         if hasattr(record, "reply") and record.reply:
-            try:
-                post_thread = client.app.bsky.feed.get_post_thread(params={"uri": record.reply.parent.uri})
-                parent_post = post_thread.thread.post
-                
-                # 👇このチェックを追加！
-                if parent_post.author.did != self_did:
-                    print("📛 自分宛のリプライではないのでスキップ")
-                    continue
+    try:
+        post_thread = client.app.bsky.feed.get_post_thread(params={"uri": record.reply.parent.uri})
+        parent_post = post_thread.thread.post
 
-                if author_did == self_did:
-                    print("🙈 自分の投稿への返信なのでスキップ")
-                    continue
+        # ✅ 親投稿が自分の投稿かをチェック（正しい向きに！）
+        if parent_post.author.did == self_did:
+            print("🟢 自分の投稿に対するリプライなので返信対象！")
+        else:
+            print("📛 自分の投稿じゃないのでスキップ")
+            continue
 
-                reply_ref = models.AppBskyFeedPost.ReplyRef(
-                    root=record.reply.root,
-                    parent=record.reply.parent
-                )
+        # ⛔ 自分で自分の投稿にリプしてたらスキップ
+        if author_did == self_did:
+            print("🙈 自分のリプなのでスキップ")
+            continue
 
-            except Exception as e:
-                print("⚠️ 元投稿の取得に失敗:", e)
-                continue
+        reply_ref = models.AppBskyFeedPost.ReplyRef(
+            root=record.reply.root,
+            parent=record.reply.parent
+        )
+
+    except Exception as e:
+        print("⚠️ 元投稿の取得に失敗:", e)
+        continue
 
         # ✏️ 返信送信
         print("📤 返信送信中…")
