@@ -205,37 +205,31 @@ def run_reply_bot():
         if not record or not hasattr(record, "text"):
             continue
 
-# 通知取得
-notifications = client.app.bsky.notification.list_notifications()['notifications']
-
-# 投稿がリプライかチェック
-for record in notifications:  # ← このループが大事！
-    if hasattr(record, "reply") and record.reply:
-        try:
-            post_thread = client.app.bsky.feed.get_post_thread(params={"uri": record.reply.parent.uri})
-            parent_post = post_thread.thread.post
-
-            if record.author.did == self_did:
-                print("🙈 自分の投稿なのでスキップ")
-                continue
-
-        except Exception as e:
-            print("⚠️ 元投稿の取得に失敗:", e)
-            continue
-
         text = record.text
-        print(f"💬 返信対象のテキスト: {text}")
         reply_text = get_reply(text)
-        print(f"✏️ 返信内容: {reply_text}")
 
+        # 💬 リプライ処理：reply_ref を生成
         reply_ref = None
         if hasattr(record, "reply") and record.reply:
-            reply_ref = models.AppBskyFeedPost.ReplyRef(
-                root=getattr(record.reply, "root", record),
-                parent=getattr(record.reply, "parent", record)
-            )
+            try:
+                post_thread = client.app.bsky.feed.get_post_thread(params={"uri": record.reply.parent.uri})
+                parent_post = post_thread.thread.post
 
-        print("📤 返信送信中...")
+                if author_did == self_did:
+                    print("🙈 自分の投稿への返信なのでスキップ")
+                    continue
+
+                reply_ref = models.AppBskyFeedPost.ReplyRef(
+                    root=record.reply.root,
+                    parent=record.reply.parent
+                )
+
+            except Exception as e:
+                print("⚠️ 元投稿の取得に失敗:", e)
+                continue
+
+        # ✏️ 返信送信
+        print("📤 返信送信中…")
         try:
             client.send_post(text=reply_text, reply_to=reply_ref)
             replied.add(post_uri)
