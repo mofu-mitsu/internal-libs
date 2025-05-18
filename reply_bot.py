@@ -240,16 +240,16 @@ def handle_post(record):  # ← 関数の中なら
 
     return reply_ref  # 最後に返す
 
-        # ✏️ 返信送信
-        print("📤 返信送信中…")
-        try:
-            client.send_post(text=reply_text, reply_to=reply_ref)
-            replied.add(post_uri)
-            save_replied(replied)
-            print(f"✅ @{author_handle} に返信完了！")
-        except Exception as e:
-            print("⚠️ 投稿失敗:", e)
-            traceback.print_exc()
+# ✏️ 返信送信
+print("📤 返信送信中…")
+try:
+    client.send_post(text=reply_text, reply_to=reply_ref)
+    replied.add(post_uri)
+    save_replied(replied)
+    print(f"✅ @{author_handle} に返信完了！")
+except Exception as e:
+    print("⚠️ 投稿失敗:", e)
+    traceback.print_exc()
 
 # --- エントリーポイント ---
 if __name__ == "__main__":
