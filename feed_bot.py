@@ -27,7 +27,7 @@ def generate_reply(prompt):
     try:
         response = requests.post(API_URL, headers=headers, json=payload, timeout=10)
         result = response.json()
-        if isinstance(result, list):
+        if isinstance(result, list) and result[0]["generated_text"]:
             return result[0]["generated_text"].split("みりんてゃ「")[-1].strip()
         else:
             return "えへへ、なんかうまく考えつかなかったかも〜…"
@@ -53,13 +53,10 @@ def generate_facets_from_text(text, hashtags):
     for tag in hashtags:
         if tag not in text:
             continue
-
         byte_start = text.encode("utf-8").find(tag.encode("utf-8"))
         byte_end = byte_start + len(tag.encode("utf-8"))
-
         if byte_start == -1:
             continue
-
         facet = models.AppBskyRichtextFacet.Main(
             index=models.AppBskyRichtextFacet.ByteSlice(
                 byte_start=byte_start,
@@ -68,7 +65,6 @@ def generate_facets_from_text(text, hashtags):
             features=[models.AppBskyRichtextFacet.Tag(tag=tag.replace("#", ""))]
         )
         facets.append(facet)
-
     return facets
 
 # 1回だけ投稿を確認して返信する関数（GitHub Actions向け）
@@ -79,42 +75,48 @@ def run_once():
     print("📨 投稿を確認中…")
     replied_uris = set()
 
-    # 投稿を取得
     timeline = client.app.bsky.feed.get_timeline(params={"limit": 20})
     feed = timeline.feed
 
     for post in feed:
-        text = post.post.record.text
+        text = getattr(post.post.record, "text", None)
         uri = post.post.uri
         cid = post.post.cid
         author = post.post.author.handle
 
-        if author == HANDLE or uri in replied_uris:
-            continue  # 自分自身や重複投稿はスキップ
+        if author == HANDLE or uri in replied_uris or not text:
+            continue  # 自分自身・重複・本文なしはスキップ
 
-        # キーワード判定
+        print(f"👀 チェック中 → @{author}: {text}")
+
         matched = False
+        reply_text = ""
+
+        # キーワード反応（部分一致・複数形対応）
         for keyword, response in KEYWORD_RESPONSES.items():
             if keyword in text:
                 reply_text = response
                 matched = True
+                print(f"✨ キーワード「{keyword}」にマッチ！")
                 break
 
-        # メンションされてて、キーワードがない → AI返信
+        # メンションあり＆キーワードなし → AI返信
         if not matched and f"@{HANDLE}" in text:
             prompt = f"みりんてゃは地雷系ENFPで、甘えん坊でちょっと病みかわな子。フォロワーが「{text}」って投稿したら、どう返す？\nみりんてゃ「"
             reply_text = generate_reply(prompt)
             print(f"🤖 AI返信生成: {reply_text}")
+            matched = True
 
-        # メンションなしでキーワードなし → 無視
-        if not matched and f"@{HANDLE}" not in text:
-            continue  # 反応しない
+        # メンションもキーワードもない → 無視
+        if not matched:
+            print(f"🚫 スキップ: 条件に合わない投稿")
+            continue
 
-        # ハッシュタグ抽出
+        # ハッシュタグ抽出＆facet生成
         hashtags = [word for word in text.split() if word.startswith("#")]
         facets = generate_facets_from_text(reply_text, hashtags)
 
-        # 返信を送信
+        # 投稿送信
         client.send_post(
             text=reply_text,
             reply_to=models.create_reply_reference(uri=uri, cid=cid) if f"@{HANDLE}" in text else None,
@@ -123,3 +125,7 @@ def run_once():
 
         replied_uris.add(uri)
         print(f"✅ 返信しました → @{author}")
+        if __name__ == "__main__":
+    run_once()
+
+
