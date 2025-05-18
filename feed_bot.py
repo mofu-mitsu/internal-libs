@@ -128,7 +128,7 @@ def run_once():
         hashtags = [word for word in text.split() if word.startswith("#")]
         facets = generate_facets_from_text(reply_text, hashtags)
 
-        try:
+try:
     client.send_post(
         text=reply_text,
         reply_to=models.AppBskyFeedPost.ReplyRef(
