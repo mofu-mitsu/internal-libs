@@ -148,18 +148,21 @@ def generate_reply_via_api(user_input):
         }
     }
     try:
+        print("📡 AIに問い合わせ中...")
         response = requests.post(HF_API_URL, headers=HEADERS, json=data, timeout=20)
-        print("🤖 AIレスポンス:", response.text)
+        print("🤖 AIレスポンス:", response.status_code, response.text)
         if response.status_code == 200:
             generated = response.json()[0]["generated_text"]
-            return generated.split("みりんてゃ")[-1].strip()
+            if "みりんてゃ" in generated:
+                return generated.split("みりんてゃ")[-1].strip()
+            return generated
         else:
             return "え〜ん……AIとおしゃべりできないみたい（泣）"
     except Exception:
         print("⚠️ AIレスポンスエラー:")
         traceback.print_exc()
         return "え〜ん……みりんてゃ迷子になっちゃった〜"
-
+        
 # --- テンプレ or AI返し ---
 def get_reply(text):
     for keyword, reply in REPLY_TABLE.items():
