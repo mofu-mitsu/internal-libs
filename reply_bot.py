@@ -242,6 +242,12 @@ def handle_post(record):  # ← 関数の中なら
 
 # ✏️ 返信送信
 print("📤 返信送信中…")
+print(f"📮 リプライ送信先: {post_uri}")
+if reply_text:
+    print(f"📤 投稿内容: {reply_text}")
+else:
+    print("⚠️ 返信テキストが生成できていません")
+
 try:
     client.send_post(text=reply_text, reply_to=reply_ref)
     replied.add(post_uri)
