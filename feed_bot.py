@@ -125,11 +125,11 @@ def run_once():
             matched = True
 
         if not matched:
-            print("🚫 スキップ: 条件に合わない投稿")
-            continue
+    print("🚫 スキップ: 条件に合わない投稿")
+    continue  # ←ここでスキップするから、下の reply_text は安全に使える！
 
-        hashtags = [word for word in text.split() if word.startswith("#")]
-        facets = generate_facets_from_text(reply_text, hashtags)
+hashtags = [word for word in text.split() if word.startswith("#")]
+facets = generate_facets_from_text(reply_text, hashtags)
 
 try:
     client.send_post(
