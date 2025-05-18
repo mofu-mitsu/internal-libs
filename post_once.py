@@ -367,6 +367,23 @@ def generate_facets_from_text(text, hashtags):
                     "tag": tag.lstrip("#")
                 }]
             })
+    # URL facets
+    url_pattern = r'(https?://[^\s]+)'
+    for match in re.finditer(url_pattern, text):
+        url = match.group(0)
+        start = text_bytes.find(url.encode("utf-8"))
+        if start != -1:
+            facets.append({
+                "index": {
+                    "byteStart": start,
+                    "byteEnd": start + len(url.encode("utf-8"))
+                },
+                "features": [{
+                    "$type": "app.bsky.richtext.facet#link",
+                    "uri": url
+                }]
+            })
+
     return facets
 
 # 文字正規化
