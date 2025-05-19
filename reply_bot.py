@@ -231,29 +231,31 @@ def run_reply_bot():
         return reply_ref, post_uri
 
     # 🔁 実際の返信処理
-    for record in records:
-        author = getattr(record, "author", None)
-        author_handle = getattr(author, "handle", None)
-        author_did = getattr(author, "did", None)
+for record in records:
+    author = getattr(record, "author", None)
+    if not author:
+        continue  # authorがなければスキップ
 
-        if not author_handle or not author_did:
-            continue
-        if author_did == self_did or author_handle == HANDLE:
-            print("🛑 自分自身への返信はスキップ")
-            continue
+    author_handle = getattr(author, "handle", None)
+    author_did = getattr(author, "did", None)
 
-        reply_ref, post_uri = handle_post(record)
+    if not author_handle or not author_did:
+        continue
+    if author_did == self_did or author_handle == HANDLE:
+        print("🛑 自分自身への返信はスキップ")
+        continue
 
-        if post_uri is None or post_uri in replied:
-            print("⏭️ 投稿スキップ")
-            continue
+    reply_ref, post_uri = handle_post(record)
 
-        text = getattr(record, "text", None)
-        if not text:
-            continue
+    if post_uri is None or post_uri in replied:
+        print("⏭️ 投稿スキップ")
+        continue
 
-        text = record.text
-        reply_text = get_reply(text)
+    text = getattr(record, "text", None)
+    if not text:
+        continue
+
+    reply_text = get_reply(text)
 
 # --- 呼び出し側のコード ---
 
