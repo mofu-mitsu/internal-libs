@@ -186,12 +186,13 @@ def get_reply(text):
 # --- メイン処理 ---
 from atproto_client.models.app.bsky.feed.post import ReplyRef
 from atproto_client.models import AppBskyFeedPost
+from datetime import datetime, timezone
 
 def handle_post(record):
     reply_ref = getattr(record, "reply", None)
     post_uri = getattr(record, "uri", None)
     return reply_ref, post_uri
-    
+
 def run_reply_bot():
     client = Client()
     client.login(HANDLE, APP_PASSWORD)
@@ -252,23 +253,22 @@ def run_reply_bot():
             print("⚠️ 返信テキストが生成されていません")
             continue
 
-        from datetime import datetime, timezone
-    try:
-        client.app.bsky.feed.post.create(
-            record=AppBskyFeedPost(
-                text=reply_text,
-                created_at=datetime.now(timezone.utc).isoformat(),
-                reply=reply_ref
-            ),
-            repo=client.me.did
-        )
-        replied.add(post_uri)
-        save_replied(replied)
-        print(f"✅ @{author_handle} に返信完了！")
-    except Exception as e:
-        print("⚠️ 投稿失敗:", e)
-        import traceback
-        traceback.print_exc()
+        try:
+            client.app.bsky.feed.post.create(
+                record=AppBskyFeedPost(
+                    text=reply_text,
+                    created_at=datetime.now(timezone.utc).isoformat(),
+                    reply=reply_ref
+                ),
+                repo=client.me.did
+            )
+            replied.add(post_uri)
+            save_replied(replied)
+            print(f"✅ @{author_handle} に返信完了！")
+        except Exception as e:
+            print("⚠️ 投稿失敗:", e)
+            import traceback
+            traceback.print_exc()
 
 if __name__ == "__main__":
     print("🤖 Reply Bot 起動中…")
