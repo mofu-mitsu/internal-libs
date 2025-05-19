@@ -191,33 +191,65 @@ def run_reply_bot():
 
     self_did = client.me.did
     replied = load_replied()
-    notifications = client.app.bsky.notification.list_notifications().notifications
 
-    print(f"📥 通知数: {len(notifications)} 件")
+    # 📥 通知取得＆リプライだけを抽出（フィルタリング）
+    notifications = client.app.bsky.notification.list_notifications(params={"limit": 25}).notifications
+    records = [n.record for n in notifications if hasattr(n, "record") and hasattr(n.record, "reply") and n.record.reply]
 
-    for note in notifications:
-        print(f"📌 通知: reason={note.reason}, uri={note.uri}")
+    print(f"📥 通知数: {len(records)} 件（リプライのみ）")
 
-        if note.reason not in ["mention", "reply"]:
-            continue
+    # 💬 リプライ処理：reply_ref と post_uri を生成して返す
+    def handle_post(record):
+        reply_ref = None
+        post_uri = record.uri.strip()
+        author_did = getattr(record, "author", {}).get("did", None)
 
-        post_uri = note.uri.strip()
-        author = getattr(note, "author", None)
+        if hasattr(record, "reply") and record.reply:
+            try:
+                post_thread = client.app.bsky.feed.get_post_thread(params={"uri": record.reply.parent.uri})
+                parent_post = post_thread.thread.post
+
+                if parent_post.author.did == self_did:
+                    print("🟢 自分の投稿に対するリプライなので返信対象！")
+                else:
+                    print("📛 自分の投稿じゃないのでスキップ")
+                    return None, None
+
+                if author_did == self_did:
+                    print("🙈 自分のリプなのでスキップ")
+                    return None, None
+
+                reply_ref = models.AppBskyFeedPost.ReplyRef(
+                    root=record.reply.root,
+                    parent=record.reply.parent
+                )
+
+            except Exception as e:
+                print("⚠️ 元投稿の取得に失敗:", e)
+                return None, None
+
+        return reply_ref, post_uri
+
+    # 🔁 実際の返信処理
+    for record in records:
+        author = getattr(record, "author", None)
         author_handle = getattr(author, "handle", None)
         author_did = getattr(author, "did", None)
-        record = getattr(note, "record", None)
-
-        print(f"🧾 投稿者: {author_handle}, 投稿DID: {author_did}, 自分DID: {self_did}")
 
         if not author_handle or not author_did:
             continue
         if author_did == self_did or author_handle == HANDLE:
             print("🛑 自分自身への返信はスキップ")
             continue
-        if post_uri in replied:
-            print("🔁 既に返信済みの投稿なのでスキップ")
+
+        reply_ref, post_uri = handle_post(record)
+
+        if post_uri is None or post_uri in replied:
+            print("⏭️ 投稿スキップ")
             continue
-        if not record or not hasattr(record, "text"):
+
+        text = getattr(record, "text", None)
+        if not text:
             continue
 
         text = record.text
