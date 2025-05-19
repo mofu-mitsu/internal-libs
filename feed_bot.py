@@ -129,38 +129,33 @@ def run_once():
             print("🚫 スキップ: 条件に合わない投稿")
             continue
 
-        # ここに返信送信処理を書くなら↓このへんに
-        # client.post.reply(...)
+        # ↓↓↓ これも for ループの中に入れる！
+        hashtags = [word for word in text.split() if word.startswith("#")]
+        facets = generate_facets_from_text(reply_text, hashtags)
 
-    hashtags = [word for word in text.split() if word.startswith("#")]
-    facets = generate_facets_from_text(reply_text, hashtags)
+        try:
+            reply_ref = None
+            if hasattr(post.post.record, "reply") and post.post.record.reply:
+                reply_ref = AppBskyFeedPost.ReplyRef(
+                    root=client.create_strong_ref(post.post.record.reply.root),
+                    parent=client.create_strong_ref(post.post.record.reply.parent)
+                )
 
-    # ✅ ここから下をループの中にインデントして入れる！
-from atproto_client.models import AppBskyFeedPost
-
-try:
-    reply_ref = None
-    if hasattr(post.post.record, "reply") and post.post.record.reply:
-        reply_ref = AppBskyFeedPost.ReplyRef(
-            root=client.create_strong_ref(post.post.record.reply.root),
-            parent=client.create_strong_ref(post.post.record.reply.parent)
-        )
-
-    client.app.bsky.feed.post.create(
-        record=AppBskyFeedPost.Record(
-            text=reply_text,
-            created_at=datetime.now(timezone.utc).isoformat(),
-            reply=reply_ref,
-            facets=facets if facets else None
-        ),
-        repo=client.me.did
-    )
-except Exception as e:
-    print(f"⚠️ 返信エラー: {e}")
-else:
-    replied_uris.add(uri)
-    save_replied_uris(replied_uris)
-    print(f"✅ 返信しました → @{author}")
+            client.app.bsky.feed.post.create(
+                record=AppBskyFeedPost.Record(
+                    text=reply_text,
+                    created_at=datetime.now(timezone.utc).isoformat(),
+                    reply=reply_ref,
+                    facets=facets if facets else None
+                ),
+                repo=client.me.did
+            )
+        except Exception as e:
+            print(f"⚠️ 返信エラー: {e}")
+        else:
+            replied_uris.add(uri)
+            save_replied_uris(replied_uris)
+            print(f"✅ 返信しました → @{author}")
             
 # 🔧 エントリーポイント
 if __name__ == "__main__":
