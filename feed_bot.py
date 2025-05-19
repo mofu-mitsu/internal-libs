@@ -140,11 +140,15 @@ def run_once():
                     parent=client.create_strong_ref(post.post.record.reply.parent)
                 )
 
-            client.send_post(
-                text=reply_text,
-                reply=reply_ref,  # ← ✅ 正しい引数名！
-                facets=facets if facets else None
-            )
+client.app.bsky.feed.post.create(
+    record=models.AppBskyFeedPost.Main(
+        text=reply_text,
+        created_at=datetime.now(timezone.utc).isoformat(),
+        reply=reply_ref,
+        facets=facets if facets else None
+    ),
+    repo=client.me.did
+)
 
         except Exception as e:
             print("⚠️ 返信エラー:", e)
