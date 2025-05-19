@@ -95,6 +95,17 @@ def run_once():
     timeline = client.app.bsky.feed.get_timeline(params={"limit": 20})
     feed = timeline.feed
 
+    # 投稿を確認して返信する関数
+def run_once():
+    client = Client()
+    client.login(HANDLE, APP_PASSWORD)
+
+    print("📨 投稿を確認中…")
+    replied_uris = load_replied_uris()
+
+    timeline = client.app.bsky.feed.get_timeline(params={"limit": 20})
+    feed = timeline.feed
+
     for post in feed:
         text = getattr(post.post.record, "text", None)
         uri = post.post.uri
@@ -126,27 +137,26 @@ def run_once():
 
         if not matched:
             print("🚫 スキップ: 条件に合わない投稿")
-            continue  # ← 🔁 ループ内だからOK！
+            continue
 
-        # 🔽 スキップしなかったときの処理
         hashtags = [word for word in text.split() if word.startswith("#")]
         facets = generate_facets_from_text(reply_text, hashtags)
 
-try:
-    client.send_post(
-        text=reply_text,
-        reply_to=models.AppBskyFeedPost.ReplyRef(
-            root=models.create_strong_ref(uri, cid),
-            parent=models.create_strong_ref(uri, cid)
-        ),
-        facets=facets if facets else None
-    )
-except Exception as e:
-    print("⚠️ 返信エラー:", e)
-else:
-    replied_uris.add(uri)
-    save_replied_uris(replied_uris)
-    print(f"✅ 返信しました → @{author}")
+        try:
+            client.send_post(
+                text=reply_text,
+                reply_to=models.AppBskyFeedPost.ReplyRef(
+                    root=models.create_strong_ref(uri, cid),
+                    parent=models.create_strong_ref(uri, cid)
+                ),
+                facets=facets if facets else None
+            )
+        except Exception as e:
+            print("⚠️ 返信エラー:", e)
+        else:
+            replied_uris.add(uri)
+            save_replied_uris(replied_uris)
+            print(f"✅ 返信しました → @{author}")
 
 # 🔧 エントリーポイント
 if __name__ == "__main__":
