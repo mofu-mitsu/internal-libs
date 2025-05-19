@@ -269,15 +269,23 @@ for record in records:
     else:
         print("⚠️ 返信テキストが生成できていません")
 
-    try:
-        client.send_post(text=reply_text, reply=reply_ref)
-        replied.add(post_uri)
-        save_replied(replied)
-        print(f"✅ @{author_handle} に返信完了！")
-    except Exception as e:
-        print("⚠️ 投稿失敗:", e)
-    
-        traceback.print_exc()
+from datetime import datetime, timezone
+
+try:
+    client.app.bsky.feed.post.create(
+        record=models.AppBskyFeedPost.Main(
+            text=reply_text,
+            created_at=datetime.now(timezone.utc).isoformat(),
+            reply=reply_ref  # ← これでちゃんとリプライになる！
+        ),
+        repo=client.me.did
+    )
+    replied.add(post_uri)
+    save_replied(replied)
+    print(f"✅ @{author_handle} に返信完了！")
+except Exception as e:
+    print("⚠️ 投稿失敗:", e)
+    traceback.print_exc()
 # --- エントリーポイント ---
 if __name__ == "__main__":
     print("🤖 Reply Bot 起動中…")
