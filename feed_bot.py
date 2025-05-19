@@ -95,11 +95,13 @@ def run_once():
     timeline = client.app.bsky.feed.get_timeline(params={"limit": 20})
     feed = timeline.feed
 
-for post in feed:
-    text = getattr(post.post.record, "text", None)
-    uri = post.post.uri
-    cid = post.post.cid
-    author = post.post.author.handle
+    for post in feed:
+        text = getattr(post.post.record, "text", None)
+        uri = post.post.uri
+        cid = post.post.cid
+        author = post.post.author.handle
+
+        # 以下略（他の処理もここにインデントを揃えて書く）
 
     if author == HANDLE or uri in replied_uris or not text:
         continue
