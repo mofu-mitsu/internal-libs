@@ -262,7 +262,7 @@ def run_reply_bot():
             ),
             repo=client.me.did
         )
-            replied.add(post_uri)
+        replied.add(post_uri)
             save_replied(replied)
             print(f"✅ @{author_handle} に返信完了！")
         except Exception as e:
