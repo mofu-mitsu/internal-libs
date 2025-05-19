@@ -188,7 +188,6 @@ def get_reply(text):
 
 # --- メイン処理 ---
 from atproto_client.models.app.bsky.feed.post import ReplyRef
-from atproto_client.models.app.bsky.feed.post import AppBskyFeedPost
 from datetime import datetime, timezone
 
 def handle_post(record, notification):
@@ -256,15 +255,22 @@ def run_reply_bot():
             print("⚠️ 返信テキストが生成されていません")
             continue
 
+        if not reply_ref:
+            print("⚠️ reply_ref が None、スキップ")
+            continue
+
         try:
+            post_data = {
+                "text": reply_text,
+                "createdAt": datetime.now(timezone.utc).isoformat(),
+                "reply": reply_ref
+            }
+
             client.app.bsky.feed.post.create(
-                record=AppBskyFeedPost(
-                    text=reply_text,
-                    created_at=datetime.now(timezone.utc).isoformat(),
-                    reply=reply_ref
-                ),
+                record=post_data,
                 repo=client.me.did
             )
+
             replied.add(post_uri)
             save_replied(replied)
             print(f"✅ @{author_handle} に返信完了！")
