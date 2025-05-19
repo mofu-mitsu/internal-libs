@@ -143,13 +143,13 @@ try:
         reply_to=reply_ref,
         facets=facets if facets else None
     )
-        except Exception as e:
-            print("⚠️ 返信エラー:", e)
-        else:
-            replied_uris.add(uri)
-            save_replied_uris(replied_uris)
-            print(f"✅ 返信しました → @{author}")
+except Exception as e:
+    print("⚠️ 返信エラー:", e)
 
+else:
+    replied_uris.add(uri)
+    save_replied_uris(replied_uris)
+    print(f"✅ 返信しました → @{author}")
 # 🔧 エントリーポイント
 if __name__ == "__main__":
     run_once()
