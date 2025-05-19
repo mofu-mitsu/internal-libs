@@ -230,7 +230,11 @@ def run_reply_bot():
 
         return reply_ref, post_uri
 
-    # 🔁 実際の返信処理
+# 通知取得
+notifications = client.app.bsky.notification.list_notifications(params={"limit": 25}).notifications
+records = [n.record for n in notifications if hasattr(n, "record")]
+
+# 🔁 実際の返信処理
 for record in records:
     author = getattr(record, "author", None)
     if not author:
