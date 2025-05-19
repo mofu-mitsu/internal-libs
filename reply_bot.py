@@ -23,16 +23,19 @@ HEADERS = {
     "Content-Type": "application/json"
 }
 
-data = {
-    "model": "elyza/ELYZA-japanese-stablelm-instruct-alpha",  # ← モデル名ここ！
-    "inputs": "ユーザー: ○○○\nみりんてゃ:",
-    "parameters": {
-        "max_new_tokens": 100,
-        "temperature": 0.8,
-        "top_p": 0.9,
-        "do_sample": True
+def generate_reply(prompt):
+    API_URL = "https://api-inference.huggingface.co/models/rinna/japanese-gpt2-small"
+    headers = {"Authorization": f"Bearer {HF_API_TOKEN}"}
+    payload = {
+        "inputs": prompt,
+        "parameters": {
+            "max_new_tokens": 100,
+            "do_sample": True,
+            "temperature": 0.8,
+            "top_k": 50,
+            "top_p": 0.95
+        }
     }
-}
 
 REPLY_TABLE = {
      "使い方": "使い方は「♡推しプロフィールメーカー♡」のページにあるよ〜！かんたんっ♪",
