@@ -198,39 +198,39 @@ def run_reply_bot():
 
     print(f"📥 通知数: {len(records)} 件（リプライのみ）")
 
-    # 💬 リプライ処理：reply_ref と post_uri を生成して返す
-    def handle_post(record):
-        reply_ref = None
-        post_uri = record.uri.strip()
-        author_did = getattr(record, "author", {}).get("did", None)
+# 💬 リプライ処理：reply_ref と post_uri を生成して返す
+def handle_post(record):
+    reply_ref = None
+    post_uri = record.uri.strip()
+    author_did = getattr(record, "author", {}).get("did", None)
 
-        if hasattr(record, "reply") and record.reply:
-            try:
-                post_thread = client.app.bsky.feed.get_post_thread(params={"uri": record.reply.parent.uri})
-                parent_post = post_thread.thread.post
+    if hasattr(record, "reply") and record.reply:
+        try:
+            post_thread = client.app.bsky.feed.get_post_thread(params={"uri": record.reply.parent.uri})
+            parent_post = post_thread.thread.post
 
-                if parent_post.author.did == self_did:
-                    print("🟢 自分の投稿に対するリプライなので返信対象！")
-                else:
-                    print("📛 自分の投稿じゃないのでスキップ")
-                    return None, None
-
-                if author_did == self_did:
-                    print("🙈 自分のリプなのでスキップ")
-                    return None, None
-
-                reply_ref = models.AppBskyFeedPost.ReplyRef(
-                    root=record.reply.root,
-                    parent=record.reply.parent
-                )
-
-            except Exception as e:
-                print("⚠️ 元投稿の取得に失敗:", e)
+            if parent_post.author.did == self_did:
+                print("🟢 自分の投稿に対するリプライなので返信対象！")
+            else:
+                print("📛 自分の投稿じゃないのでスキップ")
                 return None, None
 
-        return reply_ref, post_uri
+            if author_did == self_did:
+                print("🙈 自分のリプなのでスキップ")
+                return None, None
 
-# 通知取得
+            reply_ref = models.AppBskyFeedPost.ReplyRef(
+                root=record.reply.root,
+                parent=record.reply.parent
+            )
+
+        except Exception as e:
+            print("⚠️ 元投稿の取得に失敗:", e)
+            return None, None
+
+    return reply_ref, post_uri
+
+# 📥 通知取得
 notifications = client.app.bsky.notification.list_notifications(params={"limit": 25}).notifications
 records = [n.record for n in notifications if hasattr(n, "record")]
 
@@ -261,16 +261,6 @@ for record in records:
 
     reply_text = get_reply(text)
 
-# --- 呼び出し側のコード ---
-
-# 🔁 たとえば for record in records: の中で…
-for record in records:
-    reply_ref, post_uri = handle_post(record)
-
-    if post_uri is None:
-        print("⏭️ 投稿スキップ")
-        continue
-
     print("📤 返信送信中…")
     print(f"📮 リプライ送信先: {post_uri}")
 
@@ -286,7 +276,7 @@ for record in records:
         print(f"✅ @{author_handle} に返信完了！")
     except Exception as e:
         print("⚠️ 投稿失敗:", e)
-        
+    
         traceback.print_exc()
 # --- エントリーポイント ---
 if __name__ == "__main__":
