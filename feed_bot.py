@@ -137,26 +137,26 @@ def run_once():
 
     # ✅ ここから下をループの中にインデントして入れる！
 from atproto_client.models import AppBskyFeedPost
-    try:
-        reply_ref = None
-        if hasattr(post.post.record, "reply") and post.post.record.reply:
-            reply_ref = AppBskyFeedPost.ReplyRef(
-                root=client.create_strong_ref(post.post.record.reply.root),
-                parent=client.create_strong_ref(post.post.record.reply.parent)
-            )
 
-        client.app.bsky.feed.post.create(
-            record=AppBskyFeedPost.Record(
-                text=reply_text,
-                created_at=datetime.now(timezone.utc).isoformat(),
-                reply=reply_ref,
-                facets=facets if facets else None
-            ),
+try:
+    reply_ref = None
+    if hasattr(post.post.record, "reply") and post.post.record.reply:
+        reply_ref = AppBskyFeedPost.ReplyRef(
+            root=client.create_strong_ref(post.post.record.reply.root),
+            parent=client.create_strong_ref(post.post.record.reply.parent)
+        )
+
+    client.app.bsky.feed.post.create(
+        record=AppBskyFeedPost.Record(
+            text=reply_text,
+            created_at=datetime.now(timezone.utc).isoformat(),
+            reply=reply_ref,
+            facets=facets if facets else None
+        ),
         repo=client.me.did
     )
-
-    except Exception as e:
-        print("⚠️ 返信エラー:", e)
+except Exception as e:
+    print(f"⚠️ 返信エラー: {e}")
     else:
         replied_uris.add(uri)
         save_replied_uris(replied_uris)
