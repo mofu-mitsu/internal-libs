@@ -84,17 +84,6 @@ def generate_facets_from_text(text, hashtags):
         facets.append(facet)
     return facets
 
-# 投稿を確認して返信する関数
-def run_once():
-    client = Client()
-    client.login(HANDLE, APP_PASSWORD)
-
-    print("📨 投稿を確認中…")
-    replied_uris = load_replied_uris()
-
-    timeline = client.app.bsky.feed.get_timeline(params={"limit": 20})
-    feed = timeline.feed
-
     # 投稿を確認して返信する関数
 def run_once():
     client = Client()
