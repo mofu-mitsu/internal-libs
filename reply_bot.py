@@ -263,12 +263,12 @@ def run_reply_bot():
             repo=client.me.did
         )
         replied.add(post_uri)
-            save_replied(replied)
-            print(f"✅ @{author_handle} に返信完了！")
-        except Exception as e:
-            print("⚠️ 投稿失敗:", e)
-            import traceback
-            traceback.print_exc()
+        save_replied(replied)
+        print(f"✅ @{author_handle} に返信完了！")
+    except Exception as e:
+        print("⚠️ 投稿失敗:", e)
+        import traceback
+        traceback.print_exc()
 
 if __name__ == "__main__":
     print("🤖 Reply Bot 起動中…")
