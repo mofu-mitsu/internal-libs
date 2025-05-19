@@ -253,7 +253,7 @@ def run_reply_bot():
             continue
 
         from datetime import datetime, timezone
-　　　　try:
+    try:
         client.app.bsky.feed.post.create(
             record=AppBskyFeedPost(
                 text=reply_text,
