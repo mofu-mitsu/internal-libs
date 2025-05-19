@@ -142,7 +142,7 @@ def run_once():
 
             client.send_post(
                 text=reply_text,
-                reply_to=reply_ref,
+                reply=reply_ref,  # ← ✅ 正しい引数名！
                 facets=facets if facets else None
             )
 
