@@ -84,7 +84,7 @@ def generate_facets_from_text(text, hashtags):
         facets.append(facet)
     return facets
 
-    # 投稿を確認して返信する関数
+# 投稿を確認して返信する関数
 def run_once():
     client = Client()
     client.login(HANDLE, APP_PASSWORD)
@@ -131,25 +131,28 @@ def run_once():
         hashtags = [word for word in text.split() if word.startswith("#")]
         facets = generate_facets_from_text(reply_text, hashtags)
 
-try:
-    reply_ref = None
-    if hasattr(record, "reply") and record.reply:
-        reply_ref = models.AppBskyFeedPost.ReplyRef(
-            root=client.create_strong_ref(record.reply.root),
-            parent=client.create_strong_ref(record.reply.parent)
-        )
-    client.send_post(
-        text=reply_text,
-        reply_to=reply_ref,
-        facets=facets if facets else None
-    )
-except Exception as e:
-    print("⚠️ 返信エラー:", e)
+        # 🛠 実際の送信処理はこのループ内に置くこと！
+        try:
+            reply_ref = None
+            if hasattr(post.post.record, "reply") and post.post.record.reply:
+                reply_ref = models.AppBskyFeedPost.ReplyRef(
+                    root=client.create_strong_ref(post.post.record.reply.root),
+                    parent=client.create_strong_ref(post.post.record.reply.parent)
+                )
 
-else:
-    replied_uris.add(uri)
-    save_replied_uris(replied_uris)
-    print(f"✅ 返信しました → @{author}")
+            client.send_post(
+                text=reply_text,
+                reply_to=reply_ref,
+                facets=facets if facets else None
+            )
+
+        except Exception as e:
+            print("⚠️ 返信エラー:", e)
+        else:
+            replied_uris.add(uri)
+            save_replied_uris(replied_uris)
+            print(f"✅ 返信しました → @{author}")
+            
 # 🔧 エントリーポイント
 if __name__ == "__main__":
     run_once()
