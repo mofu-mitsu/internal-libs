@@ -157,10 +157,10 @@ try:
     )
 except Exception as e:
     print(f"⚠️ 返信エラー: {e}")
-    else:
-        replied_uris.add(uri)
-        save_replied_uris(replied_uris)
-        print(f"✅ 返信しました → @{author}")
+else:
+    replied_uris.add(uri)
+    save_replied_uris(replied_uris)
+    print(f"✅ 返信しました → @{author}")
             
 # 🔧 エントリーポイント
 if __name__ == "__main__":
