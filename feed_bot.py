@@ -1,9 +1,16 @@
-from atproto import Client, models
-import requests
+# 🔽 📦 Pythonの標準ライブラリ（先に書くときれい）
+from datetime import datetime, timezone
 import os
 import json
+import requests
+
+# 🔽 🌱 外部ライブラリ
 from dotenv import load_dotenv
+
+# 🔽 📡 atproto関連
+from atproto import Client, models
 from atproto_client.models import AppBskyFeedPost
+from atproto_client.models.utils import get_strong_ref
 
 # .envファイルを読み込む
 load_dotenv()
