@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 
 # 🔽 📡 atproto関連
 from atproto import Client, models
-from atproto.utils import get_strong_ref  # ←ここの位置がベスト！
+from atproto.models.utils import get_strong_ref
 from atproto_client.models import AppBskyFeedPost
 
 # .envファイルを読み込む
