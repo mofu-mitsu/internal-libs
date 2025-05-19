@@ -14,17 +14,35 @@ def start():
 
     self_did = client.me.did
 
-    # フォロー一覧（自分がフォローしている）
+    # 自分のフォロー一覧（プロフィール情報だけ）
     follows = client.app.bsky.graph.get_follows(params={"actor": self_did, "limit": 100}).follows
-    following_handles = {user.did: user for user in follows}  # dictにしてrkey取得のために保持
+    following_dids = set(user.did for user in follows)
 
-    # フォロワー一覧（自分をフォローしてくれている）
+    # 自分をフォローしてくれてる人
     followers = client.app.bsky.graph.get_followers(params={"actor": self_did, "limit": 100}).followers
-    follower_handles = set(user.did for user in followers)
+    follower_dids = set(user.did for user in followers)
 
-    to_follow = follower_handles - set(following_handles.keys())
-    to_unfollow = set(following_handles.keys()) - follower_handles
+    to_follow = follower_dids - following_dids
+    to_unfollow = following_dids - follower_dids
 
+    # 🔍 自分の follow レコード一覧（ここに rkey や uri がある！）
+    repo_follows = client.com.atproto.repo.list_records(
+        repo=self_did,
+        collection="app.bsky.graph.follow",
+        limit=100
+    ).records
+
+    # did をキーに、uriとrkeyをひもづける辞書を作る
+    did_to_record = {}
+    for record in repo_follows:
+        value = record.value
+        if isinstance(value, dict) and "subject" in value:
+            did_to_record[value["subject"]] = {
+                "uri": record.uri,
+                "rkey": record.uri.split("/")[-1]
+            }
+
+    # フォロー処理
     for did in to_follow:
         try:
             follow_record = models.AppBskyGraphFollow.Record(
@@ -36,16 +54,15 @@ def start():
         except Exception as e:
             print(f"❌ フォロー失敗: {did} - {e}")
 
+    # フォロー解除処理
     for did in to_unfollow:
         try:
-            # 既に取得済みのfollow情報からrkeyを取り出して解除
-            follow_user = following_handles.get(did)
-            if follow_user and hasattr(follow_user, "uri"):
-                rkey = follow_user.uri.split('/')[-1]
-                client.app.bsky.graph.unfollow.delete(repo=self_did, rkey=rkey)
+            record_info = did_to_record.get(did)
+            if record_info:
+                client.app.bsky.graph.unfollow.delete(repo=self_did, rkey=record_info["rkey"])
                 print(f"🔕 フォロー解除しました: {did}")
             else:
-                print(f"⚠️ rkey取得失敗: {did}（uriが見つからない）")
+                print(f"⚠️ フォロー解除失敗: {did}（rkey見つからない）")
         except Exception as e:
             print(f"⚠️ フォロー解除失敗: {did} - {e}")
 
