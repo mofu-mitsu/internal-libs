@@ -95,14 +95,14 @@ def run_once():
     timeline = client.app.bsky.feed.get_timeline(params={"limit": 20})
     feed = timeline.feed
 
-for post in feed:
-    text = getattr(post.post.record, "text", None)
-    uri = post.post.uri
-    cid = post.post.cid
-    author = post.post.author.handle
+    for post in feed:  # ← ここを関数の中に入れる
+        text = getattr(post.post.record, "text", None)
+        uri = post.post.uri
+        cid = post.post.cid
+        author = post.post.author.handle
 
-    if author == HANDLE or uri in replied_uris or not text:
-        continue
+        if author == HANDLE or uri in replied_uris or not text:
+            continue
 
     print(f"👀 チェック中 → @{author}: {text}")
 
