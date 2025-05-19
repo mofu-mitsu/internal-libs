@@ -131,15 +131,18 @@ def run_once():
         hashtags = [word for word in text.split() if word.startswith("#")]
         facets = generate_facets_from_text(reply_text, hashtags)
 
-        try:
-            client.send_post(
-                text=reply_text,
-                reply_to=models.AppBskyFeedPost.ReplyRef(
-                    root=models.create_strong_ref(uri, cid),
-                    parent=models.create_strong_ref(uri, cid)
-                ),
-                facets=facets if facets else None
-            )
+try:
+    reply_ref = None
+    if hasattr(record, "reply") and record.reply:
+        reply_ref = models.AppBskyFeedPost.ReplyRef(
+            root=client.create_strong_ref(record.reply.root),
+            parent=client.create_strong_ref(record.reply.parent)
+        )
+    client.send_post(
+        text=reply_text,
+        reply_to=reply_ref,
+        facets=facets if facets else None
+    )
         except Exception as e:
             print("⚠️ 返信エラー:", e)
         else:
