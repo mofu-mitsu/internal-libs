@@ -257,12 +257,13 @@ def handle_post(record):
 # --- 呼び出し側のコード ---
 
 # 🔁 たとえば for record in records: の中で…
-for record in records:  # ← ここで record を1件ずつ処理してる！
-reply_ref, post_uri = handle_post(record)
+for record in records:
+    reply_ref, post_uri = handle_post(record)
 
-if post_uri is None:
-    print("⏭️ 投稿スキップ")
-else:
+    if post_uri is None:
+        print("⏭️ 投稿スキップ")
+        continue
+
     print("📤 返信送信中…")
     print(f"📮 リプライ送信先: {post_uri}")
 
@@ -278,8 +279,8 @@ else:
         print(f"✅ @{author_handle} に返信完了！")
     except Exception as e:
         print("⚠️ 投稿失敗:", e)
+        
         traceback.print_exc()
-
 # --- エントリーポイント ---
 if __name__ == "__main__":
     print("🤖 Reply Bot 起動中…")
