@@ -137,7 +137,6 @@ def run_once():
 
     # ✅ ここから下をループの中にインデントして入れる！
 from atproto_client.models import AppBskyFeedPost
-
     try:
         reply_ref = None
         if hasattr(post.post.record, "reply") and post.post.record.reply:
