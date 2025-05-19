@@ -195,21 +195,18 @@ def run_reply_bot():
     notifications = client.app.bsky.notification.list_notifications(params={"limit": 25}).notifications
     print(f"🔔 通知総数: {len(notifications)} 件")
 
-    records = [n.record for n in notifications if hasattr(n, "record") and hasattr(n.record, "reply") and n.record.reply]
-    print(f"📥 リプライ通知: {len(records)} 件")
+    for notification in notifications:
+        record = getattr(notification, "record", None)
+        author = getattr(notification, "author", None)
 
-    for record in records:
-        # recordの構造を詳しく見る
-        print("📦 record内容:", record)
-        print("📎 record.__class__:", record.__class__)
+        if not record or not hasattr(record, "reply") or not record.reply:
+            continue  # 返信じゃない投稿はスキップ
 
-        author = getattr(record, "author", None)
+        print(f"\n📦 record内容: {record}")
+        print(f"📎 record.__class__: {type(record)}")
+
         if not author:
-            print("⚠️ author情報なし、スキップ")
-            if hasattr(record, "__dict__"):
-                print("🧪 recordの中身（vars）:", vars(record))
-            else:
-                print("🧪 recordの中身:", record)
+            print("⚠️ author情報なし（notificationに含まれない）、スキップ")
             continue
 
         author_handle = getattr(author, "handle", None)
