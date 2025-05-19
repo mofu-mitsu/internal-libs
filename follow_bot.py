@@ -2,6 +2,7 @@ from atproto import Client, models
 import os
 from dotenv import load_dotenv
 
+
 # .env 読み込み
 load_dotenv()
 HANDLE = os.getenv("HANDLE")
@@ -26,10 +27,10 @@ def start():
     to_unfollow = following_dids - follower_dids
 
     # 🔍 自分の follow レコード一覧（ここに rkey や uri がある！）
-    repo_follows = client.com.atproto.repo.list_records(
+    records = client.com.atproto.repo.list_records(
         repo=self_did,
         collection="app.bsky.graph.follow",
-        params={"limit": 100}
+        limit=100
     ).records
 
     # did をキーに、uriとrkeyをひもづける辞書を作る
