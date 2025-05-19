@@ -255,37 +255,6 @@ def run_reply_bot():
         text = record.text
         reply_text = get_reply(text)
 
-# 💬 リプライ処理：reply_ref と post_uri を生成して返す
-def handle_post(record):
-    reply_ref = None
-    post_uri = record.uri.strip()  # ← ここで record から uri を取得！
-
-    if hasattr(record, "reply") and record.reply:
-        try:
-            post_thread = client.app.bsky.feed.get_post_thread(params={"uri": record.reply.parent.uri})
-            parent_post = post_thread.thread.post
-
-            if parent_post.author.did == self_did:
-                print("🟢 自分の投稿に対するリプライなので返信対象！")
-            else:
-                print("📛 自分の投稿じゃないのでスキップ")
-                return None, None  # ← tupleで返す
-
-            if author_did == self_did:
-                print("🙈 自分のリプなのでスキップ")
-                return None, None
-
-            reply_ref = models.AppBskyFeedPost.ReplyRef(
-                root=record.reply.root,
-                parent=record.reply.parent
-            )
-
-        except Exception as e:
-            print("⚠️ 元投稿の取得に失敗:", e)
-            return None, None
-
-    return reply_ref, post_uri  # ← 両方返すよ！
-
 # --- 呼び出し側のコード ---
 
 # 🔁 たとえば for record in records: の中で…
