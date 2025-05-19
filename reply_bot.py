@@ -229,6 +229,7 @@ def run_reply_bot():
             print("⚠️ handle or didがない、スキップ")
             continue
 
+        # ✅ 自分自身が返信した場合のみスキップ（親投稿は関係ない！）
         if author_did == self_did or author_handle == HANDLE:
             print("🛑 自分自身の投稿なのでスキップ")
             continue
