@@ -3,7 +3,6 @@ import requests
 import os
 import json
 from dotenv import load_dotenv
-from atproto_client.models import AppBskyRichtextFacet
 
 # .envファイルを読み込む
 load_dotenv()
@@ -66,6 +65,7 @@ KEYWORD_RESPONSES = {
 }
 
 # Facet（ハッシュタグなど）の位置を取得する関数
+from atproto_client.models import AppBskyRichtextFacet
 def generate_facets_from_text(text, hashtags):
     facets = []
     for tag in hashtags:
@@ -136,23 +136,25 @@ def run_once():
     facets = generate_facets_from_text(reply_text, hashtags)
 
     # ✅ ここから下をループの中にインデントして入れる！
+from atproto_client.models import AppBskyFeedPost
+
     try:
         reply_ref = None
         if hasattr(post.post.record, "reply") and post.post.record.reply:
-            reply_ref = models.AppBskyFeedPost.ReplyRef(
+            reply_ref = AppBskyFeedPost.ReplyRef(
                 root=client.create_strong_ref(post.post.record.reply.root),
                 parent=client.create_strong_ref(post.post.record.reply.parent)
             )
 
         client.app.bsky.feed.post.create(
-            record=models.AppBskyFeedPost.Main(
+            record=AppBskyFeedPost.Record(
                 text=reply_text,
                 created_at=datetime.now(timezone.utc).isoformat(),
                 reply=reply_ref,
                 facets=facets if facets else None
             ),
-            repo=client.me.did
-        )
+        repo=client.me.did
+    )
 
     except Exception as e:
         print("⚠️ 返信エラー:", e)
