@@ -14,14 +14,16 @@ def start():
 
     self_did = client.me.did
 
+    # フォロー一覧（自分がフォローしている）
     follows = client.app.bsky.graph.get_follows(params={"actor": self_did, "limit": 100}).follows
-    following_handles = set(user.did for user in follows)
+    following_handles = {user.did: user for user in follows}  # dictにしてrkey取得のために保持
 
+    # フォロワー一覧（自分をフォローしてくれている）
     followers = client.app.bsky.graph.get_followers(params={"actor": self_did, "limit": 100}).followers
     follower_handles = set(user.did for user in followers)
 
-    to_follow = follower_handles - following_handles
-    to_unfollow = following_handles - follower_handles
+    to_follow = follower_handles - set(following_handles.keys())
+    to_unfollow = set(following_handles.keys()) - follower_handles
 
     for did in to_follow:
         try:
@@ -36,12 +38,14 @@ def start():
 
     for did in to_unfollow:
         try:
-            follow = client.app.bsky.graph.get_follow(
-                {'actor': self_did, 'user': did}
-            )
-            rkey = follow.uri.split('/')[-1]
-            client.app.bsky.graph.unfollow.delete(repo=self_did, rkey=rkey)
-            print(f"🔕 フォロー解除しました: {did}")
+            # 既に取得済みのfollow情報からrkeyを取り出して解除
+            follow_user = following_handles.get(did)
+            if follow_user and hasattr(follow_user, "uri"):
+                rkey = follow_user.uri.split('/')[-1]
+                client.app.bsky.graph.unfollow.delete(repo=self_did, rkey=rkey)
+                print(f"🔕 フォロー解除しました: {did}")
+            else:
+                print(f"⚠️ rkey取得失敗: {did}（uriが見つからない）")
         except Exception as e:
             print(f"⚠️ フォロー解除失敗: {did} - {e}")
 
