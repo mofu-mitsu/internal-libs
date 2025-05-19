@@ -131,31 +131,31 @@ def run_once():
         hashtags = [word for word in text.split() if word.startswith("#")]
         facets = generate_facets_from_text(reply_text, hashtags)
 
-        # 🛠 実際の送信処理はこのループ内に置くこと！
-        try:
-            reply_ref = None
-            if hasattr(post.post.record, "reply") and post.post.record.reply:
-                reply_ref = models.AppBskyFeedPost.ReplyRef(
-                    root=client.create_strong_ref(post.post.record.reply.root),
-                    parent=client.create_strong_ref(post.post.record.reply.parent)
-                )
+# 🛠 実際の送信処理はこのループ内に置くこと！
+try:
+    reply_ref = None
+    if hasattr(post.post.record, "reply") and post.post.record.reply:
+        reply_ref = models.AppBskyFeedPost.ReplyRef(
+            root=client.create_strong_ref(post.post.record.reply.root),
+            parent=client.create_strong_ref(post.post.record.reply.parent)
+        )
 
-client.app.bsky.feed.post.create(
-    record=models.AppBskyFeedPost.Main(
-        text=reply_text,
-        created_at=datetime.now(timezone.utc).isoformat(),
-        reply=reply_ref,
-        facets=facets if facets else None
-    ),
-    repo=client.me.did
-)
+    client.app.bsky.feed.post.create(
+        record=models.AppBskyFeedPost.Main(
+            text=reply_text,
+            created_at=datetime.now(timezone.utc).isoformat(),
+            reply=reply_ref,
+            facets=facets if facets else None
+        ),
+        repo=client.me.did
+    )
 
-        except Exception as e:
-            print("⚠️ 返信エラー:", e)
-        else:
-            replied_uris.add(uri)
-            save_replied_uris(replied_uris)
-            print(f"✅ 返信しました → @{author}")
+except Exception as e:
+    print("⚠️ 返信エラー:", e)
+else:
+    replied_uris.add(uri)
+    save_replied_uris(replied_uris)
+    print(f"✅ 返信しました → @{author}")
             
 # 🔧 エントリーポイント
 if __name__ == "__main__":
