@@ -253,15 +253,15 @@ def run_reply_bot():
             continue
 
         from datetime import datetime, timezone
-try:
-    client.app.bsky.feed.post.create(
-        record=AppBskyFeedPost(
-            text=reply_text,
-            created_at=datetime.now(timezone.utc).isoformat(),
-            reply=reply_ref
-        ),
-        repo=client.me.did
-    )
+　　　　try:
+        client.app.bsky.feed.post.create(
+            record=AppBskyFeedPost(
+                text=reply_text,
+                created_at=datetime.now(timezone.utc).isoformat(),
+                reply=reply_ref
+            ),
+            repo=client.me.did
+        )
             replied.add(post_uri)
             save_replied(replied)
             print(f"✅ @{author_handle} に返信完了！")
