@@ -257,6 +257,7 @@ def handle_post(record):
 # --- 呼び出し側のコード ---
 
 # 🔁 たとえば for record in records: の中で…
+for record in records:  # ← ここで record を1件ずつ処理してる！
 reply_ref, post_uri = handle_post(record)
 
 if post_uri is None:
