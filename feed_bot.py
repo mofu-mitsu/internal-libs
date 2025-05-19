@@ -3,6 +3,7 @@ import requests
 import os
 import json
 from dotenv import load_dotenv
+from atproto_client.models import AppBskyFeedPost
 
 # .envファイルを読み込む
 load_dotenv()
