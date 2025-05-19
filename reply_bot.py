@@ -199,9 +199,17 @@ def run_reply_bot():
     print(f"📥 リプライ通知: {len(records)} 件")
 
     for record in records:
+        # recordの構造を詳しく見る
+        print("📦 record内容:", record)
+        print("📎 record.__class__:", record.__class__)
+
         author = getattr(record, "author", None)
         if not author:
             print("⚠️ author情報なし、スキップ")
+            if hasattr(record, "__dict__"):
+                print("🧪 recordの中身（vars）:", vars(record))
+            else:
+                print("🧪 recordの中身:", record)
             continue
 
         author_handle = getattr(author, "handle", None)
