@@ -3,6 +3,7 @@ import requests
 import os
 import json
 from dotenv import load_dotenv
+from atproto_client.models import AppBskyRichtextFacet
 
 # .envファイルを読み込む
 load_dotenv()
@@ -74,12 +75,13 @@ def generate_facets_from_text(text, hashtags):
         byte_end = byte_start + len(tag.encode("utf-8"))
         if byte_start == -1:
             continue
-        facet = models.AppBskyRichtextFacet.Main(
-            index=models.AppBskyRichtextFacet.ByteSlice(
+
+        facet = AppBskyRichtextFacet.Facet(
+            index=AppBskyRichtextFacet.ByteSlice(
                 byte_start=byte_start,
                 byte_end=byte_end
             ),
-            features=[models.AppBskyRichtextFacet.Tag(tag=tag.replace("#", ""))]
+            features=[AppBskyRichtextFacet.Tag(tag=tag.replace("#", ""))]
         )
         facets.append(facet)
     return facets
