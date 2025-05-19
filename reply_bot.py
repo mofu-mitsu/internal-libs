@@ -188,9 +188,9 @@ from atproto_client.models.app.bsky.feed.post import ReplyRef
 from atproto_client.models import AppBskyFeedPost
 from datetime import datetime, timezone
 
-def handle_post(record):
+def handle_post(record, notification):
     reply_ref = getattr(record, "reply", None)
-    post_uri = getattr(record, "uri", None)
+    post_uri = getattr(notification, "uri", None)
     return reply_ref, post_uri
 
 def run_reply_bot():
@@ -231,7 +231,7 @@ def run_reply_bot():
             print("🛑 自分自身の投稿なのでスキップ")
             continue
 
-        reply_ref, post_uri = handle_post(record)
+        reply_ref, post_uri = handle_post(record, notification)
         print("🔗 reply_ref:", reply_ref)
         print("🧾 post_uri:", post_uri)
 
