@@ -29,7 +29,7 @@ def start():
     repo_follows = client.com.atproto.repo.list_records(
         repo=self_did,
         collection="app.bsky.graph.follow",
-        limit=100
+        params={"limit": 100}
     ).records
 
     # did をキーに、uriとrkeyをひもづける辞書を作る
