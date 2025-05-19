@@ -95,7 +95,7 @@ def run_once():
     timeline = client.app.bsky.feed.get_timeline(params={"limit": 20})
     feed = timeline.feed
 
-    for post in feed:  # ← ここを関数の中に入れる
+    for post in feed:
         text = getattr(post.post.record, "text", None)
         uri = post.post.uri
         cid = post.post.cid
@@ -104,30 +104,31 @@ def run_once():
         if author == HANDLE or uri in replied_uris or not text:
             continue
 
-    print(f"👀 チェック中 → @{author}: {text}")
+        print(f"👀 チェック中 → @{author}: {text}")
 
-    matched = False
-    reply_text = ""
+        matched = False
+        reply_text = ""
 
-    # （このあと返信生成などの処理を書く）
+        # キーワードマッチ
+        for keyword, response in KEYWORD_RESPONSES.items():
+            if keyword in text:
+                reply_text = response
+                matched = True
+                print(f"✨ キーワード「{keyword}」にマッチ！")
+                break
 
-    # キーワードマッチ
-    for keyword, response in KEYWORD_RESPONSES.items():
-        if keyword in text:
-            reply_text = response
+        if not matched and f"@{HANDLE}" in text:
+            prompt = f"みりんてゃは地雷系ENFPで、甘えん坊でちょっと病みかわな子。フォロワーが「{text}」って投稿したら、どう返す？\nみりんてゃ「"
+            reply_text = generate_reply(prompt)
+            print(f"🤖 AI返信生成: {reply_text}")
             matched = True
-            print(f"✨ キーワード「{keyword}」にマッチ！")
-            break
 
-    if not matched and f"@{HANDLE}" in text:
-        prompt = f"みりんてゃは地雷系ENFPで、甘えん坊でちょっと病みかわな子。フォロワーが「{text}」って投稿したら、どう返す？\nみりんてゃ「"
-        reply_text = generate_reply(prompt)
-        print(f"🤖 AI返信生成: {reply_text}")
-        matched = True
+        if not matched:
+            print("🚫 スキップ: 条件に合わない投稿")
+            continue
 
-    if not matched:
-        print("🚫 スキップ: 条件に合わない投稿")
-        continue
+        # ここに返信送信処理を書くなら↓このへんに
+        # client.post.reply(...)
 
     hashtags = [word for word in text.split() if word.startswith("#")]
     facets = generate_facets_from_text(reply_text, hashtags)
