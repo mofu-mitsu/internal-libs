@@ -10,7 +10,6 @@ from dotenv import load_dotenv
 # 🔽 📡 atproto関連
 from atproto import Client, models
 from atproto_client.models import AppBskyFeedPost
-from atproto_client.models.utils import get_strong_ref
 
 # .envファイルを読み込む
 load_dotenv()
@@ -145,8 +144,8 @@ def run_once():
             reply_ref = None
             if hasattr(post.post.record, "reply") and post.post.record.reply:
                 reply_ref = AppBskyFeedPost.ReplyRef(
-                    root=client.create_strong_ref(post.post.record.reply.root),
-                    parent=client.create_strong_ref(post.post.record.reply.parent)
+                    root=client.get_strong_ref(post.post.record.reply.root),
+                    parent=client.get_strong_ref(post.post.record.reply.parent)
                 )
 
             client.app.bsky.feed.post.create(
