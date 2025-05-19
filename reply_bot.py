@@ -270,7 +270,7 @@ for record in records:
         print("⚠️ 返信テキストが生成できていません")
 
     try:
-        client.send_post(text=reply_text, reply_to=reply_ref)
+        client.send_post(text=reply_text, reply=reply_ref)
         replied.add(post_uri)
         save_replied(replied)
         print(f"✅ @{author_handle} に返信完了！")
