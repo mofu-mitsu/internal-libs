@@ -95,67 +95,66 @@ def run_once():
     timeline = client.app.bsky.feed.get_timeline(params={"limit": 20})
     feed = timeline.feed
 
-    for post in feed:
-        text = getattr(post.post.record, "text", None)
-        uri = post.post.uri
-        cid = post.post.cid
-        author = post.post.author.handle
+for post in feed:
+    text = getattr(post.post.record, "text", None)
+    uri = post.post.uri
+    cid = post.post.cid
+    author = post.post.author.handle
 
-        if author == HANDLE or uri in replied_uris or not text:
-            continue  # 自分自身・重複・本文なしはスキップ
+    if author == HANDLE or uri in replied_uris or not text:
+        continue
 
-        print(f"👀 チェック中 → @{author}: {text}")
+    print(f"👀 チェック中 → @{author}: {text}")
 
-        matched = False
-        reply_text = ""
+    matched = False
+    reply_text = ""
 
-        # キーワード反応
-        for keyword, response in KEYWORD_RESPONSES.items():
-            if keyword in text:
-                reply_text = response
-                matched = True
-                print(f"✨ キーワード「{keyword}」にマッチ！")
-                break
-
-        # メンションあり＆キーワードなし → AI返信
-        if not matched and f"@{HANDLE}" in text:
-            prompt = f"みりんてゃは地雷系ENFPで、甘えん坊でちょっと病みかわな子。フォロワーが「{text}」って投稿したら、どう返す？\nみりんてゃ「"
-            reply_text = generate_reply(prompt)
-            print(f"🤖 AI返信生成: {reply_text}")
+    # キーワードマッチ
+    for keyword, response in KEYWORD_RESPONSES.items():
+        if keyword in text:
+            reply_text = response
             matched = True
+            print(f"✨ キーワード「{keyword}」にマッチ！")
+            break
 
-        if not matched:
-            print("🚫 スキップ: 条件に合わない投稿")
-            continue
+    if not matched and f"@{HANDLE}" in text:
+        prompt = f"みりんてゃは地雷系ENFPで、甘えん坊でちょっと病みかわな子。フォロワーが「{text}」って投稿したら、どう返す？\nみりんてゃ「"
+        reply_text = generate_reply(prompt)
+        print(f"🤖 AI返信生成: {reply_text}")
+        matched = True
 
-        hashtags = [word for word in text.split() if word.startswith("#")]
-        facets = generate_facets_from_text(reply_text, hashtags)
+    if not matched:
+        print("🚫 スキップ: 条件に合わない投稿")
+        continue
 
-# 🛠 実際の送信処理はこのループ内に置くこと！
-try:
-    reply_ref = None
-    if hasattr(post.post.record, "reply") and post.post.record.reply:
-        reply_ref = models.AppBskyFeedPost.ReplyRef(
-            root=client.create_strong_ref(post.post.record.reply.root),
-            parent=client.create_strong_ref(post.post.record.reply.parent)
+    hashtags = [word for word in text.split() if word.startswith("#")]
+    facets = generate_facets_from_text(reply_text, hashtags)
+
+    # ✅ ここから下をループの中にインデントして入れる！
+    try:
+        reply_ref = None
+        if hasattr(post.post.record, "reply") and post.post.record.reply:
+            reply_ref = models.AppBskyFeedPost.ReplyRef(
+                root=client.create_strong_ref(post.post.record.reply.root),
+                parent=client.create_strong_ref(post.post.record.reply.parent)
+            )
+
+        client.app.bsky.feed.post.create(
+            record=models.AppBskyFeedPost.Main(
+                text=reply_text,
+                created_at=datetime.now(timezone.utc).isoformat(),
+                reply=reply_ref,
+                facets=facets if facets else None
+            ),
+            repo=client.me.did
         )
 
-    client.app.bsky.feed.post.create(
-        record=models.AppBskyFeedPost.Main(
-            text=reply_text,
-            created_at=datetime.now(timezone.utc).isoformat(),
-            reply=reply_ref,
-            facets=facets if facets else None
-        ),
-        repo=client.me.did
-    )
-
-except Exception as e:
-    print("⚠️ 返信エラー:", e)
-else:
-    replied_uris.add(uri)
-    save_replied_uris(replied_uris)
-    print(f"✅ 返信しました → @{author}")
+    except Exception as e:
+        print("⚠️ 返信エラー:", e)
+    else:
+        replied_uris.add(uri)
+        save_replied_uris(replied_uris)
+        print(f"✅ 返信しました → @{author}")
             
 # 🔧 エントリーポイント
 if __name__ == "__main__":
