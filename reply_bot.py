@@ -169,7 +169,7 @@ def generate_reply_via_api(user_input):
                 return generated.split("みりんてゃ")[-1].strip()
             return generated
         else:
-            return "え〜ん……AIとおしゃべりできないみたい（泣）"
+            return "ふふっ、返信がうまくできなかったけど、気持ちは伝わったよ〜！"
     except Exception:
         print("⚠️ AIレスポンスエラー:")
         traceback.print_exc()
@@ -185,7 +185,7 @@ def get_reply(text):
 
 # --- メイン処理 ---
 from atproto_client.models.app.bsky.feed.post import ReplyRef
-from atproto_client.models import AppBskyFeedPost
+from atproto_client.models.app.bsky.feed.post import AppBskyFeedPost
 from datetime import datetime, timezone
 
 def handle_post(record, notification):
