@@ -184,6 +184,13 @@ def get_reply(text):
     return generate_reply_via_api(text)
 
 # --- メイン処理 ---
+from atproto_client.models.app.bsky.feed.post import ReplyRef, Main
+
+def handle_post(record):
+    reply_ref = getattr(record, "reply", None)
+    post_uri = getattr(record, "uri", None)
+    return reply_ref, post_uri
+    
 def run_reply_bot():
     client = Client()
     client.login(HANDLE, APP_PASSWORD)
@@ -247,7 +254,7 @@ def run_reply_bot():
         from datetime import datetime, timezone
         try:
             client.app.bsky.feed.post.create(
-                record=models.AppBskyFeedPost.Main(
+                     record=Main(  # ←ここを修正
                     text=reply_text,
                     created_at=datetime.now(timezone.utc).isoformat(),
                     reply=reply_ref
