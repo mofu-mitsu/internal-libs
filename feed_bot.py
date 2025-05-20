@@ -176,6 +176,7 @@ def run_once():
             save_replied_uris(replied_uris)
             print(f"✅ 返信しました → @{author}")
             print(f"📁 保存されたURI一覧（最新20件）: {list(replied_uris)[-20:]}")
+            print(f"🗂 現在の保存数: {len(replied_uris)} 件")
 
 # 🔧 エントリーポイント
 if __name__ == "__main__":
