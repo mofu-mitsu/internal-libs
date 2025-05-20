@@ -257,7 +257,7 @@ def run_reply_bot():
 
         record = getattr(notification, "record", None)
         author = getattr(notification, "author", None)
-        notification_uri = getattr(notification, "uri", None)
+        notification_uri = getattr(notification, "reasonSubject", None)
 
         if not record or not hasattr(record, "text"):
             continue
