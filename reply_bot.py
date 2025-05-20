@@ -284,6 +284,7 @@ def run_reply_bot():
             print(f"🧹 ゴミデータ '{garbage}' を削除しました")
 
     save_replied(replied)
+    upload_to_gist(REPLIED_FILE, GIST_ID, TOKEN)  # ←これ超大事！
 
     try:
         notifications = client.app.bsky.notification.list_notifications(params={"limit": 25}).notifications
