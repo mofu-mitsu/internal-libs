@@ -271,11 +271,20 @@ def run_reply_bot():
     reply_count = 0
 
     for notification in notifications:
+        # uri or reasonSubject（どちらか）＋ fallback
         notification_uri = getattr(notification, "uri", None) or getattr(notification, "reasonSubject", None)
         if notification_uri:
             notification_uri = str(notification_uri).strip()
         else:
-            continue
+            # fallback：author_handle + text をキーとして使う
+            record = getattr(notification, "record", None)
+            author = getattr(notification, "author", None)
+            if not record or not hasattr(record, "text") or not author:
+                continue
+            text = getattr(record, "text", "")
+            author_handle = getattr(author, "handle", "")
+            notification_uri = f"{author_handle}:{text}"
+            print(f"⚠️ notification_uri が取得できなかったので、仮キーで対応 → {notification_uri}")
 
         print(f"📌 チェック中 notification_uri: {notification_uri}")
         print(f"📂 保存済み replied: {replied}")
@@ -286,7 +295,6 @@ def run_reply_bot():
 
         record = getattr(notification, "record", None)
         author = getattr(notification, "author", None)
-        notification_uri = getattr(notification, "reasonSubject", None)
 
         if not record or not hasattr(record, "text"):
             continue
@@ -311,10 +319,7 @@ def run_reply_bot():
             print("🛑 スキップ理由：自分自身の投稿")
             continue
 
-        if notification_uri is None:
-            print("⏭️ スキップ理由：notification_uri が None")
-            continue
-        elif notification_uri in replied:
+        if notification_uri in replied:
             print(f"⏭️ スキップ理由：すでに replied 済み → {notification_uri}")
             continue
 
@@ -347,13 +352,9 @@ def run_reply_bot():
                 repo=client.me.did
             )
 
-            # ✅ URIが正常なときだけ保存！
-            if notification_uri and notification_uri.strip().startswith("at://"):
-                replied.add(notification_uri.strip())
-                save_replied(replied)
-                print(f"✅ @{author_handle} に返信完了！")
-            else:
-                print(f"⛔ 不正なURIなので保存しません: {notification_uri}")
+            replied.add(notification_uri)
+            save_replied(replied)
+            print(f"✅ @{author_handle} に返信完了！ → {notification_uri}")
 
             reply_count += 1
             time.sleep(REPLY_INTERVAL)
