@@ -224,43 +224,51 @@ def handle_post(record, notification):
     return None, post_uri
 
 def run_reply_bot():
-    client = Client()
-    client.login(HANDLE, APP_PASSWORD)
-    print("✅ ログイン成功！")
+    try:
+        client = Client()
+        client.login(HANDLE, APP_PASSWORD)
+        print("✅ ログイン成功！")
+    except Exception as e:
+        print(f"❌ ログインに失敗しました: {e}")
+        return
 
     self_did = client.me.did
     replied = load_replied()
 
-    notifications = client.app.bsky.notification.list_notifications(params={"limit": 25}).notifications
+    try:
+        notifications = client.app.bsky.notification.list_notifications(params={"limit": 25}).notifications
+    except Exception as e:
+        print(f"❌ 通知の取得に失敗しました: {e}")
+        return
+
     print(f"🔔 通知総数: {len(notifications)} 件")
 
-    import time  # ← これを忘れずに！
+    import time
 
-    MAX_REPLIES = 5  # 一度に返信する最大数（調整可）
-    REPLY_INTERVAL = 5  # 各リプの間隔（秒）
-
+    MAX_REPLIES = 5
+    REPLY_INTERVAL = 5
     reply_count = 0
 
+    # 👇 ここを関数の中に入れる！インデント注意！
+    for notification in notifications:
+        if reply_count >= MAX_REPLIES:
+            print(f"⏹️ 最大返信数（{MAX_REPLIES}）に達したので終了します")
+            break
 
-for notification in notifications:
-    if reply_count >= MAX_REPLIES:
-        print(f"⏹️ 最大返信数（{MAX_REPLIES}）に達したので終了します")
-        break
+        record = getattr(notification, "record", None)
+        author = getattr(notification, "author", None)
+        notification_uri = getattr(notification, "uri", None)
 
-    record = getattr(notification, "record", None)
-    author = getattr(notification, "author", None)
-    notification_uri = getattr(notification, "uri", None)
+        if not record or not hasattr(record, "text"):
+            continue
 
-    if not record or not hasattr(record, "text"):
-        continue
+        text = getattr(record, "text", None)
+        if f"@{HANDLE}" not in text and (not hasattr(record, "reply") or not record.reply):
+            continue
 
-    text = getattr(record, "text", None)
-    if f"@{HANDLE}" not in text and (not hasattr(record, "reply") or not record.reply):
-        continue
-
-    if not author:
-        print("⚠️ author情報なし（notificationに含まれない）、スキップ")
-        continue
+        if not author:
+            print("⚠️ author情報なし（notificationに含まれない）、スキップ")
+            continue
 
     # ▼ ここで返信処理やreplied.add、save_replied などが続く ▼
 
