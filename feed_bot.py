@@ -29,16 +29,45 @@ REPLIED_FILE = "replied_uris.json"
 client = Client()
 client.login(HANDLE, APP_PASSWORD)
 
-# リプライ済みURIをファイルから読み込む
-def save_replied_uris(uris):
-    with open("replied_uris.txt", "w") as f:
-        for uri in uris:
-            f.write(uri + "\n")
+# GistのURLとID
+REPLIED_JSON_URL = "https://gist.githubusercontent.com/mofu-mitsu/fa3fad819922208c93636da84f75bc34/raw/replied.json"
+GIST_ID = "fa3fad819922208c93636da84f75bc34"
+GIST_TOKEN = os.environ["GIST_TOKEN"]  # GitHub Actionsで設定してる想定
 
-# リプライ済みURIを保存
+# Gistから読み込む
+def load_replied_uris():
+    try:
+        res = requests.get(REPLIED_JSON_URL)
+        if res.status_code == 200:
+            return set(json.loads(res.text))
+        else:
+            print("⚠️ Gist読み込み失敗:", res.status_code)
+    except Exception as e:
+        print("⚠️ Gist読み込みエラー:", e)
+    return set()
+
+# Gistに保存する
 def save_replied_uris(replied_uris):
-    with open(REPLIED_FILE, "w") as f:
-        json.dump(list(replied_uris), f)
+    try:
+        url = f"https://api.github.com/gists/{GIST_ID}"
+        headers = {
+            "Authorization": f"token {GIST_TOKEN}",
+            "Accept": "application/vnd.github+json"
+        }
+        data = {
+            "files": {
+                "replied.json": {
+                    "content": json.dumps(list(replied_uris), ensure_ascii=False, indent=2)
+                }
+            }
+        }
+        response = requests.patch(url, headers=headers, json=data)
+        if response.status_code == 200:
+            print("💾 Gistに保存完了！")
+        else:
+            print("⚠️ Gist保存失敗:", response.status_code, response.text)
+    except Exception as e:
+        print("⚠️ Gist保存エラー:", e)
 
 # Hugging Face APIで返信を生成する関数
 def generate_reply(prompt):
@@ -99,13 +128,6 @@ def generate_facets_from_text(text, hashtags):
         )
         facets.append(facet)
     return facets
-    
-# 保存済みURIを読み込む関数
-def load_replied_uris():
-    if not os.path.exists(REPLIED_FILE):
-        return set()
-    with open(REPLIED_FILE, "r", encoding="utf-8") as f:
-        return set(json.load(f))
         
 # 投稿を確認して返信する関数
 def run_once():
