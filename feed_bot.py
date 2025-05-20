@@ -10,7 +10,6 @@ from dotenv import load_dotenv
 # 🔽 📡 atproto関連
 from atproto import Client, models
 from atproto_client.models import AppBskyFeedPost
-from atproto.models.utils import get_strong_ref
 
 # 🔧 get_strong_refを自作で定義（もうimportしなくてOK！）
 def get_strong_ref(record):
