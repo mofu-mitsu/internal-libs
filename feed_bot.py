@@ -155,16 +155,16 @@ def run_once():
         parent=get_strong_ref_from_post(post.post)
     )
 
-        try:
-            client.app.bsky.feed.post.create(
-                record=AppBskyFeedPost.Record(
-                    text=reply_text,
-                    created_at=datetime.now(timezone.utc).isoformat(),
-                    reply=reply_ref,
-                    facets=facets if facets else None
-                ),
-                repo=client.me.did
-            )
+try:
+    client.app.bsky.feed.post.create(
+        record=AppBskyFeedPost.Record(
+            text=reply_text,
+            created_at=datetime.now(timezone.utc).isoformat(),
+            reply=reply_ref,
+            facets=facets if facets else None
+        ),
+        repo=client.me.did
+    )
 
             # 🔽 投稿送信（リプライとして送る！）
             client.app.bsky.feed.post.create(
