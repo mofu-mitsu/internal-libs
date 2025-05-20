@@ -9,8 +9,15 @@ from dotenv import load_dotenv
 
 # 🔽 📡 atproto関連
 from atproto import Client, models
-from atproto.models.utils import get_strong_ref
 from atproto_client.models import AppBskyFeedPost
+
+# 🔧 get_strong_refを自作で定義（もうimportしなくてOK！）
+def get_strong_ref(record):
+    return {
+        "$type": "com.atproto.repo.strongRef",
+        "uri": record.uri,
+        "cid": record.cid,
+    }
 
 # .envファイルを読み込む
 load_dotenv()
@@ -153,7 +160,7 @@ def run_once():
             record=AppBskyFeedPost.Record(
                 text=reply_text,
                 created_at=datetime.now(timezone.utc).isoformat(),
-                reply=reply_ref,  # ← これがちゃんと渡っていれば「リプライ」になる
+                reply=reply_ref,  # ← これでリプライになります！
                 facets=facets if facets else None
             ),
             repo=client.me.did
