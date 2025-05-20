@@ -99,7 +99,14 @@ def generate_facets_from_text(text, hashtags):
         )
         facets.append(facet)
     return facets
-
+    
+# 保存済みURIを読み込む関数
+def load_replied_uris():
+    if not os.path.exists(REPLIED_FILE):
+        return set()
+    with open(REPLIED_FILE, "r", encoding="utf-8") as f:
+        return set(json.load(f))
+        
 # 投稿を確認して返信する関数
 def run_once():
     client = Client()
@@ -108,28 +115,27 @@ def run_once():
     print("📨 投稿を確認中…")
     replied_uris = load_replied_uris()
 
+    # タイムラインから最新20件を取得
     timeline = client.app.bsky.feed.get_timeline(params={"limit": 20})
     feed = timeline.feed
 
     for post in feed:
         text = getattr(post.post.record, "text", None)
         uri = post.post.uri
-        cid = post.post.cid
         author = post.post.author.handle
 
+        # スキップ条件：自分の投稿 or 既に返信済み or テキストなし
         if author == HANDLE or uri in replied_uris or not text:
             if uri in replied_uris:
                 print(f"⏩ スキップ（既にリプ済み）→ @{author}: {text}")
             continue
-
-        # あとはキーワード判定とかAI返信とか続くよね！
 
         print(f"👀 チェック中 → @{author}: {text}")
 
         matched = False
         reply_text = ""
 
-        # キーワードマッチ
+        # 🔍 キーワードマッチ判定
         for keyword, response in KEYWORD_RESPONSES.items():
             if keyword in text:
                 reply_text = response
@@ -137,7 +143,7 @@ def run_once():
                 print(f"✨ キーワード「{keyword}」にマッチ！")
                 break
 
-        # メンションされた場合
+        # 🔁 メンションに反応（AI生成）
         if not matched and f"@{HANDLE}" in text:
             prompt = f"みりんてゃは地雷系ENFPで、甘えん坊でちょっと病みかわな子。フォロワーが「{text}」って投稿したら、どう返す？\nみりんてゃ「"
             reply_text = generate_reply(prompt)
@@ -148,17 +154,17 @@ def run_once():
             print("🚫 スキップ: 条件に合わない投稿")
             continue
 
-        # 🔽 ハッシュタグ抽出と facets 生成（ここ大事！）
+        # 🔖 ハッシュタグとfacetsの生成
         hashtags = [word for word in text.split() if word.startswith("#")]
         facets = generate_facets_from_text(reply_text, hashtags)
 
-        # 🔽 参照情報（ReplyRef）を生成
+        # 🔁 リプライ参照情報の作成
         reply_ref = AppBskyFeedPost.ReplyRef(
             root=get_strong_ref_from_post(post.post),
             parent=get_strong_ref_from_post(post.post)
         )
 
-        # 🔽 投稿送信（tryブロックもこの中！）
+        # ✉️ 投稿送信（成功したら保存）
         try:
             client.app.bsky.feed.post.create(
                 record=AppBskyFeedPost.Record(
@@ -171,7 +177,7 @@ def run_once():
             )
         except Exception as e:
             print(f"⚠️ 返信エラー: {e}")
-        else:  # ← tryの成功時
+        else:
             replied_uris.add(uri)
             save_replied_uris(replied_uris)
             print(f"✅ 返信しました → @{author}")
