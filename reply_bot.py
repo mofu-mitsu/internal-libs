@@ -207,18 +207,28 @@ def get_reply(text):
 from atproto_client.models.app.bsky.feed.post import ReplyRef
 from datetime import datetime, timezone
 
-# ✨ここが重要：リプライ用のStrongRefを作る関数
+try:
+    from atproto_client.models.com.atproto.repo.strong_ref import Main as StrongRef
+    from atproto_client.models.app.bsky.feed.post import ReplyRef
+except ImportError:
+    StrongRef = None
+    ReplyRef = None
+
 def handle_post(record, notification):
     post_uri = getattr(notification, "uri", None)
     post_cid = getattr(notification, "cid", None)
 
-    if post_uri and post_cid:
+    # 既にreply情報が入ってるならそれを使う
+    if hasattr(record, "reply") and record.reply:
+        return record.reply, post_uri
+
+    # replyがない場合はStrongRefから組み立て（失敗してもNone）
+    if StrongRef and ReplyRef and post_uri and post_cid:
         parent_ref = StrongRef(uri=post_uri, cid=post_cid)
         reply_ref = ReplyRef(parent=parent_ref, root=parent_ref)
-    else:
-        reply_ref = None
+        return reply_ref, post_uri
 
-    return reply_ref, post_uri
+    return None, post_uri
 
 def run_reply_bot():
     client = Client()
