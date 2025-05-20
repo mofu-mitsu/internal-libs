@@ -120,7 +120,9 @@ def run_once():
         author = post.post.author.handle
 
         if author == HANDLE or uri in replied_uris or not text:
-            continue
+        if uri in replied_uris:
+            print(f"⏩ スキップ（既にリプ済み）→ @{author}: {text}")
+        continue
 
         print(f"👀 チェック中 → @{author}: {text}")
 
@@ -169,10 +171,11 @@ def run_once():
             )
         except Exception as e:
             print(f"⚠️ 返信エラー: {e}")
-        else:
-            replied_uris.add(uri)
-            save_replied_uris(replied_uris)
-            print(f"✅ 返信しました → @{author}")
+    else:
+        replied_uris.add(uri)
+        save_replied_uris(replied_uris)
+        print(f"✅ 返信しました → @{author}")
+        print(f"📁 保存されたURI一覧（最新20件）: {list(replied_uris)[-20:]}")
 
 # 🔧 エントリーポイント
 if __name__ == "__main__":
