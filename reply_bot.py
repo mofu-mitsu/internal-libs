@@ -242,25 +242,27 @@ def run_reply_bot():
     reply_count = 0
 
 
-    for notification in notifications:
-        if reply_count >= MAX_REPLIES:
-            print(f"⏹️ 最大返信数（{MAX_REPLIES}）に達したので終了します")
-            break
-        
-            record = getattr(notification, "record", None)
-            author = getattr(notification, "author", None)
-            notification_uri = getattr(notification, "uri", None)
+for notification in notifications:
+    if reply_count >= MAX_REPLIES:
+        print(f"⏹️ 最大返信数（{MAX_REPLIES}）に達したので終了します")
+        break
 
-        if not record or not hasattr(record, "text"):
-            continue
+    record = getattr(notification, "record", None)
+    author = getattr(notification, "author", None)
+    notification_uri = getattr(notification, "uri", None)
 
-        text = getattr(record, "text", None)
-        if f"@{HANDLE}" not in text and (not hasattr(record, "reply") or not record.reply):
-            continue  # メンションもリプライも含まない場合はスキップ
+    if not record or not hasattr(record, "text"):
+        continue
 
-        if not author:
-            print("⚠️ author情報なし（notificationに含まれない）、スキップ")
-            continue
+    text = getattr(record, "text", None)
+    if f"@{HANDLE}" not in text and (not hasattr(record, "reply") or not record.reply):
+        continue
+
+    if not author:
+        print("⚠️ author情報なし（notificationに含まれない）、スキップ")
+        continue
+
+    # ▼ ここで返信処理やreplied.add、save_replied などが続く ▼
 
         author_handle = getattr(author, "handle", None)
         author_did = getattr(author, "did", None)
