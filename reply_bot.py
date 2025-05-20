@@ -5,7 +5,32 @@ import traceback
 from atproto import Client, models
 from dotenv import load_dotenv
 from atproto_client.models.com.atproto.repo.strong_ref import Main as StrongRef
+from datetime import datetime, timezone, timedelta  # ← これも最初の import 群のとこに追加！
 
+REPLIED_TEXTS_FILE = "replied_texts.json"  # 追加で新しい保存ファイル
+
+def load_replied_texts():
+    if os.path.exists(REPLIED_TEXTS_FILE):
+        try:
+            with open(REPLIED_TEXTS_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                # ISO形式の文字列を datetime に変換して返す
+                return {k: datetime.fromisoformat(v) for k, v in data.items()}
+        except Exception as e:
+            print(f"⚠️ replied_texts.json の読み込みエラー: {e}")
+            return {}
+    else:
+        print("📂 replied_texts.json が存在しないので新規作成します")
+        return {}
+
+def save_replied_texts(data):
+    try:
+        with open(REPLIED_TEXTS_FILE, "w", encoding="utf-8") as f:
+            # datetime を ISO形式の文字列にして保存
+            json.dump({k: v.isoformat() for k, v in data.items()}, f, ensure_ascii=False, indent=2)
+        print(f"💾 replied_texts.json に保存しました（件数: {len(data)}）")
+    except Exception as e:
+        print(f"⚠️ replied_texts.json の保存中にエラーが発生しました: {e}")
 
 # --- 環境変数読み込み ---
 load_dotenv()
