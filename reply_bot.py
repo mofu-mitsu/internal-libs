@@ -160,6 +160,20 @@ def generate_reply_via_api(user_input):
     }
 
     try:
+        print(f"📤 {datetime.now().isoformat()} ｜APIへリクエスト送信中…")
+        response = requests.post(HF_API_URL, headers=headers, json=data)
+        print(f"🌐 ステータスコード: {response.status_code}")
+        print(f"📦 レスポンス内容: {response.text}")
+
+        response.raise_for_status()  # ← ここでエラーがあれば例外に
+        result = response.json()
+        return result
+
+    except requests.exceptions.RequestException as e:
+        print(f"⚠️ API通信エラー: {e}")
+        return {"error": str(e)}
+
+    try:
         print("📡 AIに問い合わせ中...")
         response = requests.post(HF_API_URL, headers=headers, json=data, timeout=20)
         print("🤖 AIレスポンス:", response.status_code, response.text)
