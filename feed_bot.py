@@ -134,6 +134,7 @@ def run_once():
                 print(f"✨ キーワード「{keyword}」にマッチ！")
                 break
 
+        # メンションされた場合
         if not matched and f"@{HANDLE}" in text:
             prompt = f"みりんてゃは地雷系ENFPで、甘えん坊でちょっと病みかわな子。フォロワーが「{text}」って投稿したら、どう返す？\nみりんてゃ「"
             reply_text = generate_reply(prompt)
@@ -144,33 +145,35 @@ def run_once():
             print("🚫 スキップ: 条件に合わない投稿")
             continue
 
-        # ↓↓↓ これも for ループの中に入れる！
+        # 🔽 ハッシュタグ抽出と facets 生成（ここ大事！）
         hashtags = [word for word in text.split() if word.startswith("#")]
         facets = generate_facets_from_text(reply_text, hashtags)
 
-    try:
-        reply_ref = None
-        if hasattr(post.post.record, "reply") and post.post.record.reply:
-            reply_ref = AppBskyFeedPost.ReplyRef(
-                root=get_strong_ref(post.post.record.reply.root),
-                parent=get_strong_ref(post.post.record.reply.parent)
-            )
+        try:
+            # 🔽 リプライ用の参照を生成
+            reply_ref = None
+            if hasattr(post.post.record, "reply") and post.post.record.reply:
+                reply_ref = AppBskyFeedPost.ReplyRef(
+                    root=get_strong_ref(post.post.record.reply.root),
+                    parent=get_strong_ref(post.post.record.reply.parent)
+                )
 
-        client.app.bsky.feed.post.create(
-            record=AppBskyFeedPost.Record(
-                text=reply_text,
-                created_at=datetime.now(timezone.utc).isoformat(),
-                reply=reply_ref,  # ← これでリプライになります！
-                facets=facets if facets else None
-            ),
-            repo=client.me.did
-        )
-    except Exception as e:
-        print(f"⚠️ 返信エラー: {e}")
-    else:
-        replied_uris.add(uri)
-        save_replied_uris(replied_uris)
-        print(f"✅ 返信しました → @{author}")
+            # 🔽 投稿送信（リプライとして送る！）
+            client.app.bsky.feed.post.create(
+                record=AppBskyFeedPost.Record(
+                    text=reply_text,
+                    created_at=datetime.now(timezone.utc).isoformat(),
+                    reply=reply_ref,
+                    facets=facets if facets else None
+                ),
+                repo=client.me.did
+            )
+        except Exception as e:
+            print(f"⚠️ 返信エラー: {e}")
+        else:
+            replied_uris.add(uri)
+            save_replied_uris(replied_uris)
+            print(f"✅ 返信しました → @{author}")
             
 # 🔧 エントリーポイント
 if __name__ == "__main__":
