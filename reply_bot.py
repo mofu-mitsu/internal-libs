@@ -234,21 +234,22 @@ def run_reply_bot():
     notifications = client.app.bsky.notification.list_notifications(params={"limit": 25}).notifications
     print(f"🔔 通知総数: {len(notifications)} 件")
 
-import time  # ← これを忘れずに！
+    import time  # ← これを忘れずに！
 
-MAX_REPLIES = 5  # 一度に返信する最大数（調整可）
-REPLY_INTERVAL = 5  # 各リプの間隔（秒）
+    MAX_REPLIES = 5  # 一度に返信する最大数（調整可）
+    REPLY_INTERVAL = 5  # 各リプの間隔（秒）
 
-reply_count = 0
+    reply_count = 0
 
-for notification in notifications:
-    if reply_count >= MAX_REPLIES:
-        print(f"⏹️ 最大返信数（{MAX_REPLIES}）に達したので終了します")
-        break
+
+    for notification in notifications:
+        if reply_count >= MAX_REPLIES:
+            print(f"⏹️ 最大返信数（{MAX_REPLIES}）に達したので終了します")
+            break
         
-        record = getattr(notification, "record", None)
-        author = getattr(notification, "author", None)
-        notification_uri = getattr(notification, "uri", None)
+            record = getattr(notification, "record", None)
+            author = getattr(notification, "author", None)
+            notification_uri = getattr(notification, "uri", None)
 
         if not record or not hasattr(record, "text"):
             continue
