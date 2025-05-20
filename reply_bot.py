@@ -314,17 +314,27 @@ def run_reply_bot():
         author_handle = getattr(author, "handle", None)
         author_did = getattr(author, "did", None)
 
-        print(f"\n👤 from: @{author_handle} / did: {author_did}")
-        print(f"💬 受信メッセージ: {text}")
+    print(f"\n👤 from: @{author_handle} / did: {author_did}")
+    print(f"💬 受信メッセージ: {text}")
+    print(f"🔗 チェック対象 notification_uri: {notification_uri}")
 
-        # ✅ 自分の投稿・自リプはスキップ（親投稿が自分なのはOK）
-        if author_did == self_did or author_handle == HANDLE:
-            print("🛑 自分自身の投稿なのでスキップ")
-            continue
+    # ✅ 自分の投稿・自リプはスキップ
+    if author_did == self_did or author_handle == HANDLE:
+        print("🛑 スキップ理由：自分自身の投稿")
+        continue
 
-        if notification_uri is None or notification_uri in replied:
-            print("⏭️ すでに返信済み、または処理不要な通知")
-            continue
+    # ✅ URIがない or すでに返信済み
+    if notification_uri is None:
+        print("⏭️ スキップ理由：notification_uri が None")
+        continue
+    elif notification_uri in replied:
+        print(f"⏭️ スキップ理由：すでに replied 済み → {notification_uri}")
+        continue
+
+    # ✅ テキストが空のとき
+    if not text:
+        print(f"⚠️ スキップ理由：テキストが空 → @{author_handle}")
+        continue
 
         reply_ref, post_uri = handle_post(record, notification)
         print("🔗 reply_ref:", reply_ref)
