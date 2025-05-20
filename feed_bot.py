@@ -149,14 +149,28 @@ def run_once():
         hashtags = [word for word in text.split() if word.startswith("#")]
         facets = generate_facets_from_text(reply_text, hashtags)
 
+        # 🔽 リプライ参照は必ず生成（元投稿の URI / CID を使って）
+        reply_ref = AppBskyFeedPost.ReplyRef(
+            root=AppBskyFeedPost.StrongRef(
+                uri=uri,
+                cid=cid
+            ),
+            parent=AppBskyFeedPost.StrongRef(
+                uri=uri,
+                cid=cid
+            )
+        )
+
         try:
-            # 🔽 リプライ用の参照を生成
-            reply_ref = None
-            if hasattr(post.post.record, "reply") and post.post.record.reply:
-                reply_ref = AppBskyFeedPost.ReplyRef(
-                    root=get_strong_ref(post.post.record.reply.root),
-                    parent=get_strong_ref(post.post.record.reply.parent)
-                )
+            client.app.bsky.feed.post.create(
+                record=AppBskyFeedPost.Record(
+                    text=reply_text,
+                    created_at=datetime.now(timezone.utc).isoformat(),
+                    reply=reply_ref,
+                    facets=facets if facets else None
+                ),
+                repo=client.me.did
+            )
 
             # 🔽 投稿送信（リプライとして送る！）
             client.app.bsky.feed.post.create(
