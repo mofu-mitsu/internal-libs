@@ -210,11 +210,12 @@ def run_reply_bot():
         record = getattr(notification, "record", None)
         author = getattr(notification, "author", None)
 
-        if not record or not hasattr(record, "reply") or not record.reply:
-            continue  # 返信じゃない投稿はスキップ
+        if not record or not hasattr(record, "text"):
+            continue
 
-        print(f"\n📦 record内容: {record}")
-        print(f"📎 record.__class__: {type(record)}")
+        text = getattr(record, "text", None)
+        if f"@{HANDLE}" not in text and (not hasattr(record, "reply") or not record.reply):
+            continue  # メンションもリプライも含まない場合はスキップ
 
         if not author:
             print("⚠️ author情報なし（notificationに含まれない）、スキップ")
@@ -223,13 +224,10 @@ def run_reply_bot():
         author_handle = getattr(author, "handle", None)
         author_did = getattr(author, "did", None)
 
-        print(f"👤 from: @{author_handle} / did: {author_did}")
+        print(f"\n👤 from: @{author_handle} / did: {author_did}")
+        print(f"💬 受信メッセージ: {text}")
 
-        if not author_handle or not author_did:
-            print("⚠️ handle or didがない、スキップ")
-            continue
-
-        # ✅ 自分自身が返信した場合のみスキップ（親投稿は関係ない！）
+        # ✅ 自分の投稿・自リプはスキップ（親投稿が自分なのはOK）
         if author_did == self_did or author_handle == HANDLE:
             print("🛑 自分自身の投稿なのでスキップ")
             continue
@@ -242,9 +240,6 @@ def run_reply_bot():
             print("⏭️ すでに返信済み、または処理不要な投稿")
             continue
 
-        text = getattr(record, "text", None)
-        print("💬 受信メッセージ:", text)
-
         if not text:
             print("⚠️ テキストが空、スキップ")
             continue
@@ -256,16 +251,15 @@ def run_reply_bot():
             print("⚠️ 返信テキストが生成されていません")
             continue
 
-        if not reply_ref:
-            print("⚠️ reply_ref が None、スキップ")
-            continue
-
         try:
             post_data = {
                 "text": reply_text,
                 "createdAt": datetime.now(timezone.utc).isoformat(),
-                "reply": reply_ref
             }
+
+            # replyがある場合だけ付ける（メンションの場合は reply_ref なし）
+            if reply_ref:
+                post_data["reply"] = reply_ref
 
             client.app.bsky.feed.post.create(
                 record=post_data,
