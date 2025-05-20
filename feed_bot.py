@@ -114,9 +114,11 @@ def run_once():
 
     print("📨 投稿を確認中…")
     replied_uris = load_replied_uris()
-    replied_uris = load_replied_uris()
     print(f"📄 保存済みURI読み込み完了 → 件数: {len(replied_uris)}")
     print(f"🔍 一部サンプル: {list(replied_uris)[:5]}")
+
+    # 投稿IDだけで重複チェックするためのセットも作る
+    replied_post_ids = set(uri.split('/')[-1] for uri in replied_uris)
 
     # タイムラインから最新20件を取得
     timeline = client.app.bsky.feed.get_timeline(params={"limit": 20})
@@ -125,16 +127,18 @@ def run_once():
     for post in feed:
         text = getattr(post.post.record, "text", None)
         uri = str(post.post.uri)
-    
+        post_id = uri.split('/')[-1]  # ← 投稿IDだけ取り出す
+
         print(f"📝 処理対象URI: {uri}")
         print(f"📂 保存済みURIsの一部: {list(replied_uris)[-5:]}")
+        print(f"🆔 投稿ID: {post_id}")
 
         author = post.post.author.handle
 
-        if author == HANDLE or uri in replied_uris or not text:
-            if uri in replied_uris:
+        if author == HANDLE or post_id in replied_post_ids or not text:
+            if post_id in replied_post_ids:
                 print(f"⏩ スキップ（既にリプ済み）→ @{author}: {text}")
-                print(f"    🔁 スキップ理由：URI一致 → {uri}")
+                print(f"    🔁 スキップ理由：ID一致 → {post_id}")
             elif author == HANDLE:
                 print(f"⏩ スキップ（自分の投稿）→ @{author}: {text}")
             elif not text:
