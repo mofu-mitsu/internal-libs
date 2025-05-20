@@ -247,26 +247,17 @@ def run_reply_bot():
         return
 
     self_did = client.me.did
-    # 読み込み後に不要な文字列が混ざってたら削除
     replied = load_replied()
-
     print(f"📘 replied の型: {type(replied)} / 件数: {len(replied)}")
 
-    # 文字列が混ざってたら削除する（念のため "None" も）
+    # 🧹 ゴミデータの除去
     for garbage in ["replied", None, "None"]:
         if garbage in replied:
             replied.remove(garbage)
             print(f"🧹 ゴミデータ '{garbage}' を削除しました")
 
-        save_replied(replied)  # 修正後に保存
-        # ✨ 通知URIが正しいときだけ記録する！
-    if notification_uri and notification_uri.startswith("at://"):
-        replied.add(notification_uri)
-        save_replied(replied)
-        print(f"✅ @{author_handle} に返信完了！")
-    else:
-        print(f"⛔ 不正なURIなので保存しません: {notification_uri}")
-    
+    save_replied(replied)
+
     try:
         notifications = client.app.bsky.notification.list_notifications(params={"limit": 25}).notifications
     except Exception as e:
@@ -275,94 +266,101 @@ def run_reply_bot():
 
     print(f"🔔 通知総数: {len(notifications)} 件")
 
-    import time
-
     MAX_REPLIES = 5
     REPLY_INTERVAL = 5
     reply_count = 0
 
-    # 👇 ここを関数の中に入れる！インデント注意！
     for notification in notifications:
         notification_uri = getattr(notification, "uri", None) or getattr(notification, "reasonSubject", None)
         if notification_uri:
-            notification_uri = str(notification_uri)
+            notification_uri = str(notification_uri).strip()
+        else:
+            continue
 
-    print(f"📌 チェック中 notification_uri: {notification_uri}")
-    print(f"📂 保存済み replied: {replied}")
+        print(f"📌 チェック中 notification_uri: {notification_uri}")
+        print(f"📂 保存済み replied: {replied}")
 
-    if reply_count >= MAX_REPLIES:
-        print(f"⏹️ 最大返信数（{MAX_REPLIES}）に達したので終了します")
+        if reply_count >= MAX_REPLIES:
+            print(f"⏹️ 最大返信数（{MAX_REPLIES}）に達したので終了します")
             break
 
-    record = getattr(notification, "record", None)
-    author = getattr(notification, "author", None)
-    notification_uri = getattr(notification, "reasonSubject", None)
+        record = getattr(notification, "record", None)
+        author = getattr(notification, "author", None)
+        notification_uri = getattr(notification, "reasonSubject", None)
 
-    if not record or not hasattr(record, "text"):
-        continue
+        if not record or not hasattr(record, "text"):
+            continue
 
-    text = getattr(record, "text", None)
-    if f"@{HANDLE}" not in text and (not hasattr(record, "reply") or not record.reply):
-        continue
+        text = getattr(record, "text", None)
+        if f"@{HANDLE}" not in text and (not hasattr(record, "reply") or not record.reply):
+            continue
 
-    if not author:
-        print("⚠️ author情報なし（notificationに含まれない）、スキップ")
-        continue
+        if not author:
+            print("⚠️ author情報なし（notificationに含まれない）、スキップ")
+            continue
 
-    author_handle = getattr(author, "handle", None)
-    author_did = getattr(author, "did", None)
+        author_handle = getattr(author, "handle", None)
+        author_did = getattr(author, "did", None)
 
-    print(f"\n👤 from: @{author_handle} / did: {author_did}")
-    print(f"💬 受信メッセージ: {text}")
-    print(f"🔗 チェック対象 notification_uri: {notification_uri}")
+        print(f"\n👤 from: @{author_handle} / did: {author_did}")
+        print(f"💬 受信メッセージ: {text}")
+        print(f"🔗 チェック対象 notification_uri: {notification_uri}")
 
-    if author_did == self_did or author_handle == HANDLE:
-        print("🛑 スキップ理由：自分自身の投稿")
-        continue
+        # 自分自身には返信しない
+        if author_did == self_did or author_handle == HANDLE:
+            print("🛑 スキップ理由：自分自身の投稿")
+            continue
 
-    if notification_uri is None:
-        print("⏭️ スキップ理由：notification_uri が None")
-        continue
-    elif notification_uri in replied:
-        print(f"⏭️ スキップ理由：すでに replied 済み → {notification_uri}")
-        continue
+        if notification_uri is None:
+            print("⏭️ スキップ理由：notification_uri が None")
+            continue
+        elif notification_uri in replied:
+            print(f"⏭️ スキップ理由：すでに replied 済み → {notification_uri}")
+            continue
 
-    if not text:
-        print(f"⚠️ スキップ理由：テキストが空 → @{author_handle}")
-        continue
+        if not text:
+            print(f"⚠️ スキップ理由：テキストが空 → @{author_handle}")
+            continue
 
-    reply_ref, post_uri = handle_post(record, notification)
-    print("🔗 reply_ref:", reply_ref)
-    print("🧾 post_uri:", post_uri)
+        reply_ref, post_uri = handle_post(record, notification)
+        print("🔗 reply_ref:", reply_ref)
+        print("🧾 post_uri:", post_uri)
 
-    reply_text = get_reply(text)
-    print("🤖 生成された返信:", reply_text)
+        reply_text = get_reply(text)
+        print("🤖 生成された返信:", reply_text)
 
-    if not reply_text:
-        print("⚠️ 返信テキストが生成されていません")
-        continue
+        if not reply_text:
+            print("⚠️ 返信テキストが生成されていません")
+            continue
 
-    try:
-        post_data = {
-            "text": reply_text,
-            "createdAt": datetime.now(timezone.utc).isoformat(),
-        }
+        try:
+            post_data = {
+                "text": reply_text,
+                "createdAt": datetime.now(timezone.utc).isoformat(),
+            }
 
-        if reply_ref:
-            post_data["reply"] = reply_ref
+            if reply_ref:
+                post_data["reply"] = reply_ref
 
-        client.app.bsky.feed.post.create(
-            record=post_data,
-            repo=client.me.did
-        )
+            client.app.bsky.feed.post.create(
+                record=post_data,
+                repo=client.me.did
+            )
 
-        replied.add(notification_uri)
-        save_replied(replied)
-        print(f"✅ @{author_handle} に返信完了！")
-    except Exception as e:
-        print("⚠️ 投稿失敗:", e)
-        import traceback
-        traceback.print_exc()
+            # ✅ URIが正常なときだけ保存！
+            if notification_uri and notification_uri.strip().startswith("at://"):
+                replied.add(notification_uri.strip())
+                save_replied(replied)
+                print(f"✅ @{author_handle} に返信完了！")
+            else:
+                print(f"⛔ 不正なURIなので保存しません: {notification_uri}")
+
+            reply_count += 1
+            time.sleep(REPLY_INTERVAL)
+
+        except Exception as e:
+            print("⚠️ 投稿失敗:", e)
+            traceback.print_exc()
 
 if __name__ == "__main__":
     print("🤖 Reply Bot 起動中…")
