@@ -6,6 +6,7 @@ from atproto import Client, models
 from dotenv import load_dotenv
 from atproto_client.models.com.atproto.repo.strong_ref import Main as StrongRef
 from datetime import datetime, timezone, timedelta  # ← これも最初の import 群のとこに追加！
+import time
 
 REPLIED_TEXTS_FILE = "replied_texts.json"  # 追加で新しい保存ファイル
 
