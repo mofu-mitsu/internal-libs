@@ -247,8 +247,26 @@ def run_reply_bot():
         return
 
     self_did = client.me.did
+    # 読み込み後に不要な文字列が混ざってたら削除
     replied = load_replied()
 
+    print(f"📘 replied の型: {type(replied)} / 件数: {len(replied)}")
+
+    # 文字列が混ざってたら削除する（念のため "None" も）
+    for garbage in ["replied", None, "None"]:
+        if garbage in replied:
+            replied.remove(garbage)
+            print(f"🧹 ゴミデータ '{garbage}' を削除しました")
+
+        save_replied(replied)  # 修正後に保存
+        # ✨ 通知URIが正しいときだけ記録する！
+    if notification_uri and notification_uri.startswith("at://"):
+        replied.add(notification_uri)
+        save_replied(replied)
+        print(f"✅ @{author_handle} に返信完了！")
+    else:
+        print(f"⛔ 不正なURIなので保存しません: {notification_uri}")
+    
     try:
         notifications = client.app.bsky.notification.list_notifications(params={"limit": 25}).notifications
     except Exception as e:
