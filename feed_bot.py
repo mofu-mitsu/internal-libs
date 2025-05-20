@@ -119,6 +119,7 @@ def run_once():
 
     # 投稿IDだけで重複チェックするためのセットも作る
     replied_post_ids = set(uri.split('/')[-1] for uri in replied_uris)
+    replied_texts = set()  # ←ここ！
 
     # タイムラインから最新20件を取得
     timeline = client.app.bsky.feed.get_timeline(params={"limit": 20})
@@ -197,6 +198,7 @@ def run_once():
         else:
             replied_uris.add(uri)
             save_replied_uris(replied_uris)
+            replied_texts.add(text)  # ←ここ追加！
             print(f"✅ 返信しました → @{author}")
             print(f"📁 保存されたURI一覧（最新20件）: {list(replied_uris)[-20:]}")
             print(f"🗂 現在の保存数: {len(replied_uris)} 件")
