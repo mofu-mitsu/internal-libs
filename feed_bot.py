@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 # 🔽 📡 atproto関連
 from atproto import Client, models
 from atproto_client.models import AppBskyFeedPost
+from atproto.models.utils import get_strong_ref
 
 # 🔧 get_strong_refを自作で定義（もうimportしなくてOK！）
 def get_strong_ref(record):
@@ -149,16 +150,10 @@ def run_once():
         hashtags = [word for word in text.split() if word.startswith("#")]
         facets = generate_facets_from_text(reply_text, hashtags)
 
-        # 🔽 リプライ参照は必ず生成（元投稿の URI / CID を使って）
+        # 🔽 リプライ参照を生成（重要！）
         reply_ref = AppBskyFeedPost.ReplyRef(
-            root=AppBskyFeedPost.StrongRef(
-                uri=uri,
-                cid=cid
-            ),
-            parent=AppBskyFeedPost.StrongRef(
-                uri=uri,
-                cid=cid
-            )
+            root=get_strong_ref(post),
+            parent=get_strong_ref(post)
         )
 
         try:
