@@ -255,14 +255,6 @@ def handle_post(record, notification):
 
     return None, post_uri
 
-    # replyがない場合はStrongRefから組み立て（失敗してもNone）
-    if StrongRef and ReplyRef and post_uri and post_cid:
-        parent_ref = StrongRef(uri=post_uri, cid=post_cid)
-        reply_ref = ReplyRef(parent=parent_ref, root=parent_ref)
-        return reply_ref, post_uri
-
-    return None, post_uri
-
 def run_reply_bot():
     try:
         client = Client()
@@ -274,17 +266,18 @@ def run_reply_bot():
 
     self_did = client.me.did
     replied = load_replied()
-    replied_texts = load_replied_texts()  # ← ここが追加！
+    replied_texts = load_replied_texts()  # ← ここで辞書型で読み込み
+
     print(f"📘 replied の型: {type(replied)} / 件数: {len(replied)}")
 
-    # 🧹 ゴミデータの除去
+    # 🧹 ゴミデータ削除
     for garbage in ["replied", None, "None"]:
         if garbage in replied:
             replied.remove(garbage)
             print(f"🧹 ゴミデータ '{garbage}' を削除しました")
 
     save_replied(replied)
-    upload_to_gist(REPLIED_FILE, GIST_ID, TOKEN)  # ←これ超大事！
+    upload_to_gist(REPLIED_FILE, GIST_ID, TOKEN)
 
     try:
         notifications = client.app.bsky.notification.list_notifications(params={"limit": 25}).notifications
@@ -330,7 +323,7 @@ def run_reply_bot():
             continue
 
         if not author:
-            print("⚠️ author情報なし（notificationに含まれない）、スキップ")
+            print("⚠️ author情報なし、スキップ")
             continue
 
         author_handle = getattr(author, "handle", None)
@@ -340,27 +333,26 @@ def run_reply_bot():
         print(f"💬 受信メッセージ: {text}")
         print(f"🔗 チェック対象 notification_uri: {notification_uri}")
 
-        # 自分自身には返信しない
         if author_did == self_did or author_handle == HANDLE:
-            print("🛑 スキップ理由：自分自身の投稿")
+            print("🛑 自分自身の投稿、スキップ")
             continue
 
         check_key = f"{author_did}:{text}"
 
-        # 🔁 12時間以内の重複チェック（追加部分！）
+        # 🔁 12時間以内の重複チェック
         last_replied_time = replied_texts.get(check_key)
         if last_replied_time:
             elapsed = datetime.now(timezone.utc) - last_replied_time
             if elapsed < timedelta(hours=12):
-                print(f"⏭️ スキップ理由：12時間以内に同じユーザー・同じ内容に返信済み（{elapsed} 経過）")
+                print(f"⏭️ 12時間以内に返信済み（{elapsed}経過）→ スキップ")
                 continue
 
         if notification_uri in replied:
-            print(f"⏭️ スキップ理由：すでに replied 済み → {notification_uri}")
+            print(f"⏭️ すでに replied 済み → {notification_uri}")
             continue
 
         if not text:
-            print(f"⚠️ スキップ理由：テキストが空 → @{author_handle}")
+            print(f"⚠️ テキストが空 → @{author_handle}")
             continue
 
         reply_ref, post_uri = handle_post(record, notification)
@@ -392,8 +384,8 @@ def run_reply_bot():
             replied.add(notification_uri)
             save_replied(replied)
 
-            replied_texts[check_key] = now  # ← 追加！
-            save_replied_texts(replied_texts)  # ← 追加！
+            replied_texts[check_key] = now
+            save_replied_texts(replied_texts)
 
             print(f"✅ @{author_handle} に返信完了！ → {notification_uri}")
 
