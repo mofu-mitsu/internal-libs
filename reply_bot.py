@@ -248,6 +248,7 @@ def run_reply_bot():
     for notification in notifications:
         record = getattr(notification, "record", None)
         author = getattr(notification, "author", None)
+        notification_uri = getattr(notification, "uri", None)
 
         if not record or not hasattr(record, "text"):
             continue
@@ -271,13 +272,13 @@ def run_reply_bot():
             print("🛑 自分自身の投稿なのでスキップ")
             continue
 
+        if notification_uri is None or notification_uri in replied:
+            print("⏭️ すでに返信済み、または処理不要な通知")
+            continue
+
         reply_ref, post_uri = handle_post(record, notification)
         print("🔗 reply_ref:", reply_ref)
         print("🧾 post_uri:", post_uri)
-
-        if post_uri is None or post_uri in replied:
-            print("⏭️ すでに返信済み、または処理不要な投稿")
-            continue
 
         if not text:
             print("⚠️ テキストが空、スキップ")
@@ -305,7 +306,7 @@ def run_reply_bot():
                 repo=client.me.did
             )
 
-            replied.add(post_uri)
+            replied.add(notification_uri)  # 🔁 通知URIを記録する
             save_replied(replied)
             print(f"✅ @{author_handle} に返信完了！")
         except Exception as e:
