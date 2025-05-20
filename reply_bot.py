@@ -4,6 +4,8 @@ import requests
 import traceback
 from atproto import Client, models
 from dotenv import load_dotenv
+from atproto_client.models.com.atproto.repo.strong_ref import StrongRef
+
 
 # --- 環境変数読み込み ---
 load_dotenv()
@@ -205,12 +207,14 @@ def get_reply(text):
 from atproto_client.models.app.bsky.feed.post import ReplyRef
 from datetime import datetime, timezone
 
+# ✨ここが重要：リプライ用のStrongRefを作る関数
 def handle_post(record, notification):
     post_uri = getattr(notification, "uri", None)
     post_cid = getattr(notification, "cid", None)
 
     if post_uri and post_cid:
-        reply_ref = ReplyRef(parent=post_uri, root=post_uri)
+        parent_ref = StrongRef(uri=post_uri, cid=post_cid)
+        reply_ref = ReplyRef(parent=parent_ref, root=parent_ref)
     else:
         reply_ref = None
 
