@@ -4,7 +4,7 @@ import requests
 import traceback
 from atproto import Client, models
 from dotenv import load_dotenv
-from atproto_client.models.com.atproto.repo.strong_ref import StrongRef
+from atproto_client.models.com.atproto.repo.strong_ref import Main as StrongRef
 
 
 # --- 環境変数読み込み ---
