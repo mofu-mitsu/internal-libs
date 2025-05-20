@@ -248,6 +248,7 @@ def run_reply_bot():
 
     self_did = client.me.did
     replied = load_replied()
+    replied_texts = set()
     print(f"📘 replied の型: {type(replied)} / 件数: {len(replied)}")
 
     # 🧹 ゴミデータの除去
@@ -318,6 +319,10 @@ def run_reply_bot():
         if author_did == self_did or author_handle == HANDLE:
             print("🛑 スキップ理由：自分自身の投稿")
             continue
+        check_key = f"{author_did}:{text}"
+        if check_key in replied_texts:
+            print("⏭️ スキップ理由：同じユーザー・同じ内容にもう返信済み")
+            continue      
 
         if notification_uri in replied:
             print(f"⏭️ スキップ理由：すでに replied 済み → {notification_uri}")
@@ -354,6 +359,7 @@ def run_reply_bot():
 
             replied.add(notification_uri)
             save_replied(replied)
+            replied_texts.add(check_key) 
             print(f"✅ @{author_handle} に返信完了！ → {notification_uri}")
 
             reply_count += 1
