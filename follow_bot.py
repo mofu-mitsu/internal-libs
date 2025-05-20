@@ -36,7 +36,7 @@ def start():
         except Exception as e:
             print(f"❌ フォロー失敗: {did} - {e}")
 
-    # フォロー解除処理（rkey取得してから）
+    # フォロー解除処理（delete_record で対応）
     try:
         repo_follows = client.com.atproto.repo.list_records(params={
             "repo": self_did,
@@ -49,7 +49,13 @@ def start():
         for did in to_unfollow:
             rkey = did_to_rkey.get(did)
             if rkey:
-                client.app.bsky.graph.unfollow.delete(repo=self_did, rkey=rkey)
+                client.com.atproto.repo.delete_record(
+                    data=models.ComAtprotoRepoDeleteRecord.Data(
+                        repo=self_did,
+                        collection="app.bsky.graph.follow",
+                        rkey=rkey
+                    )
+                )
                 print(f"🔕 フォロー解除しました: {did}")
             else:
                 print(f"⚠️ rkey取得失敗: {did}（uriが見つからない）")
