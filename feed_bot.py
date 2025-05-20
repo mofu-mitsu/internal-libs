@@ -121,13 +121,21 @@ def run_once():
 
     for post in feed:
         text = getattr(post.post.record, "text", None)
-        uri = str(post.post.uri)  # ← ここを明示的に変換！
+        uri = str(post.post.uri)
+    
+        print(f"📝 処理対象URI: {uri}")
+        print(f"📂 保存済みURIsの一部: {list(replied_uris)[-5:]}")
+
         author = post.post.author.handle
 
-        # スキップ条件：自分の投稿 or 既に返信済み or テキストなし
         if author == HANDLE or uri in replied_uris or not text:
             if uri in replied_uris:
                 print(f"⏩ スキップ（既にリプ済み）→ @{author}: {text}")
+                print(f"    🔁 スキップ理由：URI一致 → {uri}")
+            elif author == HANDLE:
+                print(f"⏩ スキップ（自分の投稿）→ @{author}: {text}")
+            elif not text:
+                print(f"⏩ スキップ（テキストなし）→ @{author}")
             continue
 
         print(f"👀 チェック中 → @{author}: {text}")
