@@ -135,15 +135,17 @@ def run_once():
 
         author = post.post.author.handle
 
-        if author == HANDLE or post_id in replied_post_ids or not text:
-            if post_id in replied_post_ids:
-                print(f"⏩ スキップ（既にリプ済み）→ @{author}: {text}")
-                print(f"    🔁 スキップ理由：ID一致 → {post_id}")
-            elif author == HANDLE:
-                print(f"⏩ スキップ（自分の投稿）→ @{author}: {text}")
-            elif not text:
-                print(f"⏩ スキップ（テキストなし）→ @{author}")
-            continue
+　　　　if author == HANDLE or post_id in replied_post_ids or not text or text in replied_texts:
+        if post_id in replied_post_ids:
+            print(f"⏩ スキップ（既にリプ済み）→ @{author}: {text}")
+            print(f"    🔁 スキップ理由：ID一致 → {post_id}")
+        elif author == HANDLE:
+            print(f"⏩ スキップ（自分の投稿）→ @{author}: {text}")
+        elif not text:
+            print(f"⏩ スキップ（テキストなし）→ @{author}")
+        elif text in replied_texts:
+            print(f"⏩ スキップ（同じテキスト）→ @{author}: {text}")
+        continue
 
         print(f"👀 チェック中 → @{author}: {text}")
 
