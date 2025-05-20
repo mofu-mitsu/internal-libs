@@ -220,7 +220,7 @@ def handle_post(record, notification):
 
     if StrongRef and ReplyRef and post_uri and post_cid:
         parent_ref = StrongRef(uri=post_uri, cid=post_cid)
-        root_ref = getattr(record, "reply", {}).get("root", parent_ref) if hasattr(record, "reply") else parent_ref
+        root_ref = getattr(getattr(record, "reply", None), "root", parent_ref)
         reply_ref = ReplyRef(parent=parent_ref, root=root_ref)
         return reply_ref, post_uri
 
