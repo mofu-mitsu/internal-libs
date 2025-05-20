@@ -282,10 +282,10 @@ def run_reply_bot():
     reply_count = 0
 
     # 👇 ここを関数の中に入れる！インデント注意！
-for notification in notifications:
-    notification_uri = getattr(notification, "uri", None) or getattr(notification, "reasonSubject", None)
-    if notification_uri:
-        notification_uri = str(notification_uri)
+    for notification in notifications:
+        notification_uri = getattr(notification, "uri", None) or getattr(notification, "reasonSubject", None)
+        if notification_uri:
+            notification_uri = str(notification_uri)
 
     print(f"📌 チェック中 notification_uri: {notification_uri}")
     print(f"📂 保存済み replied: {replied}")
