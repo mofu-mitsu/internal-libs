@@ -172,11 +172,11 @@ def run_once():
             )
         except Exception as e:
             print(f"⚠️ 返信エラー: {e}")
-    else:
-        replied_uris.add(uri)
-        save_replied_uris(replied_uris)
-        print(f"✅ 返信しました → @{author}")
-        print(f"📁 保存されたURI一覧（最新20件）: {list(replied_uris)[-20:]}")
+        else:  # ← tryの成功時
+            replied_uris.add(uri)
+            save_replied_uris(replied_uris)
+            print(f"✅ 返信しました → @{author}")
+            print(f"📁 保存されたURI一覧（最新20件）: {list(replied_uris)[-20:]}")
 
 # 🔧 エントリーポイント
 if __name__ == "__main__":
