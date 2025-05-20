@@ -265,10 +265,10 @@ def run_reply_bot():
 
     # 👇 ここを関数の中に入れる！インデント注意！
     for notification in notifications:
-        notification_uri = getattr(notification, "reasonSubject", None)
+        notification_uri = getattr(notification, "uri", None) or getattr(notification, "reasonSubject", None)
 
-        print(f"📌 チェック中: {notification_uri}")
-        print(f"📂 保存済みURI: {replied}")
+        print(f"📌 チェック中 notification_uri: {notification_uri}")
+        print(f"📂 保存済み replied: {replied}")
 
         if reply_count >= MAX_REPLIES:
             print(f"⏹️ 最大返信数（{MAX_REPLIES}）に達したので終了します")
