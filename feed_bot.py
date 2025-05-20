@@ -11,12 +11,12 @@ from dotenv import load_dotenv
 from atproto import Client, models
 from atproto_client.models import AppBskyFeedPost
 
-# 🔧 get_strong_refを自作で定義（もうimportしなくてOK！）
-def get_strong_ref(record):
+# 🔧 get_strong_ref を投稿用にちゃんと動くよう調整
+def get_strong_ref_from_post(post_obj):
     return {
         "$type": "com.atproto.repo.strongRef",
-        "uri": record.uri,
-        "cid": record.cid,
+        "uri": post_obj.uri,
+        "cid": post_obj.cid,
     }
 
 # .envファイルを読み込む
