@@ -110,19 +110,20 @@ def run_once():
     replied_uris = load_replied_uris()
 
     timeline = client.app.bsky.feed.get_timeline(params={"limit": 20})
-    feed = timeline.feed  # ← ここが必要！
+    feed = timeline.feed
 
     for post in feed:
-        # 以下略
-    text = getattr(post.post.record, "text", None)
-    uri = post.post.uri
-    cid = post.post.cid
-    author = post.post.author.handle
+        text = getattr(post.post.record, "text", None)
+        uri = post.post.uri
+        cid = post.post.cid
+        author = post.post.author.handle
 
-    if author == HANDLE or uri in replied_uris or not text:
-        if uri in replied_uris:
-            print(f"⏩ スキップ（既にリプ済み）→ @{author}: {text}")
-        continue
+        if author == HANDLE or uri in replied_uris or not text:
+            if uri in replied_uris:
+                print(f"⏩ スキップ（既にリプ済み）→ @{author}: {text}")
+            continue
+
+        # あとはキーワード判定とかAI返信とか続くよね！
 
         print(f"👀 チェック中 → @{author}: {text}")
 
