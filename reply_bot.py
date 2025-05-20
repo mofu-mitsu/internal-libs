@@ -115,64 +115,28 @@ def load_replied():
     return set()
 
 # --- Gistに保存 ---
-def save_replied(replied_set):
-    gist_id = REPLIED_JSON_URL.split("/")[4]
-    filename = "replied.json"
-    headers = {
-        "Authorization": f"token {GIST_TOKEN}",
-        "Accept": "application/vnd.github.v3+json"
-    }
-    data = {
-        "files": {
-            filename: {
-                "content": json.dumps(list(replied_set), indent=2, ensure_ascii=False)
-            }
-        }
-    }
-    try:
-        res = requests.patch(f"https://api.github.com/gists/{gist_id}", headers=headers, json=data)
-        if res.status_code == 200:
-            print("💾 Gistに保存完了")
-        else:
-            print("⚠️ Gist保存失敗:", res.status_code, res.text)
-    except Exception as e:
-        print("⚠️ Gist保存エラー:", e)
-
-# --- AIで返す ---
 def generate_reply_via_api(user_input):
     prompt = f"ユーザー: {user_input}\nみりんてゃ（甘えん坊で地雷系ENFPっぽい）:"
+    HF_API_URL = "https://api-inference.huggingface.co/models/rinna/japanese-gpt2-small"
+    headers = {
+        "Authorization": f"Bearer {HF_API_TOKEN}",
+        "Content-Type": "application/json"
+    }
     data = {
         "inputs": prompt,
         "parameters": {
             "max_new_tokens": 100,
             "temperature": 0.8,
-            "top_p": 0.9,
+            "top_p": 0.95,
             "do_sample": True
+        },
+        "options": {
+            "wait_for_model": True
         }
     }
+
     try:
         print("📡 AIに問い合わせ中...")
-
-        HF_API_URL = "https://api-inference.huggingface.co/pipeline/text-generation"
-        headers = {
-            "Authorization": f"Bearer {HF_API_TOKEN}",
-            "Content-Type": "application/json"
-        }
-        data = {
-            "inputs": prompt,  # ← 引数のpromptを渡してね
-            "parameters": {
-                "max_new_tokens": 100,
-                "do_sample": True,
-                "temperature": 0.8,
-                "top_k": 50,
-                "top_p": 0.95
-            },
-            "options": {
-                "wait_for_model": True
-            },
-            "model": "rinna/japanese-gpt2-small"
-        }
-
         response = requests.post(HF_API_URL, headers=headers, json=data, timeout=20)
         print("🤖 AIレスポンス:", response.status_code, response.text)
 
@@ -188,10 +152,11 @@ def generate_reply_via_api(user_input):
                 return generated.split("みりんてゃ")[-1].strip()
             return generated.strip()
         else:
+            print(f"⚠️ Status Code: {response.status_code}, Text: {response.text}")
             return "ふふっ、返信がうまくできなかったけど、気持ちは伝わったよ〜！"
 
-    except Exception:
-        print("⚠️ AIレスポンスエラー:")
+    except Exception as e:
+        print("⚠️ AIレスポンスエラー:", e)
         traceback.print_exc()
         return "え〜ん……みりんてゃ迷子になっちゃった〜"
         
