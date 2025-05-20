@@ -23,20 +23,6 @@ HEADERS = {
     "Content-Type": "application/json"
 }
 
-def generate_reply(prompt):
-    API_URL = "https://api-inference.huggingface.co/models/rinna/japanese-gpt2-small"
-    headers = {"Authorization": f"Bearer {HF_API_TOKEN}"}
-    payload = {
-        "inputs": prompt,
-        "parameters": {
-            "max_new_tokens": 100,
-            "do_sample": True,
-            "temperature": 0.8,
-            "top_k": 50,
-            "top_p": 0.95
-        }
-    }
-
 REPLY_TABLE = {
      "使い方": "使い方は「♡推しプロフィールメーカー♡」のページにあるよ〜！かんたんっ♪",
     "おすすめ": "えへへ♡ いちばんのおすすめは「♡推しプロフィールメーカー♡」だよっ！",
@@ -164,15 +150,44 @@ def generate_reply_via_api(user_input):
     }
     try:
         print("📡 AIに問い合わせ中...")
-        response = requests.post(HF_API_URL, headers=HEADERS, json=data, timeout=20)
+
+        HF_API_URL = "https://api-inference.huggingface.co/pipeline/text-generation"
+        headers = {
+            "Authorization": f"Bearer {HF_API_TOKEN}",
+            "Content-Type": "application/json"
+        }
+        data = {
+            "inputs": prompt,  # ← 引数のpromptを渡してね
+            "parameters": {
+                "max_new_tokens": 100,
+                "do_sample": True,
+                "temperature": 0.8,
+                "top_k": 50,
+                "top_p": 0.95
+            },
+            "options": {
+                "wait_for_model": True
+            },
+            "model": "rinna/japanese-gpt2-small"
+        }
+
+        response = requests.post(HF_API_URL, headers=headers, json=data, timeout=20)
         print("🤖 AIレスポンス:", response.status_code, response.text)
+
         if response.status_code == 200:
-            generated = response.json()[0]["generated_text"]
+            result = response.json()
+            if isinstance(result, list) and "generated_text" in result[0]:
+                generated = result[0]["generated_text"]
+            else:
+                print("⚠️ 予期しない応答形式:", result)
+                return "えへへっ、ちょっとだけ迷子になっちゃった〜"
+
             if "みりんてゃ" in generated:
                 return generated.split("みりんてゃ")[-1].strip()
-            return generated
+            return generated.strip()
         else:
             return "ふふっ、返信がうまくできなかったけど、気持ちは伝わったよ〜！"
+
     except Exception:
         print("⚠️ AIレスポンスエラー:")
         traceback.print_exc()
