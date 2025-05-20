@@ -15,6 +15,21 @@ HF_API_TOKEN = os.environ["HF_API_TOKEN"]
 REPLIED_JSON_URL = os.environ["REPLIED_JSON_URL"]
 GIST_TOKEN = os.environ["GIST_TOKEN"]
 
+import json
+import os
+
+REPLIED_FILE = "replied.json"  # 返信済み通知のURIを保存するファイル
+
+def load_replied():
+    if os.path.exists(REPLIED_FILE):
+        with open(REPLIED_FILE, "r", encoding="utf-8") as f:
+            return set(json.load(f))
+    return set()
+
+def save_replied(replied_set):
+    with open(REPLIED_FILE, "w", encoding="utf-8") as f:
+        json.dump(list(replied_set), f, ensure_ascii=False, indent=2)
+
 client = Client()
 client.login(HANDLE, APP_PASSWORD)
 
