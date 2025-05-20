@@ -19,13 +19,25 @@ REPLIED_FILE = "replied.json"  # 返信済み通知のURIを保存するファ�
 
 def load_replied():
     if os.path.exists(REPLIED_FILE):
-        with open(REPLIED_FILE, "r", encoding="utf-8") as f:
-            return set(json.load(f))
-    return set()
+        try:
+            with open(REPLIED_FILE, "r", encoding="utf-8") as f:
+                data = set(json.load(f))
+                print(f"✅ replied.json を読み込みました（件数: {len(data)}）")
+                return data
+        except Exception as e:
+            print(f"⚠️ replied.json の読み込み中にエラーが発生しました: {e}")
+            return set()
+    else:
+        print("📂 replied.json が存在しないので新規作成します")
+        return set()
 
 def save_replied(replied_set):
-    with open(REPLIED_FILE, "w", encoding="utf-8") as f:
-        json.dump(list(replied_set), f, ensure_ascii=False, indent=2)
+    try:
+        with open(REPLIED_FILE, "w", encoding="utf-8") as f:
+            json.dump(list(replied_set), f, ensure_ascii=False, indent=2)
+        print(f"💾 replied.json に保存しました（件数: {len(replied_set)}）")
+    except Exception as e:
+        print(f"⚠️ replied.json の保存中にエラーが発生しました: {e}")
 
 client = Client()
 client.login(HANDLE, APP_PASSWORD)
