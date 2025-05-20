@@ -206,8 +206,14 @@ from atproto_client.models.app.bsky.feed.post import ReplyRef
 from datetime import datetime, timezone
 
 def handle_post(record, notification):
-    reply_ref = getattr(record, "reply", None)
     post_uri = getattr(notification, "uri", None)
+    post_cid = getattr(notification, "cid", None)
+
+    if post_uri and post_cid:
+        reply_ref = ReplyRef(parent=post_uri, root=post_uri)
+    else:
+        reply_ref = None
+
     return reply_ref, post_uri
 
 def run_reply_bot():
