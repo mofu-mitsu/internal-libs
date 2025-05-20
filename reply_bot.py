@@ -273,7 +273,7 @@ def run_reply_bot():
 
     self_did = client.me.did
     replied = load_replied()
-    replied_texts = set()
+    replied_texts = load_replied_texts()  # ← ここが追加！
     print(f"📘 replied の型: {type(replied)} / 件数: {len(replied)}")
 
     # 🧹 ゴミデータの除去
@@ -297,12 +297,10 @@ def run_reply_bot():
     reply_count = 0
 
     for notification in notifications:
-        # uri or reasonSubject（どちらか）＋ fallback
         notification_uri = getattr(notification, "uri", None) or getattr(notification, "reasonSubject", None)
         if notification_uri:
             notification_uri = str(notification_uri).strip()
         else:
-            # fallback：author_handle + text をキーとして使う
             record = getattr(notification, "record", None)
             author = getattr(notification, "author", None)
             if not record or not hasattr(record, "text") or not author:
@@ -344,10 +342,16 @@ def run_reply_bot():
         if author_did == self_did or author_handle == HANDLE:
             print("🛑 スキップ理由：自分自身の投稿")
             continue
+
         check_key = f"{author_did}:{text}"
-        if check_key in replied_texts:
-            print("⏭️ スキップ理由：同じユーザー・同じ内容にもう返信済み")
-            continue      
+
+        # 🔁 12時間以内の重複チェック（追加部分！）
+        last_replied_time = replied_texts.get(check_key)
+        if last_replied_time:
+            elapsed = datetime.now(timezone.utc) - last_replied_time
+            if elapsed < timedelta(hours=12):
+                print(f"⏭️ スキップ理由：12時間以内に同じユーザー・同じ内容に返信済み（{elapsed} 経過）")
+                continue
 
         if notification_uri in replied:
             print(f"⏭️ スキップ理由：すでに replied 済み → {notification_uri}")
@@ -382,9 +386,13 @@ def run_reply_bot():
                 repo=client.me.did
             )
 
+            now = datetime.now(timezone.utc)
             replied.add(notification_uri)
             save_replied(replied)
-            replied_texts.add(check_key) 
+
+            replied_texts[check_key] = now  # ← 追加！
+            save_replied_texts(replied_texts)  # ← 追加！
+
             print(f"✅ @{author_handle} に返信完了！ → {notification_uri}")
 
             reply_count += 1
