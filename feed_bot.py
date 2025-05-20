@@ -114,6 +114,9 @@ def run_once():
 
     print("📨 投稿を確認中…")
     replied_uris = load_replied_uris()
+    replied_uris = load_replied_uris()
+    print(f"📄 保存済みURI読み込み完了 → 件数: {len(replied_uris)}")
+    print(f"🔍 一部サンプル: {list(replied_uris)[:5]}")
 
     # タイムラインから最新20件を取得
     timeline = client.app.bsky.feed.get_timeline(params={"limit": 20})
