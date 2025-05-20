@@ -146,7 +146,7 @@ def run_once():
             print(f"⏩ スキップ（テキストなし）→ @{author}")
         elif text in replied_texts:
             print(f"⏩ スキップ（同じテキスト）→ @{author}: {text}")
-        continue
+            continue
 
         print(f"👀 チェック中 → @{author}: {text}")
 
