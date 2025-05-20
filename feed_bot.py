@@ -113,13 +113,13 @@ def run_once():
     timeline = client.app.bsky.feed.get_timeline(params={"limit": 20})
     feed = timeline.feed
 
-    for post in feed:
-        text = getattr(post.post.record, "text", None)
-        uri = post.post.uri
-        cid = post.post.cid
-        author = post.post.author.handle
+for post in feed:
+    text = getattr(post.post.record, "text", None)
+    uri = post.post.uri
+    cid = post.post.cid
+    author = post.post.author.handle
 
-        if author == HANDLE or uri in replied_uris or not text:
+    if author == HANDLE or uri in replied_uris or not text:
         if uri in replied_uris:
             print(f"⏩ スキップ（既にリプ済み）→ @{author}: {text}")
         continue
