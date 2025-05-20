@@ -30,11 +30,10 @@ client = Client()
 client.login(HANDLE, APP_PASSWORD)
 
 # リプライ済みURIをファイルから読み込む
-def load_replied_uris():
-    if os.path.exists(REPLIED_FILE):
-        with open(REPLIED_FILE, "r") as f:
-            return set(json.load(f))
-    return set()
+def save_replied_uris(uris):
+    with open("replied_uris.txt", "w") as f:
+        for uri in uris:
+            f.write(uri + "\n")
 
 # リプライ済みURIを保存
 def save_replied_uris(replied_uris):
