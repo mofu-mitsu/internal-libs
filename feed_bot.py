@@ -149,11 +149,11 @@ def run_once():
         hashtags = [word for word in text.split() if word.startswith("#")]
         facets = generate_facets_from_text(reply_text, hashtags)
 
-        # 🔽 リプライ参照を生成（重要！）
-        reply_ref = AppBskyFeedPost.ReplyRef(
-            root=get_strong_ref(post),
-            parent=get_strong_ref(post)
-        )
+    # 🔽 使うときはこう！
+    reply_ref = AppBskyFeedPost.ReplyRef(
+        root=get_strong_ref_from_post(post.post),
+        parent=get_strong_ref_from_post(post.post)
+    )
 
         try:
             client.app.bsky.feed.post.create(
