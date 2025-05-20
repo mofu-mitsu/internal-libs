@@ -128,7 +128,7 @@ def run_once():
     for post in feed:
         text = getattr(post.post.record, "text", None)
         uri = str(post.post.uri)
-        post_id = uri.split('/')[-1]  # ← 投稿IDだけ取り出す
+        post_id = uri.split('/')[-1]
 
         print(f"📝 処理対象URI: {uri}")
         print(f"📂 保存済みURIsの一部: {list(replied_uris)[-5:]}")
@@ -136,20 +136,20 @@ def run_once():
 
         author = post.post.author.handle
 
-    if author == HANDLE or post_id in replied_post_ids or not text or text in replied_texts:
-        if post_id in replied_post_ids:
-            print(f"⏩ スキップ（既にリプ済み）→ @{author}: {text}")
-            print(f"    🔁 スキップ理由：ID一致 → {post_id}")
-        elif author == HANDLE:
-            print(f"⏩ スキップ（自分の投稿）→ @{author}: {text}")
-        elif not text:
-            print(f"⏩ スキップ（テキストなし）→ @{author}")
-        elif text in replied_texts:
-            print(f"⏩ スキップ（同じテキスト）→ @{author}: {text}")
-            continue
+        # 🔽 この if ブロックごとインデントしてループ内に置く！
+        if author == HANDLE or post_id in replied_post_ids or not text or text in replied_texts:
+            if post_id in replied_post_ids:
+                print(f"⏩ スキップ（既にリプ済み）→ @{author}: {text}")
+                print(f"    🔁 スキップ理由：ID一致 → {post_id}")
+            elif author == HANDLE:
+                print(f"⏩ スキップ（自分の投稿）→ @{author}: {text}")
+            elif not text:
+                print(f"⏩ スキップ（テキストなし）→ @{author}")
+            elif text in replied_texts:
+                print(f"⏩ スキップ（同じテキスト）→ @{author}: {text}")
+            continue  # ← これが正しくループ内に！
 
         print(f"👀 チェック中 → @{author}: {text}")
-
         matched = False
         reply_text = ""
 
