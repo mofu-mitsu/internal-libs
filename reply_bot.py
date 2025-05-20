@@ -292,7 +292,7 @@ def run_reply_bot():
 
     if reply_count >= MAX_REPLIES:
         print(f"⏹️ 最大返信数（{MAX_REPLIES}）に達したので終了します")
-        break
+            break
 
     record = getattr(notification, "record", None)
     author = getattr(notification, "author", None)
