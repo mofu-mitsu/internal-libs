@@ -218,9 +218,13 @@ def handle_post(record, notification):
     post_uri = getattr(notification, "uri", None)
     post_cid = getattr(notification, "cid", None)
 
-    # 既にreply情報が入ってるならそれを使う
-    if hasattr(record, "reply") and record.reply:
-        return record.reply, post_uri
+    if StrongRef and ReplyRef and post_uri and post_cid:
+        parent_ref = StrongRef(uri=post_uri, cid=post_cid)
+        root_ref = getattr(record, "reply", {}).get("root", parent_ref) if hasattr(record, "reply") else parent_ref
+        reply_ref = ReplyRef(parent=parent_ref, root=root_ref)
+        return reply_ref, post_uri
+
+    return None, post_uri
 
     # replyがない場合はStrongRefから組み立て（失敗してもNone）
     if StrongRef and ReplyRef and post_uri and post_cid:
