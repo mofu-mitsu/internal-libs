@@ -136,7 +136,7 @@ def run_once():
 
         author = post.post.author.handle
 
-　　　　if author == HANDLE or post_id in replied_post_ids or not text or text in replied_texts:
+    if author == HANDLE or post_id in replied_post_ids or not text or text in replied_texts:
         if post_id in replied_post_ids:
             print(f"⏩ スキップ（既にリプ済み）→ @{author}: {text}")
             print(f"    🔁 スキップ理由：ID一致 → {post_id}")
