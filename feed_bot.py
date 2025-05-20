@@ -121,7 +121,7 @@ def run_once():
 
     for post in feed:
         text = getattr(post.post.record, "text", None)
-        uri = post.post.uri
+        uri = str(post.post.uri)  # ← ここを明示的に変換！
         author = post.post.author.handle
 
         # スキップ条件：自分の投稿 or 既に返信済み or テキストなし
