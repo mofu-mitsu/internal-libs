@@ -1,12 +1,33 @@
+# ------------------------------
+# 🌐 基本ライブラリ・API
+# ------------------------------
 import os
 import json
 import requests
 import traceback
-from atproto import Client, models
-from dotenv import load_dotenv
-from atproto_client.models.com.atproto.repo.strong_ref import Main as StrongRef
-from datetime import datetime, timezone, timedelta  # ← これも最初の import 群のとこに追加！
 import time
+
+# ------------------------------
+# 🕒 日時関連（UTC→JST）
+# ------------------------------
+from datetime import datetime, timezone, timedelta
+
+# ------------------------------
+# 🧠 モデル関係（transformers）
+# ------------------------------
+from transformers import AutoModelForCausalLM, AutoTokenizer
+import torch
+
+# ------------------------------
+# 🔵 Bluesky / atproto ライブラリ
+# ------------------------------
+from atproto import Client, models
+from atproto_client.models.com.atproto.repo.strong_ref import Main as StrongRef
+
+# ------------------------------
+# 🔐 環境変数
+# ------------------------------
+from dotenv import load_dotenv
 
 REPLIED_TEXTS_FILE = "replied_texts.json"  # 追加で新しい保存ファイル
 
@@ -194,55 +215,46 @@ def upload_to_gist(file_path, gist_id, token):
         print(f"⚠️ Gistアップロード中にエラーが発生しました: {e}")
         
 # --- Gistに保存 ---
-def generate_reply_via_api(user_input):
-    prompt = f"ユーザー: {user_input}\nみりんてゃ（甘えん坊で地雷系ENFPっぽい）:"
+from transformers import AutoModelForCausalLM, AutoTokenizer
+import torch
+from datetime import datetime
+import traceback
 
-    # モデルURLを差し替え！
-    HF_API_URL = "https://api-inference.huggingface.co/models/stabilityai/japanese-stablelm-instruct-alpha-7b"
-    headers = {
-        "Authorization": f"Bearer {HF_API_TOKEN}",
-        "Content-Type": "application/json"
-    }
-    data = {
-        "inputs": prompt,
-        "parameters": {
-            "max_new_tokens": 100,
-            "temperature": 0.8,
-            "top_p": 0.95,
-            "do_sample": True
-        },
-        "options": {
-            "wait_for_model": True
-        }
-    }
+def generate_reply_via_local_model(user_input):
+    model_name = "elyza/ELYZA-japanese-LLaMA-2-7b"
 
     try:
-        print(f"📤 {datetime.now().isoformat()} ｜APIへリクエスト送信中…")
-        response = requests.post(HF_API_URL, headers=headers, json=data, timeout=20)
-        print(f"🌐 ステータスコード: {response.status_code}")
-        print(f"📦 レスポンス内容: {response.text}")
+        print(f"📤 {datetime.now().isoformat()} ｜ モデルとトークナイザを読み込み中…")
+        tokenizer = AutoTokenizer.from_pretrained(model_name)
+        model = AutoModelForCausalLM.from_pretrained(
+            model_name,
+            torch_dtype=torch.float16,
+            device_map="auto"
+        )
 
-        response.raise_for_status()
+        prompt = f"ユーザー: {user_input}\nみりんてゃ（甘えん坊で地雷系ENFPっぽい）:"
+        token_ids = tokenizer.encode(prompt, return_tensors="pt")
 
-        result = response.json()
-        if isinstance(result, list) and "generated_text" in result[0]:
-            generated = result[0]["generated_text"]
+        print(f"📤 {datetime.now().isoformat()} ｜ テキスト生成中…")
+        with torch.no_grad():
+            output_ids = model.generate(
+                token_ids.to(model.device),
+                max_new_tokens=100,
+                temperature=0.8,
+                top_p=0.95,
+                do_sample=True
+            )
 
-            # 「みりんてゃ」以降だけ取り出す
-            if "みりんてゃ" in generated:
-                reply = generated.split("みりんてゃ")[-1].strip()
-            else:
-                reply = generated.strip()
+        output = tokenizer.decode(output_ids[0], skip_special_tokens=True)
+        print(f"📦 出力内容: {output}")
 
-            return reply
-
+        if "みりんてゃ" in output:
+            reply = output.split("みりんてゃ")[-1].strip()
         else:
-            print("⚠️ 予期しない応答形式:", result)
-            return "えへへっ、ちょっとだけ迷子になっちゃった〜"
+            print("⚠️ 予期しない出力形式:", output)
+            reply = "えへへっ、ちょっとだけ迷子になっちゃった〜"
 
-    except requests.exceptions.RequestException as e:
-        print(f"⚠️ API通信エラー: {e}")
-        return "うぅっ、みりんてゃ、お空の彼方に飛ばされたみたい……"
+        return reply
 
     except Exception as e:
         print("⚠️ 予期しないエラー:", e)
