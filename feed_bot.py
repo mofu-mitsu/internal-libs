@@ -4,6 +4,7 @@ import os
 import json
 import requests
 import time
+import random
 
 # 🔽 🌱 外部ライブラリ
 from dotenv import load_dotenv
@@ -153,32 +154,6 @@ def save_replied_texts(replied_texts):
         except:
             msg = response.text
         print(f"⚠️ replied_texts保存失敗: {response.status_code} {msg}")
-        
-# Hugging Face APIで返信を生成する関数
-def generate_reply(prompt):
-    API_URL = "https://api-inference.huggingface.co/models/rinna/japanese-gpt2-small"
-    headers = {"Authorization": f"Bearer {HF_API_TOKEN}"}
-    payload = {
-        "inputs": prompt,
-        "parameters": {
-            "max_new_tokens": 100,
-            "do_sample": True,
-            "temperature": 0.8,
-            "top_k": 50,
-            "top_p": 0.95
-        }
-    }
-
-    try:
-        response = requests.post(API_URL, headers=headers, json=payload, timeout=10)
-        result = response.json()
-        if isinstance(result, list) and result[0]["generated_text"]:
-            return result[0]["generated_text"].split("みりんてゃ「")[-1].strip()
-        else:
-            return "えへへ、なんかうまく考えつかなかったかも〜…"
-    except Exception as e:
-        print("APIエラー:", e)
-        return "ちょっとだけ、おやすみ中かも…また話してね♡"
 
 # 特定のキーワードに反応する返答一覧
 KEYWORD_RESPONSES = {
@@ -191,6 +166,13 @@ KEYWORD_RESPONSES = {
     "オリキャラプロフィールメーカー": "オリキャラって…自分の分身でしょ？ うちの子語り、聞かせてよ〜♡ みりんてゃも聞きた〜い！",
     "ふわふわ相性診断": "ふたりの相性…ふわふわで、とけちゃいそうっ♡ 結果どうだった〜？教えて教えてっ！",
 }
+MENTION_TEMPLATES = [
+    "えへへ、呼んでくれてありがと♡ みりんてゃはここにいるよ〜っ♪",
+    "にゃっ⁈ 呼ばれちゃったっ♡ どうしたの〜？",
+    "みりんてゃ参上っ！呼んでくれてうれし〜っ♡",
+    "うん、今日もちゃんとお返事するよっ♪",
+    "は〜いっ！名前呼ばれてうれしいな〜♡"
+]
 
 # Facet（ハッシュタグなど）の位置を取得する関数
 from atproto_client.models import AppBskyRichtextFacet
@@ -267,9 +249,8 @@ def run_once():
                     break
 
             if not matched and f"@{HANDLE}" in text:
-                prompt = f"みりんてゃは地雷系ENFPで、甘えん坊でちょっと病みかわな子。フォロワーが「{text}」って投稿したら、どう返す？\nみりんてゃ「"
-                reply_text = generate_reply(prompt)
-                print(f"🤖 AI返信生成: {reply_text}")
+                random.choice(MENTION_TEMPLATES)
+                print(f"💬 メンション返信テンプレ: {reply_text}")
                 matched = True
 
             if not matched:
