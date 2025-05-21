@@ -169,6 +169,7 @@ def generate_facets_from_text(text, hashtags):
     return facets
         
 # 投稿を確認して返信する関数
+# 投稿を確認して返信する関数
 def run_once():
     try:
         client = Client()
@@ -176,11 +177,14 @@ def run_once():
 
         print("📨 投稿を確認中…")
         replied_uris = load_replied_uris()
+        replied_texts = set(load_replied_texts())
+
         print(f"📄 保存済みURI読み込み完了 → 件数: {len(replied_uris)}")
-        print(f"🔍 一部サンプル: {list(replied_uris)[:5]}")
+        print(f"🗂 保存済みテキスト読み込み完了 → 件数: {len(replied_texts)}")
+        print(f"🔍 URIサンプル: {list(replied_uris)[:5]}")
+        print(f"🔍 テキストサンプル: {list(replied_texts)[:5]}")
 
         replied_post_ids = set(uri.split('/')[-1] for uri in replied_uris)
-        replied_texts = set(load_replied_texts())
 
         timeline = client.app.bsky.feed.get_timeline(params={"limit": 20})
         feed = timeline.feed
@@ -189,22 +193,23 @@ def run_once():
             text = getattr(post.post.record, "text", None)
             uri = str(post.post.uri)
             post_id = uri.split('/')[-1]
+
+            print(f"📝 処理対象URI: {uri}")
+            print(f"📂 保存済みURIsの一部: {list(replied_uris)[-5:]}")
+            print(f"🆔 投稿ID: {post_id}")
+
             author = post.post.author.handle
 
-            print(f"\n📝 処理対象URI: {uri}")
-            print(f"🆔 投稿ID: {post_id}")
-            print(f"👤 投稿者: @{author}")
-
             if author == HANDLE or post_id in replied_post_ids or not text or text in replied_texts:
-                print("⏩ スキップ理由：", end="")
                 if post_id in replied_post_ids:
-                    print("既に返信済み")
+                    print(f"⏩ スキップ（既にリプ済み）→ @{author}: {text}")
+                    print(f"    🔁 スキップ理由：ID一致 → {post_id}")
                 elif author == HANDLE:
-                    print("自分自身の投稿")
+                    print(f"⏩ スキップ（自分の投稿）→ @{author}: {text}")
                 elif not text:
-                    print("テキストなし")
+                    print(f"⏩ スキップ（テキストなし）→ @{author}")
                 elif text in replied_texts:
-                    print("同じテキストに返信済み")
+                    print(f"⏩ スキップ（同じテキスト）→ @{author}: {text}")
                 continue
 
             print(f"👀 チェック中 → @{author}: {text}")
@@ -221,8 +226,8 @@ def run_once():
             if not matched and f"@{HANDLE}" in text:
                 prompt = f"みりんてゃは地雷系ENFPで、甘えん坊でちょっと病みかわな子。フォロワーが「{text}」って投稿したら、どう返す？\nみりんてゃ「"
                 reply_text = generate_reply(prompt)
-                matched = True
                 print(f"🤖 AI返信生成: {reply_text}")
+                matched = True
 
             if not matched:
                 print("🚫 スキップ: 条件に合わない投稿")
@@ -248,18 +253,25 @@ def run_once():
                 )
             except Exception as e:
                 print(f"⚠️ 返信エラー: {e}")
-                continue
+            else:
+                replied_uris.add(uri)
+                replied_texts.add(text)
+                print(f"✅ 返信しました → @{author}")
+                print(f"📁 保存されたURI一覧（最新5件）: {list(replied_uris)[-5:]}")
+                print(f"🗂 現在の保存数: {len(replied_uris)} 件")
 
-            print(f"✅ 返信成功 → @{author}")
-            replied_uris.add(uri)
-            replied_texts.add(text)
+        try:
+            save_replied_uris(replied_uris)
+            print(f"💾 URI保存成功 → 合計: {len(replied_uris)} 件")
+            print(f"📁 最新URI一覧: {list(replied_uris)[-5:]}")
 
-            try:
-                save_replied_uris(replied_uris)
-                print(f"💾 URI保存成功 → 合計: {len(replied_uris)} 件")
-                print(f"📁 最新URI一覧: {list(replied_uris)[-5:]}")
-            except Exception as e:
-                print(f"❌ URI保存失敗: {e}")
+            save_replied_texts(dict((t, True) for t in replied_texts))
+            print(f"💾 テキスト保存成功 → 合計: {len(replied_texts)} 件")
+            print("📦 最新保存テキスト（抜粋）:")
+            print(json.dumps(list(replied_texts)[-5:], ensure_ascii=False, indent=2))
+
+        except Exception as e:
+            print(f"❌ 保存失敗: {e}")
 
     except InvokeTimeoutError:
         print("⚠️ APIタイムアウト！Bluesky側の応答がないか、接続に時間がかかりすぎたみたい。")
