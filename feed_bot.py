@@ -180,7 +180,7 @@ def run_once():
         print(f"🔍 一部サンプル: {list(replied_uris)[:5]}")
 
         replied_post_ids = set(uri.split('/')[-1] for uri in replied_uris)
-        replied_texts = set()
+        replied_texts = set(load_replied_texts())
 
         timeline = client.app.bsky.feed.get_timeline(params={"limit": 20})
         feed = timeline.feed
