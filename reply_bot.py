@@ -263,7 +263,7 @@ def get_reply(text):
         if keyword in text:
             print(f"📌 テンプレで返答: {reply}")
             return reply
-     return generate_reply_via_local_model(text)
+    return generate_reply_via_local_model(text)  # ←インデントそろえた！
 
 # --- メイン処理 ---
 from atproto_client.models.app.bsky.feed.post import ReplyRef
