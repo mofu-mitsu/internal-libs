@@ -312,7 +312,7 @@ def run_reply_bot():
 
     save_replied(replied)
     save_replied_texts(replied_texts)
-    upload_to_gist(REPLIED_FILE, GIST_ID, TOKEN)
+    upload_to_gist(REPLIED_FILE, GIST_ID, GIST_TOKEN)
 
     try:
         notifications = client.app.bsky.notification.list_notifications(params={"limit": 25}).notifications
