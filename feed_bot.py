@@ -169,7 +169,6 @@ def generate_facets_from_text(text, hashtags):
     return facets
         
 # 投稿を確認して返信する関数
-# 投稿を確認して返信する関数
 def run_once():
     try:
         client = Client()
@@ -265,7 +264,7 @@ def run_once():
             print(f"💾 URI保存成功 → 合計: {len(replied_uris)} 件")
             print(f"📁 最新URI一覧: {list(replied_uris)[-5:]}")
 
-            save_replied_texts(dict((t, True) for t in replied_texts))
+            save_replied_texts({t: True for t in replied_texts})
             print(f"💾 テキスト保存成功 → 合計: {len(replied_texts)} 件")
             print("📦 最新保存テキスト（抜粋）:")
             print(json.dumps(list(replied_texts)[-5:], ensure_ascii=False, indent=2))
@@ -275,7 +274,7 @@ def run_once():
 
     except InvokeTimeoutError:
         print("⚠️ APIタイムアウト！Bluesky側の応答がないか、接続に時間がかかりすぎたみたい。")
-
+        
 # 🔧 エントリーポイント
 if __name__ == "__main__":
     run_once()
