@@ -421,21 +421,15 @@ else:
 
         check_key = f"{author_did}:{hash_text(text)}"
 
-        # 🔁 12時間以内の重複チェック
-        last_replied_time = replied_texts.get(check_key)
-        if last_replied_time:
-            elapsed = datetime.now(timezone.utc) - last_replied_time
-            if elapsed < timedelta(hours=12):
-                print(f"⏭️ 12時間以内に返信済み（{elapsed}経過）→ スキップ")
-                continue
 
         if notification_uri in replied:
-            print(f"⏭️ すでに replied 済み → {notification_uri}")
-            continue
+           print(f"⏭️ すでに replied 済み → {notification_uri}")
+           print(f"📂 現在の保存件数: {len(replied)} / 最新5件: {list(replied)[-5:]}")
+           continue
 
         if not text:
-            print(f"⚠️ テキストが空 → @{author_handle}")
-            continue
+           print(f"⚠️ テキストが空 → @{author_handle}")
+           continue
 
         reply_ref, post_uri = handle_post(record, notification)
         print("🔗 reply_ref:", reply_ref)
@@ -453,7 +447,6 @@ else:
                 "text": reply_text,
                 "createdAt": datetime.now(timezone.utc).isoformat(),
             }
-
             if reply_ref:
                 post_data["reply"] = reply_ref
 
@@ -465,11 +458,12 @@ else:
             now = datetime.now(timezone.utc)
             replied.add(notification_uri)
             save_replied(replied)
-
             replied_texts[check_key] = now
             save_replied_texts(replied_texts)
 
             print(f"✅ @{author_handle} に返信完了！ → {notification_uri}")
+            print(f"💾 URI保存成功 → 合計: {len(replied)} 件")
+            print(f"📁 最新URI一覧: {list(replied)[-5:]}")
 
             reply_count += 1
             time.sleep(REPLY_INTERVAL)
