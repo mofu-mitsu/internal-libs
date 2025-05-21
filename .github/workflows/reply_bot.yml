@@ -21,6 +21,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
+          pip install torch transformers  # チャッピーの提案を追加
 
       - name: Run Reply Bot
         env:
@@ -33,4 +34,3 @@ jobs:
           GIST_ID: fa3fad819922208c93636da84f75bc34  # ← Gist ID は直書きOK！
         run: |
           python reply_bot.py
-        
