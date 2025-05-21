@@ -21,7 +21,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
-          pip install torch transformers  # チャッピーの提案を追加
+          pip install torch transformers accelerate  # ← accelerate を追加したよ！
 
       - name: Run Reply Bot
         env:
