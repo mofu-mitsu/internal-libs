@@ -37,15 +37,15 @@ GIST_TOKEN = os.environ["GIST_TOKEN"]  # GitHub Actionsで設定してる想定
 
 # Gistから読み込む
 def load_replied_uris():
-    try:
-        res = requests.get(REPLIED_JSON_URL)
-        if res.status_code == 200:
-            return set(json.loads(res.text))
-        else:
-            print("⚠️ Gist読み込み失敗:", res.status_code)
-    except Exception as e:
-        print("⚠️ Gist読み込みエラー:", e)
-    return set()
+    print(f"🌐 Gistから読み込み中: {GIST_RAW_URL}")
+    response = requests.get(f"{GIST_RAW_URL}")
+    if response.status_code == 200:
+        lines = response.text.strip().split("\n")
+        print(f"✅ Gistから読み込んだ内容: {lines[:5]}")
+        return set(lines)
+    else:
+        print(f"⚠️ Gist読み込み失敗！status: {response.status_code}")
+        return set()
 
 # Gistに保存する
 def save_replied_uris(replied_uris):
