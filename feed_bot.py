@@ -22,32 +22,35 @@ def get_strong_ref_from_post(post_obj):
 
 # .envファイルを読み込む
 load_dotenv()
-HF_API_TOKEN = os.getenv("HF_API_TOKEN")
-HANDLE = os.environ['HANDLE']
-APP_PASSWORD = os.environ['APP_PASSWORD']
-REPLIED_FILE = "replied_uris.json"
 
+# 環境変数の読み込み
+HF_API_TOKEN = os.getenv("HF_API_TOKEN")
+HANDLE = os.getenv("HANDLE")
+APP_PASSWORD = os.getenv("APP_PASSWORD")
+GIST_TOKEN = os.getenv("GIST_TOKEN")
+
+# Gist関連情報
+GIST_RAW_URL = "https://gist.githubusercontent.com/mofu-mitsu/c16e8c8c997186319763f0e03f3cff8b/raw/988fab2c442f9137d8f3ca5d7d254b0c18f71b0f/replied_uris.json"
+GIST_ID = "c16e8c8c997186319763f0e03f3cff8b"  # GistのID部分
+
+# Blueskyログイン（必要なら）
 client = Client()
 client.login(HANDLE, APP_PASSWORD)
 
-# GistのURLとID
-REPLIED_JSON_URL = "https://gist.githubusercontent.com/mofu-mitsu/fa3fad819922208c93636da84f75bc34/raw/replied.json"
-GIST_ID = "fa3fad819922208c93636da84f75bc34"
-GIST_TOKEN = os.environ["GIST_TOKEN"]  # GitHub Actionsで設定してる想定
-
-# Gistから読み込む
+# Gistから読み込む関数
 def load_replied_uris():
     print(f"🌐 Gistから読み込み中: {GIST_RAW_URL}")
-    response = requests.get(f"{GIST_RAW_URL}")
-    if response.status_code == 200:
-        lines = response.text.strip().split("\n")
-        print(f"✅ Gistから読み込んだ内容: {lines[:5]}")
-        return set(lines)
-    else:
-        print(f"⚠️ Gist読み込み失敗！status: {response.status_code}")
+    try:
+        response = requests.get(GIST_RAW_URL, timeout=5)
+        response.raise_for_status()
+        uris = json.loads(response.text)
+        print(f"✅ Gistから読み込んだ内容（件数: {len(uris)}）: {uris[:3]} ...")
+        return set(uris)
+    except Exception as e:
+        print(f"⚠️ Gist読み込み失敗: {e}")
         return set()
 
-# Gistに保存する
+# Gistに保存する関数
 def save_replied_uris(replied_uris):
     try:
         url = f"https://api.github.com/gists/{GIST_ID}"
@@ -57,7 +60,7 @@ def save_replied_uris(replied_uris):
         }
         data = {
             "files": {
-                "replied.json": {
+                "replied_uris.json": {
                     "content": json.dumps(list(replied_uris), ensure_ascii=False, indent=2)
                 }
             }
@@ -66,9 +69,9 @@ def save_replied_uris(replied_uris):
         if response.status_code == 200:
             print("💾 Gistに保存完了！")
         else:
-            print("⚠️ Gist保存失敗:", response.status_code, response.text)
+            print(f"⚠️ Gist保存失敗: {response.status_code}, {response.text}")
     except Exception as e:
-        print("⚠️ Gist保存エラー:", e)
+        print(f"⚠️ Gist保存エラー: {e}")
 
 # Hugging Face APIで返信を生成する関数
 def generate_reply(prompt):
