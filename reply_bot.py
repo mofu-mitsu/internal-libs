@@ -340,7 +340,7 @@ if replied:
     save_replied(replied)
     print("💾 replied を保存しました")
     try:
-        upload_to_gist(REPLIED_FILE, GIST_ID, GIST_TOKEN)
+        upload_to_gist(REPLIED_GIST_FILENAME, GIST_ID, GIST_TOKEN)
         print("☁️ Gist にアップロードしました")
     except Exception as e:
         print(f"❌ Gist アップロード失敗: {e}")
