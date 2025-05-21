@@ -216,40 +216,34 @@ def generate_reply_via_api(user_input):
 
     try:
         print(f"📤 {datetime.now().isoformat()} ｜APIへリクエスト送信中…")
-        response = requests.post(HF_API_URL, headers=headers, json=data)
+        response = requests.post(HF_API_URL, headers=headers, json=data, timeout=20)
         print(f"🌐 ステータスコード: {response.status_code}")
         print(f"📦 レスポンス内容: {response.text}")
 
-        response.raise_for_status()  # ← ここでエラーがあれば例外に
+        response.raise_for_status()  # ← ここで例外が出たら except に飛ぶ
+
         result = response.json()
-        return result
+        if isinstance(result, list) and "generated_text" in result[0]:
+            generated = result[0]["generated_text"]
+
+            # 「みりんてゃ」以降だけ取り出す（例：「みりんてゃ：〇〇」の〇〇部分）
+            if "みりんてゃ" in generated:
+                reply = generated.split("みりんてゃ")[-1].strip()
+            else:
+                reply = generated.strip()
+
+            return reply
+
+        else:
+            print("⚠️ 予期しない応答形式:", result)
+            return "えへへっ、ちょっとだけ迷子になっちゃった〜"
 
     except requests.exceptions.RequestException as e:
         print(f"⚠️ API通信エラー: {e}")
-        return {"error": str(e)}
-
-    try:
-        print("📡 AIに問い合わせ中...")
-        response = requests.post(HF_API_URL, headers=headers, json=data, timeout=20)
-        print("🤖 AIレスポンス:", response.status_code, response.text)
-
-        if response.status_code == 200:
-            result = response.json()
-            if isinstance(result, list) and "generated_text" in result[0]:
-                generated = result[0]["generated_text"]
-            else:
-                print("⚠️ 予期しない応答形式:", result)
-                return "えへへっ、ちょっとだけ迷子になっちゃった〜"
-
-            if "みりんてゃ" in generated:
-                return generated.split("みりんてゃ")[-1].strip()
-            return generated.strip()
-        else:
-            print(f"⚠️ Status Code: {response.status_code}, Text: {response.text}")
-            return "ふふっ、返信がうまくできなかったけど、気持ちは伝わったよ〜！"
+        return "うぅっ、みりんてゃ、お空の彼方に飛ばされたみたい……"
 
     except Exception as e:
-        print("⚠️ AIレスポンスエラー:", e)
+        print("⚠️ 予期しないエラー:", e)
         traceback.print_exc()
         return "え〜ん……みりんてゃ迷子になっちゃった〜"
         
