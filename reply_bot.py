@@ -218,34 +218,24 @@ def load_replied():
         print(f"⚠️ Gist読み込みエラー: {e}")
     return set()
     
-def upload_to_gist(file_path, gist_id, token):
-    """指定されたファイルを既存のGistにアップロードする"""
-    try:
-        with open(file_path, 'r', encoding='utf-8') as f:
-            content = f.read()
-
-        filename = file_path.split("/")[-1]
-
-        url = f"https://api.github.com/gists/{gist_id}"
-        headers = {
-            "Authorization": f"token {token}",
-            "Accept": "application/vnd.github+json"
-        }
-        data = {
-            "files": {
-                filename: {
-                    "content": content
-                }
+def upload_gist_content(content, filename, gist_id, token):
+    url = f"https://api.github.com/gists/{gist_id}"
+    headers = {
+        "Authorization": f"token {token}",
+        "Accept": "application/vnd.github+json"
+    }
+    data = {
+        "files": {
+            filename: {
+                "content": content
             }
         }
-
-        response = requests.patch(url, headers=headers, json=data)
-        if response.status_code == 200:
-            print(f"🚀 Gist（{filename}）の更新に成功しました")
-        else:
-            print(f"❌ Gistの更新に失敗しました: {response.status_code} {response.text}")
-    except Exception as e:
-        print(f"⚠️ Gistアップロード中にエラーが発生しました: {e}")
+    }
+    response = requests.patch(url, headers=headers, json=data)
+    if response.status_code == 200:
+        print(f"🚀 Gist（{filename}）の更新に成功しました")
+    else:
+        print(f"❌ Gistの更新に失敗しました: {response.status_code} {response.text}")
         
 # --- Gistに保存 ---
 
