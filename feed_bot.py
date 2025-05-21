@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 # 🔽 📡 atproto関連
 from atproto import Client, models
 from atproto_client.models import AppBskyFeedPost
+from atproto_client.exceptions import InvokeTimeoutError
 
 # 🔧 get_strong_ref を投稿用にちゃんと動くよう調整
 def get_strong_ref_from_post(post_obj):
@@ -131,99 +132,95 @@ def generate_facets_from_text(text, hashtags):
         
 # 投稿を確認して返信する関数
 def run_once():
-    client = Client()
-    client.login(HANDLE, APP_PASSWORD)
+    try:
+        client = Client()
+        client.login(HANDLE, APP_PASSWORD)
 
-    print("📨 投稿を確認中…")
-    replied_uris = load_replied_uris()
-    print(f"📄 保存済みURI読み込み完了 → 件数: {len(replied_uris)}")
-    print(f"🔍 一部サンプル: {list(replied_uris)[:5]}")
+        print("📨 投稿を確認中…")
+        replied_uris = load_replied_uris()
+        print(f"📄 保存済みURI読み込み完了 → 件数: {len(replied_uris)}")
+        print(f"🔍 一部サンプル: {list(replied_uris)[:5]}")
 
-    # 投稿IDだけで重複チェックするためのセットも作る
-    replied_post_ids = set(uri.split('/')[-1] for uri in replied_uris)
-    replied_texts = set()  # ←ここ！
+        replied_post_ids = set(uri.split('/')[-1] for uri in replied_uris)
+        replied_texts = set()
 
-    # タイムラインから最新20件を取得
-    timeline = client.app.bsky.feed.get_timeline(params={"limit": 20})
-    feed = timeline.feed
+        timeline = client.app.bsky.feed.get_timeline(params={"limit": 20})
+        feed = timeline.feed
 
-    for post in feed:
-        text = getattr(post.post.record, "text", None)
-        uri = str(post.post.uri)
-        post_id = uri.split('/')[-1]
+        for post in feed:
+            text = getattr(post.post.record, "text", None)
+            uri = str(post.post.uri)
+            post_id = uri.split('/')[-1]
 
-        print(f"📝 処理対象URI: {uri}")
-        print(f"📂 保存済みURIsの一部: {list(replied_uris)[-5:]}")
-        print(f"🆔 投稿ID: {post_id}")
+            print(f"📝 処理対象URI: {uri}")
+            print(f"📂 保存済みURIsの一部: {list(replied_uris)[-5:]}")
+            print(f"🆔 投稿ID: {post_id}")
 
-        author = post.post.author.handle
+            author = post.post.author.handle
 
-        # 🔽 この if ブロックごとインデントしてループ内に置く！
-        if author == HANDLE or post_id in replied_post_ids or not text or text in replied_texts:
-            if post_id in replied_post_ids:
-                print(f"⏩ スキップ（既にリプ済み）→ @{author}: {text}")
-                print(f"    🔁 スキップ理由：ID一致 → {post_id}")
-            elif author == HANDLE:
-                print(f"⏩ スキップ（自分の投稿）→ @{author}: {text}")
-            elif not text:
-                print(f"⏩ スキップ（テキストなし）→ @{author}")
-            elif text in replied_texts:
-                print(f"⏩ スキップ（同じテキスト）→ @{author}: {text}")
-            continue  # ← これが正しくループ内に！
+            if author == HANDLE or post_id in replied_post_ids or not text or text in replied_texts:
+                if post_id in replied_post_ids:
+                    print(f"⏩ スキップ（既にリプ済み）→ @{author}: {text}")
+                    print(f"    🔁 スキップ理由：ID一致 → {post_id}")
+                elif author == HANDLE:
+                    print(f"⏩ スキップ（自分の投稿）→ @{author}: {text}")
+                elif not text:
+                    print(f"⏩ スキップ（テキストなし）→ @{author}")
+                elif text in replied_texts:
+                    print(f"⏩ スキップ（同じテキスト）→ @{author}: {text}")
+                continue
 
-        print(f"👀 チェック中 → @{author}: {text}")
-        matched = False
-        reply_text = ""
+            print(f"👀 チェック中 → @{author}: {text}")
+            matched = False
+            reply_text = ""
 
-        # 🔍 キーワードマッチ判定
-        for keyword, response in KEYWORD_RESPONSES.items():
-            if keyword in text:
-                reply_text = response
+            for keyword, response in KEYWORD_RESPONSES.items():
+                if keyword in text:
+                    reply_text = response
+                    matched = True
+                    print(f"✨ キーワード「{keyword}」にマッチ！")
+                    break
+
+            if not matched and f"@{HANDLE}" in text:
+                prompt = f"みりんてゃは地雷系ENFPで、甘えん坊でちょっと病みかわな子。フォロワーが「{text}」って投稿したら、どう返す？\nみりんてゃ「"
+                reply_text = generate_reply(prompt)
+                print(f"🤖 AI返信生成: {reply_text}")
                 matched = True
-                print(f"✨ キーワード「{keyword}」にマッチ！")
-                break
 
-        # 🔁 メンションに反応（AI生成）
-        if not matched and f"@{HANDLE}" in text:
-            prompt = f"みりんてゃは地雷系ENFPで、甘えん坊でちょっと病みかわな子。フォロワーが「{text}」って投稿したら、どう返す？\nみりんてゃ「"
-            reply_text = generate_reply(prompt)
-            print(f"🤖 AI返信生成: {reply_text}")
-            matched = True
+            if not matched:
+                print("🚫 スキップ: 条件に合わない投稿")
+                continue
 
-        if not matched:
-            print("🚫 スキップ: 条件に合わない投稿")
-            continue
+            hashtags = [word for word in text.split() if word.startswith("#")]
+            facets = generate_facets_from_text(reply_text, hashtags)
 
-        # 🔖 ハッシュタグとfacetsの生成
-        hashtags = [word for word in text.split() if word.startswith("#")]
-        facets = generate_facets_from_text(reply_text, hashtags)
-
-        # 🔁 リプライ参照情報の作成
-        reply_ref = AppBskyFeedPost.ReplyRef(
-            root=get_strong_ref_from_post(post.post),
-            parent=get_strong_ref_from_post(post.post)
-        )
-
-        # ✉️ 投稿送信（成功したら保存）
-        try:
-            client.app.bsky.feed.post.create(
-                record=AppBskyFeedPost.Record(
-                    text=reply_text,
-                    created_at=datetime.now(timezone.utc).isoformat(),
-                    reply=reply_ref,
-                    facets=facets if facets else None
-                ),
-                repo=client.me.did
+            reply_ref = AppBskyFeedPost.ReplyRef(
+                root=get_strong_ref_from_post(post.post),
+                parent=get_strong_ref_from_post(post.post)
             )
-        except Exception as e:
-            print(f"⚠️ 返信エラー: {e}")
-        else:
-            replied_uris.add(uri)
-            save_replied_uris(replied_uris)
-            replied_texts.add(text)  # ←ここ追加！
-            print(f"✅ 返信しました → @{author}")
-            print(f"📁 保存されたURI一覧（最新20件）: {list(replied_uris)[-20:]}")
-            print(f"🗂 現在の保存数: {len(replied_uris)} 件")
+
+            try:
+                client.app.bsky.feed.post.create(
+                    record=AppBskyFeedPost.Record(
+                        text=reply_text,
+                        created_at=datetime.now(timezone.utc).isoformat(),
+                        reply=reply_ref,
+                        facets=facets if facets else None
+                    ),
+                    repo=client.me.did
+                )
+            except Exception as e:
+                print(f"⚠️ 返信エラー: {e}")
+            else:
+                replied_uris.add(uri)
+                save_replied_uris(replied_uris)
+                replied_texts.add(text)
+                print(f"✅ 返信しました → @{author}")
+                print(f"📁 保存されたURI一覧（最新20件）: {list(replied_uris)[-20:]}")
+                print(f"🗂 現在の保存数: {len(replied_uris)} 件")
+
+    except InvokeTimeoutError:
+        print("⚠️ APIタイムアウト！Bluesky側の応答がないか、接続に時間がかかりすぎたみたい。時間を置いて試してみてね。")
 
 # 🔧 エントリーポイント
 if __name__ == "__main__":
