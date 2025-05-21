@@ -153,7 +153,6 @@ REPLY_TABLE = {
 }
 
 # --- Gistから読み込み ---
-# --- Gistから読み込み ---
 def load_replied():
     try:
         res = requests.get(REPLIED_JSON_URL)
