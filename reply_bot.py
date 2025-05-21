@@ -153,45 +153,60 @@ REPLY_TABLE = {
 }
 
 # --- Gistから読み込み ---
-def load_replied():
-    try:
-        res = requests.get(REPLIED_JSON_URL)
-        if res.status_code == 200:
-            return set(json.loads(res.text))
-        else:
-            print("⚠️ Gist読み込み失敗:", res.status_code)
-    except Exception as e:
-        print("⚠️ Gist読み込みエラー:", e)
-    return set()
-    
-def upload_to_gist(file_path, gist_id, token):
-    """指定されたファイルを既存のGistにアップロードする"""
-    try:
-        with open(file_path, 'r', encoding='utf-8') as f:
-            content = f.read()
+def generate_reply_via_api(user_input):
+    prompt = f"ユーザー: {user_input}\nみりんてゃ（甘えん坊で地雷系ENFPっぽい）:"
 
-        filename = file_path.split("/")[-1]
-
-        url = f"https://api.github.com/gists/{gist_id}"
-        headers = {
-            "Authorization": f"token {token}",
-            "Accept": "application/vnd.github+json"
+    # モデルURLを差し替え！
+    HF_API_URL = "https://api-inference.huggingface.co/models/stabilityai/japanese-stablelm-instruct-alpha-7b"
+    headers = {
+        "Authorization": f"Bearer {HF_API_TOKEN}",
+        "Content-Type": "application/json"
+    }
+    data = {
+        "inputs": prompt,
+        "parameters": {
+            "max_new_tokens": 100,
+            "temperature": 0.8,
+            "top_p": 0.95,
+            "do_sample": True
+        },
+        "options": {
+            "wait_for_model": True
         }
-        data = {
-            "files": {
-                filename: {
-                    "content": content
-                }
-            }
-        }
+    }
 
-        response = requests.patch(url, headers=headers, json=data)
-        if response.status_code == 200:
-            print(f"🚀 Gist（{filename}）の更新に成功しました")
+    try:
+        print(f"📤 {datetime.now().isoformat()} ｜APIへリクエスト送信中…")
+        response = requests.post(HF_API_URL, headers=headers, json=data, timeout=20)
+        print(f"🌐 ステータスコード: {response.status_code}")
+        print(f"📦 レスポンス内容: {response.text}")
+
+        response.raise_for_status()
+
+        result = response.json()
+        if isinstance(result, list) and "generated_text" in result[0]:
+            generated = result[0]["generated_text"]
+
+            # 「みりんてゃ」以降だけ取り出す
+            if "みりんてゃ" in generated:
+                reply = generated.split("みりんてゃ")[-1].strip()
+            else:
+                reply = generated.strip()
+
+            return reply
+
         else:
-            print(f"❌ Gistの更新に失敗しました: {response.status_code} {response.text}")
+            print("⚠️ 予期しない応答形式:", result)
+            return "えへへっ、ちょっとだけ迷子になっちゃった〜"
+
+    except requests.exceptions.RequestException as e:
+        print(f"⚠️ API通信エラー: {e}")
+        return "うぅっ、みりんてゃ、お空の彼方に飛ばされたみたい……"
+
     except Exception as e:
-        print(f"⚠️ Gistアップロード中にエラーが発生しました: {e}")
+        print("⚠️ 予期しないエラー:", e)
+        traceback.print_exc()
+        return "え〜ん……みりんてゃ迷子になっちゃった〜"
         
 # --- Gistに保存 ---
 def generate_reply_via_api(user_input):
