@@ -240,7 +240,7 @@ def upload_gist_content(content, filename, gist_id, token):
 # --- Gistに保存 ---
 
 def generate_reply_via_local_model(user_input):
-    model_name = "rinna/japanese-gpt2-small"
+    model_name = "cl-tohoku/bert-base-japanese-v2"
 
     try:
         print(f"📤 {datetime.now().isoformat()} ｜ モデルとトークナイザを読み込み中…")
