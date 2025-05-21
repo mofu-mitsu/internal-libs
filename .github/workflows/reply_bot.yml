@@ -5,6 +5,10 @@ on:
     - cron: '*/30 * * * *'  # 30分ごとに実行
   workflow_dispatch:        # 手動実行もOK
 
+concurrency:
+  group: bluesky-reply
+  cancel-in-progress: false  # 古い順に1つずつ処理するようにする！
+
 jobs:
   run-reply-bot:
     runs-on: ubuntu-latest
@@ -21,7 +25,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
-          pip install torch transformers accelerate  # ← accelerate を追加したよ！
+          pip install torch transformers accelerate  # ← accelerate を追加済み！
 
       - name: Run Reply Bot
         env:
