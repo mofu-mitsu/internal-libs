@@ -227,16 +227,12 @@ def upload_to_gist(file_path, gist_id, token):
 # --- Gistに保存 ---
 
 def generate_reply_via_local_model(user_input):
-    model_name = "elyza/ELYZA-japanese-LLaMA-2-7b"
+    model_name = "rinna/japanese-gpt2-small"
 
     try:
         print(f"📤 {datetime.now().isoformat()} ｜ モデルとトークナイザを読み込み中…")
         tokenizer = AutoTokenizer.from_pretrained(model_name)
-        model = AutoModelForCausalLM.from_pretrained(
-            model_name,
-            torch_dtype=torch.float16,
-            device_map="auto"
-        )
+        model = AutoModelForCausalLM.from_pretrained(model_name)
 
         prompt = f"ユーザー: {user_input}\nみりんてゃ（甘えん坊で地雷系ENFPっぽい）:"
         token_ids = tokenizer.encode(prompt, return_tensors="pt")
@@ -244,28 +240,21 @@ def generate_reply_via_local_model(user_input):
         print(f"📤 {datetime.now().isoformat()} ｜ テキスト生成中…")
         with torch.no_grad():
             output_ids = model.generate(
-                token_ids.to(model.device),
+                token_ids,
                 max_new_tokens=100,
                 temperature=0.8,
                 top_p=0.95,
                 do_sample=True
             )
 
-        output = tokenizer.decode(output_ids[0], skip_special_tokens=True)
-        print(f"📦 出力内容: {output}")
-
-        if "みりんてゃ" in output:
-            reply = output.split("みりんてゃ")[-1].strip()
-        else:
-            print("⚠️ 予期しない出力形式:", output)
-            reply = "えへへっ、ちょっとだけ迷子になっちゃった〜"
-
+        output_text = tokenizer.decode(output_ids[0], skip_special_tokens=True)
+        reply = output_text.split("みりんてゃ（甘えん坊で地雷系ENFPっぽい）:")[-1].strip()
+        print(f"🤖 AI返答: {reply}")
         return reply
 
     except Exception as e:
-        print("⚠️ 予期しないエラー:", e)
-        traceback.print_exc()
-        return "え〜ん……みりんてゃ迷子になっちゃった〜"
+        print(f"❌ モデル読み込みエラー: {e}")
+        return "えへへ、ごめんね〜今ちょっと調子悪いみたい…またお話しよ？"
         
 # --- テンプレ or AI返し ---
 def get_reply(text):
