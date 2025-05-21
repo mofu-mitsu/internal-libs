@@ -227,7 +227,7 @@ def upload_to_gist(file_path, gist_id, token):
 # --- Gistに保存 ---
 
 def generate_reply_via_local_model(user_input):
-    model_name = "rinna/japanese-gpt2-small"
+    model_name = "elyza/ELYZA-japanese-LLaMA-2-7b"
 
     try:
         print(f"📤 {datetime.now().isoformat()} ｜ モデルとトークナイザを読み込み中…")
