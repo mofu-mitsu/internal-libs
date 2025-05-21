@@ -163,7 +163,36 @@ def load_replied():
     except Exception as e:
         print("⚠️ Gist読み込みエラー:", e)
     return set()
+    
+def upload_to_gist(file_path, gist_id, token):
+    """指定されたファイルを既存のGistにアップロードする"""
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            content = f.read()
 
+        filename = file_path.split("/")[-1]
+
+        url = f"https://api.github.com/gists/{gist_id}"
+        headers = {
+            "Authorization": f"token {token}",
+            "Accept": "application/vnd.github+json"
+        }
+        data = {
+            "files": {
+                filename: {
+                    "content": content
+                }
+            }
+        }
+
+        response = requests.patch(url, headers=headers, json=data)
+        if response.status_code == 200:
+            print(f"🚀 Gist（{filename}）の更新に成功しました")
+        else:
+            print(f"❌ Gistの更新に失敗しました: {response.status_code} {response.text}")
+    except Exception as e:
+        print(f"⚠️ Gistアップロード中にエラーが発生しました: {e}")
+        
 # --- Gistに保存 ---
 def generate_reply_via_api(user_input):
     prompt = f"ユーザー: {user_input}\nみりんてゃ（甘えん坊で地雷系ENFPっぽい）:"
@@ -276,7 +305,13 @@ def run_reply_bot():
             replied.remove(garbage)
             print(f"🧹 ゴミデータ '{garbage}' を削除しました")
 
+    # 🔧 replied_textsのNoneキー対策（辞書のkeyにNoneが入ってるケース）
+    if None in replied_texts:
+        del replied_texts[None]
+        print("🧹 replied_texts から None キーを削除しました")
+
     save_replied(replied)
+    save_replied_texts(replied_texts)
     upload_to_gist(REPLIED_FILE, GIST_ID, TOKEN)
 
     try:
