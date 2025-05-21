@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 import os
 import json
 import requests
+import time
 
 # 🔽 🌱 外部ライブラリ
 from dotenv import load_dotenv
