@@ -29,30 +29,12 @@ from atproto_client.models.com.atproto.repo.strong_ref import Main as StrongRef
 # ------------------------------
 from dotenv import load_dotenv
 
-REPLIED_TEXTS_FILE = "replied_texts.json"  # 追加で新しい保存ファイル
-
-def load_replied_texts():
-    if os.path.exists(REPLIED_TEXTS_FILE):
-        try:
-            with open(REPLIED_TEXTS_FILE, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                # ISO形式の文字列を datetime に変換して返す
-                return {k: datetime.fromisoformat(v) for k, v in data.items()}
-        except Exception as e:
-            print(f"⚠️ replied_texts.json の読み込みエラー: {e}")
-            return {}
-    else:
-        print("📂 replied_texts.json が存在しないので新規作成します")
-        return {}
-
-def save_replied_texts(data):
-    try:
-        with open(REPLIED_TEXTS_FILE, "w", encoding="utf-8") as f:
-            # datetime を ISO形式の文字列にして保存
-            json.dump({k: v.isoformat() for k, v in data.items()}, f, ensure_ascii=False, indent=2)
-        print(f"💾 replied_texts.json に保存しました（件数: {len(data)}）")
-    except Exception as e:
-        print(f"⚠️ replied_texts.json の保存中にエラーが発生しました: {e}")
+import os
+import json
+import requests
+from datetime import datetime
+from dotenv import load_dotenv
+from atproto import Client
 
 # --- 環境変数読み込み ---
 load_dotenv()
@@ -62,30 +44,78 @@ HF_API_TOKEN = os.environ["HF_API_TOKEN"]
 REPLIED_JSON_URL = os.environ["REPLIED_JSON_URL"]
 GIST_ID = os.getenv("GIST_ID")
 GIST_TOKEN = os.getenv("GIST_TOKEN")
-REPLIED_FILE = "replied.json"  # 返信済み通知のURIを保存するファイル
 
+# --- Gist API設定 ---
+GIST_API_URL = f"https://api.github.com/gists/{GIST_ID}"
+HEADERS = {
+    "Authorization": f"token {GIST_TOKEN}",
+    "Accept": "application/vnd.github.v3+json"
+}
+
+# --- ファイル名設定（Gist内のファイル名）---
+REPLIED_FILE = "replied.json"
+REPLIED_TEXTS_FILE = "replied_texts.json"
+
+# --- replied.json 読み書き ---
 def load_replied():
-    if os.path.exists(REPLIED_FILE):
-        try:
-            with open(REPLIED_FILE, "r", encoding="utf-8") as f:
-                data = set(json.load(f))
-                print(f"✅ replied.json を読み込みました（件数: {len(data)}）")
-                return data
-        except Exception as e:
-            print(f"⚠️ replied.json の読み込み中にエラーが発生しました: {e}")
-            return set()
-    else:
-        print("📂 replied.json が存在しないので新規作成します")
+    try:
+        response = requests.get(GIST_API_URL, headers=HEADERS)
+        response.raise_for_status()
+        gist_data = response.json()
+        content = gist_data["files"][REPLIED_FILE]["content"]
+        data = set(json.loads(content))
+        print(f"✅ replied.json をGistから読み込みました（件数: {len(data)}）")
+        return data
+    except Exception as e:
+        print(f"⚠️ replied.json の読み込み中にエラーが発生しました: {e}")
         return set()
 
 def save_replied(replied_set):
     try:
-        with open(REPLIED_FILE, "w", encoding="utf-8") as f:
-            json.dump(list(replied_set), f, ensure_ascii=False, indent=2)
-        print(f"💾 replied.json に保存しました（件数: {len(replied_set)}）")
+        content = json.dumps(list(replied_set), ensure_ascii=False, indent=2)
+        payload = { "files": { REPLIED_FILE: { "content": content } } }
+        response = requests.patch(GIST_API_URL, headers=HEADERS, json=payload)
+        response.raise_for_status()
+        print(f"💾 replied.json をGistに保存しました（件数: {len(replied_set)}）")
     except Exception as e:
         print(f"⚠️ replied.json の保存中にエラーが発生しました: {e}")
 
+# --- replied_texts.json 読み書き ---
+def load_replied_texts():
+    try:
+        response = requests.get(GIST_API_URL, headers=HEADERS)
+        response.raise_for_status()
+        gist_data = response.json()
+        content = gist_data["files"][REPLIED_TEXTS_FILE]["content"]
+        raw_data = json.loads(content)
+        # ISO形式から datetime に変換
+        data = {k: datetime.fromisoformat(v) for k, v in raw_data.items()}
+        print(f"✅ replied_texts.json をGistから読み込みました（件数: {len(data)}）")
+        return data
+    except Exception as e:
+        print(f"⚠️ replied_texts.json の読み込みエラー: {e}")
+        return {}
+
+def save_replied_texts(data):
+    try:
+        # datetime を ISO文字列に変換
+        serializable_data = {k: v.isoformat() for k, v in data.items()}
+        content = json.dumps(serializable_data, ensure_ascii=False, indent=2)
+        payload = { "files": { REPLIED_TEXTS_FILE: { "content": content } } }
+        response = requests.patch(GIST_API_URL, headers=HEADERS, json=payload)
+        response.raise_for_status()
+        print(f"💾 replied_texts.json をGistに保存しました（件数: {len(data)}）")
+    except Exception as e:
+        print(f"⚠️ replied_texts.json の保存中にエラーが発生しました: {e}")
+
+# --- HuggingFace API設定 ---
+HF_API_URL = "https://api-inference.huggingface.co/"
+HF_HEADERS = {
+    "Authorization": f"Bearer {HF_API_TOKEN}",
+    "Content-Type": "application/json"
+}
+
+# --- Blueskyログイン ---
 client = Client()
 client.login(HANDLE, APP_PASSWORD)
 
