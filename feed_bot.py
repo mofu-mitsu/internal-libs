@@ -253,8 +253,6 @@ def run_once():
                     print(f"⏩ スキップ（自分の投稿）→ @{author}: {text}")
                 elif not text:
                     print(f"⏩ スキップ（テキストなし）→ @{author}")
-                elif text in replied_texts:
-                    print(f"⏩ スキップ（同じテキスト）→ @{author}: {text}")
                 continue
 
             print(f"👀 チェック中 → @{author}: {text}")
