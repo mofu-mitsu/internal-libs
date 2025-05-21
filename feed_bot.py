@@ -35,7 +35,7 @@ client.login(HANDLE, APP_PASSWORD)
 GIST_RAW_URL_URIS = "https://gist.githubusercontent.com/mofu-mitsu/c16e8c8c997186319763f0e03f3cff8b/raw/988fab2c442f9137d8f3ca5d7d254b0c18f71b0f/replied_uris.json"
 GIST_ID_URIS = "c16e8c8c997186319763f0e03f3cff8b"
 
-GIST_RAW_URL_TEXTS = "https://gist.githubusercontent.com/mofu-mitsu/a149431b226cf7b50ba057be4de7eae9/raw/3a4a89645438b9aa97848f3a359f3e5eab0bbf30/replied_texts.json"
+GIST_RAW_URL_TEXTS = "https://gist.githubusercontent.com/mofu-mitsu/a149431b226cf7b50ba057be4de7eae9/raw/94587c4feaf678c6d03d4c8dfc090302eda676ac/replied_texts.json"
 GIST_ID_TEXTS = "a149431b226cf7b50ba057be4de7eae9"
 
 # 🔹 replied_urisの読み書き
