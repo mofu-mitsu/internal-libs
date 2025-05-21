@@ -34,9 +34,11 @@ load_dotenv()
 HANDLE = os.environ["HANDLE"]
 APP_PASSWORD = os.environ["APP_PASSWORD"]
 HF_API_TOKEN = os.environ["HF_API_TOKEN"]
-REPLIED_JSON_URL = os.environ["REPLIED_JSON_URL"]
 GIST_ID = os.getenv("GIST_ID")
 GIST_TOKEN = os.getenv("GIST_TOKEN")
+
+REPLIED_GIST_FILENAME = "replied.json"
+REPLIED_JSON_URL = f"https://gist.githubusercontent.com/{GIST_ID}/raw/{REPLIED_GIST_FILENAME}"
 
 # --- Gist API設定 ---
 GIST_API_URL = f"https://api.github.com/gists/{GIST_ID}"
@@ -45,17 +47,13 @@ HEADERS = {
     "Accept": "application/vnd.github.v3+json"
 }
 
-# --- ファイル名設定（Gist内のファイル名）---
-REPLIED_FILE = "replied.json"
-REPLIED_TEXTS_FILE = "replied_texts.json"
-
 # --- replied.json 読み書き ---
 def load_replied():
     try:
         response = requests.get(GIST_API_URL, headers=HEADERS)
         response.raise_for_status()
         gist_data = response.json()
-        content = gist_data["files"][REPLIED_FILE]["content"]
+        content = gist_data["files"][REPLIED_GIST_FILENAME]["content"]
         data = set(json.loads(content))
         print(f"✅ replied.json をGistから読み込みました（件数: {len(data)}）")
         return data
@@ -66,7 +64,7 @@ def load_replied():
 def save_replied(replied_set):
     try:
         content = json.dumps(list(replied_set), ensure_ascii=False, indent=2)
-        payload = { "files": { REPLIED_FILE: { "content": content } } }
+        payload = { "files": { REPLIED_GIST_FILENAME: { "content": content } } }
         response = requests.patch(GIST_API_URL, headers=HEADERS, json=payload)
         response.raise_for_status()
         print(f"💾 replied.json をGistに保存しました（件数: {len(replied_set)}）")
@@ -217,8 +215,9 @@ def load_replied():
     except Exception as e:
         print(f"⚠️ Gist読み込みエラー: {e}")
     return set()
-    
-def upload_gist_content(content, filename, gist_id, token):
+
+# --- Gistに上書き保存 ---
+def upload_gist_content(content, filename=REPLIED_GIST_FILENAME, gist_id=GIST_ID, token=GIST_TOKEN):
     url = f"https://api.github.com/gists/{gist_id}"
     headers = {
         "Authorization": f"token {token}",
@@ -315,23 +314,39 @@ def run_reply_bot():
 
     print(f"📘 replied の型: {type(replied)} / 件数: {len(replied)}")
 
-    # --- 🧹 replied（URLのセット）を整理 ---
-    original_replied_count = len(replied)
-    replied = {uri for uri in replied if isinstance(uri, str) and uri.startswith("http")}
+# --- 🧹 replied（URLのセット）を整理 ---
+original_replied_count = len(replied)
+replied = {uri for uri in replied if isinstance(uri, str) and uri.startswith("http")}
 
-    removed_count = original_replied_count - len(replied)
-    if removed_count > 0:
-        print(f"🧹 無効なデータを {removed_count} 件削除しました（replied）")
-    else:
-        print("✅ replied は問題ありませんでした")
+removed_count = original_replied_count - len(replied)
+if removed_count > 0:
+    print(f"🧹 無効なデータを {removed_count} 件削除しました（replied）")
+else:
+    print("✅ replied は問題ありませんでした")
 
-    # --- 🧹 replied_texts（辞書）を整理 ---
+# --- 🧹 replied_texts（辞書）を整理 ---
+if isinstance(replied_texts, dict):
     if None in replied_texts:
         del replied_texts[None]
         print("🧹 replied_texts から None キーを削除しました")
     else:
         print("✅ replied_texts に None キーは存在しませんでした")
+else:
+    print("⚠️ replied_texts が辞書ではありません。初期化します")
+    replied_texts = {}
 
+# --- ⛑️ 空じゃなければ保存・アップロード ---
+if replied:
+    save_replied(replied)
+    print("💾 replied を保存しました")
+    try:
+        upload_to_gist(REPLIED_FILE, GIST_ID, GIST_TOKEN)
+        print("☁️ Gist にアップロードしました")
+    except Exception as e:
+        print(f"❌ Gist アップロード失敗: {e}")
+else:
+    print("⚠️ replied が空なので Gist に保存しません")
+    
     save_replied(replied)
     save_replied_texts(replied_texts)
     upload_to_gist(REPLIED_FILE, GIST_ID, GIST_TOKEN)
