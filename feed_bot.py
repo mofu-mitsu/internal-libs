@@ -38,14 +38,39 @@ GIST_ID_URIS = "c16e8c8c997186319763f0e03f3cff8b"
 GIST_RAW_URL_TEXTS = "https://gist.githubusercontent.com/mofu-mitsu/a149431b226cf7b50ba057be4de7eae9/raw/replied_texts.json"
 GIST_ID_TEXTS = "a149431b226cf7b50ba057be4de7eae9"
 
-# 🔹 replied_urisの読み書き
+# 🧷 Gistのバックアップ
+def backup_gist(gist_id, filename, content):
+    backup_filename = filename.replace(".json", f"_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json")
+    url = f"https://api.github.com/gists/{gist_id}"
+    headers = {
+        "Authorization": f"token {GIST_TOKEN}",
+        "Accept": "application/vnd.github+json"
+    }
+    data = {
+        "files": {
+            backup_filename: {
+                "content": content
+            }
+        }
+    }
+    response = requests.patch(url, headers=headers, json=data)
+    if response.status_code == 200:
+        print(f"📦 バックアップ作成完了: {backup_filename}")
+    else:
+        try:
+            msg = response.json().get("message", "")
+        except:
+            msg = response.text
+        print(f"⚠️ バックアップ失敗: {response.status_code} {msg}")
+
+# 🔹 replied_uris の読み書き
 def load_replied_uris():
     print(f"🌐 Gistから読み込み中: {GIST_RAW_URL_URIS}")
     try:
         response = requests.get(GIST_RAW_URL_URIS)
         if response.status_code == 200:
             uris = json.loads(response.text)
-            print(f"✅ 読み込んだreplied_uris: {uris[:5]}")
+            print(f"✅ 読み込んだ replied_uris: {uris[:5]}")
             return set(uris)
         else:
             print(f"⚠️ Gist読み込み失敗（uris）: {response.status_code}")
@@ -60,10 +85,16 @@ def save_replied_uris(replied_uris):
         "Authorization": f"token {GIST_TOKEN}",
         "Accept": "application/vnd.github+json"
     }
+    content = json.dumps(list(replied_uris), ensure_ascii=False, indent=2)
+
+    # バックアップ＆クールダウン
+    backup_gist(GIST_ID_URIS, "replied_uris.json", content)
+    time.sleep(1)
+
     data = {
         "files": {
             "replied_uris.json": {
-                "content": json.dumps(list(replied_uris), ensure_ascii=False, indent=2)
+                "content": content
             }
         }
     }
@@ -71,16 +102,20 @@ def save_replied_uris(replied_uris):
     if response.status_code == 200:
         print("💾 replied_uris.json に保存完了！")
     else:
-        print("⚠️ replied_uris保存失敗:", response.status_code, response.text)
+        try:
+            msg = response.json().get("message", "")
+        except:
+            msg = response.text
+        print(f"⚠️ replied_uris保存失敗: {response.status_code} {msg}")
 
-# 🔸 replied_textsの読み書き
+# 🔸 replied_texts の読み書き
 def load_replied_texts():
     print(f"🌐 Gistから読み込み中: {GIST_RAW_URL_TEXTS}")
     try:
         response = requests.get(GIST_RAW_URL_TEXTS)
         if response.status_code == 200:
             texts = json.loads(response.text)
-            print(f"✅ 読み込んだreplied_textsの一部: {list(texts.items())[:3]}")
+            print(f"✅ 読み込んだ replied_texts の一部: {list(texts.items())[:3]}")
             return texts
         else:
             print(f"⚠️ Gist読み込み失敗（texts）: {response.status_code}")
@@ -95,10 +130,16 @@ def save_replied_texts(replied_texts):
         "Authorization": f"token {GIST_TOKEN}",
         "Accept": "application/vnd.github+json"
     }
+    content = json.dumps(replied_texts, ensure_ascii=False, indent=2)
+
+    # バックアップ＆クールダウン
+    backup_gist(GIST_ID_TEXTS, "replied_texts.json", content)
+    time.sleep(1)
+
     data = {
         "files": {
             "replied_texts.json": {
-                "content": json.dumps(replied_texts, ensure_ascii=False, indent=2)
+                "content": content
             }
         }
     }
@@ -106,8 +147,12 @@ def save_replied_texts(replied_texts):
     if response.status_code == 200:
         print("💾 replied_texts.json に保存完了！")
     else:
-        print("⚠️ replied_texts保存失敗:", response.status_code, response.text)
-
+        try:
+            msg = response.json().get("message", "")
+        except:
+            msg = response.text
+        print(f"⚠️ replied_texts保存失敗: {response.status_code} {msg}")
+        
 # Hugging Face APIで返信を生成する関数
 def generate_reply(prompt):
     API_URL = "https://api-inference.huggingface.co/models/rinna/japanese-gpt2-small"
