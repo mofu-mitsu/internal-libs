@@ -189,23 +189,22 @@ def run_once():
             text = getattr(post.post.record, "text", None)
             uri = str(post.post.uri)
             post_id = uri.split('/')[-1]
-
-            print(f"📝 処理対象URI: {uri}")
-            print(f"📂 保存済みURIsの一部: {list(replied_uris)[-5:]}")
-            print(f"🆔 投稿ID: {post_id}")
-
             author = post.post.author.handle
 
+            print(f"\n📝 処理対象URI: {uri}")
+            print(f"🆔 投稿ID: {post_id}")
+            print(f"👤 投稿者: @{author}")
+
             if author == HANDLE or post_id in replied_post_ids or not text or text in replied_texts:
+                print("⏩ スキップ理由：", end="")
                 if post_id in replied_post_ids:
-                    print(f"⏩ スキップ（既にリプ済み）→ @{author}: {text}")
-                    print(f"    🔁 スキップ理由：ID一致 → {post_id}")
+                    print("既に返信済み")
                 elif author == HANDLE:
-                    print(f"⏩ スキップ（自分の投稿）→ @{author}: {text}")
+                    print("自分自身の投稿")
                 elif not text:
-                    print(f"⏩ スキップ（テキストなし）→ @{author}")
+                    print("テキストなし")
                 elif text in replied_texts:
-                    print(f"⏩ スキップ（同じテキスト）→ @{author}: {text}")
+                    print("同じテキストに返信済み")
                 continue
 
             print(f"👀 チェック中 → @{author}: {text}")
@@ -222,8 +221,8 @@ def run_once():
             if not matched and f"@{HANDLE}" in text:
                 prompt = f"みりんてゃは地雷系ENFPで、甘えん坊でちょっと病みかわな子。フォロワーが「{text}」って投稿したら、どう返す？\nみりんてゃ「"
                 reply_text = generate_reply(prompt)
-                print(f"🤖 AI返信生成: {reply_text}")
                 matched = True
+                print(f"🤖 AI返信生成: {reply_text}")
 
             if not matched:
                 print("🚫 スキップ: 条件に合わない投稿")
@@ -249,16 +248,21 @@ def run_once():
                 )
             except Exception as e:
                 print(f"⚠️ 返信エラー: {e}")
-            else:
-                replied_uris.add(uri)
+                continue
+
+            print(f"✅ 返信成功 → @{author}")
+            replied_uris.add(uri)
+            replied_texts.add(text)
+
+            try:
                 save_replied_uris(replied_uris)
-                replied_texts.add(text)
-                print(f"✅ 返信しました → @{author}")
-                print(f"📁 保存されたURI一覧（最新20件）: {list(replied_uris)[-20:]}")
-                print(f"🗂 現在の保存数: {len(replied_uris)} 件")
+                print(f"💾 URI保存成功 → 合計: {len(replied_uris)} 件")
+                print(f"📁 最新URI一覧: {list(replied_uris)[-5:]}")
+            except Exception as e:
+                print(f"❌ URI保存失敗: {e}")
 
     except InvokeTimeoutError:
-        print("⚠️ APIタイムアウト！Bluesky側の応答がないか、接続に時間がかかりすぎたみたい。時間を置いて試してみてね。")
+        print("⚠️ APIタイムアウト！Bluesky側の応答がないか、接続に時間がかかりすぎたみたい。")
 
 # 🔧 エントリーポイント
 if __name__ == "__main__":
