@@ -349,7 +349,12 @@ else:
     
     save_replied(replied)
     save_replied_texts(replied_texts)
-    upload_to_gist(REPLIED_FILE, GIST_ID, GIST_TOKEN)
+
+    # 確実にファイルが書き込まれたか確認（例：os.path.exists とかでもOK）
+    if os.path.exists(REPLIED_GIST_FILENAME):
+        upload_to_gist(REPLIED_GIST_FILENAME, GIST_ID, GIST_TOKEN)
+    else:
+    print("⚠️ REPLIED_GIST_FILENAME の保存に失敗した可能性あり、Gistへのアップロード中止")
 
     try:
         notifications = client.app.bsky.notification.list_notifications(params={"limit": 25}).notifications
@@ -409,7 +414,12 @@ else:
             print("🛑 自分自身の投稿、スキップ")
             continue
 
-        check_key = f"{author_did}:{text}"
+        import hashlib
+
+        def hash_text(text):
+        return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+        check_key = f"{author_did}:{hash_text(text)}"
 
         # 🔁 12時間以内の重複チェック
         last_replied_time = replied_texts.get(check_key)
