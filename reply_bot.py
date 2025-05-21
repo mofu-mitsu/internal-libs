@@ -39,8 +39,8 @@ HANDLE = os.environ["HANDLE"]
 APP_PASSWORD = os.environ["APP_PASSWORD"]
 HF_API_TOKEN = os.environ["HF_API_TOKEN"]
 REPLIED_JSON_URL = os.environ["REPLIED_JSON_URL"]
-GIST_TOKEN = os.environ["GIST_TOKEN"]
-
+GIST_ID = os.getenv("GIST_ID")
+GIST_TOKEN = os.getenv("GIST_TOKEN")
 REPLIED_FILE = "replied.json"  # 返信済み通知のURIを保存するファイル
 
 def load_replied():
