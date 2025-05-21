@@ -299,16 +299,22 @@ def run_reply_bot():
 
     print(f"📘 replied の型: {type(replied)} / 件数: {len(replied)}")
 
-    # 🧹 ゴミデータ削除
-    for garbage in ["replied", None, "None"]:
-        if garbage in replied:
-            replied.remove(garbage)
-            print(f"🧹 ゴミデータ '{garbage}' を削除しました")
+    # --- 🧹 replied（URLのセット）を整理 ---
+    original_replied_count = len(replied)
+    replied = {uri for uri in replied if isinstance(uri, str) and uri.startswith("http")}
 
-    # 🔧 replied_textsのNoneキー対策（辞書のkeyにNoneが入ってるケース）
+    removed_count = original_replied_count - len(replied)
+    if removed_count > 0:
+        print(f"🧹 無効なデータを {removed_count} 件削除しました（replied）")
+    else:
+        print("✅ replied は問題ありませんでした")
+
+    # --- 🧹 replied_texts（辞書）を整理 ---
     if None in replied_texts:
         del replied_texts[None]
         print("🧹 replied_texts から None キーを削除しました")
+    else:
+        print("✅ replied_texts に None キーは存在しませんでした")
 
     save_replied(replied)
     save_replied_texts(replied_texts)
