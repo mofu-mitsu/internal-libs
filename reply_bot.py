@@ -175,14 +175,24 @@ REPLY_TABLE = {
 
 # --- Gistから読み込み ---
 def load_replied():
+    print(f"🌐 Gistから読み込み中: {REPLIED_JSON_URL}")
     try:
         res = requests.get(REPLIED_JSON_URL)
         if res.status_code == 200:
-            return set(json.loads(res.text))
+            data = set(json.loads(res.text))
+            print("✅ Gistからの読み込みに成功")
+            print(f"📄 保存済みURI読み込み完了 → 件数: {len(data)}")
+
+            if len(data) > 0:
+                print("📁 最新URI一覧:")
+                for uri in list(data)[-5:]:  # 最新5件だけ表示（多すぎないように）
+                    print(f" - {uri}")
+
+            return data
         else:
-            print("⚠️ Gist読み込み失敗:", res.status_code)
+            print(f"⚠️ Gist読み込み失敗: {res.status_code}")
     except Exception as e:
-        print("⚠️ Gist読み込みエラー:", e)
+        print(f"⚠️ Gist読み込みエラー: {e}")
     return set()
     
 def upload_to_gist(file_path, gist_id, token):
