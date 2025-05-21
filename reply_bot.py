@@ -215,10 +215,6 @@ def upload_to_gist(file_path, gist_id, token):
         print(f"⚠️ Gistアップロード中にエラーが発生しました: {e}")
         
 # --- Gistに保存 ---
-from transformers import AutoModelForCausalLM, AutoTokenizer
-import torch
-from datetime import datetime
-import traceback
 
 def generate_reply_via_local_model(user_input):
     model_name = "elyza/ELYZA-japanese-LLaMA-2-7b"
@@ -267,7 +263,7 @@ def get_reply(text):
         if keyword in text:
             print(f"📌 テンプレで返答: {reply}")
             return reply
-    return generate_reply_via_api(text)
+     return generate_reply_via_local_model(text)
 
 # --- メイン処理 ---
 from atproto_client.models.app.bsky.feed.post import ReplyRef
