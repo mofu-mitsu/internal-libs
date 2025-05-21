@@ -249,7 +249,7 @@ def run_once():
                     break
 
             if not matched and f"@{HANDLE}" in text:
-                random.choice(MENTION_TEMPLATES)
+                reply_text = random.choice(MENTION_TEMPLATES)  # ←代入！！
                 print(f"💬 メンション返信テンプレ: {reply_text}")
                 matched = True
 
