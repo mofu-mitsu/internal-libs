@@ -29,13 +29,6 @@ from atproto_client.models.com.atproto.repo.strong_ref import Main as StrongRef
 # ------------------------------
 from dotenv import load_dotenv
 
-import os
-import json
-import requests
-from datetime import datetime
-from dotenv import load_dotenv
-from atproto import Client
-
 # --- 環境変数読み込み ---
 load_dotenv()
 HANDLE = os.environ["HANDLE"]
