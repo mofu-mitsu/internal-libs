@@ -266,7 +266,7 @@ def generate_reply_via_local_model(user_input):
 
     except Exception as e:
         print(f"❌ モデル読み込みエラー: {e}")
-        return "えへへ、ごめんね〜今ちょっと調子悪いみたい…またお話しよ？"
+        return "えへへ、ごめんね〜〜今ちょっと調子悪いみたい…またお話しよ？"
         
 # --- テンプレ or AI返し ---
 def get_reply(text):
