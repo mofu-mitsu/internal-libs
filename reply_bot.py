@@ -49,7 +49,7 @@ HEADERS = {
     "Accept": "application/vnd.github.v3+json"
 }
 
-# --- Gistからデータ読み込み ---
+# --- Gistから replied.json のみ読み込み ---
 def load_gist_data():
     try:
         response = requests.get(GIST_API_URL, headers=HEADERS)
@@ -60,15 +60,10 @@ def load_gist_data():
         replied = set(json.loads(replied_content))
         print(f"✅ replied.json をGistから読み込みました（件数: {len(replied)})")
 
-        texts_content = gist_data["files"][REPLIED_TEXTS_FILE]["content"]
-        raw_texts = json.loads(texts_content)
-        replied_texts = {k: datetime.fromisoformat(v) for k, v in raw_texts.items()}
-        print(f"✅ replied_texts.json をGistから読み込みました（件数: {len(replied_texts)})")
-
-        return replied, replied_texts
+        return replied
     except Exception as e:
         print(f"⚠️ Gistデータの読み込み中にエラーが発生しました: {e}")
-        return set(), {}
+        return set()
 
 # --- replied.json 保存 ---
 def save_replied(replied_set):
@@ -328,7 +323,6 @@ def run_reply_bot():
         print("⚠️ replied が空なので Gist に保存しません")
 
     save_replied(replied)
-    save_replied_texts(replied_texts)
 
     if os.path.exists(REPLIED_GIST_FILENAME):
         upload_to_gist(REPLIED_GIST_FILENAME, GIST_ID, GIST_TOKEN)
@@ -397,8 +391,6 @@ def run_reply_bot():
         def hash_text(text):
             return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
-        check_key = f"{author_did}:{hash_text(text)}"
-
         if notification_uri in replied:
             print(f"⏭️ すでに replied 済み → {notification_uri}")
             print(f"📂 現在の保存件数: {len(replied)} / 最新5件: {list(replied)[-5:]}")
@@ -435,8 +427,6 @@ def run_reply_bot():
             now = datetime.now(timezone.utc)
             replied.add(notification_uri)
             save_replied(replied)
-            replied_texts[check_key] = now
-            save_replied_texts(replied_texts)
 
             print(f"✅ @{author_handle} に返信完了！ → {notification_uri}")
             print(f"💾 URI保存成功 → 合計: {len(replied)} 件")
