@@ -40,8 +40,6 @@ GIST_TOKEN = os.getenv("GIST_TOKEN")
 REPLIED_GIST_FILENAME = "replied.json"
 REPLIED_JSON_URL = f"https://gist.githubusercontent.com/{GIST_ID}/raw/{REPLIED_GIST_FILENAME}"
 
-replied, replied_texts = load_gist_data()
-
 # --- Gist API設定 ---
 GIST_API_URL = f"https://api.github.com/gists/{GIST_ID}"
 HEADERS = {
