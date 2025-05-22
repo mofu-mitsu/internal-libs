@@ -212,11 +212,24 @@ def upload_gist_content(content, filename=REPLIED_GIST_FILENAME, gist_id=GIST_ID
             }
         }
     }
-    response = requests.patch(url, headers=headers, json=data)
-    if response.status_code == 200:
-        print(f"🚀 Gist（{filename}）の更新に成功しました")
-    else:
-        print(f"❌ Gistの更新に失敗しました: {response.status_code} {response.text}")
+
+    # 🔍 デバッグログ
+    print("📡 Gistアップロード準備中...")
+    print(f"🔗 URL: {url}")
+    print(f"🔐 トークン（先頭5文字）: {token[:5]}...（長さ: {len(token)}）")
+    print(f"📤 ヘッダー: {headers}")
+    print(f"📝 送信内容（data）:\n{json.dumps(data, indent=2, ensure_ascii=False)}")
+
+    try:
+        response = requests.patch(url, headers=headers, json=data)
+        print(f"📥 レスポンスコード: {response.status_code}")
+        print(f"📥 レスポンス本文: {response.text}")
+        if response.status_code == 200:
+            print(f"🚀 Gist（{filename}）の更新に成功しました")
+        else:
+            print(f"❌ Gistの更新に失敗しました: {response.status_code} {response.text}")
+    except Exception as e:
+        print(f"❌ 例外発生: {e}")
         
 # --- Gistに保存 ---
 
