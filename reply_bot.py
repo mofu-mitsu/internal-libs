@@ -46,7 +46,7 @@ REPLIED_JSON_URL = f"https://gist.githubusercontent.com/{GIST_USER}/{GIST_ID}/ra
 # --- Gist API設定 ---
 GIST_API_URL = f"https://api.github.com/gists/{GIST_ID}"
 HEADERS = {
-    "Authorization": f"token {GIST_TOKEN}",
+    "Authorization": f"Bearer {GIST_TOKEN}",
     "Accept": "application/vnd.github.v3+json"
 }
 
@@ -71,6 +71,11 @@ def save_replied(replied_set):
     try:
         content = json.dumps(list(replied_set), ensure_ascii=False, indent=2)
         payload = { "files": { REPLIED_GIST_FILENAME: { "content": content } } }
+
+        # 🔽 デバッグ用に送信内容を表示！
+        print("🛠 PATCH 送信内容（payload）:")
+        print(json.dumps(payload, indent=2, ensure_ascii=False))
+
         response = requests.patch(GIST_API_URL, headers=HEADERS, json=payload)
         response.raise_for_status()
         print(f"💾 replied.json をGistに保存しました（件数: {len(replied_set)}）")
