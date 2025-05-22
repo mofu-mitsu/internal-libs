@@ -39,7 +39,7 @@ jobs:
           APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
           HF_API_TOKEN: ${{ secrets.HF_API_TOKEN }}
           REPLIED_JSON_URL: ${{ secrets.REPLIED_JSON_URL }}
-          GIST_TOKEN: ${{ secrets.GIST_TOKEN }}
+          GIST_TOKEN_REPLY: ${{ secrets.GIST_TOKEN_REPLY }}
           GIST_ID: 40391085a2e0b8a48935ad0b460cf422
         run: |
           python reply_bot.py
