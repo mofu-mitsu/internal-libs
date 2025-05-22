@@ -28,7 +28,7 @@ HF_API_TOKEN = os.getenv("HF_API_TOKEN")
 HANDLE = os.environ['HANDLE']
 APP_PASSWORD = os.environ['APP_PASSWORD']
 GIST_TOKEN = os.environ["GIST_TOKEN"]
-
+print(f"🪪 現在のGIST_TOKEN: {GIST_TOKEN[:8]}...（先頭8文字だけ表示）")
 # Blueskyにログイン
 client = Client()
 client.login(HANDLE, APP_PASSWORD)
