@@ -36,7 +36,7 @@ HANDLE = os.environ["HANDLE"]
 APP_PASSWORD = os.environ["APP_PASSWORD"]
 HF_API_TOKEN = os.environ["HF_API_TOKEN"]
 GIST_TOKEN = os.environ["GIST_TOKEN"]
-
+print(f"🪪 現在のGIST_TOKEN: {GIST_TOKEN[:8]}...（先頭8文字だけ表示）")
 # --- 固定値（環境変数にせず直書きでOK） ---
 GIST_USER = "mofu-mitsu"
 GIST_ID = "40391085a2e0b8a48935ad0b460cf422"  # ←新IDに修正！！
