@@ -233,6 +233,14 @@ def upload_gist_content(content, filename=REPLIED_GIST_FILENAME, gist_id=GIST_ID
 def generate_reply_via_local_model(user_input):
     model_name = "cl-tohoku/bert-base-japanese-v2"
 
+    failure_messages = [
+        "えへへ、ごめんね〜〜今ちょっと調子悪いみたい……またお話しよ？",
+        "うぅ、ごめん〜…上手くお返事できなかったの。ちょっと待ってて？",
+        "あれれ？みりんてゃ、おねむかも…またあとで頑張るねっ！",
+        "んん〜〜バグっちゃったかも……でも君のこと嫌いじゃないよ！",
+        "今日はちょっと…お休みモードかも。また構ってくれる？"
+    ]
+
     try:
         print(f"📤 {datetime.now().isoformat()} ｜ モデルとトークナイザを読み込み中…")
         tokenizer = AutoTokenizer.from_pretrained(model_name)
@@ -258,7 +266,8 @@ def generate_reply_via_local_model(user_input):
 
     except Exception as e:
         print(f"❌ モデル読み込みエラー: {e}")
-        return "えへへ、ごめんね〜〜今ちょっと調子悪いみたい……またお話しよ？"
+        fallback = random.choice(failure_messages)  # ← ランダム選出！
+        return fallback
         
 # --- テンプレ or AI返し ---
 def get_reply(text):
