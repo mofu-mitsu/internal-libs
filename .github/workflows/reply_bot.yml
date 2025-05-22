@@ -35,6 +35,6 @@ jobs:
           REPLIED_JSON_URL: ${{ secrets.REPLIED_JSON_URL }}
           REPLIED_TEXTS_GIST_ID: a6a47f2ae7417d9f6adadf6c281cbdb7
           GIST_TOKEN: ${{ secrets.GIST_TOKEN }}
-          GIST_ID: fa3fad819922208c93636da84f75bc34  # ← Gist ID は直書きOK！
+          GIST_ID: 40391085a2e0b8a48935ad0b460cf422  # ←こっちに変えて！！
         run: |
           python reply_bot.py
