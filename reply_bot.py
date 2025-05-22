@@ -250,24 +250,26 @@ def upload_gist_content(content, filename=REPLIED_GIST_FILENAME, gist_id=GIST_ID
 # --- Gistに保存 ---
 
 def generate_reply_via_local_model(user_input):
-    model_name = "cl-tohoku/bert-base-japanese-v2"
+    model_name = "rinna/japanese-gpt2-medium"
 
     failure_messages = [
         "えへへ、ごめんね〜〜今ちょっと調子悪いみたい……またお話しよ？",
         "うぅ、ごめん〜…上手くお返事できなかったの。ちょっと待ってて？",
         "あれれ？みりんてゃ、おねむかも…またあとで頑張るねっ！",
         "んん〜〜バグっちゃったかも……でも君のこと嫌いじゃないよ！",
-        "今日はちょっと…お休みモードかも。また構ってくれる？"
-        "えへへ、なんかうまく考えつかなかったかも〜…"
+        "今日はちょっと…お休みモードかも。また構ってくれる？",
+        "えへへ、なんかうまく考えつかなかったかも〜…",
         "ちょっとだけ、おやすみ中かも…また話してね♡"
     ]
 
     try:
         print(f"📤 {datetime.now().isoformat()} ｜ モデルとトークナイザを読み込み中…")
-        tokenizer = AutoTokenizer.from_pretrained(model_name)
+        tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=False)
         model = AutoModelForCausalLM.from_pretrained(model_name)
 
+        # プロンプト
         prompt = f"ユーザー: {user_input}\nみりんてゃ（甘えん坊で地雷系ENFPっぽい）:"
+
         token_ids = tokenizer.encode(prompt, return_tensors="pt")
 
         print(f"📤 {datetime.now().isoformat()} ｜ テキスト生成中…")
@@ -277,17 +279,20 @@ def generate_reply_via_local_model(user_input):
                 max_new_tokens=100,
                 temperature=0.8,
                 top_p=0.95,
-                do_sample=True
+                do_sample=True,
+                pad_token_id=tokenizer.eos_token_id  # これ大事！
             )
 
         output_text = tokenizer.decode(output_ids[0], skip_special_tokens=True)
+        # プロンプトからの分岐部分だけ切り出す
         reply = output_text.split("みりんてゃ（甘えん坊で地雷系ENFPっぽい）:")[-1].strip()
+
         print(f"🤖 AI返答: {reply}")
         return reply
 
     except Exception as e:
         print(f"❌ モデル読み込みエラー: {e}")
-        fallback = random.choice(failure_messages)  # ← ランダム選出！
+        fallback = random.choice(failure_messages)
         return fallback
         
 # --- テンプレ or AI返し ---
