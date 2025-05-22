@@ -40,6 +40,8 @@ GIST_TOKEN = os.getenv("GIST_TOKEN")
 REPLIED_GIST_FILENAME = "replied.json"
 REPLIED_JSON_URL = f"https://gist.githubusercontent.com/{GIST_ID}/raw/{REPLIED_GIST_FILENAME}"
 
+replied, replied_texts = load_gist_data()
+
 # --- Gist API設定 ---
 GIST_API_URL = f"https://api.github.com/gists/{GIST_ID}"
 HEADERS = {
@@ -47,20 +49,28 @@ HEADERS = {
     "Accept": "application/vnd.github.v3+json"
 }
 
-# --- replied.json 読み書き ---
-def load_replied():
+# --- Gistからデータ読み込み ---
+def load_gist_data():
     try:
         response = requests.get(GIST_API_URL, headers=HEADERS)
         response.raise_for_status()
         gist_data = response.json()
-        content = gist_data["files"][REPLIED_GIST_FILENAME]["content"]
-        data = set(json.loads(content))
-        print(f"✅ replied.json をGistから読み込みました（件数: {len(data)}）")
-        return data
-    except Exception as e:
-        print(f"⚠️ replied.json の読み込み中にエラーが発生しました: {e}")
-        return set()
 
+        replied_content = gist_data["files"][REPLIED_GIST_FILENAME]["content"]
+        replied = set(json.loads(replied_content))
+        print(f"✅ replied.json をGistから読み込みました（件数: {len(replied)})")
+
+        texts_content = gist_data["files"][REPLIED_TEXTS_FILE]["content"]
+        raw_texts = json.loads(texts_content)
+        replied_texts = {k: datetime.fromisoformat(v) for k, v in raw_texts.items()}
+        print(f"✅ replied_texts.json をGistから読み込みました（件数: {len(replied_texts)})")
+
+        return replied, replied_texts
+    except Exception as e:
+        print(f"⚠️ Gistデータの読み込み中にエラーが発生しました: {e}")
+        return set(), {}
+
+# --- replied.json 保存 ---
 def save_replied(replied_set):
     try:
         content = json.dumps(list(replied_set), ensure_ascii=False, indent=2)
@@ -71,25 +81,9 @@ def save_replied(replied_set):
     except Exception as e:
         print(f"⚠️ replied.json の保存中にエラーが発生しました: {e}")
 
-# --- replied_texts.json 読み書き ---
-def load_replied_texts():
-    try:
-        response = requests.get(GIST_API_URL, headers=HEADERS)
-        response.raise_for_status()
-        gist_data = response.json()
-        content = gist_data["files"][REPLIED_TEXTS_FILE]["content"]
-        raw_data = json.loads(content)
-        # ISO形式から datetime に変換
-        data = {k: datetime.fromisoformat(v) for k, v in raw_data.items()}
-        print(f"✅ replied_texts.json をGistから読み込みました（件数: {len(data)}）")
-        return data
-    except Exception as e:
-        print(f"⚠️ replied_texts.json の読み込みエラー: {e}")
-        return {}
-
+# --- replied_texts.json 保存 ---
 def save_replied_texts(data):
     try:
-        # datetime を ISO文字列に変換
         serializable_data = {k: v.isoformat() for k, v in data.items()}
         content = json.dumps(serializable_data, ensure_ascii=False, indent=2)
         payload = { "files": { REPLIED_TEXTS_FILE: { "content": content } } }
