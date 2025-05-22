@@ -1,3 +1,5 @@
 atproto
 python-dotenv
 requests
+fugashi
+ipadic
