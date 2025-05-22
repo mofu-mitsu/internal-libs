@@ -269,6 +269,7 @@ def generate_reply_via_local_model(user_input):
 
         # プロンプト
         prompt = f"ユーザー: {user_input}\nみりんてゃ（甘えん坊で地雷系ENFPっぽい）:"
+        print("📎 使用プロンプト:", repr(prompt))  # ← ここ追加！
 
         token_ids = tokenizer.encode(prompt, return_tensors="pt")
 
@@ -280,14 +281,15 @@ def generate_reply_via_local_model(user_input):
                 temperature=0.8,
                 top_p=0.95,
                 do_sample=True,
-                pad_token_id=tokenizer.eos_token_id  # これ大事！
+                pad_token_id=tokenizer.eos_token_id
             )
 
         output_text = tokenizer.decode(output_ids[0], skip_special_tokens=True)
-        # プロンプトからの分岐部分だけ切り出す
-        reply = output_text.split("みりんてゃ（甘えん坊で地雷系ENFPっぽい）:")[-1].strip()
+        print("📥 生成された全体テキスト:", repr(output_text))  # ← ここ追加！
 
-        print(f"🤖 AI返答: {reply}")
+        reply = output_text.split("みりんてゃ（甘えん坊で地雷系ENFPっぽい）:")[-1].strip()
+        print("📝 最終抽出されたreply:", repr(reply))  # ← ここも追加！
+
         return reply
 
     except Exception as e:
