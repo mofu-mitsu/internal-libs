@@ -322,8 +322,6 @@ def run_reply_bot():
     else:
         print("⚠️ replied が空なので Gist に保存しません")
 
-    save_replied(replied)
-
     if os.path.exists(REPLIED_GIST_FILENAME):
         upload_to_gist(REPLIED_GIST_FILENAME, GIST_ID, GIST_TOKEN)
     else:
