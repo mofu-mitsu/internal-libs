@@ -217,6 +217,7 @@ def run_once():
         feed = timeline.feed
 
         for post in feed:
+            time.sleep(random.uniform(5, 15))
             text = getattr(post.post.record, "text", None)
             uri = str(post.post.uri)
             post_id = uri.split('/')[-1]
