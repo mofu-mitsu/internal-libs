@@ -46,7 +46,7 @@ REPLIED_JSON_URL = f"https://gist.githubusercontent.com/{GIST_USER}/{GIST_ID}/ra
 # --- Gist API設定 ---
 GIST_API_URL = f"https://api.github.com/gists/{GIST_ID}"
 HEADERS = {
-    "Authorization": f"Bearer {GIST_TOKEN}",
+    "Authorization": f"token {GIST_TOKEN}",
     "Accept": "application/vnd.github.v3+json"
 }
 
