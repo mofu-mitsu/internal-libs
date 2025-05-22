@@ -81,18 +81,6 @@ def save_replied(replied_set):
     except Exception as e:
         print(f"⚠️ replied.json の保存中にエラーが発生しました: {e}")
 
-# --- replied_texts.json 保存 ---
-def save_replied_texts(data):
-    try:
-        serializable_data = {k: v.isoformat() for k, v in data.items()}
-        content = json.dumps(serializable_data, ensure_ascii=False, indent=2)
-        payload = { "files": { REPLIED_TEXTS_FILE: { "content": content } } }
-        response = requests.patch(GIST_API_URL, headers=HEADERS, json=payload)
-        response.raise_for_status()
-        print(f"💾 replied_texts.json をGistに保存しました（件数: {len(data)}）")
-    except Exception as e:
-        print(f"⚠️ replied_texts.json の保存中にエラーが発生しました: {e}")
-
 # --- HuggingFace API設定 ---
 HF_API_URL = "https://api-inference.huggingface.co/"
 HF_HEADERS = {
@@ -326,17 +314,6 @@ def run_reply_bot():
         print(f"🧹 無効なデータを {removed_count} 件削除しました（replied）")
     else:
         print("✅ replied は問題ありませんでした")
-
-    # --- 🧹 replied_texts（辞書）を整理 ---
-    if isinstance(replied_texts, dict):
-        if None in replied_texts:
-            del replied_texts[None]
-            print("🧹 replied_texts から None キーを削除しました")
-        else:
-            print("✅ replied_texts に None キーは存在しませんでした")
-    else:
-        print("⚠️ replied_texts が辞書ではありません。初期化します")
-        replied_texts = {}
 
     # --- ⛑️ 空じゃなければ保存・アップロード ---
     if replied:
