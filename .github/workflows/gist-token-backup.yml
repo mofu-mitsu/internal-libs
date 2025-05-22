@@ -1,16 +1,41 @@
-# .github/workflows/gist-token-backup.yml
 name: Gist Token Backup
 
 on:
-  workflow_dispatch:  # 手動で実行可能にするトリガー
+  workflow_dispatch:
 
 jobs:
-  backup:
+  check-gist:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Show partial GIST_TOKEN
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Check GIST_TOKEN
         run: |
-          echo "🔐 GIST_TOKEN（先頭8文字だけ）: ${GIST_TOKEN:0:8}"
+          echo "🔐 GIST_TOKEN（先頭8文字だけ）: ${GIST_TOKEN::8}"
+        env:
+          GIST_TOKEN: ${{ secrets.GIST_TOKEN }}
+
+      - name: Fetch replied.json from Gist
+        run: |
+          echo "🌐 Gist から replied.json を取得中..."
+          GIST_ID="40391085a2e0b8a48935ad0b460cf422"
+          FILENAME="replied.json"
+          GIST_USER="mofu-mitsu"
+          GIST_URL="https://gist.githubusercontent.com/${GIST_USER}/${GIST_ID}/raw/${FILENAME}"
+
+          echo "📥 取得URL: $GIST_URL"
+          HTTP_STATUS=$(curl -s -o temp.json -w "%{http_code}" "$GIST_URL")
+          
+          if [ "$HTTP_STATUS" = "200" ]; then
+            echo "✅ replied.json を正常に取得しました！"
+            echo "📝 上位3件を表示:"
+            head -n 10 temp.json | jq . | head -n 15
+          else
+            echo "❌ 取得失敗（HTTPステータス: $HTTP_STATUS）"
+            cat temp.json
+            exit 1
+          fi
         env:
           GIST_TOKEN: ${{ secrets.GIST_TOKEN }}
