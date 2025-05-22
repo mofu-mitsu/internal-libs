@@ -35,8 +35,8 @@ load_dotenv()
 HANDLE = os.environ["HANDLE"]
 APP_PASSWORD = os.environ["APP_PASSWORD"]
 HF_API_TOKEN = os.environ["HF_API_TOKEN"]
-GIST_TOKEN = os.environ["GIST_TOKEN"]
-print(f"🪪 現在のGIST_TOKEN: {GIST_TOKEN[:8]}...（先頭8文字だけ表示）")
+GIST_TOKEN_REPLY = os.environ["GIST_TOKEN_REPLY"]
+print(f"🪪 現在のGIST_TOKEN_REPLY: {GIST_TOKEN_REPLY[:8]}...（先頭8文字だけ表示）")
 # --- 固定値（環境変数にせず直書きでOK） ---
 GIST_USER = "mofu-mitsu"
 GIST_ID = "40391085a2e0b8a48935ad0b460cf422"  # ←新IDに修正！！
@@ -46,7 +46,7 @@ REPLIED_JSON_URL = f"https://gist.githubusercontent.com/{GIST_USER}/{GIST_ID}/ra
 # --- Gist API設定 ---
 GIST_API_URL = f"https://api.github.com/gists/{GIST_ID}"
 HEADERS = {
-    "Authorization": f"token {GIST_TOKEN}",
+    "Authorization": f"token {GIST_TOKEN_REPLY}",
     "Accept": "application/vnd.github.v3+json"
 }
 
@@ -355,7 +355,7 @@ def run_reply_bot():
         save_replied(replied)
         print("💾 replied を保存しました")
         try:
-            upload_to_gist(REPLIED_GIST_FILENAME, GIST_ID, GIST_TOKEN)
+            upload_to_gist(REPLIED_GIST_FILENAME, GIST_ID, GIST_TOKEN_REPLY)
             print("☁️ Gist にアップロードしました")
         except Exception as e:
             print(f"❌ Gist アップロード失敗: {e}")
@@ -363,7 +363,7 @@ def run_reply_bot():
         print("⚠️ replied が空なので Gist に保存しません")
 
     if os.path.exists(REPLIED_GIST_FILENAME):
-        upload_to_gist(REPLIED_GIST_FILENAME, GIST_ID, GIST_TOKEN)
+        upload_to_gist(REPLIED_GIST_FILENAME, GIST_ID, GIST_TOKEN_REPLY)
     else:
         print("⚠️ REPLIED_GIST_FILENAME の保存に失敗した可能性あり、Gistへのアップロード中止")
 
