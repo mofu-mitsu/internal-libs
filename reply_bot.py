@@ -308,7 +308,7 @@ def run_reply_bot():
 
     # --- 🧹 replied（URLのセット）を整理 ---
     original_replied_count = len(replied)
-    replied = [uri for uri in replied if isinstance(uri, str) and uri.startswith("http")]
+    replied = {uri for uri in replied if isinstance(uri, str) and uri.startswith("http")}
 
     removed_count = original_replied_count - len(replied)
     if removed_count > 0:
