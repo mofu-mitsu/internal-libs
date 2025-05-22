@@ -39,7 +39,7 @@ GIST_TOKEN = os.environ["GIST_TOKEN"]
 
 # --- 固定値（環境変数にせず直書きでOK） ---
 GIST_USER = "mofu-mitsu"
-GIST_ID = "fa3fad819922208c93636da84f75bc34"
+GIST_ID = "40391085a2e0b8a48935ad0b460cf422"  # ←新IDに修正！！
 REPLIED_GIST_FILENAME = "replied.json"
 REPLIED_JSON_URL = f"https://gist.githubusercontent.com/{GIST_USER}/{GIST_ID}/raw/{REPLIED_GIST_FILENAME}"
 
