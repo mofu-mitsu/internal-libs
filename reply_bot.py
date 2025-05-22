@@ -367,7 +367,7 @@ else:
     MAX_REPLIES = 5
     REPLY_INTERVAL = 5
     reply_count = 0
-    
+
     for notification in notifications:
         notification_uri = getattr(notification, "uri", None) or getattr(notification, "reasonSubject", None)
         if notification_uri:
@@ -417,19 +417,18 @@ else:
         import hashlib
 
         def hash_text(text):
-        return hashlib.sha256(text.encode("utf-8")).hexdigest()
+            return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
         check_key = f"{author_did}:{hash_text(text)}"
 
-
         if notification_uri in replied:
-           print(f"⏭️ すでに replied 済み → {notification_uri}")
-           print(f"📂 現在の保存件数: {len(replied)} / 最新5件: {list(replied)[-5:]}")
-           continue
+            print(f"⏭️ すでに replied 済み → {notification_uri}")
+            print(f"📂 現在の保存件数: {len(replied)} / 最新5件: {list(replied)[-5:]}")
+            continue
 
         if not text:
-           print(f"⚠️ テキストが空 → @{author_handle}")
-           continue
+            print(f"⚠️ テキストが空 → @{author_handle}")
+            continue
 
         reply_ref, post_uri = handle_post(record, notification)
         print("🔗 reply_ref:", reply_ref)
@@ -471,7 +470,7 @@ else:
         except Exception as e:
             print("⚠️ 投稿失敗:", e)
             traceback.print_exc()
-
+            
 if __name__ == "__main__":
     print("🤖 Reply Bot 起動中…")
     run_reply_bot()
