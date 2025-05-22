@@ -292,6 +292,7 @@ def generate_reply_via_local_model(user_input):
 
     except Exception as e:
         print(f"❌ モデル読み込みエラー: {e}")
+        print("🔍 random の中身確認 →", dir(random)) 
         fallback = random.choice(failure_messages)
         return fallback
         
