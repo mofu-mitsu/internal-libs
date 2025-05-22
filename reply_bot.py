@@ -53,17 +53,27 @@ HEADERS = {
 # --- Gistから replied.json のみ読み込み ---
 def load_gist_data():
     try:
+        print(f"🌐 Gistデータ読み込み開始 → URL: {GIST_API_URL}")
+        print(f"🔐 ヘッダー: {HEADERS}")
+
         response = requests.get(GIST_API_URL, headers=HEADERS)
+        print(f"📥 レスポンスステータス: {response.status_code}")
+
         response.raise_for_status()
         gist_data = response.json()
 
-        replied_content = gist_data["files"][REPLIED_GIST_FILENAME]["content"]
-        replied = set(json.loads(replied_content))
-        print(f"✅ replied.json をGistから読み込みました（件数: {len(replied)})")
-
-        return replied
+        if REPLIED_GIST_FILENAME in gist_data["files"]:
+            replied_content = gist_data["files"][REPLIED_GIST_FILENAME]["content"]
+            replied = set(json.loads(replied_content))
+            print(f"✅ replied.json をGistから読み込みました（件数: {len(replied)}）")
+            return replied
+        else:
+            print(f"⚠️ Gist内に {REPLIED_GIST_FILENAME} が見つかりませんでした")
+            return set()
     except Exception as e:
         print(f"⚠️ Gistデータの読み込み中にエラーが発生しました: {e}")
+        if 'response' in locals():
+            print(f"📥 レスポンス本文:\n{response.text}")
         return set()
 
 # --- replied.json 保存 ---
@@ -72,15 +82,21 @@ def save_replied(replied_set):
         content = json.dumps(list(replied_set), ensure_ascii=False, indent=2)
         payload = { "files": { REPLIED_GIST_FILENAME: { "content": content } } }
 
-        # 🔽 デバッグ用に送信内容を表示！
+        print("💾 Gist保存準備中...")
+        print(f"🔗 URL: {GIST_API_URL}")
+        print(f"🔐 ヘッダー: {HEADERS}")
         print("🛠 PATCH 送信内容（payload）:")
         print(json.dumps(payload, indent=2, ensure_ascii=False))
 
         response = requests.patch(GIST_API_URL, headers=HEADERS, json=payload)
+        print(f"📥 レスポンスステータス: {response.status_code}")
+
         response.raise_for_status()
         print(f"💾 replied.json をGistに保存しました（件数: {len(replied_set)}）")
     except Exception as e:
         print(f"⚠️ replied.json の保存中にエラーが発生しました: {e}")
+        if 'response' in locals():
+            print(f"📥 レスポンス本文:\n{response.text}")
 
 # --- HuggingFace API設定 ---
 HF_API_URL = "https://api-inference.huggingface.co/"
