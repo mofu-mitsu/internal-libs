@@ -220,12 +220,16 @@ def run_once():
             text = getattr(post.post.record, "text", None)
             uri = str(post.post.uri)
             post_id = uri.split('/')[-1]
+            author = post.post.author.handle
 
             print(f"📝 処理対象URI: {uri}")
             print(f"📂 保存済みURIsの一部: {list(replied_uris)[-5:]}")
             print(f"🆔 投稿ID: {post_id}")
 
-            author = post.post.author.handle
+            # 🚫 リプライ投稿ならスキップ
+            if hasattr(post.post.record, "reply") and post.post.record.reply is not None:
+                print(f"📭 スキップ（リプライ投稿）→ @{author}: {text}")
+                continue
 
             if author == HANDLE or post_id in replied_post_ids or not text:
                 if post_id in replied_post_ids:
@@ -249,7 +253,7 @@ def run_once():
                     break
 
             if not matched and f"@{HANDLE}" in text:
-                reply_text = random.choice(MENTION_TEMPLATES)  # ←代入！！
+                reply_text = random.choice(MENTION_TEMPLATES)
                 print(f"💬 メンション返信テンプレ: {reply_text}")
                 matched = True
 
