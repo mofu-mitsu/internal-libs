@@ -1,0 +1,16 @@
+# .github/workflows/gist-token-backup.yml
+name: Gist Token Backup
+
+on:
+  workflow_dispatch:  # 手動で実行可能にするトリガー
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Show partial GIST_TOKEN
+        run: |
+          echo "🔐 GIST_TOKEN（先頭8文字だけ）: ${GIST_TOKEN:0:8}"
+        env:
+          GIST_TOKEN: ${{ secrets.GIST_TOKEN }}
