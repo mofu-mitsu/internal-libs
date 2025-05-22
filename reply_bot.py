@@ -6,6 +6,7 @@ import json
 import requests
 import traceback
 import time
+import random
 
 # ------------------------------
 # 🕒 日時関連（UTC→JST）
