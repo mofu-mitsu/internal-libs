@@ -29,16 +29,18 @@ from atproto_client.models.com.atproto.repo.strong_ref import Main as StrongRef
 # ------------------------------
 from dotenv import load_dotenv
 
-# --- 環境変数読み込み ---
+# --- 環境読み込み ---
 load_dotenv()
 HANDLE = os.environ["HANDLE"]
 APP_PASSWORD = os.environ["APP_PASSWORD"]
 HF_API_TOKEN = os.environ["HF_API_TOKEN"]
-GIST_ID = os.getenv("GIST_ID")
-GIST_TOKEN = os.getenv("GIST_TOKEN")
+GIST_TOKEN = os.environ["GIST_TOKEN"]
 
+# --- 固定値（環境変数にせず直書きでOK） ---
+GIST_USER = "mofu-mitsu"
+GIST_ID = "fa3fad819922208c93636da84f75bc34"
 REPLIED_GIST_FILENAME = "replied.json"
-REPLIED_JSON_URL = f"https://gist.githubusercontent.com/{GIST_ID}/raw/{REPLIED_GIST_FILENAME}"
+REPLIED_JSON_URL = f"https://gist.githubusercontent.com/{GIST_USER}/{GIST_ID}/raw/{REPLIED_GIST_FILENAME}"
 
 # --- Gist API設定 ---
 GIST_API_URL = f"https://api.github.com/gists/{GIST_ID}"
@@ -196,14 +198,13 @@ def load_replied():
             print("✅ Gistからの読み込みに成功")
             print(f"📄 保存済みURI読み込み完了 → 件数: {len(data)}")
 
-            if len(data) > 0:
+            if data:
                 print("📁 最新URI一覧:")
-                for uri in list(data)[-5:]:  # 最新5件だけ表示（多すぎないように）
+                for uri in list(data)[-5:]:  # 最新5件だけ表示
                     print(f" - {uri}")
-
             return data
         else:
-            print(f"⚠️ Gist読み込み失敗: {res.status_code}")
+            print(f"⚠️ Gist読み込み失敗: {res.status_code} {res.text}")
     except Exception as e:
         print(f"⚠️ Gist読み込みエラー: {e}")
     return set()
@@ -311,7 +312,6 @@ def run_reply_bot():
 
     self_did = client.me.did
     replied = load_replied()
-    replied_texts = load_replied_texts()
 
     print(f"📘 replied の型: {type(replied)} / 件数: {len(replied)}")
 
