@@ -354,7 +354,7 @@ else:
         notifications = client.app.bsky.notification.list_notifications(params={"limit": 25}).notifications
     except Exception as e:
         print(f"❌ 通知の取得に失敗しました: {e}")
-        return
+        pass
 
     print(f"🔔 通知総数: {len(notifications)} 件")
 
