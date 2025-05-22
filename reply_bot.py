@@ -304,47 +304,46 @@ def run_reply_bot():
 
     self_did = client.me.did
     replied = load_replied()
-    replied_texts = load_replied_texts()  # ← ここで辞書型で読み込み
+    replied_texts = load_replied_texts()
 
     print(f"📘 replied の型: {type(replied)} / 件数: {len(replied)}")
 
-# --- 🧹 replied（URLのセット）を整理 ---
-original_replied_count = len(replied)
-replied = {uri for uri in replied if isinstance(uri, str) and uri.startswith("http")}
+    # --- 🧹 replied（URLのセット）を整理 ---
+    original_replied_count = len(replied)
+    replied = {uri for uri in replied if isinstance(uri, str) and uri.startswith("http")}
 
-removed_count = original_replied_count - len(replied)
-if removed_count > 0:
-    print(f"🧹 無効なデータを {removed_count} 件削除しました（replied）")
-else:
-    print("✅ replied は問題ありませんでした")
-
-# --- 🧹 replied_texts（辞書）を整理 ---
-if isinstance(replied_texts, dict):
-    if None in replied_texts:
-        del replied_texts[None]
-        print("🧹 replied_texts から None キーを削除しました")
+    removed_count = original_replied_count - len(replied)
+    if removed_count > 0:
+        print(f"🧹 無効なデータを {removed_count} 件削除しました（replied）")
     else:
-        print("✅ replied_texts に None キーは存在しませんでした")
-else:
-    print("⚠️ replied_texts が辞書ではありません。初期化します")
-    replied_texts = {}
+        print("✅ replied は問題ありませんでした")
 
-# --- ⛑️ 空じゃなければ保存・アップロード ---
-if replied:
-    save_replied(replied)
-    print("💾 replied を保存しました")
-    try:
-        upload_to_gist(REPLIED_GIST_FILENAME, GIST_ID, GIST_TOKEN)
-        print("☁️ Gist にアップロードしました")
-    except Exception as e:
-        print(f"❌ Gist アップロード失敗: {e}")
-else:
-    print("⚠️ replied が空なので Gist に保存しません")
+    # --- 🧹 replied_texts（辞書）を整理 ---
+    if isinstance(replied_texts, dict):
+        if None in replied_texts:
+            del replied_texts[None]
+            print("🧹 replied_texts から None キーを削除しました")
+        else:
+            print("✅ replied_texts に None キーは存在しませんでした")
+    else:
+        print("⚠️ replied_texts が辞書ではありません。初期化します")
+        replied_texts = {}
+
+    # --- ⛑️ 空じゃなければ保存・アップロード ---
+    if replied:
+        save_replied(replied)
+        print("💾 replied を保存しました")
+        try:
+            upload_to_gist(REPLIED_GIST_FILENAME, GIST_ID, GIST_TOKEN)
+            print("☁️ Gist にアップロードしました")
+        except Exception as e:
+            print(f"❌ Gist アップロード失敗: {e}")
+    else:
+        print("⚠️ replied が空なので Gist に保存しません")
 
     save_replied(replied)
     save_replied_texts(replied_texts)
 
-    # 確実にファイルが書き込まれたか確認（例：os.path.exists とかでもOK）
     if os.path.exists(REPLIED_GIST_FILENAME):
         upload_to_gist(REPLIED_GIST_FILENAME, GIST_ID, GIST_TOKEN)
     else:
@@ -354,7 +353,7 @@ else:
         notifications = client.app.bsky.notification.list_notifications(params={"limit": 25}).notifications
     except Exception as e:
         print(f"❌ 通知の取得に失敗しました: {e}")
-        pass
+        return
 
     print(f"🔔 通知総数: {len(notifications)} 件")
 
@@ -409,7 +408,6 @@ else:
             continue
 
         import hashlib
-
         def hash_text(text):
             return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
