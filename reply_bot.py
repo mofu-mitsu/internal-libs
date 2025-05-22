@@ -346,7 +346,7 @@ if replied:
         print(f"❌ Gist アップロード失敗: {e}")
 else:
     print("⚠️ replied が空なので Gist に保存しません")
-    
+
     save_replied(replied)
     save_replied_texts(replied_texts)
 
@@ -354,7 +354,7 @@ else:
     if os.path.exists(REPLIED_GIST_FILENAME):
         upload_to_gist(REPLIED_GIST_FILENAME, GIST_ID, GIST_TOKEN)
     else:
-    print("⚠️ REPLIED_GIST_FILENAME の保存に失敗した可能性あり、Gistへのアップロード中止")
+        print("⚠️ REPLIED_GIST_FILENAME の保存に失敗した可能性あり、Gistへのアップロード中止")
 
     try:
         notifications = client.app.bsky.notification.list_notifications(params={"limit": 25}).notifications
@@ -367,7 +367,7 @@ else:
     MAX_REPLIES = 5
     REPLY_INTERVAL = 5
     reply_count = 0
-
+    
     for notification in notifications:
         notification_uri = getattr(notification, "uri", None) or getattr(notification, "reasonSubject", None)
         if notification_uri:
