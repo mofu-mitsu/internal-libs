@@ -267,9 +267,9 @@ def generate_reply_via_local_model(user_input):
         tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=False)
         model = AutoModelForCausalLM.from_pretrained(model_name)
 
-        # プロンプト
-        prompt = f"ユーザー: {user_input}\nみりんてゃ（甘えん坊で地雷系ENFPっぽい）:"
-        print("📎 使用プロンプト:", repr(prompt))  # ← ここ追加！
+        # 改良プロンプト
+        prompt = f"ユーザー: {user_input}\nみりんてゃ（甘えん坊で地雷系ENFPっぽい）:\n"
+        print("📎 使用プロンプト:", repr(prompt))
 
         token_ids = tokenizer.encode(prompt, return_tensors="pt")
 
@@ -277,18 +277,19 @@ def generate_reply_via_local_model(user_input):
         with torch.no_grad():
             output_ids = model.generate(
                 token_ids,
-                max_new_tokens=100,
+                max_new_tokens=80,
                 temperature=0.8,
                 top_p=0.95,
                 do_sample=True,
-                pad_token_id=tokenizer.eos_token_id
+                pad_token_id=tokenizer.eos_token_id,
+                no_repeat_ngram_size=2  # ★ リピート防止
             )
 
         output_text = tokenizer.decode(output_ids[0], skip_special_tokens=True)
-        print("📥 生成された全体テキスト:", repr(output_text))  # ← ここ追加！
+        print("📥 生成された全体テキスト:", repr(output_text))
 
         reply = output_text.split("みりんてゃ（甘えん坊で地雷系ENFPっぽい）:")[-1].strip()
-        print("📝 最終抽出されたreply:", repr(reply))  # ← ここも追加！
+        print("📝 最終抽出されたreply:", repr(reply))
 
         return reply
 
