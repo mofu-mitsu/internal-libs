@@ -30,16 +30,18 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install torch==2.0.1 \
-                      transformers==4.38.2 \
-                      bitsandbytes --upgrade --index-url https://pypi.org/simple/ \
-                      accelerate --upgrade \
-                      psutil==5.9.8 \
-                      sentencepiece==0.2.0
+          pip install --upgrade pip
+          pip install torch==2.0.1 transformers==4.38.2 psutil==5.9.8 sentencepiece==0.2.0
+          pip install --upgrade --index-url https://pypi.org/simple/ bitsandbytes
+          pip install --upgrade accelerate
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
       - name: Check installed packages
         run: pip list
+
+      - name: Check GPU
+        run: |
+          if command -v nvidia-smi; then nvidia-smi; else echo "No GPU detected"; fi
 
       - name: Run Reply Bot
         env:
