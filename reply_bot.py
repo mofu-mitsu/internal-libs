@@ -272,18 +272,26 @@ def upload_gist_content(content, filename=REPLIED_GIST_FILENAME, gist_id=GIST_ID
 def clean_sentence_ending(reply):
     reply = reply.split("\n")[0].strip()
 
-    # 変なタグや名前除去
+    # 名前など除去
     reply = re.sub(r"^みりんてゃ\s*[:：]\s*", "", reply)
     reply = re.sub(r"^ユーザー\s*[:：]\s*", "", reply)
 
-    # 文末の句読点整理
+    # 文末の「。！？笑」＋「。」みたいなのを整える
     reply = re.sub(r"([！？笑])。$", r"\1", reply)
 
-    # 絵文字や記号だけで終わってないかチェック
-    if not re.search(r"[ぁ-んァ-ン一-龥ーa-zA-Z0-9][。！？笑♡]*$", reply):
-        reply += "…♡"
+    # 企業口調・敬語っぽいキーワードが入ってたら完全差し替え
+    if re.search(r"(ご利用|誠に|お詫び|貴重なご意見|申し上げます|ございます|お客様)", reply):
+        return random.choice([
+            "ん〜〜なんか難しくなっちゃったの…甘やかしてくれる？♡",
+            "うぅ……みりんてゃ、失敗しちゃったかもっ！",
+            "えへへ〜♡ だいすきって言って逃げよ〜〜！"
+        ])
 
-    # 文末が自然じゃない場合の補完
+    # 文字が全くない or 記号だけで終わる場合
+    if not re.search(r"[ぁ-んァ-ン一-龥ーa-zA-Z0-9]", reply):
+        return "えへへ〜♡ なんかよくわかんないけど…好きっ♡"
+
+    # 文末が自然じゃないなら補完（！とか♡があればOK）
     if not re.search(r"[。！？♡♪笑]$", reply):
         reply += "のっ♡"
 
