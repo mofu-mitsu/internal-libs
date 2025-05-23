@@ -1,4 +1,4 @@
-name: Test Gist Access
+name: Test Gist Access.yml
 on: workflow_dispatch
 jobs:
   test-gist:
