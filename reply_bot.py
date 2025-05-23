@@ -259,6 +259,22 @@ def upload_gist_content(content, filename=REPLIED_GIST_FILENAME, gist_id=GIST_ID
         
 # --- Gistに保存 ---
 
+def clean_sentence_ending(reply):
+    # 改行で区切って最初の行だけにする
+    reply = reply.split("\n")[0].strip()
+
+    # 「みりんてゃ:」みたいなのがあればカット
+    reply = re.sub(r"^みりんてゃ\s*[:：]\s*", "", reply)
+
+    # 文末の変な句読点コンビネーションを整理
+    reply = re.sub(r"([！？笑])。$", r"\1", reply)
+
+    # 文末が終わってない感じなら句点追加
+    if not re.search(r"[。！？笑♡]$", reply):
+        reply += "。"
+
+    return reply
+
 def generate_reply_via_local_model(user_input):
     model_name = "rinna/japanese-gpt-neox-3.6b-instruction-ppo"
 
@@ -284,7 +300,6 @@ def generate_reply_via_local_model(user_input):
         tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=False)
         model = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype=torch.float16).eval()
 
-        # Neox系は instruction-tuning に合わせてプロンプトを明確に！
         prompt = (
             f"以下はユーザーと、甘えん坊でちょっと地雷系の女の子『みりんてゃ』との会話です。\n"
             f"みりんてゃはかわいくて、語尾に『〜♡』をよくつけますが、ちゃんと人の話は理解しています。\n"
@@ -318,12 +333,11 @@ def generate_reply_via_local_model(user_input):
             if match:
                 reply_text = match.group(1).strip()
             else:
-                # fallback: 全体から入力ぶんカットして使用
                 new_tokens = output_ids[0][input_length:]
                 reply_text = tokenizer.decode(new_tokens, skip_special_tokens=True).strip()
 
-            # 改行カット＋文末調整
-            reply_text = reply_text.split("\n")[0].split("。")[0] + "。"
+            # 文末整える！
+            reply_text = clean_sentence_ending(reply_text)
 
             # 崩壊チェック
             if any(ng in reply_text for ng in [">>", "スレ", "イククル", "ベッド", "(*", "まりちゃん", "777"]):
