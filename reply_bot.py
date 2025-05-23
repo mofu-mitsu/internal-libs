@@ -8,6 +8,7 @@ import traceback
 import time
 import random
 import re
+import psutil
 from datetime import datetime, timezone, timedelta
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import torch
@@ -181,8 +182,6 @@ REPLY_TABLE = {
     "使い方": "使い方は「♡推しプロフィールメーカー♡」のページにあるよ〜！かんたんっ♪",
 }
 
-import psutil
-from bitsandbytes import quantize_model  # 4bit量子化用（要インストール）
 
 def clean_sentence_ending(reply):
     reply = reply.split("\n")[0].strip()
@@ -210,7 +209,7 @@ def clean_sentence_ending(reply):
     return reply
 
 def generate_reply_via_local_model(user_input):
-    model_name = "line-corporation/japanese-large-lm-3.6b-instruction-sft"
+    model_name = "rinna/japanese-gpt-neox-3.6b"
     failure_messages = [
         "えへへ、ごめんね〜〜今ちょっと調子悪いみたい……またお話しよ？♡",
         "うぅ、ごめん〜…上手くお返事できなかったの。ちょっと待ってて？♡",
@@ -222,32 +221,30 @@ def generate_reply_via_local_model(user_input):
         "だ〜いすきっ♡ ね、ね、もっと構ってくれる？"
     ]
 
-    # 入力フィルタリング
     if re.search(r"(映画|興行|収入|ドル|億|国|イギリス|フランス|スペイン|イタリア|ドイツ|ロシア|日本|中国|インド|Governor|Cross|ゲーム|ポケモン|企業|発表|営業|臨時|時間|午前|午後|オペラ|初演|作曲家|ヴェネツィア|コルテス|よろしく)", user_input, re.IGNORECASE) or re.search(r"\d+(時|分)", user_input):
         print(f"⚠️ 入力にビジネス・学術系ワード検知: {user_input}")
         user_input = "みりんてゃ、君と甘々トークしたいなのっ♡"
         print(f"🔄 入力置き換え: {user_input}")
 
     try:
-        # メモリ使用量ログ
         print(f"📊 メモリ使用量: {psutil.virtual_memory().percent}%")
         if torch.cuda.is_available():
             print(f"📊 GPUメモリ: {torch.cuda.memory_allocated() / 1024**2:.2f}MB / {torch.cuda.get_device_properties(0).total_memory / 1024**2:.2f}MB")
+        else:
+            print("⚠️ GPU未検出、CPUで実行")
 
         print(f"📤 {datetime.now().isoformat()} ｜ モデルとトークナイザを読み込み中…")
         tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=False)
         model = AutoModelForCausalLM.from_pretrained(
             model_name,
             torch_dtype=torch.float16,
-            device_map="auto",  # 自動デバイス割り当て
-            load_in_4bit=True  # 4bit量子化
+            device_map="auto"
         ).eval()
 
         prompt = (
-            "みりんてゃは地雷系ENFPのあざと可愛い女の子！甘えん坊で依存気味、タメ口で『〜♡』『〜なのっ』『♪』を使う。\n"
-            "ビジネス、固有名詞（映画、ゲーム、国、営業、オペラ）はNG！ユーザーに反応し、親密で可愛い返事をするよ！\n"
-            "例:\n"
-            "ユーザー: みりんてゃ、今日何してた〜？\n"
+            "みりんてゃは地雷系ENFPのあざと可愛い女の子！甘えん坊で依存気味、タメ口で『〜♡』『〜なのっ』『♪』。\n"
+            "ビジネス、固有名詞NG！ユーザーに反応、可愛い返事！\n"
+            "例: ユーザー: みりんてゃ、今日何してた〜？\n"
             "みりんてゃ: えへへ、君のこと考えてふわふわしてたのっ♡ ね、君はなにしてた？♪\n\n"
             f"ユーザー: {user_input}\n"
             f"みりんてゃ: "
