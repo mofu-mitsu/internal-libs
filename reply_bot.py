@@ -277,7 +277,7 @@ def generate_reply_via_local_model(user_input):
         with torch.no_grad():
             output_ids = model.generate(
                 token_ids,
-                max_new_tokens=80,
+                max_new_tokens=100,
                 temperature=0.8,
                 top_p=0.95,
                 no_repeat_ngram_size=2,
@@ -288,16 +288,17 @@ def generate_reply_via_local_model(user_input):
         output_text = tokenizer.decode(output_ids[0], skip_special_tokens=True)
         print("📥 生成された全体テキスト:", repr(output_text))
 
-        # プロンプト部分を除去
-        if prompt in output_text:
-            reply = output_text.replace(prompt, "").strip()
+        # 出力から「最初に出てくる 'みりんてゃ' のセリフ」以降だけを取り出す
+        match = re.search(r"みりんてゃ（甘えん坊で地雷系ENFPっぽい）:\s*(.*)", output_text)
+        if match:
+            reply = match.group(1).strip()
         else:
-            reply = output_text.split("みりんてゃ（甘えん坊で地雷系ENFPっぽい）:")[-1].strip()
+            reply = output_text.strip()
 
-        # 意味不明な羅列ストッパー（"みりんてゃ"が繰り返されたら切る）
+        # 意味不明な連続（"みりんてゃ"が3回以上）を削除
         reply = re.split(r"(みりんてゃ\s?){3,}", reply)[0].strip()
 
-        # 最後の文を綺麗に整える（句点で区切って最初の文だけ返すとか）
+        # 文末整形
         reply = reply.split("。")[0] + "。" if "。" in reply else reply
 
         print("📝 最終抽出されたreply:", repr(reply))
