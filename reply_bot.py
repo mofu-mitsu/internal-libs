@@ -237,7 +237,7 @@ def generate_reply_via_local_model(user_input):
         tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=False)
         model = AutoModelForCausalLM.from_pretrained(
             model_name,
-            torch_dtype=torch.float16,  # 量子化なし
+            torch_dtype=torch.float32,  # 量子化なし
             device_map="auto"
         ).eval()
 
