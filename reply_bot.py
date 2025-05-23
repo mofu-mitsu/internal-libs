@@ -183,6 +183,10 @@ REPLY_TABLE = {
     "使い方": "使い方は「♡推しプロフィールメーカー♡」のページにあるよ〜！かんたんっ♪",
 }
 
+# グローバルモデルとトークナイザ（チャッピーの最適化提案）
+model = None
+tokenizer = None
+
 def clean_sentence_ending(reply):
     reply = reply.split("\n")[0].strip()
     reply = re.sub(r"^みりんてゃ\s*[:：]\s*", "", reply)
@@ -210,6 +214,28 @@ def clean_sentence_ending(reply):
 
     return reply
 
+def initialize_model_and_tokenizer(model_name="rinna/japanese-gpt-neox-3.6b"):
+    global model, tokenizer
+    if model is None or tokenizer is None:
+        print(f"📤 {datetime.now().isoformat()} ｜ トークナイザを読み込み中…")
+        tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=False)
+        print(f"📤 {datetime.now().isoformat()} ｜ トークナイザ読み込み完了")
+
+        print(f"📤 {datetime.now().isoformat()} ｜ モデルを読み込み中…")
+        bnb_config = BitsAndBytesConfig(
+            load_in_4bit=True,
+            bnb_4bit_use_double_quant=True,
+            bnb_4bit_quant_type="nf4",
+            bnb_4bit_compute_dtype=torch.float32
+        )
+        model = AutoModelForCausalLM.from_pretrained(
+            model_name,
+            quantization_config=bnb_config,
+            device_map="auto"
+        ).eval()
+        print(f"📤 {datetime.now().isoformat()} ｜ モデル読み込み完了")
+    return model, tokenizer
+
 def generate_reply_via_local_model(user_input):
     model_name = "rinna/japanese-gpt-neox-3.6b"
     failure_messages = [
@@ -222,6 +248,15 @@ def generate_reply_via_local_model(user_input):
         "今日も君に甘えたい気分なのっ♡ ぎゅーってして？",
         "だ〜いすきっ♡ ね、ね、もっと構ってくれる？"
     ]
+
+    # ラブラブフィルター（チャッピーの提案）
+    if re.search(r"(大好き|ぎゅー|ちゅー|愛してる|キス|添い寝)", user_input, re.IGNORECASE):
+        print(f"⚠️ ラブラブ入力検知: {user_input}")
+        return random.choice([
+            "うぅ…ドキドキ止まんないのっ♡ もっと甘やかしてぇ♡",
+            "えへへ♡ そんなの言われたら…みりんてゃ、溶けちゃいそうなのぉ〜♪",
+            "も〜〜〜♡ 好きすぎて胸がぎゅーってなるぅ♡"
+        ])
 
     # 感情フィルター（チャッピーの提案）
     if re.search(r"(疲れた|しんどい|つらい|泣きたい|ごめん|寝れない)", user_input, re.IGNORECASE):
@@ -245,30 +280,17 @@ def generate_reply_via_local_model(user_input):
         else:
             print("⚠️ GPU未検出、CPUで実行")
 
-        print(f"📤 {datetime.now().isoformat()} ｜ トークナイザを読み込み中…")
-        tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=False)
-        print(f"📤 {datetime.now().isoformat()} ｜ トークナイザ読み込み完了")
-
-        print(f"📤 {datetime.now().isoformat()} ｜ モデルを読み込み中…")
-        bnb_config = BitsAndBytesConfig(
-            load_in_4bit=True,
-            bnb_4bit_use_double_quant=True,
-            bnb_4bit_quant_type="nf4",
-            bnb_4bit_compute_dtype=torch.float32
-        )
-        model = AutoModelForCausalLM.from_pretrained(
-            model_name,
-            quantization_config=bnb_config,
-            device_map="auto"
-        ).eval()
-        print(f"📤 {datetime.now().isoformat()} ｜ モデル読み込み完了")
+        # モデルとトークナイザの初期化（1回のみ）
+        model, tokenizer = initialize_model_and_tokenizer(model_name)
 
         # プロンプト強化（チャッピー＋俺）
         intro_lines = random.choice([
             "えへへ〜、みりんてゃはね〜、",
             "ねぇねぇ、聞いて聞いて〜♡",
-            "ん〜今日もふわふwaしてたのっ♪"
-        ])  # チャッピーの揺らぎ
+            "ん〜今日もふわふwaしてたのっ♪",
+            "きゃ〜っ、君だぁ！やっと会えたのっ♡",  # チャッピーの揺らぎ強化
+            "ふわふわ〜、君のこと考えてたんだからっ♪"
+        ])
         prompt = (
             f"{intro_lines}\n"
             "あなたは「みりんてゃ」、地雷系ENFPのあざと可愛い女の子！\n"
@@ -312,7 +334,8 @@ def generate_reply_via_local_model(user_input):
                 print(f"📝 生の生成テキスト: {repr(raw_reply)}")
                 reply_text = clean_sentence_ending(raw_reply)
 
-                if reply_text in failure_messages or reply_text in fallback_cute_lines:
+                # フォールバック柔軟化（チャッピーの提案）
+                if any(re.search(rf"\b{re.escape(msg)}\b", reply_text) for msg in failure_messages + fallback_cute_lines):
                     print(f"⚠️ フォールバック検知、リトライ中…")
                     continue
 
