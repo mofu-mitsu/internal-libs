@@ -263,44 +263,62 @@ def generate_reply_via_local_model(user_input):
         "ちょっとだけ、おやすみ中かも…また話してね♡"
     ]
 
+    fallback_cute_lines = [
+        "えへへ〜♡ みりんてゃのこと、ちゃんと見ててね？",
+        "今日も甘えたい気分なのっ♡",
+        "だ〜いすきっ♡ それだけじゃダメ？",
+        "ぎゅーってしてほしいの…♡",
+    ]
+
     try:
         print(f"📤 {datetime.now().isoformat()} ｜ モデルとトークナイザを読み込み中…")
         tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=False)
         model = AutoModelForCausalLM.from_pretrained(model_name)
 
-        # プロンプト
-        prompt = f"ユーザー: {user_input}\nみりんてゃ（甘えん坊で地雷系ENFPっぽい）: "
+        # プロンプト（人格誘導つき）
+        prompt = (
+            f"ユーザー: {user_input}\n"
+            "みりんてゃ（甘えん坊で地雷系ENFPっぽいキャラ、かわいくて語尾に『〜♡』とかつけがち、話はふわふわしてるが内容は一応わかる）: "
+        )
 
         print("📎 使用プロンプト:", repr(prompt))
-
         input_ids = tokenizer.encode(prompt, return_tensors="pt")
-        input_length = input_ids.shape[1]  # ← 入力部分のトークン数を記録しておく！
+        input_length = input_ids.shape[1]
 
-        print(f"📤 {datetime.now().isoformat()} ｜ テキスト生成中…")
-        with torch.no_grad():
-            output_ids = model.generate(
-                input_ids,
-                max_new_tokens=100,
-                temperature=0.85,
-                top_p=0.95,
-                do_sample=True,
-                pad_token_id=tokenizer.eos_token_id,
-                no_repeat_ngram_size=2
-            )
+        reply_text = ""
+        for attempt in range(3):  # 最大3回リトライ
+            print(f"📤 {datetime.now().isoformat()} ｜ テキスト生成中…（試行 {attempt + 1}）")
+            with torch.no_grad():
+                output_ids = model.generate(
+                    input_ids,
+                    max_new_tokens=100,
+                    temperature=0.85,
+                    top_p=0.95,
+                    do_sample=True,
+                    pad_token_id=tokenizer.eos_token_id,
+                    no_repeat_ngram_size=2
+                )
 
-        # 出力全体をデコード
-        output_text = tokenizer.decode(output_ids[0], skip_special_tokens=True)
-        print("📥 生成された全体テキスト:", repr(output_text))
+            output_text = tokenizer.decode(output_ids[0], skip_special_tokens=True)
+            print("📥 生成された全体テキスト:", repr(output_text))
 
-        # 入力トークン数ぶんをスライスして「生成された分だけ」抽出
-        new_tokens = output_ids[0][input_length:]
-        reply_text = tokenizer.decode(new_tokens, skip_special_tokens=True).strip()
+            new_tokens = output_ids[0][input_length:]
+            reply_text = tokenizer.decode(new_tokens, skip_special_tokens=True).strip()
 
-        # 不要なセリフ混入の対策（名前: が来たら強制終了）
-        reply_text = re.split(r"[a-zA-Z0-9一-龠ぁ-んァ-ンー]{1,10}\s*[:：]", reply_text)[0]
+            # 不要な発言者のセリフをカット（例: りり:、>>777 など）
+            reply_text = re.split(r"[a-zA-Z0-9一-龠ぁ-んァ-ンー]{1,10}\s*[:：]", reply_text)[0]
+            reply_text = reply_text.split("\n")[0].split("。")[0] + "。"
 
-        # 長すぎたり、改行・カッコ混乱も処理
-        reply_text = reply_text.split("\n")[0].split("。")[0] + "。"
+            # 崩壊チェック（NGワード含まれてたらリトライ）
+            if any(ng in reply_text for ng in [">>", "スレ", "イククル", "ベッド", "(*", "うふふ", "(*", "まりちゃん", "777"]):
+                print("⚠️ 崩壊っぽいのでリトライ中…")
+                continue
+            else:
+                break  # 問題なければループ終了
+
+        # 最後の確認：意味がある長さか？
+        if len(reply_text.strip()) < 5:
+            reply_text = random.choice(fallback_cute_lines)
 
         print("📝 最終抽出されたreply:", repr(reply_text))
         return reply_text
