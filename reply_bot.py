@@ -268,46 +268,46 @@ def generate_reply_via_local_model(user_input):
         tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=False)
         model = AutoModelForCausalLM.from_pretrained(model_name)
 
-        prompt = f"ユーザー: {user_input}\nみりんてゃ（甘えん坊で地雷系ENFPっぽい）:\n"
+        # プロンプト
+        prompt = f"ユーザー: {user_input}\nみりんてゃ（甘えん坊で地雷系ENFPっぽい）: "
+
         print("📎 使用プロンプト:", repr(prompt))
 
-        token_ids = tokenizer.encode(prompt, return_tensors="pt")
+        input_ids = tokenizer.encode(prompt, return_tensors="pt")
+        input_length = input_ids.shape[1]  # ← 入力部分のトークン数を記録しておく！
 
         print(f"📤 {datetime.now().isoformat()} ｜ テキスト生成中…")
         with torch.no_grad():
             output_ids = model.generate(
-                token_ids,
+                input_ids,
                 max_new_tokens=100,
-                temperature=0.8,
+                temperature=0.85,
                 top_p=0.95,
-                no_repeat_ngram_size=2,
                 do_sample=True,
-                pad_token_id=tokenizer.eos_token_id
+                pad_token_id=tokenizer.eos_token_id,
+                no_repeat_ngram_size=2
             )
 
+        # 出力全体をデコード
         output_text = tokenizer.decode(output_ids[0], skip_special_tokens=True)
         print("📥 生成された全体テキスト:", repr(output_text))
 
-        # 出力から「最初に出てくる 'みりんてゃ' のセリフ」以降だけを取り出す
-        match = re.search(r"みりんてゃ（甘えん坊で地雷系ENFPっぽい）:\s*(.*)", output_text)
-        if match:
-            reply = match.group(1).strip()
-        else:
-            reply = output_text.strip()
+        # 入力トークン数ぶんをスライスして「生成された分だけ」抽出
+        new_tokens = output_ids[0][input_length:]
+        reply_text = tokenizer.decode(new_tokens, skip_special_tokens=True).strip()
 
-        # 意味不明な連続（"みりんてゃ"が3回以上）を削除
-        reply = re.split(r"(みりんてゃ\s?){3,}", reply)[0].strip()
+        # 不要なセリフ混入の対策（名前: が来たら強制終了）
+        reply_text = re.split(r"[a-zA-Z0-9一-龠ぁ-んァ-ンー]{1,10}\s*[:：]", reply_text)[0]
 
-        # 文末整形
-        reply = reply.split("。")[0] + "。" if "。" in reply else reply
+        # 長すぎたり、改行・カッコ混乱も処理
+        reply_text = reply_text.split("\n")[0].split("。")[0] + "。"
 
-        print("📝 最終抽出されたreply:", repr(reply))
-        return reply
+        print("📝 最終抽出されたreply:", repr(reply_text))
+        return reply_text
 
     except Exception as e:
         print(f"❌ モデル読み込みエラー: {e}")
-        fallback = random.choice(failure_messages)
-        return fallback
+        return random.choice(failure_messages)
         
 # --- テンプレ or AI返し ---
 def get_reply(text):
