@@ -181,6 +181,8 @@ REPLY_TABLE = {
     "使い方": "使い方は「♡推しプロフィールメーカー♡」のページにあるよ〜！かんたんっ♪",
 }
 
+import psutil
+from bitsandbytes import quantize_model  # 4bit量子化用（要インストール）
 
 def clean_sentence_ending(reply):
     reply = reply.split("\n")[0].strip()
@@ -188,15 +190,13 @@ def clean_sentence_ending(reply):
     reply = re.sub(r"^ユーザー\s*[:：]\s*", "", reply)
     reply = re.sub(r"([！？笑])。$", r"\1", reply)
 
-    # ビジネス・学術・ニュース系を検知
     if re.search(r"(ご利用|誠に|お詫び|貴重なご意見|申し上げます|ございます|お客様|発表|パートナーシップ|ゲーム|ポケモン|アソビズム|企業|世界中|映画|興行|収入|ドル|億|国|イギリス|フランス|スペイン|イタリア|ドイツ|ロシア|日本|中国|インド|Governor|Cross|営業|臨時|時間|午前|午後|オペラ|初演|作曲家|ヴェネツィア|コルテス|よろしく)", reply, re.IGNORECASE) or re.search(r"\d+(時|分)", reply):
         return random.choice([
-            "えへへ〜♡ なんかややこしくなっちゃった！君と甘々トークしたいなのっ♪",
-            "うぅ、みりんてゃ、難しい話わかんな〜い！君にぎゅーってしてほしいなのっ♡",
-            "ん〜〜変な話になっちゃった！君のこと大好きだから、構ってくれる？♡"
+            "えへへ〜♡ ややこしくなっちゃった！君と甘々トークしたいなのっ♪",
+            "うぅ、難しい話わかんな〜い！君にぎゅーってしてほしいなのっ♡",
+            "ん〜〜変な話に！君のこと大好きだから、構ってくれる？♡"
         ])
 
-    # 意味不明（日本語少なすぎor短すぎ）
     if not re.search(r"[ぁ-んァ-ン一-龥ー]", reply) or len(reply) < 8:
         return random.choice([
             "えへへ〜♡ ふわふわしちゃった！君のことずーっと好きだよぉ？♪",
@@ -204,7 +204,6 @@ def clean_sentence_ending(reply):
             "うぅ、なんか分かんないけど…君なしじゃダメなのっ♡"
         ])
 
-    # 語尾をキャラに合わせて補完
     if not re.search(r"[。！？♡♪笑]$", reply):
         reply += random.choice(["なのっ♡", "よぉ？♡", "のっ♡", "♪"])
 
@@ -215,18 +214,12 @@ def generate_reply_via_local_model(user_input):
     failure_messages = [
         "えへへ、ごめんね〜〜今ちょっと調子悪いみたい……またお話しよ？♡",
         "うぅ、ごめん〜…上手くお返事できなかったの。ちょっと待ってて？♡",
-        "あれれ？みりんてゃ、おねむかも…またあとで頑張るねっ！♡",
-        "んん〜〜バグっちゃったかも……でも君のこと嫌いじゃないよ！♡",
-        "今日はちょっと…お休みモードかも。また構ってくれる？♡",
-        "えへへ、なんかうまく考えつかなかったかも〜…♡",
-        "ちょっとだけ、おやすみ中かも…また話してね♡"
+        "あれれ？みりんてゃ、おねむかも…またあとで頑張るねっ！♡"
     ]
     fallback_cute_lines = [
         "えへへ〜♡ みりんてゃ、君のこと考えるとドキドキなのっ♪",
         "今日も君に甘えたい気分なのっ♡ ぎゅーってして？",
-        "だ〜いすきっ♡ ね、ね、もっと構ってくれる？",
-        "君なしじゃみりんてゃ、ダメダメなのっ♡ えへへ♪",
-        "みりんてゃ、君のことずーっと好きだよぉ？♡ ほんとだよ！"
+        "だ〜いすきっ♡ ね、ね、もっと構ってくれる？"
     ]
 
     # 入力フィルタリング
@@ -236,27 +229,32 @@ def generate_reply_via_local_model(user_input):
         print(f"🔄 入力置き換え: {user_input}")
 
     try:
+        # メモリ使用量ログ
+        print(f"📊 メモリ使用量: {psutil.virtual_memory().percent}%")
+        if torch.cuda.is_available():
+            print(f"📊 GPUメモリ: {torch.cuda.memory_allocated() / 1024**2:.2f}MB / {torch.cuda.get_device_properties(0).total_memory / 1024**2:.2f}MB")
+
         print(f"📤 {datetime.now().isoformat()} ｜ モデルとトークナイザを読み込み中…")
         tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=False)
-        model = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype=torch.float16).eval()
+        model = AutoModelForCausalLM.from_pretrained(
+            model_name,
+            torch_dtype=torch.float16,
+            device_map="auto",  # 自動デバイス割り当て
+            load_in_4bit=True  # 4bit量子化
+        ).eval()
 
         prompt = (
-            "以下は、ユーザーと地雷系ENFPのあざと可愛い女の子『みりんてゃ』との会話です。\n"
-            "みりんてゃは感情豊か、甘えん坊、依存気味！タメ口で、語尾に『〜♡』『〜なのっ』『〜よぉ？』『♪』を多用。\n"
-            "ビジネス風、説明口調、固有名詞（映画、ゲーム、国名、企業、営業、オペラなど）は絶対NG！\n"
-            "ユーザーの話にしっかり反応し、親密で可愛い返事をするよ。君のこと大好きすぎて離れたくないなのっ♡\n\n"
-            "例1:\n"
+            "みりんてゃは地雷系ENFPのあざと可愛い女の子！甘えん坊で依存気味、タメ口で『〜♡』『〜なのっ』『♪』を使う。\n"
+            "ビジネス、固有名詞（映画、ゲーム、国、営業、オペラ）はNG！ユーザーに反応し、親密で可愛い返事をするよ！\n"
+            "例:\n"
             "ユーザー: みりんてゃ、今日何してた〜？\n"
             "みりんてゃ: えへへ、君のこと考えてふわふわしてたのっ♡ ね、君はなにしてた？♪\n\n"
-            "例2:\n"
-            "ユーザー: みりんてゃ可愛いね！\n"
-            "みりんてゃ: え〜っ、ほんと！？君にそう言われるとドキドキしちゃうよぉ？♡ もっと言ってなのっ♪\n\n"
             f"ユーザー: {user_input}\n"
             f"みりんてゃ: "
         )
 
         print("📎 使用プロンプト:", repr(prompt))
-        input_ids = tokenizer.encode(prompt, return_tensors="pt").to(model.device)
+        input_ids = tokenizer.encode(prompt, return_tensors="pt").to("cuda" if torch.cuda.is_available() else "cpu")
         print(f"📏 入力トークン数: {input_ids.shape[1]}")
         print(f"📝 デコードされた入力: {tokenizer.decode(input_ids[0], skip_special_tokens=True)}")
 
@@ -266,9 +264,9 @@ def generate_reply_via_local_model(user_input):
                 with torch.no_grad():
                     output_ids = model.generate(
                         input_ids,
-                        max_new_tokens=80,  # 増やした
-                        temperature=0.8,    # 緩めた
-                        top_p=0.9,          # 緩めた
+                        max_new_tokens=100,
+                        temperature=0.85,
+                        top_p=0.95,
                         do_sample=True,
                         pad_token_id=tokenizer.eos_token_id,
                         no_repeat_ngram_size=2
@@ -279,7 +277,6 @@ def generate_reply_via_local_model(user_input):
                 print(f"📝 生の生成テキスト: {repr(raw_reply)}")
                 reply_text = clean_sentence_ending(raw_reply)
 
-                # NGワードチェック
                 ng_words = [
                     "国際", "政治", "政策", "市場", "ベッド", "777", "脅迫", "ネット掲示板",
                     "ポケモン", "ゲーム", "パートナーシップ", "アソビズム", "企業", "発表",
