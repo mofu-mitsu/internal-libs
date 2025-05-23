@@ -227,7 +227,7 @@ def upload_gist_content(content, filename=REPLIED_GIST_FILENAME, gist_id=GIST_ID
     url = f"https://api.github.com/gists/{gist_id}"
     headers = {
         "Authorization": f"token {token}",
-        "Accept": "application/vnd.github+json"
+        "Accept": "application/vnd.github.v3+json"  # ✅ 推奨形式
     }
     data = {
         "files": {
