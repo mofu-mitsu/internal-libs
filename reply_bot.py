@@ -57,6 +57,7 @@ HEADERS = {
 
 # --- Gistから replied.json のみ読み込み ---
 def load_gist_data():
+    response = None
     try:
         print(f"🌐 Gistデータ読み込み開始 → URL: {GIST_API_URL}")
         print(f"🔐 ヘッダー: {HEADERS}")
