@@ -183,7 +183,6 @@ REPLY_TABLE = {
     "使い方": "使い方は「♡推しプロフィールメーカー♡」のページにあるよ〜！かんたんっ♪",
 }
 
-
 def clean_sentence_ending(reply):
     reply = reply.split("\n")[0].strip()
     reply = re.sub(r"^みりんてゃ\s*[:：]\s*", "", reply)
@@ -239,7 +238,7 @@ def generate_reply_via_local_model(user_input):
             load_in_4bit=True,
             bnb_4bit_use_double_quant=True,
             bnb_4bit_quant_type="nf4",
-            bnb_4bit_compute_dtype="float32"  # チャッピーの推奨！
+            bnb_4bit_compute_dtype=torch.float32  # LayerNormエラー回避
         )
 
         tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=False)
@@ -269,7 +268,7 @@ def generate_reply_via_local_model(user_input):
                 with torch.no_grad():
                     output_ids = model.generate(
                         input_ids,
-                        max_new_tokens=80,  # チャッピーの推奨
+                        max_new_tokens=80,
                         temperature=0.85,
                         top_p=0.95,
                         do_sample=True,
