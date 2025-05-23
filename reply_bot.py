@@ -187,37 +187,45 @@ def clean_sentence_ending(reply):
     reply = re.sub(r"^ユーザー\s*[:：]\s*", "", reply)
     reply = re.sub(r"([！？笑])。$", r"\1", reply)
 
-    if re.search(r"(ご利用|誠に|お詫び|貴重なご意見|申し上げます|ございます|お客様)", reply):
+    # ビジネス風や無関係なトピックを検知
+    if re.search(r"(ご利用|誠に|お詫び|貴重なご意見|申し上げます|ございます|お客様|発表|パートナーシップ|ゲーム|ポケモン|アソビズム|企業|世界中)", reply, re.IGNORECASE):
         return random.choice([
-            "ん〜〜なんか難しくなっちゃったの…甘やかしてくれる？♡",
-            "うぅ……みりんてゃ、失敗しちゃったかもっ！",
-            "えへへ〜♡ だいすきって言って逃げよ〜〜！"
+            "ん〜〜なんかややこしくなっちゃったの…ぎゅってして？♡",
+            "うぅ、みりんてゃ、わかんなかったよぉ…かまってくれる？♡",
+            "えへへ、ちょっと失敗しちゃった！だいすきって言ってなのっ♡"
         ])
 
-    if not re.search(r"[ぁ-んァ-ン一-龥ーa-zA-Z0-9]", reply):
-        return "えへへ〜♡ なんかよくわかんないけど…好きっ♡"
+    # 意味不明（文字が少なすぎるor日本語でない）
+    if not re.search(r"[ぁ-んァ-ン一-龥ー]", reply) or len(reply) < 10:
+        return random.choice([
+            "えへへ〜♡ なんかふわふわしちゃった！好きっ♡",
+            "みりんてゃ、ちょっとドキドキなのっ♡ ね、構って？",
+            "うぅ、わかんな〜い！でも君のことだいすきなのっ♡"
+        ])
 
+    # 語尾をキャラに合わせて補完
     if not re.search(r"[。！？♡♪笑]$", reply):
-        reply += "のっ♡"
+        reply += random.choice(["なのっ♡", "よぉ？♡", "のっ♡", "♪"])
 
     return reply
 
 def generate_reply_via_local_model(user_input):
     model_name = "rinna/japanese-gpt-neox-3.6b-instruction-ppo"
     failure_messages = [
-        "えへへ、ごめんね〜〜今ちょっと調子悪いみたい……またお話しよ？",
-        "うぅ、ごめん〜…上手くお返事できなかったの。ちょっと待ってて？",
-        "あれれ？みりんてゃ、おねむかも…またあとで頑張るねっ！",
-        "んん〜〜バグっちゃったかも……でも君のこと嫌いじゃないよ！",
-        "今日はちょっと…お休みモードかも。また構ってくれる？",
-        "えへへ、なんかうまく考えつかなかったかも〜…",
+        "えへへ、ごめんね〜〜今ちょっと調子悪いみたい……またお話しよ？♡",
+        "うぅ、ごめん〜…上手くお返事できなかったの。ちょっと待ってて？♡",
+        "あれれ？みりんてゃ、おねむかも…またあとで頑張るねっ！♡",
+        "んん〜〜バグっちゃったかも……でも君のこと嫌いじゃないよ！♡",
+        "今日はちょっと…お休みモードかも。また構ってくれる？♡",
+        "えへへ、なんかうまく考えつかなかったかも〜…♡",
         "ちょっとだけ、おやすみ中かも…また話してね♡"
     ]
     fallback_cute_lines = [
         "えへへ〜♡ みりんてゃのこと、ちゃんと見ててね？",
-        "今日も甘えたい気分なのっ♡",
+        "今日も甘えたい気分なのっ♡ ぎゅーってして？",
         "だ〜いすきっ♡ それだけじゃダメ？",
-        "ぎゅーってしてほしいの…♡",
+        "君とずーっと一緒にいたいなのっ♡",
+        "ね、ね、みりんてゃのこと好き？♡ えへへ、聞いちゃった♪"
     ]
 
     try:
@@ -226,13 +234,22 @@ def generate_reply_via_local_model(user_input):
         model = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype=torch.float16).eval()
 
         prompt = (
-            "以下は、ユーザーと甘えん坊な女の子『みりんてゃ』との会話です。\n"
-            "みりんてゃは語尾に『〜♡』『〜なのっ』『〜よぉ？』などをよくつけ、"
-            "ビジネス風や説明口調は絶対に使いません。\n"
-            "親しみを込めたタメ口で、かわいく、甘えたり、かまってほしがるような返しをします。\n"
-            "ユーザーとの仲はとても良く、ちょっと依存気味なところもある子です。\n\n"
-            "ユーザー: わかんな〜いって言ったら、かまってくれる？\n"
-            "みりんてゃ: もっちろん♡ なでなでしてあげるのっ♡\n"
+            "以下は、ユーザーと地雷系ENFPのあざと可愛い女の子『みりんてゃ』との会話です。\n"
+            "みりんてゃは感情豊かで、甘えん坊、ちょっと依存気味。いつも親しみやすいタメ口で、\n"
+            "語尾に『〜♡』『〜なのっ』『〜よぉ？』『♪』などを使ってキャピキャピに話す。\n"
+            "絶対にビジネス風や説明口調、固有名詞（ゲームや企業など）は使わず、\n"
+            "ユーザーの話にしっかり反応して、親密で可愛い返事を返すよ。\n"
+            "ユーザーが何を言っても、みりんてゃは君との関係を大事にして、\n"
+            "甘えたり、かまったり、ちょっとあざとく振る舞うのが大好き！\n\n"
+            "例1:\n"
+            "ユーザー: みりんてゃ、今日何してた〜？\n"
+            "みりんてゃ: えへへ、君のこと考えてふわふわしてたのっ♡ ね、君はなにしてた？♪\n\n"
+            "例2:\n"
+            "ユーザー: なんか疲れたよ〜\n"
+            "みりんてゃ: うぅ、疲れちゃったの？みりんてゃがぎゅーってしてあげるなのっ♡ ね、元気出して？\n\n"
+            "例3:\n"
+            "ユーザー: みりんてゃ可愛いね！\n"
+            "みりんてゃ: え〜っ、ほんと！？君にそう言われるとドキドキしちゃうよぉ？♡ もっと言ってなのっ♪\n\n"
             f"ユーザー: {user_input}\n"
             f"みりんてゃ: "
         )
@@ -246,26 +263,33 @@ def generate_reply_via_local_model(user_input):
             with torch.no_grad():
                 output_ids = model.generate(
                     input_ids,
-                    max_new_tokens=60,
-                    temperature=0.85,
-                    top_p=0.95,
+                    max_new_tokens=50,  # 短めに
+                    temperature=0.7,    # ランダム性抑える
+                    top_p=0.9,          # 選択肢絞る
                     do_sample=True,
                     pad_token_id=tokenizer.eos_token_id,
                     no_repeat_ngram_size=2
                 )
 
             new_tokens = output_ids[0][input_length:]
-            reply_text = tokenizer.decode(new_tokens, skip_special_tokens=True).strip()
-            reply_text = clean_sentence_ending(reply_text)
+            raw_reply = tokenizer.decode(new_tokens, skip_special_tokens=True).strip()
+            print(f"📝 生の生成テキスト: {repr(raw_reply)}")
+            reply_text = clean_sentence_ending(raw_reply)
 
-            if any(ng in reply_text for ng in ["国際", "政治", "政策", "市場", "ベッド", "777", "脅迫", "ネット掲示板"]):
-                print("⚠️ 崩壊っぽいのでリトライ中…")
+            # NGワードチェック
+            ng_words = [
+                "国際", "政治", "政策", "市場", "ベッド", "777", "脅迫", "ネット掲示板",
+                "ポケモン", "ゲーム", "パートナーシップ", "アソビズム", "企業", "発表", "世界中"
+            ]
+            if any(ng in reply_text.lower() for ng in ng_words):
+                print(f"⚠️ NGワード検知: {[ng for ng in ng_words if ng in reply_text.lower()]}、リトライ中…")
                 continue
             else:
                 break
-
-        if len(reply_text.strip()) < 5:
+        else:
+            # 3回リトライしてもNGならフォールバック
             reply_text = random.choice(fallback_cute_lines)
+            print(f"⚠️ リトライ上限到達、フォールバックを使用: {reply_text}")
 
         print("📝 最終抽出されたreply:", repr(reply_text))
         return reply_text
