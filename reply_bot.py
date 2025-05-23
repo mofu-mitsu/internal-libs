@@ -30,6 +30,8 @@ from atproto_client.models.com.atproto.repo.strong_ref import Main as StrongRef
 # 🔐 環境変数
 # ------------------------------
 from dotenv import load_dotenv
+load_dotenv()
+print("GIST_TOKEN_REPLY:", repr(os.getenv("GIST_TOKEN_REPLY")))
 
 # --- 環境読み込み ---
 load_dotenv()
