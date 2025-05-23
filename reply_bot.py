@@ -181,12 +181,6 @@ REPLY_TABLE = {
     "使い方": "使い方は「♡推しプロフィールメーカー♡」のページにあるよ〜！かんたんっ♪",
 }
 
-import random
-import re
-from datetime import datetime
-from transformers import AutoModelForCausalLM, AutoTokenizer
-import torch
-
 def clean_sentence_ending(reply):
     reply = reply.split("\n")[0].strip()
     reply = re.sub(r"^みりんてゃ\s*[:：]\s*", "", reply)
