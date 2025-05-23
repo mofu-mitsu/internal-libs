@@ -1,0 +1,22 @@
+name: Gist Token Test
+
+on:
+  workflow_dispatch:  # 手動で実行できるようにする
+
+jobs:
+  test-gist-upload:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (空でも必要)
+        uses: actions/checkout@v3
+
+      - name: Upload to Gist
+        env:
+          GIST_ID: 40391085a2e0b8a48935ad0b460cf422  # 使いたいGist ID
+          GIST_TOKEN: ${{ secrets.GIST_TOKEN_REPLY }}  # 秘密に登録したトークン
+        run: |
+          echo "🔧 Uploading test content to Gist..."
+          curl -X PATCH "https://api.github.com/gists/$GIST_ID" \
+            -H "Authorization: token $GIST_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            -d '{"files": {"replied.json": {"content": "GitHub Actions test at '"$(date)"'"}}}'
