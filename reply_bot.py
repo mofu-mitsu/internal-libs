@@ -422,11 +422,6 @@ def run_reply_bot():
     else:
         print("⚠️ replied が空なので Gist に保存しません")
 
-    if os.path.exists(REPLIED_GIST_FILENAME):
-        upload_to_gist(REPLIED_GIST_FILENAME, GIST_ID, GIST_TOKEN_REPLY)
-    else:
-        print("⚠️ REPLIED_GIST_FILENAME の保存に失敗した可能性あり、Gistへのアップロード中止")
-
     try:
         notifications = client.app.bsky.notification.list_notifications(params={"limit": 25}).notifications
     except Exception as e:
