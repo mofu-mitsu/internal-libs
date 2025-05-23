@@ -88,11 +88,19 @@ def load_gist_data():
 def save_replied(replied_set):
     try:
         content = json.dumps(list(replied_set), ensure_ascii=False, indent=2)
-        payload = { "files": { REPLIED_GIST_FILENAME: { "content": content } } }
+        payload = {
+            "files": {
+                REPLIED_GIST_FILENAME: {
+                    "content": content
+                }
+            }
+        }
 
         print("💾 Gist保存準備中...")
         print(f"🔗 URL: {GIST_API_URL}")
         print(f"🔐 ヘッダー: {HEADERS}")
+        print(f"🔑 トークンの長さ: {len(GIST_TOKEN_REPLY)}")
+        print(f"🔑 トークンのrepr: {repr(GIST_TOKEN_REPLY)}")
         print("🛠 PATCH 送信内容（payload）:")
         print(json.dumps(payload, indent=2, ensure_ascii=False))
 
