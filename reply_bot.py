@@ -477,7 +477,7 @@ def run_reply_bot():
         print("🔗 reply_ref:", reply_ref)
         print("🧾 post_uri:", post_uri)
 
-        reply_text = get_reply(text)
+        reply_text = generate_reply_via_local_model(text)
         print("🤖 生成された返信:", reply_text)
 
         if not reply_text:
