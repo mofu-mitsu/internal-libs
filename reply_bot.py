@@ -37,6 +37,10 @@ HANDLE = os.environ["HANDLE"]
 APP_PASSWORD = os.environ["APP_PASSWORD"]
 HF_API_TOKEN = os.environ["HF_API_TOKEN"]
 GIST_TOKEN_REPLY = os.environ["GIST_TOKEN_REPLY"]
+if not GIST_TOKEN_REPLY:
+    print("❌ GIST_TOKEN_REPLYが読み込まれていません！（None）")
+else:
+    print(f"🧪 GIST_TOKEN_REPLY: {repr(GIST_TOKEN_REPLY)}")
 print(f"🪪 現在のGIST_TOKEN_REPLY: {GIST_TOKEN_REPLY[:8]}...（先頭8文字だけ表示）")
 # --- 固定値（環境変数にせず直書きでOK） ---
 GIST_USER = "mofu-mitsu"
