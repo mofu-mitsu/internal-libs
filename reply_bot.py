@@ -188,7 +188,7 @@ def clean_sentence_ending(reply):
     reply = re.sub(r"([！？笑])。$", r"\1", reply)
 
     # ビジネス・学術・ニュース系を検知
-    if re.search(r"(ご利用|誠に|お詫び|貴重なご意見|申し上げます|ございます|お客様|発表|パートナーシップ|ポケモン|アソビズム|企業|世界中|映画|興行|収入|ドル|億|国|イギリス|フランス|スペイン|イタリア|ドイツ|ロシア|中国|インド|Governor|Cross|営業|臨時|時間|午前|午後|オペラ|初演|作曲家|ヴェネツィア|コルテス)", reply, re.IGNORECASE) or re.search(r"\d+(時|分)", reply):
+    if re.search(r"(ご利用|誠に|お詫び|貴重なご意見|申し上げます|ございます|お客様|発表|パートナーシップ|ゲーム|ポケモン|アソビズム|企業|世界中|映画|興行|収入|ドル|億|国|イギリス|フランス|スペイン|イタリア|ドイツ|ロシア|日本|中国|インド|Governor|Cross|営業|臨時|時間|午前|午後|オペラ|初演|作曲家|ヴェネツィア|コルテス|よろしく)", reply, re.IGNORECASE) or re.search(r"\d+(時|分)", reply):
         return random.choice([
             "えへへ〜♡ なんかややこしくなっちゃった！君と甘々トークしたいなのっ♪",
             "うぅ、みりんてゃ、難しい話わかんな〜い！君にぎゅーってしてほしいなのっ♡",
@@ -210,7 +210,7 @@ def clean_sentence_ending(reply):
     return reply
 
 def generate_reply_via_local_model(user_input):
-    model_name = "rinna/japanese-gpt-neox-3.6b-chat"  # モデル変更！
+    model_name = "line-corporation/japanese-large-lm-3.6b-instruction-sft"  # 新モデル！
     failure_messages = [
         "えへへ、ごめんね〜〜今ちょっと調子悪いみたい……またお話しよ？♡",
         "うぅ、ごめん〜…上手くお返事できなかったの。ちょっと待ってて？♡",
@@ -270,8 +270,8 @@ def generate_reply_via_local_model(user_input):
                 output_ids = model.generate(
                     input_ids,
                     max_new_tokens=40,
-                    temperature=0.65,  # ランダム性抑える
-                    top_p=0.7,         # キャラに合った出力に絞る
+                    temperature=0.65,
+                    top_p=0.7,
                     do_sample=True,
                     pad_token_id=tokenizer.eos_token_id,
                     no_repeat_ngram_size=2
@@ -289,7 +289,7 @@ def generate_reply_via_local_model(user_input):
                 "世界中", "映画", "興行", "収入", "ドル", "億", "国", "イギリス", "フランス",
                 "スペイン", "イタリア", "ドイツ", "ロシア","中国", "インド",
                 "Governor", "Cross", "営業", "臨時", "オペラ",
-                "初演", "作曲家", "ヴェネツィア", "コルテス", 
+                "初演", "作曲家", "ヴェネツィア", "コルテス"
             ]
             if any(ng in reply_text.lower() for ng in ng_words) or re.search(r"\d+(時|分)", reply_text):
                 print(f"⚠️ NGワード検知: {[ng for ng in ng_words if ng in reply_text.lower()]}、リトライ中…")
