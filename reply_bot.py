@@ -7,6 +7,7 @@ import requests
 import traceback
 import time
 import random
+import re
 
 # ------------------------------
 # 🕒 日時関連（UTC→JST）
@@ -267,7 +268,6 @@ def generate_reply_via_local_model(user_input):
         tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=False)
         model = AutoModelForCausalLM.from_pretrained(model_name)
 
-        # 改良プロンプト
         prompt = f"ユーザー: {user_input}\nみりんてゃ（甘えん坊で地雷系ENFPっぽい）:\n"
         print("📎 使用プロンプト:", repr(prompt))
 
@@ -280,22 +280,31 @@ def generate_reply_via_local_model(user_input):
                 max_new_tokens=80,
                 temperature=0.8,
                 top_p=0.95,
+                no_repeat_ngram_size=2,
                 do_sample=True,
-                pad_token_id=tokenizer.eos_token_id,
-                no_repeat_ngram_size=2  # ★ リピート防止
+                pad_token_id=tokenizer.eos_token_id
             )
 
         output_text = tokenizer.decode(output_ids[0], skip_special_tokens=True)
         print("📥 生成された全体テキスト:", repr(output_text))
 
-        reply = output_text.split("みりんてゃ（甘えん坊で地雷系ENFPっぽい）:")[-1].strip()
-        print("📝 最終抽出されたreply:", repr(reply))
+        # プロンプト部分を除去
+        if prompt in output_text:
+            reply = output_text.replace(prompt, "").strip()
+        else:
+            reply = output_text.split("みりんてゃ（甘えん坊で地雷系ENFPっぽい）:")[-1].strip()
 
+        # 意味不明な羅列ストッパー（"みりんてゃ"が繰り返されたら切る）
+        reply = re.split(r"(みりんてゃ\s?){3,}", reply)[0].strip()
+
+        # 最後の文を綺麗に整える（句点で区切って最初の文だけ返すとか）
+        reply = reply.split("。")[0] + "。" if "。" in reply else reply
+
+        print("📝 最終抽出されたreply:", repr(reply))
         return reply
 
     except Exception as e:
         print(f"❌ モデル読み込みエラー: {e}")
-        print("🔍 random の中身確認 →", dir(random)) 
         fallback = random.choice(failure_messages)
         return fallback
         
