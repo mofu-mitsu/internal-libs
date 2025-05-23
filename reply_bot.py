@@ -42,7 +42,7 @@ print(f"🪪 現在のGIST_TOKEN_REPLY: {GIST_TOKEN_REPLY[:8]}...（先頭8文�
 GIST_USER = "mofu-mitsu"
 GIST_ID = "40391085a2e0b8a48935ad0b460cf422"  # ←新IDに修正！！
 REPLIED_GIST_FILENAME = "replied.json"
-REPLIED_JSON_URL = f"https://gist.githubusercontent.com/{GIST_USER}/{GIST_ID}/raw/{REPLIED_GIST_FILENAME}"
+REPLIED_JSON_URL = os.getenv("REPLIED_JSON_URL") or f"https://gist.githubusercontent.com/{GIST_USER}/{GIST_ID}/raw/{REPLIED_GIST_FILENAME}"
 
 # --- Gist API設定 ---
 GIST_API_URL = f"https://api.github.com/gists/{GIST_ID}"
