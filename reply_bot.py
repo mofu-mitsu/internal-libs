@@ -20,8 +20,6 @@ from datetime import datetime, timezone, timedelta
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import torch
 
-from your_local_model_module import generate_reply_via_local_model
-
 # ------------------------------
 # 🔵 Bluesky / atproto ライブラリ
 # ------------------------------
