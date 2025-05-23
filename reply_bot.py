@@ -270,18 +270,22 @@ def upload_gist_content(content, filename=REPLIED_GIST_FILENAME, gist_id=GIST_ID
 # --- Gistに保存 ---
 
 def clean_sentence_ending(reply):
-    # 改行で区切って最初の行だけにする
     reply = reply.split("\n")[0].strip()
 
-    # 「みりんてゃ:」みたいなのがあればカット
+    # 変なタグや名前除去
     reply = re.sub(r"^みりんてゃ\s*[:：]\s*", "", reply)
+    reply = re.sub(r"^ユーザー\s*[:：]\s*", "", reply)
 
-    # 文末の変な句読点コンビネーションを整理
+    # 文末の句読点整理
     reply = re.sub(r"([！？笑])。$", r"\1", reply)
 
-    # 文末が終わってない感じなら句点追加
-    if not re.search(r"[。！？笑♡]$", reply):
-        reply += "。"
+    # 絵文字や記号だけで終わってないかチェック
+    if not re.search(r"[ぁ-んァ-ン一-龥ーa-zA-Z0-9][。！？笑♡]*$", reply):
+        reply += "…♡"
+
+    # 文末が自然じゃない場合の補完
+    if not re.search(r"[。！？♡♪笑]$", reply):
+        reply += "のっ♡"
 
     return reply
 
@@ -311,12 +315,14 @@ def generate_reply_via_local_model(user_input):
         tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=False)
         model = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype=torch.float16).eval()
 
-        # 強化プロンプト（甘えん坊みりんてゃを維持）
         prompt = (
             "以下は、ユーザーと甘えん坊な女の子『みりんてゃ』との会話です。\n"
-            "みりんてゃは語尾に『〜♡』『〜なのっ』『〜よぉ？』などをよくつけ、ビジネス風や説明口調は絶対に使いません。\n"
+            "みりんてゃは語尾に『〜♡』『〜なのっ』『〜よぉ？』などをよくつけ、"
+            "ビジネス風や説明口調は絶対に使いません。\n"
             "親しみを込めたタメ口で、かわいく、甘えたり、かまってほしがるような返しをします。\n"
-            "ユーザーとの仲はとても良く、ちょっと依存気味なところもある子です。\n"
+            "ユーザーとの仲はとても良く、ちょっと依存気味なところもある子です。\n\n"
+            "ユーザー: わかんな〜いって言ったら、かまってくれる？\n"
+            "みりんてゃ: もっちろん♡ なでなでしてあげるのっ♡\n"
             f"ユーザー: {user_input}\n"
             f"みりんてゃ: "
         )
@@ -325,13 +331,12 @@ def generate_reply_via_local_model(user_input):
         input_ids = tokenizer.encode(prompt, return_tensors="pt").to(model.device)
         input_length = input_ids.shape[1]
 
-        reply_text = ""
         for attempt in range(3):
             print(f"📤 {datetime.now().isoformat()} ｜ テキスト生成中…（試行 {attempt + 1}）")
             with torch.no_grad():
                 output_ids = model.generate(
                     input_ids,
-                    max_new_tokens=100,
+                    max_new_tokens=60,
                     temperature=0.85,
                     top_p=0.95,
                     do_sample=True,
@@ -339,22 +344,13 @@ def generate_reply_via_local_model(user_input):
                     no_repeat_ngram_size=2
                 )
 
-            output_text = tokenizer.decode(output_ids[0], skip_special_tokens=True)
-            print("📥 生成された全体テキスト:", repr(output_text))
+            new_tokens = output_ids[0][input_length:]
+            reply_text = tokenizer.decode(new_tokens, skip_special_tokens=True).strip()
 
-            # 「みりんてゃ:」以降を抜き出す
-            match = re.search(r"みりんてゃ\s*[:：]\s*(.*)", output_text)
-            if match:
-                reply_text = match.group(1).strip()
-            else:
-                new_tokens = output_ids[0][input_length:]
-                reply_text = tokenizer.decode(new_tokens, skip_special_tokens=True).strip()
-
-            # 文末調整
             reply_text = clean_sentence_ending(reply_text)
 
-            # 崩壊チェック
-            if any(ng in reply_text for ng in [">>", "スレ", "イククル", "ベッド", "(*", "まりちゃん", "777"]):
+            # 崩壊判定（わりと広めに）
+            if any(ng in reply_text for ng in ["国際", "政治", "政策", "市場", "ベッド", "777", "脅迫", "ネット掲示板"]):
                 print("⚠️ 崩壊っぽいのでリトライ中…")
                 continue
             else:
