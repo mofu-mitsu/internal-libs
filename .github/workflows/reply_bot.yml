@@ -21,7 +21,11 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.cache/huggingface
-          key: ${{ runner.os }}-hf-cache
+          key: ${{ runner.os }}-hf-cache-${{ hashFiles('**/requirements.txt') }}
+
+      - name: Clear pip cache
+        run: |
+          pip cache purge
 
       - name: Set up Python
         uses: actions/setup-python@v4
