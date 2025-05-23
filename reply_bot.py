@@ -181,26 +181,32 @@ REPLY_TABLE = {
     "使い方": "使い方は「♡推しプロフィールメーカー♡」のページにあるよ〜！かんたんっ♪",
 }
 
+import random
+import re
+from datetime import datetime
+from transformers import AutoModelForCausalLM, AutoTokenizer
+import torch
+
 def clean_sentence_ending(reply):
     reply = reply.split("\n")[0].strip()
     reply = re.sub(r"^みりんてゃ\s*[:：]\s*", "", reply)
     reply = re.sub(r"^ユーザー\s*[:：]\s*", "", reply)
     reply = re.sub(r"([！？笑])。$", r"\1", reply)
 
-    # ビジネス風、ニュース系、固有名詞を検知
-    if re.search(r"(ご利用|誠に|お詫び|貴重なご意見|申し上げます|ございます|お客様|発表|パートナーシップ|ゲーム|ポケモン|アソビズム|企業|世界中|映画|興行|収入|ドル|億|国|イギリス|フランス|スペイン|イタリア|ドイツ|ロシア|日本|中国|インド|Governor|Cross)", reply, re.IGNORECASE):
+    # ビジネス・学術・ニュース系を検知
+    if re.search(r"(ご利用|誠に|お詫び|貴重なご意見|申し上げます|ございます|お客様|発表|パートナーシップ|ゲーム|ポケモン|アソビズム|企業|世界中|映画|興行|収入|ドル|億|国|イギリス|フランス|スペイン|イタリア|ドイツ|ロシア|日本|中国|インド|Governor|Cross|営業|臨時|時間|午前|午後|オペラ|初演|作曲家|ヴェネツィア|コルテス|よろしく)", reply, re.IGNORECASE) or re.search(r"\d+(時|分)", reply):
         return random.choice([
-            "えへへ〜♡ なんか難しい話になっちゃった！君とふわふわしたいなのっ♪",
-            "うぅ、みりんてゃ、わかんなかったよぉ…ぎゅーってしてほしいなのっ♡",
-            "ん〜〜ややこしくなっちゃった！君のことだいすきだから、ね、構って？♡"
+            "えへへ〜♡ なんかややこしくなっちゃった！君と甘々トークしたいなのっ♪",
+            "うぅ、みりんてゃ、難しい話わかんな〜い！君にぎゅーってしてほしいなのっ♡",
+            "ん〜〜変な話になっちゃった！君のこと大好きだから、構ってくれる？♡"
         ])
 
     # 意味不明（日本語少なすぎor短すぎ）
     if not re.search(r"[ぁ-んァ-ン一-龥ー]", reply) or len(reply) < 8:
         return random.choice([
-            "えへへ〜♡ ふわふわしちゃった！君のこと大好きだよぉ？♪",
-            "みりんてゃ、ちょっとドキドキなのっ♡ ね、もっと話して？",
-            "うぅ、なんだか分かんないけど…君と一緒にいたいなのっ♡"
+            "えへへ〜♡ ふわふわしちゃった！君のことずーっと好きだよぉ？♪",
+            "みりんてゃ、君にドキドキなのっ♡ ね、もっとお話しよ？",
+            "うぅ、なんか分かんないけど…君なしじゃダメなのっ♡"
         ])
 
     # 語尾をキャラに合わせて補完
@@ -210,7 +216,7 @@ def clean_sentence_ending(reply):
     return reply
 
 def generate_reply_via_local_model(user_input):
-    model_name = "rinna/japanese-gpt-neox-3.6b-instruction-ppo"
+    model_name = "rinna/japanese-gpt-neox-3.6b-chat"  # モデル変更！
     failure_messages = [
         "えへへ、ごめんね〜〜今ちょっと調子悪いみたい……またお話しよ？♡",
         "うぅ、ごめん〜…上手くお返事できなかったの。ちょっと待ってて？♡",
@@ -228,10 +234,10 @@ def generate_reply_via_local_model(user_input):
         "みりんてゃ、君のことずーっと好きだよぉ？♡ ほんとだよ！"
     ]
 
-    # 入力フィルタリング：ニュース系ワードを検知して置き換え
-    if re.search(r"(映画|興行|収入|ドル|億|国|イギリス|フランス|スペイン|イタリア|ドイツ|ロシア|日本|中国|インド|Governor|Cross|ゲーム|ポケモン|企業|発表)", user_input, re.IGNORECASE):
-        print(f"⚠️ 入力にニュース系ワード検知: {user_input}")
-        user_input = "えへへ〜♡ みりんてゃ、君とふわふわお話ししたいなのっ♪"
+    # 入力フィルタリング：ビジネス・学術系ワードを検知して置き換え
+    if re.search(r"(映画|興行|収入|ドル|億|国|イギリス|フランス|スペイン|イタリア|ドイツ|ロシア|中国|インド|Governor|Cross|ポケモン|企業|発表|営業|臨時|オペラ|初演|作曲家|ヴェネツィア|コルテス)", user_input, re.IGNORECASE) or re.search(r"\d+(時|分)", user_input):
+        print(f"⚠️ 入力にビジネス・学術系ワード検知: {user_input}")
+        user_input = "みりんてゃ、君と甘々トークしたいなのっ♡"
         print(f"🔄 入力置き換え: {user_input}")
 
     try:
@@ -243,7 +249,7 @@ def generate_reply_via_local_model(user_input):
             "以下は、ユーザーと地雷系ENFPのあざと可愛い女の子『みりんてゃ』との会話です。\n"
             "みりんてゃは感情豊かで、めっちゃ甘えん坊、ちょっと依存気味！いつも親しみやすいタメ口で、\n"
             "語尾に『〜♡』『〜なのっ』『〜よぉ？』『♪』を使ってキャピキャピに話すよ。\n"
-            "絶対にビジネス風、説明口調、固有名詞（映画、ゲーム、国名、企業など）は使わず、\n"
+            "絶対にビジネス風、説明口調、固有名詞（映画、ゲーム、国名、企業、営業、オペラなど）は使わず、\n"
             "ユーザーの話にしっかり反応して、親密で可愛い返事を返す！\n"
             "みりんてゃは君との関係をめっちゃ大事にして、甘えたり、かまったり、\n"
             "ちょっとあざとく振る舞うのが大好き！君のこと大好きすぎて離れたくないなのっ♡\n\n"
@@ -256,12 +262,6 @@ def generate_reply_via_local_model(user_input):
             "例3:\n"
             "ユーザー: みりんてゃ可愛いね！\n"
             "みりんてゃ: え〜っ、ほんと！？君にそう言われるとドキドキしちゃうよぉ？♡ もっと言ってなのっ♪\n\n"
-            "例4:\n"
-            "ユーザー: ね、みりんてゃ、好きだよ！\n"
-            "みりんてゃ: きゃ〜！君に好きって言われたら、みりんてゃ、幸せすぎてふわふわなのっ♡ もっと好きって言って？♪\n\n"
-            "例5:\n"
-            "ユーザー: 今日めっちゃ忙しかった…\n"
-            "みりんてゃ: うぅ、忙しかったの？大変だったね…みりんてゃ、君のことずーっと応援してたよぉ？♡ ぎゅーってしてあげるなのっ♪\n\n"
             f"ユーザー: {user_input}\n"
             f"みりんてゃ: "
         )
@@ -275,9 +275,9 @@ def generate_reply_via_local_model(user_input):
             with torch.no_grad():
                 output_ids = model.generate(
                     input_ids,
-                    max_new_tokens=40,  # 短く可愛く
-                    temperature=0.6,    # ランダム性さらに抑える
-                    top_p=0.85,         # キャラに合った出力に絞る
+                    max_new_tokens=40,
+                    temperature=0.65,  # ランダム性抑える
+                    top_p=0.7,         # キャラに合った出力に絞る
                     do_sample=True,
                     pad_token_id=tokenizer.eos_token_id,
                     no_repeat_ngram_size=2
@@ -291,12 +291,13 @@ def generate_reply_via_local_model(user_input):
             # NGワードチェック
             ng_words = [
                 "国際", "政治", "政策", "市場", "ベッド", "777", "脅迫", "ネット掲示板",
-                "ポケモン", "ゲーム", "パートナーシップ", "アソビズム", "企業", "発表",
+                "ポケモン", "パートナーシップ", "アソビズム", "企業", "発表",
                 "世界中", "映画", "興行", "収入", "ドル", "億", "国", "イギリス", "フランス",
-                "スペイン", "イタリア", "ドイツ", "ロシア", "日本", "中国", "インド",
-                "Governor", "Cross"
+                "スペイン", "イタリア", "ドイツ", "ロシア","中国", "インド",
+                "Governor", "Cross", "営業", "臨時", "オペラ",
+                "初演", "作曲家", "ヴェネツィア", "コルテス", "よろしく"
             ]
-            if any(ng in reply_text.lower() for ng in ng_words):
+            if any(ng in reply_text.lower() for ng in ng_words) or re.search(r"\d+(時|分)", reply_text):
                 print(f"⚠️ NGワード検知: {[ng for ng in ng_words if ng in reply_text.lower()]}、リトライ中…")
                 continue
             else:
