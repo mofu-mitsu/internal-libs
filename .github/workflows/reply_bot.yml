@@ -30,8 +30,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install -r requirements.txt
-          pip install torch transformers accelerate sentencepiece
+          pip install torch==2.0.1 transformers==4.38.2 bitsandbytes==0.43.1 psutil==5.9.8 accelerate==0.27.2 sentencepiece==0.2.0
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
       - name: Run Reply Bot
         env:
