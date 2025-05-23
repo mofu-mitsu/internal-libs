@@ -310,7 +310,7 @@ def generate_reply_via_local_model(user_input):
             reply_text = reply_text.split("\n")[0].split("。")[0] + "。"
 
             # 崩壊チェック（NGワード含まれてたらリトライ）
-            if any(ng in reply_text for ng in [">>", "スレ", "イククル", "ベッド", "(*", "うふふ", "(*", "まりちゃん", "777"]):
+            if any(ng in reply_text for ng in [">>", "スレ", "イククル", "ベッド", "(*", "(*", "まりちゃん", "777"]):
                 print("⚠️ 崩壊っぽいのでリトライ中…")
                 continue
             else:
