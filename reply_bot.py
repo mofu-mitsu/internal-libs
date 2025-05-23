@@ -1,4 +1,4 @@
-## ------------------------------
+# ------------------------------
 # 🌐 基本ライブラリ・API
 # ------------------------------
 import os
@@ -15,6 +15,7 @@ from atproto import Client, models
 from atproto_client.models.com.atproto.repo.strong_ref import Main as StrongRef
 from atproto_client.models.app.bsky.feed.post import ReplyRef
 from dotenv import load_dotenv
+import urllib.parse  # URI正規化用
 
 # ------------------------------
 # 🔐 環境変数
@@ -48,12 +49,22 @@ HEADERS = {
     "Content-Type": "application/json"
 }
 
+# --- URI正規化 ---
+def normalize_uri(uri):
+    if not uri:
+        return None
+    uri = str(uri).strip()
+    parsed = urllib.parse.urlparse(uri)
+    # スキーム、ネットロケーション、パスだけを結合（クエリやフラグメントは無視）
+    normalized = f"{parsed.scheme}://{parsed.netloc}{parsed.path}"
+    return normalized
+
 # --- Gistから replied.json の読み込み ---
 def load_gist_data():
     print(f"🌐 Gistデータ読み込み開始 → URL: {GIST_API_URL}")
     print(f"🔐 ヘッダーの内容:\n{json.dumps(HEADERS, indent=2)}")
 
-    for attempt in range(3):  # リトライ3回
+    for attempt in range(3):
         try:
             curl_command = [
                 "curl", "-X", "GET", GIST_API_URL,
@@ -71,8 +82,12 @@ def load_gist_data():
             gist_data = json.loads(result.stdout)
             if REPLIED_GIST_FILENAME in gist_data["files"]:
                 replied_content = gist_data["files"][REPLIED_GIST_FILENAME]["content"]
-                replied = set(json.loads(replied_content))
+                replied = set(normalize_uri(uri) for uri in json.loads(replied_content) if uri)
                 print(f"✅ replied.json をGistから読み込みました（件数: {len(replied)}）")
+                if replied:
+                    print("📁 最新URI一覧（正規化済み）:")
+                    for uri in list(replied)[-5:]:
+                        print(f" - {uri}")
                 return replied
             else:
                 print(f"⚠️ Gist内に {REPLIED_GIST_FILENAME} が見つかりませんでした")
@@ -95,7 +110,7 @@ def save_replied(replied_set):
     print(f"🔑 トークンの先頭5文字: {GIST_TOKEN_REPLY[:5]}")
     print(f"🔑 トークンの末尾5文字: {GIST_TOKEN_REPLY[-5:]}")
 
-    for attempt in range(3):  # リトライ3回
+    for attempt in range(3):
         try:
             content = json.dumps(list(replied_set), ensure_ascii=False, indent=2)
             payload = {"files": {REPLIED_GIST_FILENAME: {"content": content}}}
@@ -127,6 +142,27 @@ def save_replied(replied_set):
             else:
                 print("❌ 最大リトライ回数に達しました")
                 return False
+
+# --- Gistから読み込み（簡易版） ---
+def load_replied():
+    print(f"🌐 Gistから読み込み中: {REPLIED_JSON_URL}")
+    try:
+        curl_command = ["curl", "-s", REPLIED_JSON_URL]
+        result = subprocess.run(curl_command, capture_output=True, text=True)
+        if result.returncode == 0:
+            data = set(normalize_uri(uri) for uri in json.loads(result.stdout) if uri)
+            print("✅ Gistからの読み込みに成功")
+            print(f"📄 保存済みURI読み込み完了 → 件数: {len(data)}")
+            if data:
+                print("📁 最新URI一覧（正規化済み）:")
+                for uri in list(data)[-5:]:
+                    print(f" - {uri}")
+            return data
+        else:
+            print(f"⚠️ Gist読み込み失敗: {result.stderr}")
+    except Exception as e:
+        print(f"⚠️ Gist読み込みエラー: {e}")
+    return set()
 
 # --- HuggingFace API設定 ---
 HF_API_URL = "https://api-inference.huggingface.co/"
@@ -221,27 +257,6 @@ REPLY_TABLE = {
     'ちゅー': 'え、いきなりちゅーとか……責任とってよね…っ（照）',
     'ちゅ〜': 'え、いきなりちゅーとか……責任とってよね…っ（照）',
 }
-
-# --- Gistから読み込み ---
-def load_replied():
-    print(f"🌐 Gistから読み込み中: {REPLIED_JSON_URL}")
-    try:
-        curl_command = ["curl", "-s", REPLIED_JSON_URL]
-        result = subprocess.run(curl_command, capture_output=True, text=True)
-        if result.returncode == 0:
-            data = set(json.loads(result.stdout))
-            print("✅ Gistからの読み込みに成功")
-            print(f"📄 保存済みURI読み込み完了 → 件数: {len(data)}")
-            if data:
-                print("📁 最新URI一覧:")
-                for uri in list(data)[-5:]:
-                    print(f" - {uri}")
-            return data
-        else:
-            print(f"⚠️ Gist読み込み失敗: {result.stderr}")
-    except Exception as e:
-        print(f"⚠️ Gist読み込みエラー: {e}")
-    return set()
 
 def clean_sentence_ending(reply):
     reply = reply.split("\n")[0].strip()
@@ -345,9 +360,9 @@ def handle_post(record, notification):
         parent_ref = StrongRef(uri=post_uri, cid=post_cid)
         root_ref = getattr(getattr(record, "reply", None), "root", parent_ref)
         reply_ref = ReplyRef(parent=parent_ref, root=root_ref)
-        return reply_ref, post_uri
+        return reply_ref, normalize_uri(post_uri)
 
-    return None, post_uri
+    return None, normalize_uri(post_uri)
 
 def run_reply_bot():
     self_did = client.me.did
@@ -364,12 +379,16 @@ def run_reply_bot():
             removed = True
     if removed:
         print(f"💾 ゴミデータ削除後にrepliedを保存します")
-        save_replied(replied)
+        if not save_replied(replied):
+            print("❌ ゴミデータ削除後の保存に失敗しました")
+            return
 
     # --- ⛑️ 空じゃなければ初期保存 ---
     if replied:
         print("💾 初期状態のrepliedを保存します")
-        save_replied(replied)
+        if not save_replied(replied):
+            print("❌ 初期保存に失敗しました")
+            return
     else:
         print("⚠️ replied が空なので初期保存はスキップ")
 
@@ -385,10 +404,8 @@ def run_reply_bot():
     reply_count = 0
 
     for notification in notifications:
-        notification_uri = getattr(notification, "uri", None) or getattr(notification, "reasonSubject", None)
-        if notification_uri:
-            notification_uri = str(notification_uri).strip()
-        else:
+        notification_uri = normalize_uri(getattr(notification, "uri", None) or getattr(notification, "reasonSubject", None))
+        if not notification_uri:
             record = getattr(notification, "record", None)
             author = getattr(notification, "author", None)
             if not record or not hasattr(record, "text") or not author:
@@ -398,8 +415,8 @@ def run_reply_bot():
             notification_uri = f"{author_handle}:{text}"
             print(f"⚠️ notification_uri が取得できなかったので、仮キーで対応 → {notification_uri}")
 
-        print(f"📌 チェック中 notification_uri: {notification_uri}")
-        print(f"📂 保存済み replied: {list(replied)[-5:]}")
+        print(f"📌 チェック中 notification_uri（正規化済み）: {notification_uri}")
+        print(f"📂 保存済み replied（最新5件）: {list(replied)[-5:]}")
 
         if reply_count >= MAX_REPLIES:
             print(f"⏹️ 最大返信数（{MAX_REPLIES}）に達したので終了します")
@@ -424,7 +441,7 @@ def run_reply_bot():
 
         print(f"\n👤 from: @{author_handle} / did: {author_did}")
         print(f"💬 受信メッセージ: {text}")
-        print(f"🔗 チェック対象 notification_uri: {notification_uri}")
+        print(f"🔗 チェック対象 notification_uri（正規化済み）: {notification_uri}")
 
         if author_did == self_did or author_handle == HANDLE:
             print("🛑 自分自身の投稿、スキップ")
@@ -440,7 +457,7 @@ def run_reply_bot():
 
         reply_ref, post_uri = handle_post(record, notification)
         print("🔗 reply_ref:", reply_ref)
-        print("🧾 post_uri:", post_uri)
+        print("🧾 post_uri（正規化済み）:", post_uri)
 
         reply_text = generate_reply_via_local_model(text)
         print("🤖 生成された返信:", reply_text)
@@ -463,11 +480,13 @@ def run_reply_bot():
             )
 
             replied.add(notification_uri)
-            save_replied(replied)
+            if not save_replied(replied):
+                print(f"❌ URI保存失敗 → {notification_uri}")
+                continue
 
             print(f"✅ @{author_handle} に返信完了！ → {notification_uri}")
             print(f"💾 URI保存成功 → 合計: {len(replied)} 件")
-            print(f"📁 最新URI一覧: {list(replied)[-5:]}")
+            print(f"📁 最新URI一覧（正規化済み）: {list(replied)[-5:]}")
 
             reply_count += 1
             time.sleep(REPLY_INTERVAL)
