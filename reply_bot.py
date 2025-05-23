@@ -54,7 +54,8 @@ REPLIED_JSON_URL = os.getenv("REPLIED_JSON_URL") or f"https://gist.githubusercon
 GIST_API_URL = f"https://api.github.com/gists/{GIST_ID}"
 HEADERS = {
     "Authorization": f"token {GIST_TOKEN_REPLY}",
-    "Accept": "application/vnd.github.v3+json"
+    "Accept": "application/vnd.github+json",  # ←ここを修正
+    "Content-Type": "application/json"
 }
 
 # --- Gistから replied.json のみ読み込み ---
@@ -88,24 +89,21 @@ def load_gist_data():
 def save_replied(replied_set):
     try:
         content = json.dumps(list(replied_set), ensure_ascii=False, indent=2)
-        payload = {
-            "files": {
-                REPLIED_GIST_FILENAME: {
-                    "content": content
-                }
-            }
-        }
+        payload = { "files": { REPLIED_GIST_FILENAME: { "content": content } } }
 
         print("💾 Gist保存準備中...")
         print(f"🔗 URL: {GIST_API_URL}")
         print(f"🔐 ヘッダー: {HEADERS}")
         print(f"🔑 トークンの長さ: {len(GIST_TOKEN_REPLY)}")
-        print(f"🔑 トークンのrepr: {repr(GIST_TOKEN_REPLY)}")
+        print(f"🔑 トークンの先頭5文字: {GIST_TOKEN_REPLY[:5]}")
+        print(f"🔑 トークンの末尾5文字: {GIST_TOKEN_REPLY[-5:]}")
         print("🛠 PATCH 送信内容（payload）:")
         print(json.dumps(payload, indent=2, ensure_ascii=False))
 
         response = requests.patch(GIST_API_URL, headers=HEADERS, json=payload)
         print(f"📥 レスポンスステータス: {response.status_code}")
+        print(f"📥 レスポンスヘッダー: {response.headers}")  # レートリミット確認用
+        print(f"📥 レスポンス本文: {response.text}")
 
         response.raise_for_status()
         print(f"💾 replied.json をGistに保存しました（件数: {len(replied_set)}）")
@@ -235,7 +233,8 @@ def upload_gist_content(content, filename=REPLIED_GIST_FILENAME, gist_id=GIST_ID
     url = f"https://api.github.com/gists/{gist_id}"
     headers = {
         "Authorization": f"token {token}",
-        "Accept": "application/vnd.github.v3+json"  # ✅ 推奨形式
+        "Accept": "application/vnd.github+json",  # ←ここを修正
+        "Content-Type": "application/json"
     }
     data = {
         "files": {
