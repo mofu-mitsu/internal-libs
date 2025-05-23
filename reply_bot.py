@@ -234,10 +234,17 @@ def generate_reply_via_local_model(user_input):
             print("⚠️ GPU未検出、CPUで実行")
 
         print(f"📤 {datetime.now().isoformat()} ｜ モデルとトークナイザを読み込み中…")
+        bnb_config = BitsAndBytesConfig(
+            load_in_4bit=True,
+            bnb_4bit_use_double_quant=True,
+            bnb_4bit_quant_type="nf4",
+            bnb_4bit_compute_dtype="float32"  # チャッピーの推奨！
+        )
+
         tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=False)
         model = AutoModelForCausalLM.from_pretrained(
             model_name,
-            torch_dtype=torch.float16,
+            quantization_config=bnb_config,
             device_map="auto"
         ).eval()
 
@@ -261,7 +268,7 @@ def generate_reply_via_local_model(user_input):
                 with torch.no_grad():
                     output_ids = model.generate(
                         input_ids,
-                        max_new_tokens=100,
+                        max_new_tokens=80,  # チャッピーの推奨
                         temperature=0.85,
                         top_p=0.95,
                         do_sample=True,
