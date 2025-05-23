@@ -1,0 +1,14 @@
+name: Test Gist Access
+on: workflow_dispatch
+jobs:
+  test-gist:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test Gist API
+        env:
+          GIST_TOKEN: ${{ secrets.GIST_TOKEN_REPLY }}
+        run: |
+          curl -X GET \
+            -H "Authorization: token $GIST_TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/gists/40391085a2e0b8a48935ad0b460cf422
