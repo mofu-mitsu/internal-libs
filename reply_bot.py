@@ -256,7 +256,7 @@ def upload_gist_content(content, filename=REPLIED_GIST_FILENAME, gist_id=GIST_ID
 # --- Gistに保存 ---
 
 def generate_reply_via_local_model(user_input):
-    model_name = "rinna/japanese-gpt2-medium"
+    model_name = "rinna/japanese-gpt-neox-3.6b-instruction-ppo"
 
     failure_messages = [
         "えへへ、ごめんね〜〜今ちょっと調子悪いみたい……またお話しよ？",
@@ -278,20 +278,22 @@ def generate_reply_via_local_model(user_input):
     try:
         print(f"📤 {datetime.now().isoformat()} ｜ モデルとトークナイザを読み込み中…")
         tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=False)
-        model = AutoModelForCausalLM.from_pretrained(model_name)
+        model = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype=torch.float16).eval()
 
-        # プロンプト（人格誘導つき）
+        # Neox系は instruction-tuning に合わせてプロンプトを明確に！
         prompt = (
+            f"以下はユーザーと、甘えん坊でちょっと地雷系の女の子『みりんてゃ』との会話です。\n"
+            f"みりんてゃはかわいくて、語尾に『〜♡』をよくつけますが、ちゃんと人の話は理解しています。\n"
             f"ユーザー: {user_input}\n"
-            "みりんてゃ（甘えん坊で地雷系ENFPっぽいキャラ、かわいくて語尾に『〜♡』とかつけがち、話はふわふわしてるが内容は一応わかる）: "
+            f"みりんてゃ: "
         )
 
         print("📎 使用プロンプト:", repr(prompt))
-        input_ids = tokenizer.encode(prompt, return_tensors="pt")
+        input_ids = tokenizer.encode(prompt, return_tensors="pt").to(model.device)
         input_length = input_ids.shape[1]
 
         reply_text = ""
-        for attempt in range(3):  # 最大3回リトライ
+        for attempt in range(3):
             print(f"📤 {datetime.now().isoformat()} ｜ テキスト生成中…（試行 {attempt + 1}）")
             with torch.no_grad():
                 output_ids = model.generate(
@@ -307,21 +309,25 @@ def generate_reply_via_local_model(user_input):
             output_text = tokenizer.decode(output_ids[0], skip_special_tokens=True)
             print("📥 生成された全体テキスト:", repr(output_text))
 
-            new_tokens = output_ids[0][input_length:]
-            reply_text = tokenizer.decode(new_tokens, skip_special_tokens=True).strip()
+            # 出力の中から「みりんてゃの発言部分だけ」を取り出す
+            match = re.search(r"みりんてゃ\s*[:：]\s*(.*)", output_text)
+            if match:
+                reply_text = match.group(1).strip()
+            else:
+                # fallback: 全体から入力ぶんカットして使用
+                new_tokens = output_ids[0][input_length:]
+                reply_text = tokenizer.decode(new_tokens, skip_special_tokens=True).strip()
 
-            # 不要な発言者のセリフをカット（例: りり:、>>777 など）
-            reply_text = re.split(r"[a-zA-Z0-9一-龠ぁ-んァ-ンー]{1,10}\s*[:：]", reply_text)[0]
+            # 改行カット＋文末調整
             reply_text = reply_text.split("\n")[0].split("。")[0] + "。"
 
-            # 崩壊チェック（NGワード含まれてたらリトライ）
-            if any(ng in reply_text for ng in [">>", "スレ", "イククル", "ベッド", "(*", "(*", "まりちゃん", "777"]):
+            # 崩壊チェック
+            if any(ng in reply_text for ng in [">>", "スレ", "イククル", "ベッド", "(*", "まりちゃん", "777"]):
                 print("⚠️ 崩壊っぽいのでリトライ中…")
                 continue
             else:
-                break  # 問題なければループ終了
+                break
 
-        # 最後の確認：意味がある長さか？
         if len(reply_text.strip()) < 5:
             reply_text = random.choice(fallback_cute_lines)
 
@@ -332,14 +338,6 @@ def generate_reply_via_local_model(user_input):
         print(f"❌ モデル読み込みエラー: {e}")
         return random.choice(failure_messages)
         
-# --- テンプレ or AI返し ---
-def get_reply(text):
-    for keyword, reply in REPLY_TABLE.items():
-        if keyword in text:
-            print(f"📌 テンプレで返答: {reply}")
-            return reply
-    return generate_reply_via_local_model(text)
-
 # --- メイン処理 ---
 from atproto_client.models.app.bsky.feed.post import ReplyRef
 from datetime import datetime, timezone
