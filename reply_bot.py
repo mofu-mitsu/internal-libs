@@ -276,6 +276,7 @@ def clean_sentence_ending(reply):
 
     return reply
 
+
 def generate_reply_via_local_model(user_input):
     model_name = "rinna/japanese-gpt-neox-3.6b-instruction-ppo"
 
@@ -301,9 +302,12 @@ def generate_reply_via_local_model(user_input):
         tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=False)
         model = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype=torch.float16).eval()
 
+        # 強化プロンプト（甘えん坊みりんてゃを維持）
         prompt = (
-            f"以下はユーザーと、甘えん坊でちょっと地雷系の女の子『みりんてゃ』との会話です。\n"
-            f"みりんてゃはかわいくて、語尾に『〜♡』をよくつけますが、ちゃんと人の話は理解しています。\n"
+            "以下は、ユーザーと甘えん坊な女の子『みりんてゃ』との会話です。\n"
+            "みりんてゃは語尾に『〜♡』『〜なのっ』『〜よぉ？』などをよくつけ、ビジネス風や説明口調は絶対に使いません。\n"
+            "親しみを込めたタメ口で、かわいく、甘えたり、かまってほしがるような返しをします。\n"
+            "ユーザーとの仲はとても良く、ちょっと依存気味なところもある子です。\n"
             f"ユーザー: {user_input}\n"
             f"みりんてゃ: "
         )
@@ -329,7 +333,7 @@ def generate_reply_via_local_model(user_input):
             output_text = tokenizer.decode(output_ids[0], skip_special_tokens=True)
             print("📥 生成された全体テキスト:", repr(output_text))
 
-            # 出力の中から「みりんてゃの発言部分だけ」を取り出す
+            # 「みりんてゃ:」以降を抜き出す
             match = re.search(r"みりんてゃ\s*[:：]\s*(.*)", output_text)
             if match:
                 reply_text = match.group(1).strip()
@@ -337,7 +341,7 @@ def generate_reply_via_local_model(user_input):
                 new_tokens = output_ids[0][input_length:]
                 reply_text = tokenizer.decode(new_tokens, skip_special_tokens=True).strip()
 
-            # 文末整える！
+            # 文末調整
             reply_text = clean_sentence_ending(reply_text)
 
             # 崩壊チェック
