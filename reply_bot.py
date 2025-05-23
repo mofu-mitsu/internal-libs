@@ -232,6 +232,11 @@ def upload_gist_content(content, filename=REPLIED_GIST_FILENAME, gist_id=GIST_ID
 
     # 🔍 デバッグログ
     print("📡 Gistアップロード準備中...")
+    try:
+        with open(REPLIED_GIST_FILENAME, "r", encoding="utf-8") as f:
+            print("📂 保存された replied.json の中身:", f.read())
+    except FileNotFoundError:
+        print("❗ ファイルが見つからなかったよ（replied.json）")
     print(f"🔗 URL: {url}")
     print(f"🔐 トークン（先頭5文字）: {token[:5]}...（長さ: {len(token)}）")
     print(f"📤 ヘッダー: {headers}")
