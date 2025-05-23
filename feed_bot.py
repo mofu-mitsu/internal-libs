@@ -255,11 +255,6 @@ def run_once():
                     print(f"✨ キーワード「{keyword}」にマッチ！")
                     break
 
-            if not matched and f"@{HANDLE}" in text:
-                reply_text = random.choice(MENTION_TEMPLATES)
-                print(f"💬 メンション返信テンプレ: {reply_text}")
-                matched = True
-
             if not matched:
                 print("🚫 スキップ: 条件に合わない投稿")
                 continue
