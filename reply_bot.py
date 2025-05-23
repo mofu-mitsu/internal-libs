@@ -40,7 +40,6 @@ else:
 GIST_USER = "mofu-mitsu"
 GIST_ID = "40391085a2e0b8a48935ad0b460cf422"
 REPLIED_GIST_FILENAME = "replied.json"
-REPLIED_JSON_URL = os.getenv("REPLIED_JSON_URL") or f"https://gist.githubusercontent.com/{GIST_USER}/{GIST_ID}/raw/{REPLIED_GIST_FILENAME}"
 GIST_API_URL = f"https://api.github.com/gists/{GIST_ID}"
 HEADERS = {
     "Authorization": f"token {GIST_TOKEN_REPLY}",
@@ -85,6 +84,7 @@ def load_gist_data():
             gist_data = json.loads(result.stdout)
             if REPLIED_GIST_FILENAME in gist_data["files"]:
                 replied_content = gist_data["files"][REPLIED_GIST_FILENAME]["content"]
+                print(f"📄 生のreplied.json内容:\n{replied_content}")
                 raw_uris = json.loads(replied_content)
                 replied = set(uri for uri in (normalize_uri(u) for u in raw_uris) if uri)
                 print(f"✅ replied.json をGistから読み込みました（件数: {len(replied)}）")
@@ -142,8 +142,7 @@ def save_replied(replied_set):
 
             if result.returncode == 0:
                 print(f"💾 replied.json をGistに保存しました（件数: {len(cleaned_set)}）")
-                # 保存後、即読み込みして確認
-                time.sleep(1)  # Gistの反映待ち
+                time.sleep(2)  # キャッシュ反映待ち
                 new_replied = load_gist_data()
                 if cleaned_set.issubset(new_replied):
                     print("✅ 保存内容が正しく反映されました")
@@ -161,28 +160,6 @@ def save_replied(replied_set):
             else:
                 print("❌ 最大リトライ回数に達しました")
                 return False
-
-# --- Gistから読み込み（簡易版） ---
-def load_replied():
-    print(f"🌐 Gistから読み込み中: {REPLIED_JSON_URL}")
-    try:
-        curl_command = ["curl", "-s", REPLIED_JSON_URL]
-        result = subprocess.run(curl_command, capture_output=True, text=True)
-        if result.returncode == 0:
-            raw_uris = json.loads(result.stdout)
-            data = set(uri for uri in (normalize_uri(u) for u in raw_uris) if uri)
-            print("✅ Gistからの読み込みに成功")
-            print(f"📄 保存済みURI読み込み完了 → 件数: {len(data)}")
-            if data:
-                print("📁 最新URI一覧（正規化済み）:")
-                for uri in list(data)[-5:]:
-                    print(f" - {uri}")
-            return data
-        else:
-            print(f"⚠️ Gist読み込み失敗: {result.stderr}")
-    except Exception as e:
-        print(f"⚠️ Gist読み込みエラー: {e}")
-    return set()
 
 # --- HuggingFace API設定 ---
 HF_API_URL = "https://api-inference.huggingface.co/"
@@ -312,7 +289,7 @@ def handle_post(record, notification):
 
 def run_reply_bot():
     self_did = client.me.did
-    replied = load_replied()
+    replied = load_gist_data()  # load_replied()をやめてGist APIに統一
     print(f"📘 replied の型: {type(replied)} / 件数: {len(replied)}")
 
     # --- 🧹 replied（URLのセット）を整理 ---
