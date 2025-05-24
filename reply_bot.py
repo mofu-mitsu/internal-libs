@@ -237,9 +237,9 @@ def initialize_model_and_tokenizer(model_name="cyberagent/open-calm-3b"):
 def generate_reply_via_local_model(user_input):
     model_name = "cyberagent/open-calm-3b"
     failure_messages = [
-        "えへへ、ごめんね〜〜今ちょっと調子悪いみたい……またお話しよ？♡",
-        "うぅ、ごめん〜…上手くお返事できなかったの。ちょっと待ってて？♡",
-        "あれれ？みりんてゃ、おねむかも…またあとで頑張るねっ！♡"
+        "えへへ、ごめんね〜今ちょっと調子悪いみたい……またお話しよ？♡",
+        "うぅ、ごめん〜…上手くお返事できなかったの…ちょっと待ってて？♡",
+        "あれれ？みりんてゃ、おねむかも……またあとで頑張るねっ！♡"
     ]
     fallback_cute_lines = [
         "えへへ〜♡ みりんてゃ、君のこと考えるとドキドキなのっ♪",
