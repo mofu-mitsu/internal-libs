@@ -18,6 +18,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      - name: Clear HuggingFace cache
+        run: |
+          rm -rf ~/.cache/huggingface
+
       - name: Clear pip cache
         run: |
           pip cache purge
@@ -30,7 +34,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install --upgrade pip
-          pip install torch==2.0.1 transformers==4.38.2 psutil==5.9.8 sentencepiece==0.2.0
+          pip install torch==2.0.1 transformers==4.36.2 psutil==5.9.8 sentencepiece==0.2.0
           pip install -U accelerate
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
