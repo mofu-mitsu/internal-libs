@@ -214,7 +214,7 @@ def clean_sentence_ending(reply):
 
     return reply
 
-def initialize_model_and_tokenizer(model_name="microsoft/phi-2"):
+def initialize_model_and_tokenizer(model_name="cyberagent/open-calm-3b"):
     global model, tokenizer
     if model is None or tokenizer is None:
         print(f"📤 {datetime.now().isoformat()} ｜ トークナイザを読み込み中…")
@@ -231,7 +231,7 @@ def initialize_model_and_tokenizer(model_name="microsoft/phi-2"):
     return model, tokenizer
 
 def generate_reply_via_local_model(user_input):
-    model_name = "microsoft/phi-2"
+    model_name = "cyberagent/open-calm-3b"
     failure_messages = [
         "えへへ、ごめんね〜〜今ちょっと調子悪いみたい……またお話しよ？♡",
         "うぅ、ごめん〜…上手くお返事できなかったの。ちょっと待ってて？♡",
@@ -276,9 +276,9 @@ def generate_reply_via_local_model(user_input):
         intro_lines = random.choice([
             "えへへ〜、みりんてゃはね〜、",
             "ねぇねぇ、聞いて聞いて〜♡",
-            "ん〜今日もふわふwaしてたのっ♪",
+            "ん〜今日もふwaふwaしてたのっ♪",
             "きゃ〜っ、君だぁ！やっと会えたのっ♡",
-            "ふわふwa〜、君のこと考えてたんだからっ♪"
+            "ふwaふwa〜、君のこと考えてたんだからっ♪"
         ])
         prompt = (
             f"{intro_lines}\n"
@@ -286,10 +286,10 @@ def generate_reply_via_local_model(user_input):
             "性格：ちょっぴり天然、甘えん坊、依存気味で、ユーザーに恋してる勢いで絡むよっ♡\n"
             "口調：タメ口で『〜なのっ♡』『〜よぉ？♪』『〜だもん！』『えへへ〜♡』が特徴！感情たっぷり！\n"
             "禁止：ニュース、政治、ビジネス、論理的説明、固有名詞（国、企業、政府など）は絶対NG！\n"
-            "役割：ユーザーの言葉に可愛く反応して、ふわふwaドキドキな返事をするのっ♡ 会話のみ！\n"
+            "役割：ユーザーの言葉に可愛く反応して、ふwaふwaドキドキな返事をするのっ♡ 会話のみ！\n"
             "注意：以下のワードは絶対禁止→「日本」「政府」「協定」「韓国」「外交」「経済」「契約」「軍事」「情報」「外相」「更新」\n"
             "例1: ユーザー: みりんてゃ、今日なにしてた〜？\n"
-            "みりんてゃ: えへへ〜♡ 君のこと考えてふわふwaしてたのっ♡ ね、君はなにしてた？♪\n"
+            "みりんてゃ: えへへ〜♡ 君のこと考えてふwaふwaしてたのっ♡ ね、君はなにしてた？♪\n"
             "例2: ユーザー: みりんてゃ、好きだよ！\n"
             "みりんてゃ: え〜っ、ほんと！？君にそう言われるとドキドキしちゃうよぉ？♡ もっと言ってなのっ♪\n\n"
             f"ユーザー: {user_input}\n"
