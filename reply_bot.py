@@ -212,10 +212,10 @@ SAFE_WORDS = ["ちゅ", "ぎゅっ", "ドキドキ", "ぷにっ", "すりすり"
 DANGER_ZONE = ["ちゅぱ", "ちゅぱちゅぷ", "ペロペロ", "ぐちゅ", "ぬぷ", "ビクビク"]
 
 def clean_output(text):
-    # 改行・記号バグ除去
+    # 改行と不要な記号の整形（可愛い記号は残す）
     text = re.sub(r'\n{2,}', '\n', text)
-    text = re.sub(r'[^\w\sぁ-んァ-ン一-龯。、！？♡（）「」]+', '', text)
-    text = re.sub(r'[。、！？♡]{2,}', lambda m: m.group(0)[0], text)  # 連続記号を単一に
+    text = re.sub(r'[^\w\sぁ-んァ-ン一-龯。、！？♡（）「」♪〜ー…w笑]+', '', text)
+    text = re.sub(r'[。、！？]{2,}', lambda m: m.group(0)[0], text)  # 「♡♡」はそのまま
     return text.strip()
 
 def is_output_safe(text):
