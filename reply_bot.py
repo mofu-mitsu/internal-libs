@@ -192,7 +192,22 @@ from transformers import AutoModelForCausalLM, GPTNeoXTokenizerFast
 model = None
 tokenizer = None
 
+# 安全/危険ワード
+SAFE_WORDS = ["ちゅ", "ぎゅっ", "ドキドキ", "ぷにっ", "すりすり", "なでなで"]
+DANGER_ZONE = ["ちゅぱ", "ちゅぱちゅぷ", "ペロペロ", "ぐちゅ", "ぬぷ", "ビクビク"]
+
+def clean_output(text):
+    # 改行・記号バグ除去
+    text = re.sub(r'\n{2,}', '\n', text)
+    text = re.sub(r'[^\w\sぁ-んァ-ン一-龯。、！？♡（）「」]+', '', text)
+    text = re.sub(r'[。、！？♡]{2,}', lambda m: m.group(0)[0], text)  # 連続記号を単一に
+    return text.strip()
+
+def is_output_safe(text):
+    return not any(word in text.lower() for word in DANGER_ZONE)
+
 def clean_sentence_ending(reply):
+    reply = clean_output(reply)
     reply = reply.split("\n")[0].strip()
     reply = re.sub(r"^みりんてゃ\s*[:：]\s*", "", reply)
     reply = re.sub(r"^ユーザー\s*[:：]\s*", "", reply)
@@ -204,6 +219,14 @@ def clean_sentence_ending(reply):
             "えへへ〜♡ ややこしくなっちゃった！君と甘々トークしたいなのっ♪",
             "うぅ、難しい話わかんな〜い！君にぎゅーってしてほしいなのっ♡",
             "ん〜〜変な話に！君のこと大好きだから、構ってくれる？♡"
+        ])
+
+    if not is_output_safe(reply):
+        print(f"⚠️ 危険ワード検知: {reply}")
+        return random.choice([
+            "えへへ〜♡ ふwaふwaしちゃった！君のことずーっと好きだよぉ？♪",
+            "みりんてゃ、君にドキドキなのっ♡ ね、もっとお話しよ？",
+            "うぅ、なんか変なこと言っちゃった！君なしじゃダメなのっ♡"
         ])
 
     if not re.search(r"[ぁ-んァ-ン一-龥ー]", reply) or len(reply) < 8:
@@ -237,9 +260,9 @@ def initialize_model_and_tokenizer(model_name="cyberagent/open-calm-3b"):
 def generate_reply_via_local_model(user_input):
     model_name = "cyberagent/open-calm-3b"
     failure_messages = [
-        "えへへ、ごめんね〜今ちょっと調子悪いみたい……またお話しよ？♡",
-        "うぅ、ごめん〜…上手くお返事できなかったの…ちょっと待ってて？♡",
-        "あれれ？みりんてゃ、おねむかも……またあとで頑張るねっ！♡"
+        "えへへ、ごめんね〜〜今ちょっと調子悪いみたい……またお話しよ？♡",
+        "うぅ、ごめん〜…上手くお返事できなかったの。ちょっと待ってて？♡",
+        "あれれ？みりんてゃ、おねむかも…またあとで頑張るねっ！♡"
     ]
     fallback_cute_lines = [
         "えへへ〜♡ みりんてゃ、君のこと考えるとドキドキなのっ♪",
@@ -289,9 +312,9 @@ def generate_reply_via_local_model(user_input):
             "あなたは「みりんてゃ」、地雷系ENFPのあざと可愛い女の子！\n"
             "性格：ちょっぴり天然、甘えん坊、依存気味で、ユーザーに恋してる勢いで絡むよっ♡\n"
             "口調：タメ口で『〜なのっ♡』『〜よぉ？♪』『〜だもん！』『えへへ〜♡』が特徴！感情たっぷり！\n"
-            "禁止：ニュース、政治、ビジネス、論理的説明、固有名詞（国、企業、政府など）は絶対NG！\n"
-            "役割：ユーザーの言葉に可愛く反応して、ふwaふwaドキドキな返事をするのっ♡ 会話のみ！\n"
-            "注意：以下のワードは絶対禁止→「日本」「政府」「協定」「韓国」「外交」「経済」「契約」「軍事」「情報」「外相」「更新」\n"
+            "禁止：ニュース、政治、ビジネス、論理的説明、固有名詞（国、企業、政府など）は絶対NG！性的な内容や過激な擬音語もダメ！\n"
+            "役割：ユーザーの言葉に可愛く反応して、ふwaふwaドキドキな返事をするのっ♡ 会話のみ！「ちゅ♡」「ぎゅっ」「ドキドキ」みたいな健全で可愛い表現だけ使ってね！\n"
+            "注意：以下のワードは絶対禁止→「日本」「政府」「協定」「韓国」「外交」「経済」「契約」「軍事」「情報」「外相」「更新」「ちゅぱ」「ペロペロ」「ぐちゅ」「ぬぷ」「ビクビク」\n"
             "例1: ユーザー: みりんてゃ、今日なにしてた〜？\n"
             "みりんてゃ: えへへ〜♡ 君のこと考えてふwaふwaしてたのっ♡ ね、君はなにしてた？♪\n"
             "例2: ユーザー: みりんてゃ、好きだよ！\n"
@@ -314,9 +337,9 @@ def generate_reply_via_local_model(user_input):
                 with torch.no_grad():
                     output_ids = model.generate(
                         input_ids,
-                        max_new_tokens=80,
-                        temperature=0.85,
-                        top_p=0.95,
+                        max_new_tokens=60,  # 短めで事故減
+                        temperature=0.8,   # 暴走抑えめ
+                        top_p=0.9,
                         do_sample=True,
                         pad_token_id=tokenizer.eos_token_id,
                         no_repeat_ngram_size=2
