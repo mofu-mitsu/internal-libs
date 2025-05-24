@@ -8,6 +8,7 @@ import traceback
 import time
 import random
 import re
+import requests
 import psutil
 from datetime import datetime, timezone, timedelta
 from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -185,6 +186,9 @@ REPLY_TABLE = {
 
 
 # グローバルモデルとトークナイザ
+from transformers import AutoModelForCausalLM, GPTNeoXTokenizerFast
+
+# グローバルモデルとトークナイザ
 model = None
 tokenizer = None
 
@@ -204,7 +208,7 @@ def clean_sentence_ending(reply):
 
     if not re.search(r"[ぁ-んァ-ン一-龥ー]", reply) or len(reply) < 8:
         return random.choice([
-            "えへへ〜♡ ふわふわしちゃった！君のことずーっと好きだよぉ？♪",
+            "えへへ〜♡ ふwaふwaしちゃった！君のことずーっと好きだよぉ？♪",
             "みりんてゃ、君にドキドキなのっ♡ ね、もっとお話しよ？",
             "うぅ、なんか分かんないけど…君なしじゃダメなのっ♡"
         ])
@@ -218,7 +222,7 @@ def initialize_model_and_tokenizer(model_name="cyberagent/open-calm-3b"):
     global model, tokenizer
     if model is None or tokenizer is None:
         print(f"📤 {datetime.now().isoformat()} ｜ トークナイザを読み込み中…")
-        tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=False)
+        tokenizer = GPTNeoXTokenizerFast.from_pretrained(model_name, use_fast=True)
         print(f"📤 {datetime.now().isoformat()} ｜ トークナイザ読み込み完了")
 
         print(f"📤 {datetime.now().isoformat()} ｜ モデルを読み込み中…")
@@ -342,6 +346,32 @@ def generate_reply_via_local_model(user_input):
     except Exception as e:
         print(f"❌ モデル読み込みエラー: {e}")
         return random.choice(failure_messages)
+
+def fetch_bluesky_posts():
+    client = Client()
+    client.login(HANDLE, APP_PASSWORD)
+    posts = client.get_timeline(limit=50).feed
+    unreplied = []
+    for post in posts:
+        if post.post.author.handle != HANDLE and not post.post.viewer.reply:
+            unreplied.append({
+                "post_id": post.post.uri,
+                "text": post.post.record.text
+            })
+    return unreplied
+
+def post_replies_to_bluesky():
+    unreplied = fetch_bluesky_posts()
+    client = Client()
+    client.login(HANDLE, APP_PASSWORD)
+    for post in unreplied:
+        try:
+            reply = generate_reply_via_local_model(post["text"])
+            client.send_post(text=reply, reply_to={"uri": post["post_id"]})
+            print(f"📤 投稿成功: {reply}")
+        except Exception as e:
+            print(f"❌ 投稿エラー: {e}")
+
         
 # --- メイン処理 ---
 def handle_post(record, notification):
