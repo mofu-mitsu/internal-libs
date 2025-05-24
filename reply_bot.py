@@ -183,7 +183,8 @@ REPLY_TABLE = {
     "使い方": "使い方は「♡推しプロフィールメーカー♡」のページにあるよ〜！かんたんっ♪",
 }
 
-# グローバルモデルとトークナイザ（チャッピーの最適化提案）
+
+# グローバルモデルとトークナイザ
 model = None
 tokenizer = None
 
@@ -193,7 +194,6 @@ def clean_sentence_ending(reply):
     reply = re.sub(r"^ユーザー\s*[:：]\s*", "", reply)
     reply = re.sub(r"([！？笑])。$", r"\1", reply)
 
-    # NGワード強化
     if re.search(r"(ご利用|誠に|お詫び|貴重なご意見|申し上げます|ございます|お客様|発表|パートナーシップ|ゲーム|ポケモン|アソビズム|企業|世界中|映画|興行|収入|ドル|億|国|イギリス|フランス|スペイン|イタリア|ドイツ|ロシア|日本|中国|インド|Governor|Cross|営業|臨時|時間|午前|午後|オペラ|初演|作曲家|ヴェネツィア|コルテス|よろしく|政府|協定|軍事|情報|外交|外相|自動更新)", reply, re.IGNORECASE) or re.search(r"\d+(時|分)", reply):
         print(f"⚠️ NGワード検知: {reply}")
         return random.choice([
@@ -214,7 +214,7 @@ def clean_sentence_ending(reply):
 
     return reply
 
-def initialize_model_and_tokenizer(model_name="rinna/japanese-gpt-neox-3.6b"):
+def initialize_model_and_tokenizer(model_name="microsoft/phi-2"):
     global model, tokenizer
     if model is None or tokenizer is None:
         print(f"📤 {datetime.now().isoformat()} ｜ トークナイザを読み込み中…")
@@ -222,22 +222,16 @@ def initialize_model_and_tokenizer(model_name="rinna/japanese-gpt-neox-3.6b"):
         print(f"📤 {datetime.now().isoformat()} ｜ トークナイザ読み込み完了")
 
         print(f"📤 {datetime.now().isoformat()} ｜ モデルを読み込み中…")
-        bnb_config = BitsAndBytesConfig(
-            load_in_4bit=True,
-            bnb_4bit_use_double_quant=True,
-            bnb_4bit_quant_type="nf4",
-            bnb_4bit_compute_dtype=torch.float32
-        )
         model = AutoModelForCausalLM.from_pretrained(
             model_name,
-            quantization_config=bnb_config,
+            torch_dtype=torch.float32,
             device_map="auto"
         ).eval()
         print(f"📤 {datetime.now().isoformat()} ｜ モデル読み込み完了")
     return model, tokenizer
 
 def generate_reply_via_local_model(user_input):
-    model_name = "rinna/japanese-gpt-neox-3.6b"
+    model_name = "microsoft/phi-2"
     failure_messages = [
         "えへへ、ごめんね〜〜今ちょっと調子悪いみたい……またお話しよ？♡",
         "うぅ、ごめん〜…上手くお返事できなかったの。ちょっと待ってて？♡",
@@ -249,7 +243,6 @@ def generate_reply_via_local_model(user_input):
         "だ〜いすきっ♡ ね、ね、もっと構ってくれる？"
     ]
 
-    # ラブラブフィルター（チャッピーの提案）
     if re.search(r"(大好き|ぎゅー|ちゅー|愛してる|キス|添い寝)", user_input, re.IGNORECASE):
         print(f"⚠️ ラブラブ入力検知: {user_input}")
         return random.choice([
@@ -258,7 +251,6 @@ def generate_reply_via_local_model(user_input):
             "も〜〜〜♡ 好きすぎて胸がぎゅーってなるぅ♡"
         ])
 
-    # 感情フィルター（チャッピーの提案）
     if re.search(r"(疲れた|しんどい|つらい|泣きたい|ごめん|寝れない)", user_input, re.IGNORECASE):
         print(f"⚠️ 癒し系入力検知: {user_input}")
         return random.choice([
@@ -267,7 +259,6 @@ def generate_reply_via_local_model(user_input):
             "んん〜っ、えへへ♡ 甘えてもいいの、ぜ〜んぶ受け止めるからねっ♪"
         ])
 
-    # 入力のNGワードチェック
     if re.search(r"(映画|興行|収入|ドル|億|国|イギリス|フランス|スペイン|イタリア|ドイツ|ロシア|日本|中国|インド|Governor|Cross|ゲーム|ポケモン|企業|発表|営業|臨時|時間|午前|午後|オペラ|初演|作曲家|ヴェネツィア|コルテス|よろしく|政府|協定|軍事|情報|外交|外相|自動更新)", user_input, re.IGNORECASE) or re.search(r"\d+(時|分)", user_input):
         print(f"⚠️ 入力にビジネス・学術系ワード検知: {user_input}")
         user_input = "みりんてゃ、君と甘々トークしたいなのっ♡"
@@ -280,16 +271,14 @@ def generate_reply_via_local_model(user_input):
         else:
             print("⚠️ GPU未検出、CPUで実行")
 
-        # モデルとトークナイザの初期化（1回のみ）
         model, tokenizer = initialize_model_and_tokenizer(model_name)
 
-        # プロンプト強化（チャッピー＋俺）
         intro_lines = random.choice([
             "えへへ〜、みりんてゃはね〜、",
             "ねぇねぇ、聞いて聞いて〜♡",
             "ん〜今日もふわふwaしてたのっ♪",
-            "きゃ〜っ、君だぁ！やっと会えたのっ♡",  # チャッピーの揺らぎ強化
-            "ふわふわ〜、君のこと考えてたんだからっ♪"
+            "きゃ〜っ、君だぁ！やっと会えたのっ♡",
+            "ふわふwa〜、君のこと考えてたんだからっ♪"
         ])
         prompt = (
             f"{intro_lines}\n"
@@ -297,10 +286,10 @@ def generate_reply_via_local_model(user_input):
             "性格：ちょっぴり天然、甘えん坊、依存気味で、ユーザーに恋してる勢いで絡むよっ♡\n"
             "口調：タメ口で『〜なのっ♡』『〜よぉ？♪』『〜だもん！』『えへへ〜♡』が特徴！感情たっぷり！\n"
             "禁止：ニュース、政治、ビジネス、論理的説明、固有名詞（国、企業、政府など）は絶対NG！\n"
-            "役割：ユーザーの言葉に可愛く反応して、ふわふわドキドキな返事をするのっ♡ 会話のみ！\n"
+            "役割：ユーザーの言葉に可愛く反応して、ふわふwaドキドキな返事をするのっ♡ 会話のみ！\n"
             "注意：以下のワードは絶対禁止→「日本」「政府」「協定」「韓国」「外交」「経済」「契約」「軍事」「情報」「外相」「更新」\n"
             "例1: ユーザー: みりんてゃ、今日なにしてた〜？\n"
-            "みりんてゃ: えへへ〜♡ 君のこと考えてふわふわしてたのっ♡ ね、君はなにしてた？♪\n"
+            "みりんてゃ: えへへ〜♡ 君のこと考えてふわふwaしてたのっ♡ ね、君はなにしてた？♪\n"
             "例2: ユーザー: みりんてゃ、好きだよ！\n"
             "みりんてゃ: え〜っ、ほんと！？君にそう言われるとドキドキしちゃうよぉ？♡ もっと言ってなのっ♪\n\n"
             f"ユーザー: {user_input}\n"
@@ -334,7 +323,6 @@ def generate_reply_via_local_model(user_input):
                 print(f"📝 生の生成テキスト: {repr(raw_reply)}")
                 reply_text = clean_sentence_ending(raw_reply)
 
-                # フォールバック柔軟化（チャッピーの提案）
                 if any(re.search(rf"\b{re.escape(msg)}\b", reply_text) for msg in failure_messages + fallback_cute_lines):
                     print(f"⚠️ フォールバック検知、リトライ中…")
                     continue
