@@ -17,11 +17,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Cache HuggingFace models
-        uses: actions/cache@v3
-        with:
-          path: ~/.cache/huggingface
-          key: ${{ runner.os }}-hf-cache-${{ hashFiles('**/requirements.txt') }}
+      - name: Clear HuggingFace cache
+        run: |
+          rm -rf ~/.cache/huggingface
 
       - name: Clear pip cache
         run: |
@@ -36,8 +34,7 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install torch==2.0.1 transformers==4.38.2 psutil==5.9.8 sentencepiece==0.2.0
-          pip install --upgrade --index-url https://pypi.org/simple/ bitsandbytes
-          pip install --upgrade accelerate
+          pip install -U accelerate
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
       - name: Check installed packages
