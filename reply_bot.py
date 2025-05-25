@@ -334,7 +334,7 @@ def generate_reply_via_local_model(user_input):
             print("⚠️ GPU未検出、CPUで実行")
 
         model, tokenizer = initialize_model_and_tokenizer(model_name)
-　　　　　 # イントロライン
+        # イントロライン
         intro_lines = random.choice([
             "えへへ〜、みりんてゃはね〜、",
             "ねぇねぇ、聞いて聞いて〜♡",
