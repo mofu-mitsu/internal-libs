@@ -43,6 +43,20 @@ HEADERS = {
 }
 LOCK_FILE = "bot.lock"
 
+# --- URI正規化 ---
+def normalize_uri(uri):
+    if not uri or not isinstance(uri, str) or uri in ["replied", "", "None"]:
+        return None
+    uri = uri.strip()
+    if not uri.startswith("at://"):
+        return None
+    try:
+        parsed = urllib.parse.urlparse(uri)
+        normalized = f"{parsed.scheme}://{parsed.netloc}{parsed.path}"
+        return normalized if normalized.startswith("at://") else None
+    except Exception:
+        return None
+
 # ------------------------------
 # 📁 Gist操作
 # ------------------------------
