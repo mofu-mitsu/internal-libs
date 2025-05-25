@@ -281,7 +281,7 @@ def initialize_model_and_tokenizer(model_name="cyberagent/open-calm-3b"):
         print(f"📤 {datetime.now(timezone.utc).isoformat()} ｜ モデル読み込み中…")
         model = AutoModelForCausalLM.from_pretrained(
             model_name,
-            torch_dtype=torch.float16,  # float32にも変更可能
+            torch_dtype=torch.float32,  # float32にも変更可能
             device_map="auto"
         ).eval()
         print(f"📤 {datetime.now(timezone.utc).isoformat()} ｜ モデル読み込み完了")
