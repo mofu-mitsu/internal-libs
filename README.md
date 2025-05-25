@@ -8,7 +8,7 @@
 
 ### Q. セットアップがうまくいきません
 A. Pythonと必要なライブラリがインストールされているか確認してみてください。  
-→ 詳しくは[セットアップガイド](https://github.com/mofu-mitsu/mirin_bot_once/wiki/Setup-Guide)
+→ 詳しくは[wikiへ](https://github.com/mofu-mitsu/mirin_bot_once/wiki/Setup-Guide)
 
 ### Q. GIST_TOKEN_REPLYが見つかりません
 A. GitHub Secretsに正しく登録されているか確認してください。  
@@ -16,7 +16,7 @@ A. GitHub Secretsに正しく登録されているか確認してください。
 
 ### Q. Botの名前を変更したい
 A. `reply_bot.py`の「★ カスタマイズポイント ★」を編集してください。  
-→ 詳しくは[カスタマイズガイド](https://github.com/mofu-mitsu/mirin_bot_once/wiki/Customization-Guide)
+→ 詳しくは[wikiへ](https://github.com/mofu-mitsu/mirin_bot_once/wiki/Customization-Guide)
 
 ---
 
