@@ -196,10 +196,19 @@ SAFE_WORDS = ["ちゅ", "ぎゅっ", "ドキドキ", "ぷにっ", "すりすり"
 DANGER_ZONE = ["ちゅぱ", "ちゅぱちゅぷ", "ペロペロ", "ぐちゅ", "ぬぷ", "ビクビク"]
 def clean_output(text):
     
-    # 改行と不要な記号の整形（可愛い記号は残す）
+# ------------------------------
+# ★ カスタマイズポイント
+# ------------------------------
+BOT_NAME = "みりんてゃ"
+FIRST_PERSON = "みりんてゃ"
+
+# ------------------------------
+# 🧹 テキスト処理
+# ------------------------------
+def clean_output(text):
     text = re.sub(r'\n{2,}', '\n', text)
     text = re.sub(r'[^\w\sぁ-んァ-ン一-龯。、！？♡（）「」♪〜ー…w笑]+', '', text)
-    text = re.sub(r'[。、！？]{2,}', lambda m: m.group(0)[0], text)  # 「♡♡」はそのまま
+    text = re.sub(r'[。、！？]{2,}', lambda m: m.group(0)[0], text)
     return text.strip()
 
 def is_output_safe(text):
@@ -208,52 +217,71 @@ def is_output_safe(text):
 def clean_sentence_ending(reply):
     reply = clean_output(reply)
     reply = reply.split("\n")[0].strip()
-    reply = re.sub(r"^みりんてゃ\s*[:：]\s*", "", reply)
+
+    reply = re.sub(rf"^{BOT_NAME}\s*[:：]\s*", "", reply)
     reply = re.sub(r"^ユーザー\s*[:：]\s*", "", reply)
     reply = re.sub(r"([！？笑])。$", r"\1", reply)
 
-    if re.search(r"(ご利用|誠に|お詫び|貴重なご意見|申し上げます|ございます|お客様|発表|パートナーシップ|ポケモン|アソビズム|企業|世界中|映画|興行|収入|ドル|億|国|イギリス|フランス|スペイン|イタリア|ドイツ|ロシア|中国|インド|Governor|Cross|営業|臨時|オペラ|初演|作曲家|ヴェネツィア|コルテス|政府|協定|軍事|情報|外交|外相|自動更新)", reply, re.IGNORECASE) or re.search(r"\d+(時|分)", reply):
-        print(f"⚠️ NGワード検知: {reply}")
+    # 一人称チェック
+    if FIRST_PERSON != "俺" and "俺" in reply:
+        print(f"⚠️ 意図しない一人称『俺』検知: {reply}")
         return random.choice([
-            "えへへ〜♡ ややこしくなっちゃった！君と甘々トークしたいなのっ♪",
-            "うぅ、難しい話わかんな〜い！君にぎゅーってしてほしいなのっ♡",
-            "ん〜〜変な話に！君のこと大好きだから、構ってくれる？♡"
+            f"えへへ〜♡ {BOT_NAME}、君のこと考えるとドキドキなのっ♪",
+            f"うぅ、{BOT_NAME}、君にぎゅーってしたいなのっ♡",
+            f"ね、ね、{BOT_NAME}、君ともっとお話ししたいのっ♡"
         ])
 
+    # NGワードチェック
+    if re.search(r"(ご利用|誠に|お詫び|貴重なご意見|申し上げます|ございます|お客様|発表|パートナーシップ|ポケモン|アソビズム|企業|世界中|映画|興行|収入|ドル|億|国|イギリス|フランス|スペイン|イタリア|ドイツ|ロシア|中国|インド|Governor|Cross|営業|臨時|オペラ|初演|作曲家|ヴェネツィア|コルテス|政府|協定|軍事|情報|外交|外相|自動更新|\d+(時|分))", reply, re.IGNORECASE):
+        print(f"⚠️ NGワード検知: {reply}")
+        return random.choice([
+            f"えへへ〜♡ ややこしくなっちゃった！{BOT_NAME}、君と甘々トークしたいなのっ♪",
+            f"うぅ、難しい話わかんな〜い！{BOT_NAME}、君にぎゅーってしてほしいなのっ♡",
+            f"ん〜〜変な話に！{BOT_NAME}、君のこと大好きだから、構ってくれる？♡"
+        ])
+
+    # 危険ワードチェック
     if not is_output_safe(reply):
         print(f"⚠️ 危険ワード検知: {reply}")
         return random.choice([
-            "えへへ〜♡ ふwaふwaしちゃった！君のことずーっと好きだよぉ？♪",
-            "みりんてゃ、君にドキドキなのっ♡ ね、もっとお話しよ？",
-            "うぅ、なんか変なこと言っちゃった！君なしじゃダメなのっ♡"
+            f"えへへ〜♡ {BOT_NAME}、ふwaふwaしちゃった！君のことずーっと好きだよぉ？♪",
+            f"{BOT_NAME}、君にドキドキなのっ♡ ね、もっとお話しよ？",
+            f"うぅ、なんか変なこと言っちゃった！{BOT_NAME}、君なしじゃダメなのっ♡"
         ])
 
+    # 文字数が短すぎたり、日本語っぽくない場合
     if not re.search(r"[ぁ-んァ-ン一-龥ー]", reply) or len(reply) < 8:
         return random.choice([
-            "えへへ〜♡ ふwaふwaしちゃった！君のことずーっと好きだよぉ？♪",
-            "みりんてゃ、君にドキドキなのっ♡ ね、もっとお話しよ？",
-            "うぅ、なんか分かんないけど…君なしじゃダメなのっ♡"
+            f"えへへ〜♡ {BOT_NAME}、ふwaふwaしちゃった！君のことずーっと好きだよぉ？♪",
+            f"{BOT_NAME}、君にドキドキなのっ♡ ね、もっとお話しよ？",
+            f"うぅ、なんか分かんないけど…{BOT_NAME}、君なしじゃダメなのっ♡"
         ])
 
+    # 文末に絵文字がなければ追加
     if not re.search(r"[。！？♡♪笑]$", reply):
-        reply += random.choice(["なのっ♡", "よぉ？♡", "のっ♡", "♪"])
+        reply += random.choice(["なのっ♡", "よぉ？♪", "のっ♪", "♪"])
 
     return reply
+
+# ------------------------------
+# 🤖 モデル初期化
+# ------------------------------
+model = None
+tokenizer = None
 
 def initialize_model_and_tokenizer(model_name="cyberagent/open-calm-3b"):
     global model, tokenizer
     if model is None or tokenizer is None:
-        print(f"📤 {datetime.now().isoformat()} ｜ トークナイザを読み込み中…")
+        print(f"📤 {datetime.now(timezone.utc).isoformat()} ｜ トークナイザ読み込み中…")
         tokenizer = GPTNeoXTokenizerFast.from_pretrained(model_name, use_fast=True)
-        print(f"📤 {datetime.now().isoformat()} ｜ トークナイザ読み込み完了")
-
-        print(f"📤 {datetime.now().isoformat()} ｜ モデルを読み込み中…")
+        print(f"📤 {datetime.now(timezone.utc).isoformat()} ｜ トークナイザ読み込み完了")
+        print(f"📤 {datetime.now(timezone.utc).isoformat()} ｜ モデル読み込み中…")
         model = AutoModelForCausalLM.from_pretrained(
             model_name,
-            torch_dtype=torch.float32,
+            torch_dtype=torch.float16,  # float32にも変更可能
             device_map="auto"
         ).eval()
-        print(f"📤 {datetime.now().isoformat()} ｜ モデル読み込み完了")
+        print(f"📤 {datetime.now(timezone.utc).isoformat()} ｜ モデル読み込み完了")
     return model, tokenizer
     
 # ------------------------------
