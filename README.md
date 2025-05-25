@@ -1,7 +1,6 @@
 # 🌟 みりんてゃBot Starter Kit
 
-ようこそ！みりんてゃBot Starter Kitで、自分だけの可愛いBotを作りましょう！  
-以下のガイドに従ってセットアップを進めてください。
+みりんてゃが「えへへ〜♡ ドキドキなのっ♪」ってリプしてくれるBluesky Bot！このキットで君だけのBotをカスタム💖
 
 ---
 
@@ -167,3 +166,9 @@ A. 以下を確認してください：
 - 詳しくは[GitHub Actionsの使用制限](https://docs.github.com/en/actions/learn-github-actions/usage-limits-billing-and-administration)を確認してください。
 ```
 ---
+
+### Q. 問題が解決しない場合は？
+A. [カスタマーサポート](#customer-support)へ！GoogleフォームやblueskyのDMで気軽にどうぞ♡
+
+## 📚 もっと知りたい？
+詳細なFAQやカスタマイズ例は[Wiki](https://github.com/mofu-mitsu/mirin_bot_once/wiki/Customization-Guide)へ！
