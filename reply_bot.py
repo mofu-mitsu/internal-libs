@@ -206,7 +206,7 @@ def save_gist_data(replied_set):
                 "curl", "-X", "PATCH", GIST_API_URL,
                 "-H", f"Authorization: token {GIST_TOKEN_REPLY}",
                 "-H", "Accept: application/vnd.github+json",
-                "-H", "Content-Type: "application/json",
+                "-H", "Content-Type: \"application/json\"",
                 "-d", json.dumps(payload, ensure_ascii=False)
             ]
             result = subprocess.run(curl_command, capture_output=True, text=True)
