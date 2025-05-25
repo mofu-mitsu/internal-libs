@@ -187,6 +187,13 @@ REPLY_TABLE = {
 }
 # ヒント: キーワードは部分一致。{BOT_NAME}でキャラ名を動的に挿入可能！
 
+# グローバルモデルとトークナイザ
+from transformers import AutoModelForCausalLM, GPTNeoXTokenizerFast
+
+# グローバルモデルとトークナイザ
+model = None
+tokenizer = None
+
 # ------------------------------
 # ★ カスタマイズポイント2: 安全/危険ワード
 # ------------------------------
