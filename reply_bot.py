@@ -187,27 +187,26 @@ REPLY_TABLE = {
 }
 # ヒント: キーワードは部分一致。{BOT_NAME}でキャラ名を動的に挿入可能！
 
-# グローバルモデルとトークナイザ
-from transformers import AutoModelForCausalLM, GPTNeoXTokenizerFast
-model = None
-tokenizer = None
-
 # ------------------------------
 # ★ カスタマイズポイント2: 安全/危険ワード
 # ------------------------------
 SAFE_WORDS = ["ちゅ", "ぎゅっ", "ドキドキ", "ぷにっ", "すりすり", "なでなで"]
 DANGER_ZONE = ["ちゅぱ", "ちゅぱちゅぷ", "ペロペロ", "ぐちゅ", "ぬぷ", "ビクビク"]
-def clean_output(text):
-    
+# ヒント: SAFE_WORDSはOKな表現、DANGER_ZONEはNGワード。キャラの雰囲気に合わせて！
+
 # ------------------------------
 # ★ カスタマイズポイント3: キャラ設定
 # ------------------------------
-    BOT_NAME = "みりんてゃ"
-    FIRST_PERSON = "みりんてゃ"
+BOT_NAME = "みりんてゃ"  # キャラ名（例: "クマちゃん", "ツンデレ姫"）
+FIRST_PERSON = "みりんてゃ"  # 一人称（例: "私", "君", "あたし", "ボク"）
+# ヒント: BOT_NAMEは返信や正規表現で使用。FIRST_PERSONはプロンプトで固定。
 
 # ------------------------------
 # 🧹 テキスト処理
 # ------------------------------
+import re
+import random
+
 def clean_output(text):
     text = re.sub(r'\n{2,}', '\n', text)
     text = re.sub(r'[^\w\sぁ-んァ-ン一-龯。、！？♡（）「」♪〜ー…w笑]+', '', text)
@@ -252,7 +251,7 @@ def clean_sentence_ending(reply):
             f"うぅ、なんか変なこと言っちゃった！{BOT_NAME}、君なしじゃダメなのっ♡"
         ])
 
-    # 文字数が短すぎたり、日本語っぽくない場合
+    # 意味不明な返信 or 長さ不足の防止
     if not re.search(r"[ぁ-んァ-ン一-龥ー]", reply) or len(reply) < 8:
         return random.choice([
             f"えへへ〜♡ {BOT_NAME}、ふwaふwaしちゃった！君のことずーっと好きだよぉ？♪",
@@ -260,7 +259,7 @@ def clean_sentence_ending(reply):
             f"うぅ、なんか分かんないけど…{BOT_NAME}、君なしじゃダメなのっ♡"
         ])
 
-    # 文末に絵文字がなければ追加
+    # 終わりが味気ない場合、キャラっぽい語尾を追加
     if not re.search(r"[。！？♡♪笑]$", reply):
         reply += random.choice(["なのっ♡", "よぉ？♪", "のっ♪", "♪"])
 
