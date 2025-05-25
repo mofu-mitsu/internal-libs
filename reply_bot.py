@@ -24,24 +24,16 @@ from transformers import BitsAndBytesConfig
 # 🔐 環境変数
 # ------------------------------
 load_dotenv()
-HANDLE = os.environ["HANDLE"]
-APP_PASSWORD = os.environ["APP_PASSWORD"]
-HF_API_TOKEN = os.environ["HF_API_TOKEN"]
-GIST_TOKEN_REPLY = os.environ["GIST_TOKEN_REPLY"]
+HANDLE = os.getenv("HANDLE") or exit("❌ HANDLEが設定されていません")
+APP_PASSWORD = os.getenv("APP_PASSWORD") or exit("❌ APP_PASSWORDが設定されていません")
+GIST_TOKEN_REPLY = os.getenv("GIST_TOKEN_REPLY") or exit("❌ GIST_TOKEN_REPLYが設定されていません")
+GIST_ID = os.getenv("GIST_ID") or exit("❌ GIST_IDが設定されていません")
 
-if not GIST_TOKEN_REPLY:
-    print("❌ GIST_TOKEN_REPLYが読み込まれていません！（None）")
-    exit(1)
-else:
-    print(f"🧪 GIST_TOKEN_REPLY: {repr(GIST_TOKEN_REPLY)}")
-    print(f"🪪 現在のGIST_TOKEN_REPLY: {GIST_TOKEN_REPLY[:8]}...（先頭8文字だけ表示）")
-    print(f"🔑 トークンの長さ: {len(GIST_TOKEN_REPLY)}")
-    print(f"🔑 トークンの先頭5文字: {GIST_TOKEN_REPLY[:5]}")
-    print(f"🔑 トークンの末尾5文字: {GIST_TOKEN_REPLY[-5:]}")
+print(f"✅ 環境変数読み込み完了: HANDLE={HANDLE[:8]}..., GIST_ID={GIST_ID[:8]}...")
+print(f"🧪 GIST_TOKEN_REPLY: {repr(GIST_TOKEN_REPLY)[:8]}...")
+print(f"🔑 トークンの長さ: {len(GIST_TOKEN_REPLY)}")
 
 # --- 固定値 ---
-GIST_USER = "mofu-mitsu"
-GIST_ID = "40391085a2e0b8a48935ad0b460cf422"
 REPLIED_GIST_FILENAME = "replied.json"
 GIST_API_URL = f"https://api.github.com/gists/{GIST_ID}"
 HEADERS = {
@@ -49,20 +41,7 @@ HEADERS = {
     "Accept": "application/vnd.github+json",
     "Content-Type": "application/json"
 }
-
-# --- URI正規化 ---
-def normalize_uri(uri):
-    if not uri or not isinstance(uri, str) or uri in ["replied", "", "None"]:
-        return None
-    uri = uri.strip()
-    if not uri.startswith("at://"):
-        return None
-    try:
-        parsed = urllib.parse.urlparse(uri)
-        normalized = f"{parsed.scheme}://{parsed.netloc}{parsed.path}"
-        return normalized if normalized.startswith("at://") else None
-    except Exception:
-        return None
+LOCK_FILE = "bot.lock"
 
 # --- Gistから replied.json の読み込み ---
 def load_gist_data():
