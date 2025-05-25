@@ -1,15 +1,15 @@
+# reply_bot.py
 # ------------------------------
 # 🌐 基本ライブラリ・API
 # ------------------------------
 import os
 import json
-import subprocess
-import traceback
 import time
 import random
 import re
 import psutil
 import filelock
+import requests
 from datetime import datetime, timezone
 from transformers import AutoModelForCausalLM, GPTNeoXTokenizerFast
 import torch
@@ -18,7 +18,7 @@ from atproto_client.models.com.atproto.repo.strong_ref import Main as StrongRef
 from atproto_client.models.app.bsky.feed.post import ReplyRef
 from dotenv import load_dotenv
 import urllib.parse
-import requests
+import traceback
 
 # ------------------------------
 # 🔐 環境変数
@@ -28,13 +28,6 @@ HANDLE = os.getenv("HANDLE") or exit("❌ HANDLEが設定されていません")
 APP_PASSWORD = os.getenv("APP_PASSWORD") or exit("❌ APP_PASSWORDが設定されていません")
 GIST_TOKEN_REPLY = os.getenv("GIST_TOKEN_REPLY") or exit("❌ GIST_TOKEN_REPLYが設定されていません")
 GIST_ID = os.getenv("GIST_ID") or exit("❌ GIST_IDが設定されていません")
-
-# ★ 機密情報は .env や GitHub Secrets に！ ★
-# .env 例:
-# HANDLE=@your_handle.bsky.social
-# APP_PASSWORD=your_app_password
-# GIST_TOKEN_REPLY=your_gist_token
-# GIST_ID=your_gist_id
 
 print(f"✅ 環境変数読み込み完了: HANDLE={HANDLE[:8]}..., GIST_ID={GIST_ID[:8]}...")
 print(f"🧪 GIST_TOKEN_REPLY: {repr(GIST_TOKEN_REPLY)[:8]}...")
@@ -89,7 +82,7 @@ def load_gist_data():
         except Exception as e:
             print(f"⚠️ 試行 {attempt + 1} エラー: {e}")
             if attempt < 4:
-                time.sleep(2 ** attempt)  # 指数バックオフ
+                time.sleep(2 ** attempt)
             else:
                 print("❌ 最大リトライ回数に達しました")
                 return set()
@@ -107,7 +100,7 @@ def save_replied(replied_set):
                 print(f"💾 replied.json 保存完了（件数: {len(cleaned_set)}）")
                 time.sleep(1)
                 new_replied = load_gist_data()
-                if cleaned_set == new_replied:  # 完全一致チェック
+                if cleaned_set == new_replied:
                     print("✅ 保存内容反映確認")
                     return True
                 raise Exception("保存内容の反映に失敗: データ不一致")
@@ -136,21 +129,21 @@ except Exception as e:
 # ------------------------------
 REPLY_TABLE = {
     "使い方": "使い方は「♡推しプロフィールメーカー♡」のページにあるよ〜！かんたんっ♪",
-    '作ったよ': 'えっ…ほんと？ありがとぉ♡ 見せて見せてっ！',
-    '作ってみる': 'えっ…ほんと？ありがとぉ♡ 見せて見せてっ！',
-    '遊んだよ': 'やったぁ〜っ！また遊んでね♡ 他のもいっぱいあるから見てみて〜っ',
-    '使ったよ': 'えっ！？ほんと使ってくれた！？ うれしすぎてとける〜〜♡',
-    '見たよ': 'うれしっ♡ 見つけてくれてありがとにゃん♡',
-    'きたよ': 'きゅ〜ん♡ 来てくれてとびきりの「すきっ」プレゼントしちゃう♡',
-    'フォローした': 'ありがとぉ♡ みりんてゃ、超よろこびダンス中〜っ！',
-    'やってみた': 'わ〜〜！うちのツール使ってくれてありがとっ♡感想とかくれると、みりんてゃめちゃくちゃよろこぶよ〜〜！',
-    'やってみる': 'やった〜♡ みりんてゃの広報が効いたかも！？てへっ！',
-    '相性悪かった': 'うそでしょ……そんなぁ〜（バタッ）でも、みりんてゃはあきらめないからっ！',
-    '相性良かった': 'えっ、運命かな…！？こんど一緒にプリとか撮っちゃう〜？♡',
-    'やったよ': 'えへへ♡ みりんてゃのツールであそんでくれてありがとっ！らぶっ！',
-    'タグから': '見つけてくれてありがとっ！もしかして運命？♡',
-    'ツインテ似合うね': 'ふふ、そう言われるために生きてる←',
-    'ツインテール似合うね': 'ふふ、そう言われるために生きてる←',
+    "作ったよ": "えっ…ほんと？ありがとぉ♡ 見せて見せてっ！",
+    "作ってみる": "えっ…ほんと？ありがとぉ♡ 見せて見せてっ！",
+    "遊んだよ": "やったぁ〜っ！また遊んでね♡ 他のもいっぱいあるから見てみて〜っ",
+    "使ったよ": "えっ！？ほんと使ってくれた！？ うれしすぎてとける〜〜♡",
+    "見たよ": "うれしっ♡ 見つけてくれてありがとにゃん♡",
+    "きたよ": "きゅ〜ん♡ 来てくれてとびきりの「すきっ」プレゼントしちゃう♡",
+    "フォローした": "ありがとぉ♡ みりんてゃ、超よろこびダンス中〜っ！",
+    "やってみた": "わ〜〜！うちのツール使ってくれてありがとっ♡感想とかくれると、みりんてゃめちゃくちゃよろこぶよ〜〜！",
+    "やってみる": "やった〜♡ みりんてゃの広報が効いたかも！？てへっ！",
+    "相性悪かった": "うそでしょ……そんなぁ〜（バタッ）でも、みりんてゃはあきらめないからっ！",
+    "相性良かった": "えっ、運命かな…！？こんど一緒にプリとか撮っちゃう〜？♡",
+    "やったよ": "えへへ♡ みりんてゃのツールであそんでくれてありがとっ！らぶっ！",
+    "タグから": "見つけてくれてありがとっ！もしかして運命？♡",
+    "ツインテ似合うね": "ふふ、そう言われるために生きてる←",
+    "ツインテール似合うね": "ふふ、そう言われるために生きてる←",
 }
 # ヒント: キーワードは部分一致。{BOT_NAME}でキャラ名を動的に挿入可能！
 
@@ -159,14 +152,12 @@ REPLY_TABLE = {
 # ------------------------------
 SAFE_WORDS = ["ちゅ", "ぎゅっ", "ドキドキ", "ぷにっ", "すりすり", "なでなで"]
 DANGER_ZONE = ["ちゅぱ", "ちゅぱちゅぷ", "ペロペロ", "ぐちゅ", "ぬぷ", "ビクビク"]
-# ヒント: SAFE_WORDSはOKな表現、DANGER_ZONEはNGワード。キャラの雰囲気に合わせて！
 
 # ------------------------------
 # ★ カスタマイズポイント3: キャラ設定
 # ------------------------------
 BOT_NAME = "みりんてゃ"
 FIRST_PERSON = "みりんてゃ"
-# ヒント: BOT_NAMEは返信や正規表現で使用。FIRST_PERSONはプロンプトで固定。
 
 # ------------------------------
 # 🧹 テキスト処理
@@ -215,7 +206,7 @@ def clean_sentence_ending(reply):
         return random.choice([
             f"えへへ〜♡ {BOT_NAME}、ふwaふwaしちゃった！君のことずーっと好きだよぉ？♪",
             f"{BOT_NAME}、君にドキドキなのっ♡ ね、もっとお話しよ？",
-            f"うぅ、なんか分、{君}なしじゃダメなのっ♡"
+            f"うぅ、なんか分かんないけど…{BOT_NAME}、君なしじゃダメなのっ♡"
         ])
 
     if not re.search(r"[。！？♡♪笑]$", reply):
@@ -229,28 +220,28 @@ def clean_sentence_ending(reply):
 model = None
 tokenizer = None
 
-def initialize_model_and_tokenizer(model_name="cyberjoke/open-calm-3b"):
+def initialize_model_and_tokenizer(model_name="cyberagent/open-calm-3b"):
     global model, tokenizer
     if model is None or tokenizer is None:
-        print(f"📤 {datetime.now().isoformat()} ｜ トークナイザ読み込み中…")
+        print(f"📤 {datetime.now(timezone.utc).isoformat()} ｜ トークナイザ読み込み中…")
         tokenizer = GPTNeoXTokenizerFast.from_pretrained(model_name, use_fast=True)
-        print(f"📤 {datetime.now().isoformat()} ｜ トークナイザ読み込み完了")
-        print(f"📤 {datetime.now().isoformat()} ｜ モデル読み込み中…")
+        print(f"📤 {datetime.now(timezone.utc).isoformat()} ｜ トークナイザ読み込み完了")
+        print(f"📤 {datetime.now(timezone.utc).isoformat()} ｜ モデル読み込み中…")
         model = AutoModelForCausalLM.from_pretrained(
             model_name,
             torch_dtype=torch.float16,
             device_map="auto"
         ).eval()
-        print(f"📤 {datetime.now().isoformat()} ｜ モデル読み込み完了")
+        print(f"📤 {datetime.now(timezone.utc).isoformat()} ｜ モデル読み込み完了")
     return model, tokenizer
 
 # ------------------------------
 # ★ カスタマイズポイント4: 返信生成
 # ------------------------------
 def generate_reply_via_local_model(user_input):
-    model_name = "cyberjota/open-calm-3b"
+    model_name = "cyberagent/open-calm-3b"
     failure_messages = [
-        f"えへ、ごめ、ご、ご〜〜！ちょっと調子悪いみたい…{BOT_NAME}、またね？♪",
+        f"えへ、ごめんね〜！ちょっと調子悪いみたい…{BOT_NAME}、またね？♪",
         f"うぅ、失敗…{BOT_NAME}、すぐリトライするから待ってて！♪",
         f"あれ？{BOT_NAME}、おねむかも…また後で頑張るよ！♪"
     ]
@@ -264,30 +255,29 @@ def generate_reply_via_local_model(user_input):
         f"ね、ね、聞いて〜♪",
         f"ん〜今日もふwaふwa〜♪",
         f"きゃ！君だ！{BOT_NAME}、やっと会えた！♪",
-        f"ふwa〜、{BOT_NAME}、君のこと考えてたんだから！♪",
+        f"ふwa〜、{BOT_NAME}、君のこと考えてたんだから！",
     ]
 
     if re.search(r"(大好き|ぎゅー|ちゅー|愛してる|キス|添い寝)", user_input, re.IGNORECASE):
-        print(f"⚠️ ラブラブ入力OK: {user_input}")
+        print(f"⚠️ ラブラブ入力検知: {user_input}")
         return random.choice([
             f"うぅ…{BOT_NAME}、ドキドキ止まんないのっ！♪ もっと甘やかして〜♡♪",
-            f"えへ♡、そんなの言われたら…{BOT_NAME}、溶けちゃうよ〜♪",
-            f"も〜〜♪ {BOT_NAME}、好きすぎて胸キュン♪♪！"
+            f"えへ♪ そんなの言われたら…{BOT_NAME}、溶けちゃうよ〜♪",
+            f"も〜♪ {BOT_NAME}、好きすぎて胸キュン♪♪！"
         ])
 
-    if re.search(r"(疲れた|しんどい|つらい|泣きたい|ごめん|寝れない)", user_input, re.IGNORECASE):
-        print(f"⚠️ 癒し系入力OK: {user_input}")
+    elif re.search(r"(疲れた|しんどい|つらい|泣きたい|ごめん|寝れない)", user_input, re.IGNORECASE):
+        print(f"⚠️ 癒し系入力検知: {user_input}")
         return random.choice([
-            f"う、よしよしだよ… {BOT_NAME}、元気出るまでそばにいる♪♪",
-            f"ぎゅ〜♪ {BOT_NAME}、無理しなくていいよ？♪",
-            f"んん〜、えへ♪ {BOT_NAME}、甘えてもいいよ、ぜんぶ受け止める♪"
+            f"うぅ、よしよし…{BOT_NAME}、君が元気になるまでそばにいるよ♪",
+            f"ぎゅ〜♪ {BOT_NAME}、無理しなくていいよ、ね？♪",
+            f"んん〜♪ えへ、{BOT_NAME}、君のことはぜんぶ受け止めるよ♪"
         ])
 
-    if re.search(r"(映画|興行|収入|ドル|億|国|イギリス|フランス|…|政治|更新|\d)", user_input, re.IGNORECASE):
+    elif re.search(r"(映画|興行|収入|ドル|億|国|イギリス|フランス|スペイン|イタリア|ドイツ|ロシア|中国|インド|Governor|Cross|ポケモン|企業|クローン|営業|…|政治|協定|\d+(時|分))", user_input, re.IGNORECASE):
         print(f"⚠️ ビジネス系ワード検知: {user_input}")
-        user_input = f"{BOT_NAME}、君と甘々トークしたいなの！♪",
+        user_input = f"{BOT_NAME}、君と甘々トークしたいなの！♪"
         print(f"🔄 入力置き換え: {user_input}")
-        f f"{BOT_NAME}"
 
     for key, reply in REPLY_TABLE.items():
         if key in user_input:
@@ -298,32 +288,32 @@ def generate_reply_via_local_model(user_input):
         if torch.cuda.is_available():
             print(f"📊 GPU: {torch.cuda.memory_allocated() / 1024**2:.2f} MB")
         else:
-            print("⚠️ GPUなし、CPUで実行")
+            print("⚠️ GPUなし、CPU実行")
         model, tokenizer = initialize_model_and_tokenizer(model_name)
 
         intro = random.choice(intro_lines)
         prompt = (
             f"{intro}\n"
-            f"あなたは『{buggyBOT_NAME}』、ふwaふwaな地雷系！一人称は『{fIRST_PERSON}』！\n"
-            f"タメで「〜なのっ♪」「〜よ♪」「えへ〜♪」な口調！\n"
-            f"政治、ニュースはダメ！『ちゅ♡』『ぎゅ』な可愛い言葉だけ！\n"
+            f"あなたは『{BOT_NAME}』、ふwaふwaな地雷系！一人称は『{FIRST_PERSON}』！\n"
+            f"タメ口で「〜なのっ♪」「〜よ♪」「えへ〜♪」な口調！\n"
+            f"政治、ニュースはNG！『ちゅ♡』『ぎゅ』な可愛い言葉だけ！\n"
             f"例: ユーザー: {BOT_NAME}、好きだよ！\n"
-            f"{BOT_NAME}: え〜！？ほんと！？{FIRST_PERSON}、君に言われるとドキドキなのっ♪」！\n"
-            f"ユーザ: {user_input} \n"
+            f"{BOT_NAME}: え〜！？ほんと！？{FIRST_PERSON}、君に言われるとドキドキなのっ♪\n"
+            f"ユーザー: {user_input}\n"
             f"{BOT_NAME}: "
         )
 
         input_ids = tokenizer.encode(prompt, return_tensors="pt").to("cuda" if torch.cuda.is_available() else "cpu")
-        print(f"📤 入力トークン数: {len(input_ids[0])}"）
-)
-        for attempt in range(4):
-            print(f"📝 テキスト生成中（試行 {attempt + 1}）")
+        print(f"🔗 入力トークン数: {input_ids.shape[1]}")
+
+        for attempt in range(3):
+            print(f"📤 テキスト生成中（試行 {attempt + 1}）")
             try:
                 with torch.no_grad():
                     output_ids = model.generate(
                         input_ids,
                         max_new_tokens=50,
-                        temperature=0.6,
+                        temperature=0.7,
                         top_p=0.9,
                         do_sample=True,
                         pad_token_id=tokenizer.eos_token_id,
@@ -331,7 +321,7 @@ def generate_reply_via_local_model(user_input):
                     )
                 raw_reply = tokenizer.decode(output_ids[0][input_ids.shape[1]:], skip_special_tokens=True).strip()
                 reply_text = clean_sentence_ending(raw_reply)
-                if any(re.search(r"\b{re.escape(msg)}\b", reply_text) for msg in failure_messages + fallback_cute_lines):
+                if any(re.search(rf"\b{re.escape(msg)}\b", reply_text) for msg in failure_messages + fallback_cute_lines):
                     print(f"⚠️ フォールバック検知、リトライ")
                     continue
                 print(f"📩 生成テキスト: {reply_text}")
@@ -340,137 +330,140 @@ def generate_reply_via_local_model(user_input):
                 print(f"⚠️ 生成エラー: {e}")
                 continue
         return random.choice(fallback_cute_lines).replace("{BOT_NAME}", BOT_NAME)
-                print(f"📩 {replay_text}")
-                return replay_text
+
     except Exception as e:
         print(f"❌ モデルエラー: {e}")
         return random.choice(failure_messages).replace("{BOT_NAME}", BOT_NAME)
 
-# ----------------------
+# ------------------------------
 # 📬 メイン処理
-# ----------------------
+# ------------------------------
 def handle_post(record, notification):
     post_uri = getattr(notification, "uri", None)
-    post_cid = getattr(record, "cid", None)
+    post_cid = getattr(notification, "cid", None)
     if post_uri and post_cid:
-        parent = PostRef(uri=post_uri, post_cid=post_data)
-        root_ref = getattr(record.reply, "post_ref", parent)
-        reply_ref = PostReplyRef(parent=parent, root_ref=root_ref)
+        parent_ref = StrongRef(uri=post_uri, cid=post_cid)
+        root_ref = getattr(getattr(record, "reply", None), "root", parent_ref)
+        reply_ref = ReplyRef(parent=parent_ref, root=root_ref)
         return reply_ref, normalize_uri(post_uri)
     return None, normalize_uri(post_uri)
 
-def run_reply():
-    self_did = client.me.did
-    replied = load_git_data()
-    print(f"📖 replied件数: {len(replied)}")
+def run_reply_bot():
+    with lock:
+        self_did = client.me.did
+        replied = load_gist_data()
+        print(f"📖 replied件数: {len(replied)}")
 
-    garbage_items = [
-        "replied", "", None, "None", "://"
-        ]
-    removed = False
-    for garbage in garbage_items:
-        while garbage in replied:
-            replied.remove(garbage)
-            print(f"📗 ゴミデータ削除: {garbage}")
-            removed = True
+        garbage_items = ["replied", "", None, "None", "://replied"]
+        removed = False
+        for garbage in garbage_items:
+            while garbage in replied:
+                replied.remove(garbage)
+                print(f"🖌️ ゴミデータ削除: {garbage}")
+                removed = True
         if removed and not save_replied(replied):
-            print("⚠️ ゴミデータ削除後、保存失敗")
+            print(f"⚠️ ゴミデータ削除後、保存失敗")
             return
 
-    try:
-        notifications = client.app.bsky.notification.list_notifications(params={"limit": 100}).notifications
-        print(f"🔔 通知件数: {len(notifications)}")
-    except Exception as e:
-        print(f"⚠️ 通知取得エラー: {e}")
-        return
+        try:
+            notifications = client.app.bsky.notification.list_notifications(params={"limit": 50}).notifications
+            print(f"🔔✅ 通知件数: {len(notifications)}")
+        except Exception as e:
+            print(f"⚠️ 通知取得エラー: {e}")
+            return
 
-    MAX_REPLIES = 5
-    REPLY_INTERVAL = 5
-    reply_count = 0
+        MAX_REPLIES = 5
+        REPLY_INTERVAL = 5
+        reply_count = 0
 
-    for notification in notifications:
-        if reply_count >= MAX_REPLIES:
-            print(f"⏹ 最大リプ数（{MAX_REPLIES}）到達")
-            break
+        for notification in notifications:
+            if reply_count >= MAX_REPLIES:
+                print(f"⏪ 最大リプ数（{MAX_REPLIES}）到達")
+                break
 
-        notification_uri = normalize_uri(
-            getattr(notification, "uri", None)
-            or getattr(notification, "reason_subject", None)
+            notification_uri = normalize_uri(
+                getattr(notification, "uri", None)
+                or getattr(notification, "reasonSubject", None)
             )
-            )
-        if not notification_uri:
-            record = getattr(notification, "records", None)
+
+            if not notification_uri:
+                record = getattr(notification, "record", None)
+                author = getattr(notification, "author", None)
+                if not record or not hasattr(record, "text") or not author:
+                    print(f"⚠️ 無効な通知、スキップ")
+                    continue
+                text = getattr(record, "text", "")
+                author_handle = getattr(author, "handle", "")
+                notification_uri = f"{author_handle}: {text}"
+                print(f"⚠️ URIなし、仮: {notification_uri}")
+
+            print(f"📌 チェック中: {notification_uri}")
+            if notification_uri in replied:
+                print(f"⏩ すでに処理済み: {notification_uri}")
+                continue
+
+            record = getattr(notification, "record", None)
             author = getattr(notification, "author", None)
             if not record or not hasattr(record, "text") or not author:
-                print(f"⚠️ 無効な通知、スキップ中")
+                print(f"⚠️ レコード/テキストなし、スキップ")
                 continue
-            text = getattr(record, "text", "")
-            author_handle = getattr(author, "handle", "")
-            notification_uri = f"{author_handle}: {text}"
-            print(f"⚠️ URIなし、仮: {notification_uri}")
 
-        print(f"📌 チェック中: {notification_uri}")
-        if notification_uri in replied:
-            print(f"⏩ すでに処理済み: {notification_uri}")
-            continue
+            text = record.text
+            if f"@{HANDLE}" not in text and (not hasattr(record, "reply") or not record.reply):
+                print(f"⚠️ メンション/リプなし: {text}")
+                continue
 
-        record = getattr(notification, "record", None)
-        if not record or not hasattr(record, "text"):
-            print(f"⚠️ レコード/テキストなし、スキップ中")
-            continue
+            author_handle = getattr(author, "handle", None)
+            author_did = getattr(author, "did", None)
+            print(f"👤 From: @{author_handle} / DID: {author_did}")
+            print(f"💬 メッセージ: {text}")
 
-        text = record.text
-        if f"@{HANDLE}" not in text and (not hasattr(record, "reply") or not record.reply):
-            print(f"⚠️ メンション/リプライなし、スキップ: {text}")
-            continue
+            if author_did == self_did or author_handle == HANDLE:
+                print(f"🖌️ 自己投稿、スキップ")
+                continue
 
-        author_handle = getattr(author, "handle", None)
-        author_did = = getattr(author, "did", None)
-        print(f"👤 From: {author_handle} / DID: {author_did}")
-        print(f"💬 メッセージ: {text}")
+            if not text:
+                print(f"⚠️ テキスト空: @{author_handle}")
+                continue
 
-        if author_did == self_did or author_handle == HANDLE:
-            print(f"⚖️ 自己投稿、スキップ")
-            continue
+            reply_ref, post_uri = handle_post(record|{
+            reply_text = generate_reply_via_local_model(text)
+            if not reply_text:
+                print(f"⚠️ リプテキスト生成失敗")
+                continue
 
-        if not text:
-            print(f"⚠️ テキストが空: {author_handle}")
-            continue
+            try:
+                post_data = {
+                    "text": reply_text,
+                    "createdAt": datetime.now(timezone.utc).isoformat(),
+                }
+                if reply_ref:
+                    post_data["reply"] = reply_ref
 
-        reply_ref, post_uri = handle_post(record, notification)
-        reply_text = generate_reply_via_local_model(text)
-        if not reply_text:
-            print(f"⚠️ リプテキスト生成失敗")
-            continue
+                client.app.bsky.feed.post.create(
+                    record=post_data,
+                    repo=client.me.did
+                )
 
-        try:
-            post_data = {"text": reply_text, "createdAt": datetime.now().time().isoformat()}
-            if reply_ref:
-                post_data["reply"] = reply_ref
+                normalized_uri = normalize_uri(notification_uri)
+                if normalized_uri:
+                    replied.add(normalized_uri)
+                    if not save_replied(replied):
+                        print(f"⚠️⚠️ 保存失敗: {normalized_uri}")
+                        continue
+                    print(f"✅ OK投稿: {normalized_uri} to @{author_handle}")
+                    print(f"📖 保存OK: {len(replied)} 件")
+                else:
+                    print(f"⚠️ 無効なURI: {notification_uri}")
 
-            client.app_post(
-                record=post_data,
-                repo=client.me.did
-            )
+                reply_count += 1
+                time.sleep(REPLY_INTERVAL)
 
-            normalized_uri = normalize_uri(notification_uri)
-            if normalized_uri:
-                replied.add(normalized_uri)
-                if not save_replied(replied):
-                    print(f"⚠️ 保存失敗: {normalized_uri}")
-                    continue
-                print(f"✅ 投稿成功: {normalized_uri}")
-                print(f"📖 保存成功: {len(replied)} 件")
-            else:
-                print(f"⚠️ 無効なURI: {notification_uri}")
-
-            reply_count += 1
-            time.sleep(1)
-
-        except Exception as e:
-            print(f"⚠️ error: {e}")
-            continue
+            except Exception as e:
+                print(f"⚠️ 投稿エラー: {e}")
+                traceback.print_exc()
+                continue
 
 if __name__ == "__main__":
-    print("Bot 起動…")
-    run_reply()
+    print("🤖 Bot 起動中…")
+    run_reply_bot()
