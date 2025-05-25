@@ -43,7 +43,9 @@ HEADERS = {
 }
 LOCK_FILE = "bot.lock"
 
-# --- URI正規化 ---
+# ------------------------------
+# 🔗 URI正規化
+# ------------------------------
 def normalize_uri(uri):
     if not uri or not isinstance(uri, str) or uri in ["replied", "", "None"]:
         return None
