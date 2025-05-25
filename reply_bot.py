@@ -276,7 +276,7 @@ def generate_reply_via_local_model(user_input):
         ])
 
     if re.search(r"(疲れた|しんどい|つらい|泣きたい|ごめん|寝れない)", user_input, re.IGNORECASE):
-        print(f"⚠️ 癒し系入力OK: {user_input}"})
+        print(f"⚠️ 癒し系入力OK: {user_input}")
         return random.choice([
             f"う、よしよしだよ… {BOT_NAME}、元気出るまでそばにいる♪♪",
             f"ぎゅ〜♪ {BOT_NAME}、無理しなくていいよ？♪",
