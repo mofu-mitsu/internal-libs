@@ -165,7 +165,6 @@ A. 以下を確認してください：
 - 実行頻度を高くしすぎると、GitHub Actionsの無料枠を超える可能性があります。
 - 詳しくは[GitHub Actionsの使用制限](https://docs.github.com/en/actions/learn-github-actions/usage-limits-billing-and-administration)を確認してください。
 ```
----
 
 ### Q. 問題が解決しない場合は？
 A. [カスタマーサポート](#customer-support)へ！GoogleフォームやblueskyのDMで気軽にどうぞ♡
