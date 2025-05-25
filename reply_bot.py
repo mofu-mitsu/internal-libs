@@ -145,10 +145,6 @@ def save_replied(replied_set):
 
 # --- HuggingFace API設定 ---
 HF_API_URL = "https://api-inference.huggingface.co/"
-HF_HEADERS = {
-    "Authorization": f"Bearer {HF_API_TOKEN}",
-    "Content-Type": "application/json"
-}
 
 # --- Blueskyログイン ---
 try:
