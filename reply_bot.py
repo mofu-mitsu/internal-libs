@@ -255,7 +255,10 @@ def initialize_model_and_tokenizer(model_name="cyberagent/open-calm-3b"):
         ).eval()
         print(f"📤 {datetime.now().isoformat()} ｜ モデル読み込み完了")
     return model, tokenizer
-
+    
+# ------------------------------
+# ★ カスタマイズポイント4: 返信生成
+# ------------------------------
 def generate_reply_via_local_model(user_input):
     model_name = "cyberagent/open-calm-3b"
     failure_messages = [
