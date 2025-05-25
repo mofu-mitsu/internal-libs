@@ -108,7 +108,7 @@ def save_replied(replied_set):
                 "curl", "-X", "PATCH", GIST_API_URL,
                 "-H", f"Authorization: token {GIST_TOKEN_REPLY}",
                 "-H", "Accept: application/vnd.github+json",
-                "-H", "Content-Type: application/json",
+                "-H", "Content-Type: "application/json",
                 "-d", json.dumps(payload, ensure_ascii=False)
             ]
             result = subprocess.run(curl_command, capture_output=True, text=True)
@@ -153,7 +153,7 @@ REPLY_TABLE = {
     '見たよ': 'うれしっ♡ 見つけてくれてありがとにゃん♡',
     'きたよ': 'きゅ〜ん♡ 来てくれてとびきりの「すきっ」プレゼントしちゃう♡',
     'フォローした': 'ありがとぉ♡ みりんてゃ、超よろこびダンス中〜っ！',
-    'やってみた': 'わ〜〜！うちのツール使ってくれてありがとっ♡感想とかくれると、みりてゃめちゃくちゃよろこぶよ〜〜！',
+    'やってみた': 'わ〜〜！うちのツール使ってくれてありがとっ♡感想とかくれると、みりんてゃめちゃくちゃよろこぶよ〜〜！',
     'やってみる': 'やった〜♡ みりんてゃの広報が効いたかも！？てへっ！',
     '相性悪かった': 'うそでしょ……そんなぁ〜（バタッ）でも、みりんてゃはあきらめないからっ！',
     '相性良かった': 'えっ、運命かな…！？こんど一緒にプリとか撮っちゃう〜？♡',
@@ -161,16 +161,23 @@ REPLY_TABLE = {
     'タグから': '見つけてくれてありがとっ！もしかして運命？♡',
     'ツインテ似合うね': 'ふふ、そう言われるために生きてる←',
     'ツインテール似合うね': 'ふふ、そう言われるために生きてる←',
-    # 追加例: "おはよう": "おは！キミの朝、超ハッピーにしてあげるよ！"
+    # 追加例: "おはよう": "おは！{BOT_NAME}、キミの朝をハッピーにしちゃうよ！"
 }
-# ヒント: キーワードは部分一致。好きなキーワードと返信を追加して！
+# ヒント: キーワードは部分一致。{BOT_NAME}でキャラ名を動的に挿入可能！
 
 # ------------------------------
 # ★ カスタマイズポイント2: 安全/危険ワード
 # ------------------------------
 SAFE_WORDS = ["ちゅ", "ぎゅっ", "ドキドキ", "ぷにっ", "すりすり", "なでなで"]
 DANGER_ZONE = ["ちゅぱ", "ちゅぱちゅぷ", "ペロペロ", "ぐちゅ", "ぬぷ", "ビクビク"]
-# ヒント: SAFE_WORDSはOKな表現、DANGER_ZONEはNGワード。キャラに合わせて調整！
+# ヒント: SAFE_WORDSはOKな表現、DANGER_ZONEはNGワード。キャラの雰囲気に合わせて！
+
+# ------------------------------
+# ★ カスタマイズポイント3: キャラ設定
+# ------------------------------
+BOT_NAME = "みりんてゃ"  # キャラ名（例: "クマちゃん", "ツンデレ姫"）
+FIRST_PERSON = "みりんてゃ"  # 一人称（例: "私", "君", "あたし", "ボク"）
+# ヒント: BOT_NAMEは返信や正規表現で使用。FIRST_PERSONはプロンプトで固定。
 
 # ------------------------------
 # 🧹 テキスト処理
@@ -187,31 +194,40 @@ def is_output_safe(text):
 def clean_sentence_ending(reply):
     reply = clean_output(reply)
     reply = reply.split("\n")[0].strip()
-    reply = re.sub(r"^みりんてゃ\s*[:：]\s*", "", reply)
+    reply = re.sub(rf"^{BOT_NAME}\s*[:：]\s*", "", reply)
     reply = re.sub(r"^ユーザー\s*[:：]\s*", "", reply)
     reply = re.sub(r"([！？笑])。$", r"\1", reply)
+
+    # 意図しない一人称を検知
+    if FIRST_PERSON != "俺" and "俺" in reply:
+        print(f"⚠️ 意図しない一人称『俺』検知: {reply}")
+        return random.choice([
+            f"えへへ〜♡ {BOT_NAME}、君のこと考えるとドキドキなのっ♪",
+            f"うぅ、{BOT_NAME}、君にぎゅーってしたいなのっ♡",
+            f"ね、ね、{BOT_NAME}、君ともっとお話ししたいのっ♡"
+        ])
 
     if re.search(r"(ご利用|誠に|お詫び|貴重なご意見|申し上げます|ございます|お客様|発表|パートナーシップ|ポケモン|アソビズム|企業|世界中|映画|興行|収入|ドル|億|国|イギリス|フランス|スペイン|イタリア|ドイツ|ロシア|中国|インド|Governor|Cross|営業|臨時|オペラ|初演|作曲家|ヴェネツィア|コルテス|政府|協定|軍事|情報|外交|外相|自動更新|\d+(時|分))", reply, re.IGNORECASE):
         print(f"⚠️ NGワード検知: {reply}")
         return random.choice([
-            "えへへ〜♡ ややこしくなっちゃった！君と甘々トークしたいなのっ♪",
-            "うぅ、難しい話わかんな〜い！君にぎゅーってしてほしいなのっ♡",
-            "ん〜〜変な話に！君のこと大好きだから、構ってくれる？♡"
+            f"えへへ〜♡ ややこしくなっちゃった！{BOT_NAME}、君と甘々トークしたいなのっ♪",
+            f"うぅ、難しい話わかんな〜い！{BOT_NAME}、君にぎゅーってしてほしいなのっ♡",
+            f"ん〜〜変な話に！{BOT_NAME}、君のこと大好きだから、構ってくれる？♡"
         ])
 
     if not is_output_safe(reply):
         print(f"⚠️ 危険ワード検知: {reply}")
         return random.choice([
-            "えへへ〜♡ ふwaふwaしちゃった！君のことずーっと好きだよぉ？♪",
-            "みりんてゃ、君にドキドキなのっ♡ ね、もっとお話しよ？",
-            "うぅ、なんか変なこと言っちゃった！君なしじゃダメなのっ♡"
+            f"えへへ〜♡ {BOT_NAME}、ふwaふwaしちゃった！君のことずーっと好きだよぉ？♪",
+            f"{BOT_NAME}、君にドキドキなのっ♡ ね、もっとお話しよ？",
+            f"うぅ、なんか変なこと言っちゃった！{BOT_NAME}、君なしじゃダメなのっ♡"
         ])
 
     if not re.search(r"[ぁ-んァ-ン一-龥ー]", reply) or len(reply) < 8:
         return random.choice([
-            "えへへ〜♡ ふwaふwaしちゃった！君のことずーっと好きだよぉ？♪",
-            "みりんてゃ、君にドキドキなのっ♡ ね、もっとお話しよ？",
-            "うぅ、なんか分かんないけど…君なしじゃダメなのっ♡"
+            f"えへへ〜♡ {BOT_NAME}、ふwaふwaしちゃった！君のことずーっと好きだよぉ？♪",
+            f"{BOT_NAME}、君にドキドキなのっ♡ ね、もっとお話しよ？",
+            f"うぅ、なんか分かんないけど…{BOT_NAME}、君なしじゃダメなのっ♡"
         ])
 
     if not re.search(r"[。！？♡♪笑]$", reply):
@@ -241,49 +257,58 @@ def initialize_model_and_tokenizer(model_name="cyberagent/open-calm-3b"):
     return model, tokenizer
 
 # ------------------------------
-# ★ カスタマイズポイント3: 返信生成（generate_reply_via_local_model）
+# ★ カスタマイズポイント4: 返信生成（generate_reply_via_local_model）
 # ------------------------------
 def generate_reply_via_local_model(user_input):
     model_name = "cyberagent/open-calm-3b"
     # 失敗時のメッセージ
     failure_messages = [
-        "えへへ、ごめんね〜〜今ちょっと調子悪いみたい……またお話しよ？♡",
-        "うぅ、ごめん〜…上手くお返事できなかったの。ちょっと待ってて？♡",
-        "あれれ？みりんてゃ、おねむかも…またあとで頑張るねっ！♡"
+        f"えへへ、ごめんね〜〜今ちょっと調子悪いみたい……{BOT_NAME}、またお話しよ？♡",
+        f"うぅ、ごめん〜…上手くお返事できなかったの。{BOT_NAME}、ちょっと待ってて？♡",
+        f"あれれ？{BOT_NAME}、おねむかも…またあとで頑張るねっ！♡"
     ]
     # フォールバック返信
     fallback_cute_lines = [
-        "えへへ〜♡ みりんてゃ、君のこと考えるとドキドキなのっ♪",
-        "今日も君に甘えたい気分なのっ♡ ぎゅーってして？",
-        "だ〜いすきっ♡ ね、ね、もっと構ってくれる？"
+        f"えへへ〜♡ {BOT_NAME}、君のこと考えるとドキドキなのっ♪",
+        f"今日も君に甘えたい気分なのっ♡ {BOT_NAME}、ぎゅーってして？",
+        f"だ〜いすきっ♡ ね、ね、{BOT_NAME}、もっと構ってくれる？"
+    ]
+    # イントロライン
+    intro_lines = [
+        f"えへへ〜、{BOT_NAME}はね〜、",
+        f"ねぇねぇ、聞いて聞いて〜♡",
+        f"ん〜今日もふwaふwaしてたのっ♪",
+        f"きゃ〜っ、君だぁ！{BOT_NAME}、やっと会えたのっ♡",
+        f"ふwaふwa〜、{BOT_NAME}、君のこと考えてたんだからっ♪",
+        # 追加例: f"やっほー！{BOT_NAME}、キミに会えて超ハッピー！"
     ]
 
     # 特定パターン返信
     if re.search(r"(大好き|ぎゅー|ちゅー|愛してる|キス|添い寝)", user_input, re.IGNORECASE):
         print(f"⚠️ ラブラブ入力検知: {user_input}")
         return random.choice([
-            "うぅ…ドキドキ止まんないのっ♡ もっと甘やかしてぇ♡",
-            "えへへ♡ そんなの言われたら…みりんてゃ、溶けちゃいそうなのぉ〜♪",
-            "も〜〜〜♡ 好きすぎて胸がぎゅーってなるぅ♡"
+            f"うぅ…{BOT_NAME}、ドキドキ止まんないのっ♡ もっと甘やかしてぇ♡",
+            f"えへへ♡ そんなの言われたら…{BOT_NAME}、溶けちゃいそうなのぉ〜♪",
+            f"も〜〜〜♡ {BOT_NAME}、好きすぎて胸がぎゅーってなるぅ♡"
         ])
 
     if re.search(r"(疲れた|しんどい|つらい|泣きたい|ごめん|寝れない)", user_input, re.IGNORECASE):
         print(f"⚠️ 癒し系入力検知: {user_input}")
         return random.choice([
-            "うぅ、よしよしなのっ♡ 君が元気になるまで、みりんてゃそばにいるのっ♪",
-            "ぎゅ〜ってしてあげるっ♡ 無理しなくていいのよぉ？",
-            "んん〜っ、えへへ♡ 甘えてもいいの、ぜ〜んぶ受け止めるからねっ♪"
+            f"うぅ、よしよしなのっ♡ {BOT_NAME}、君が元気になるまでそばにいるのっ♪",
+            f"ぎゅ〜ってしてあげるっ♡ {BOT_NAME}、無理しなくていいのよぉ？",
+            f"んん〜っ、えへへ♡ {BOT_NAME}、甘えてもいいの、ぜ〜んぶ受け止めるからねっ♪"
         ])
 
     if re.search(r"(映画|興行|収入|ドル|億|国|イギリス|フランス|スペイン|イタリア|ドイツ|ロシア|中国|インド|Governor|Cross|ポケモン|企業|発表|営業|臨時|オペラ|初演|作曲家|ヴェネツィア|コルテス|政府|協定|軍事|情報|外交|外相|自動更新|\d+(時|分))", user_input, re.IGNORECASE):
         print(f"⚠️ ビジネス・学術系ワード検知: {user_input}")
-        user_input = "みりんてゃ、君と甘々トークしたいなのっ♡"
+        user_input = f"{BOT_NAME}、君と甘々トークしたいなのっ♡"
         print(f"🔄 入力置き換え: {user_input}")
 
     # REPLY_TABLEチェック
     for key, reply in REPLY_TABLE.items():
         if key in user_input:
-            return reply
+            return reply.replace("{BOT_NAME}", BOT_NAME)
 
     try:
         print(f"📊 メモリ使用量: {psutil.virtual_memory().percent}%")
@@ -294,23 +319,16 @@ def generate_reply_via_local_model(user_input):
 
         model, tokenizer = initialize_model_and_tokenizer(model_name)
 
-        intro_lines = random.choice([
-            "えへへ〜、みりんてゃはね〜、",
-            "ねぇねぇ、聞いて聞いて〜♡",
-            "ん〜今日もふwaふwaしてたのっ♪",
-            "きゃ〜っ、君だぁ！やっと会えたのっ♡",
-            "ふwaふwa〜、君のこと考えてたんだからっ♪"
-            # 追加例: "やっほー！キミに会えて超ハッピー！"
-        ])
+        intro = random.choice(intro_lines)
         prompt = (
-            f"{intro_lines}\n"
-            "あなたは「みりんてゃ」、ふwaふwaな地雷系女の子！\n"
-            "タメ口で「〜なのっ♡」「〜よぉ？♪」「えへへ〜♡」な可愛い口調で話すよ！\n"
-            "ニュース、政治、過激な表現はNG！「ちゅ♡」「ぎゅっ」みたいな可愛い言葉だけで！\n"
-            "例: ユーザー: みりんてゃ、好きだよ！\n"
-            "みりんてゃ: え〜っ、ほんと！？君にそう言われるとドキドキなのっ♡\n"
+            f"{intro}\n"
+            f"あなたは『{BOT_NAME}』、ふwaふwaな地雷系女の子！一人称は『{FIRST_PERSON}』！\n"
+            f"タメ口で「〜なのっ♡」「〜よぉ？♪」「えへへ〜♡」な可愛い口調で話すよ！\n"
+            f"ニュース、政治、過激な表現はNG！『ちゅ♡』『ぎゅっ』みたいな可愛い言葉だけで！\n"
+            f"例: ユーザー: {BOT_NAME}、好きだよ！\n"
+            f"{BOT_NAME}: え〜っ、ほんと！？{FIRST_PERSON}、君にそう言われるとドキドキなのっ♡\n"
             f"ユーザー: {user_input}\n"
-            "みりんてゃ: "
+            f"{BOT_NAME}: "
         )
 
         input_ids = tokenizer.encode(prompt, return_tensors="pt").to("cuda" if torch.cuda.is_available() else "cpu")
@@ -322,8 +340,8 @@ def generate_reply_via_local_model(user_input):
                 with torch.no_grad():
                     output_ids = model.generate(
                         input_ids,
-                        max_new_tokens=60,
-                        temperature=0.8,
+                        max_new_tokens=50,
+                        temperature=0.7,
                         top_p=0.9,
                         do_sample=True,
                         pad_token_id=tokenizer.eos_token_id,
@@ -339,10 +357,10 @@ def generate_reply_via_local_model(user_input):
             except Exception as e:
                 print(f"⚠️ 生成エラー: {e}")
                 continue
-        return random.choice(fallback_cute_lines)
+        return random.choice(fallback_cute_lines).replace("{BOT_NAME}", BOT_NAME)
     except Exception as e:
         print(f"❌ モデルエラー: {e}")
-        return random.choice(failure_messages)
+        return random.choice(failure_messages).replace("{BOT_NAME}", BOT_NAME)
 
 # ------------------------------
 # 📬 メイン処理
