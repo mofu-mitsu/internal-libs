@@ -1,0 +1,34 @@
+# make_config.py
+import json
+
+config = {
+    "bot_name": input("Botの名前を入力（例：みりんてゃ）: "),
+    "character_description": input("Botの性格を入力（例：地雷系ENFPのあざと可愛い女の子）: "),
+    "api_keys": {
+        "bluesky_handle": input("Blueskyハンドルを入力（例：@your_handle.bsky.social）: "),
+        "bluesky_app_password": input("Blueskyアプリパスワードを入力: "),
+        "gist_token_reply": input("Gistトークンを入力: ")
+    },
+    "gist": {
+        "gist_id": input("Gist IDを入力: "),
+        "filename": "replied.json"
+    },
+    "reply_table": {
+        "使い方": "使い方は公式ページ見てね！簡単だよ〜♪",
+        "こんにちは": "やっほー！会えて嬉しいな！♪"
+    },
+    "fallback_replies": ["ふふ、キミと話すの楽しいよ！♪"],
+    "safe_words": ["ハート", "キラキラ"],
+    "danger_words": ["不適切", "禁止"],
+    "reply_endings": ["だよ！♪", "かな？"],
+    "model_settings": {
+        "model_name": "cyberagent/open-calm-3b",
+        "max_new_tokens": 60,
+        "temperature": 0.8,
+        "top_p": 0.9
+    }
+}
+
+with open("config.json", "w", encoding="utf-8") as f:
+    json.dump(config, f, ensure_ascii=False, indent=2)
+print("✅ config.jsonを作成しました！")
