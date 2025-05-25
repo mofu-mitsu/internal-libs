@@ -12,6 +12,7 @@ import requests
 import psutil
 from datetime import datetime, timezone, timedelta
 from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoModelForCausalLM, GPTNeoXTokenizerFast
 import torch
 from atproto import Client, models
 from atproto_client.models.com.atproto.repo.strong_ref import Main as StrongRef
@@ -186,13 +187,6 @@ REPLY_TABLE = {
     # 追加例: "おはよう": "おは！{BOT_NAME}、キミの朝をハッピーにしちゃうよ！"
 }
 # ヒント: キーワードは部分一致。{BOT_NAME}でキャラ名を動的に挿入可能！
-
-# グローバルモデルとトークナイザ
-from transformers import AutoModelForCausalLM, GPTNeoXTokenizerFast
-
-# グローバルモデルとトークナイザ
-model = None
-tokenizer = None
 
 # ------------------------------
 # ★ カスタマイズポイント2: 安全/危険ワード
