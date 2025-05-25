@@ -296,7 +296,7 @@ def generate_reply_via_local_model(user_input):
     try:
         print(f"📊 メモリ使用量: {psutil.virtual_memory().percent}%")
         if torch.cuda.is_available():
-            print(f"📊 GPU: {torch.cuda.memory_allocated() / 1024**2:.2f} MB}")
+            print(f"📊 GPU: {torch.cuda.memory_allocated() / 1024**2:.2f} MB")
         else:
             print("⚠️ GPUなし、CPUで実行")
         model, tokenizer = initialize_model_and_tokenizer(model_name)
@@ -314,7 +314,7 @@ def generate_reply_via_local_model(user_input):
         )
 
         input_ids = tokenizer.encode(prompt, return_tensors="pt").to("cuda" if torch.cuda.is_available() else "cpu")
-        print(f"📤 入力トークン数: {len(input_ids[0])}")
+        print(f"📤 入力トークン数: {len(input_ids[0])}"）
 )
         for attempt in range(4):
             print(f"📝 テキスト生成中（試行 {attempt + 1}）")
@@ -339,12 +339,12 @@ def generate_reply_via_local_model(user_input):
             except Exception as e:
                 print(f"⚠️ 生成エラー: {e}")
                 continue
-        return random.choice(fallback_cute_lines).replace("{BOT_NAME}", BOT_NAME,})
+        return random.choice(fallback_cute_lines).replace("{BOT_NAME}", BOT_NAME)
                 print(f"📩 {replay_text}")
                 return replay_text
     except Exception as e:
         print(f"❌ モデルエラー: {e}")
-        return random.choice(failure_messages).replace("{BOT_NAME}", BOT_NAME})
+        return random.choice(failure_messages).replace("{BOT_NAME}", BOT_NAME)
 
 # ----------------------
 # 📬 メイン処理
