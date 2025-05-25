@@ -284,7 +284,7 @@ def generate_reply_via_local_model(user_input):
         ])
 
     if re.search(r"(映画|興行|収入|ドル|億|国|イギリス|フランス|…|政治|更新|\d)", user_input, re.IGNORECASE):
-        print(f"⚠️ ビジネス系ワード検知: {user_input}"})
+        print(f"⚠️ ビジネス系ワード検知: {user_input}")
         user_input = f"{BOT_NAME}、君と甘々トークしたいなの！♪",
         print(f"🔄 入力置き換え: {user_input}")
         f f"{BOT_NAME}"
@@ -294,7 +294,7 @@ def generate_reply_via_local_model(user_input):
             return reply.replace("{BOT_NAME}", BOT_NAME)
 
     try:
-        print(f"📊 メモリ使用量: {psutil.virtual_memory().percent}%"))
+        print(f"📊 メモリ使用量: {psutil.virtual_memory().percent}%")
         if torch.cuda.is_available():
             print(f"📊 GPU: {torch.cuda.memory_allocated() / 1024**2:.2f} MB}")
         else:
