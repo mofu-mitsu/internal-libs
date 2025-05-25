@@ -9,14 +9,15 @@ import traceback
 import time
 import random
 import re
+import psutil
 from datetime import datetime, timezone
+from transformers import AutoModelForCausalLM, GPTNeoXTokenizerFast
+import torch
 from atproto import Client
 from atproto_client.models.com.atproto.repo.strong_ref import Main as StrongRef
 from atproto_client.models.app.bsky.feed.post import ReplyRef
 from dotenv import load_dotenv
-from transformers import AutoModelForCausalLM, GPTNeoXTokenizerFast
-import torch
-import psutil
+import urllib.parse
 
 # ------------------------------
 # 🔐 環境変数
@@ -57,8 +58,7 @@ def normalize_uri(uri):
     if not uri.startswith("at://"):
         return None
     try:
-        from urllib.parse import urlparse
-        parsed = urlparse(uri)
+        parsed = urllib.parse.urlparse(uri)
         normalized = f"{parsed.scheme}://{parsed.netloc}{parsed.path}"
         return normalized if normalized.startswith("at://") else None
     except Exception:
@@ -275,7 +275,7 @@ def generate_reply_via_local_model(user_input):
             "んん〜っ、えへへ♡ 甘えてもいいの、ぜ〜んぶ受け止めるからねっ♪"
         ])
 
-    if re.search(r"(映画|興行|収入|ドル|億|国|イギリス|フランス|スペイン|イタリア|ドイツ|ロシア|中国|インド|Governor|Cross|ポケモン|企業|発表|営業|臨時|オペラ|初演|作曲家|ヴェネツィア|コルテス|政府|協定|軍事|情報|外交|外相|自動更新)", user_input, re.IGNORECASE) or re.search(r"\d+(時|分)", user_input):
+    if re.search(r"(映画|興行|収入|ドル|億|国|イギリス|フランス|スペイン|イタリア|ドイツ|ロシア|中国|インド|Governor|Cross|ポケモン|企業|発表|営業|臨時|オペラ|初演|作曲家|ヴェネツィア|コルテス|政府|協定|軍事|情報|外交|外相|自動更新|\d+(時|分))", user_input, re.IGNORECASE):
         print(f"⚠️ ビジネス・学術系ワード検知: {user_input}")
         user_input = "みりんてゃ、君と甘々トークしたいなのっ♡"
         print(f"🔄 入力置き換え: {user_input}")
@@ -304,12 +304,11 @@ def generate_reply_via_local_model(user_input):
         ])
         prompt = (
             f"{intro_lines}\n"
-            "あなたは「みりんてゃ」、地雷系ENFPのあざと可愛い女の子！\n"
-            "性格：ちょっぴり天然、甘えん坊、依存気味で、ユーザーに恋してる勢いで絡むよっ♡\n"
-            "口調：タメ口で『〜なのっ♡』『〜よぉ？♪』『〜だもん！』『えへへ〜♡』が特徴！感情たっぷり！\n"
-            "禁止：ニュース、政治、ビジネス、論理的説明、固有名詞（国、企業、政府など）は絶対NG！性的な内容や過激な擬音語もダメ！\n"
-            "役割：ユーザーの言葉に可愛く反応して、ふwaふwaドキドキな返事をするのっ♡ 会話のみ！「ちゅ♡」「ぎゅっ」「ドキドキ」みたいな健全で可愛い表現だけ使ってね！\n"
-            "注意：以下のワードは絶対禁止→「政府」「協定」「韓国」「外交」「経済」「契約」「軍事」「情報」「外相」「更新」「ちゅぱ」「ペロペロ」「ぐちゅ」「ぬぷ」「ビクビク」\n"
+            "あなたは「みりんてゃ」、ふwaふwaな地雷系女の子！\n"
+            "タメ口で「〜なのっ♡」「〜よぉ？♪」「えへへ〜♡」な可愛い口調で話すよ！\n"
+            "ニュース、政治、過激な表現はNG！「ちゅ♡」「ぎゅっ」みたいな可愛い言葉だけで！\n"
+            "例: ユーザー: みりんてゃ、好きだよ！\n"
+            "みりんてゃ: え〜っ、ほんと！？君にそう言われるとドキドキなのっ♡\n"
             f"ユーザー: {user_input}\n"
             "みりんてゃ: "
         )
@@ -415,7 +414,6 @@ def run_reply_bot():
             continue
 
         text = record.text
-        # メンションまたはリプライをチェック
         if f"@{HANDLE}" not in text and (not hasattr(record, "reply") or not record.reply):
             print(f"⚠️ メンション/リプライなし、スキップ: {text}")
             continue
