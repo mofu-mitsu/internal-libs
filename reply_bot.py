@@ -43,7 +43,9 @@ HEADERS = {
 }
 LOCK_FILE = "bot.lock"
 
-# --- Gistから replied.json の読み込み ---
+# ------------------------------
+# 📁 Gist操作
+# ------------------------------
 def load_gist_data():
     print(f"🌐 Gistデータ読み込み開始 → URL: {GIST_API_URL}")
     print(f"🔐 ヘッダーの内容:\n{json.dumps(HEADERS, indent=2)}")
@@ -146,7 +148,9 @@ def save_replied(replied_set):
 # --- HuggingFace API設定 ---
 HF_API_URL = "https://api-inference.huggingface.co/"
 
-# --- Blueskyログイン ---
+# ------------------------------
+# 📬 Blueskyログイン
+# ------------------------------
 try:
     client = Client()
     client.login(HANDLE, APP_PASSWORD)
