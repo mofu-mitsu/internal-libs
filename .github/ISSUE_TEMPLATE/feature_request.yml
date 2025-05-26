@@ -1,0 +1,19 @@
+name: 💡 機能提案
+description: みりんてゃBotに欲しい機能を教えて！
+title: "[提案] <機能の簡単な説明>"
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: feature
+    attributes:
+      label: 欲しい機能
+      description: どんな機能を追加してほしい？例：「チャッピーの名言ランダム投稿！」
+      placeholder: 例：チャッピーが「今日もみりんてゃ日和だねっ！」とかつぶやいてほしい♡
+    validations:
+      required: true
+  - type: textarea
+    id: use-case
+    attributes:
+      label: どんなときに使う？
+      description: この機能で何ができるか教えて！
+      placeholder: 例：フォロワーが喜ぶ可愛い投稿が増える！みりんてゃのドキドキ感アップ！
