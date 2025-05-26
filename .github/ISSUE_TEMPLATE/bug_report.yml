@@ -1,0 +1,27 @@
+name: 🐛 バグ報告
+description: みりんてゃBotのバグを見つけたら教えて！
+title: "[バグ] <バグの簡単な説明>"
+labels: ["bug"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: バグの内容
+      description: どんなバグ？例：「みりんてゃが『了解しました』って返してきた！」
+      placeholder: 例：みりんてゃの返信が「ふwaふwa」じゃなくて変！ログはこれ→[error.log]
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 再現手順
+      description: バグが出たときの操作を教えて！
+      placeholder: 例：1. Botに「好き！」と投稿 2. 変な返信が来た
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: ログやエラー
+      description: エラーメッセージやログがあれば貼ってね！
+      placeholder: 例：ERROR: Invalid URI in replied.json
