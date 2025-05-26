@@ -1,0 +1,13 @@
+name: 💬 みりんてゃ雑談
+description: みりんてゃへのラブレターやアイデア、なんでもOK！
+title: "[雑談] <トピックの簡単な説明>"
+labels: ["chat"]
+body:
+  - type: textarea
+    id: chat
+    attributes:
+      label: 話したいこと
+      description: みりんてゃへの愛やアイデア、なんでも書いて！
+      placeholder: 例：みりんてゃにピンクのフリフリドレス着せてほしいなのっ♡
+    validations:
+      required: true
