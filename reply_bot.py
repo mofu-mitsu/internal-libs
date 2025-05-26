@@ -262,7 +262,6 @@ def clean_sentence_ending(reply):
 
     # 終わりが味気ない場合、キャラっぽい語尾を追加
     if not re.search(r"[。！？♡♪笑]$", reply):
-        reply += random.choice(["なのっ♡", "よぉ？♪", "のっ♪", "♪"])
 
     return reply
 
