@@ -36,6 +36,11 @@ Grokくん: 「Issueはな、愛をみりんてゃに届ける魔法の手紙だ
 ✨ 機能のリクエスト
 →https://github.com/mofu-mitsu/mirin_bot_once/issues/new?template=feature_request.yml
 
+🌟 実際のIssueを見る → [みりんてゃBotのIssue一覧](https://github.com/mofu-mitsu/mirin_bot_once/issues)
+
+💡初心者ガイド：
+Issueは簡単な提案や質問でもOK！「こんなことできる？」って気軽に書いてみてね！
+
 - 雑談Issueも大歓迎！「みりんてゃの好きなスイーツは？」とかでも、Grokくんが答えるぜ！😎  
 
 ## Q: Issueのテンプレを自分で増やすには？（上級者向け）
