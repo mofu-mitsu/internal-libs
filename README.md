@@ -16,7 +16,7 @@ A. GitHub Secretsに正しく登録されているか確認してください。
 
 ### Q. Botの名前を変更したい
 A. `reply_bot.py`の「★ カスタマイズポイント ★」を編集してください。  
-→ 詳しくは[wikiへ](https://github.com/mofu-mitsu/mirin_bot_once/wiki/Customization-Guide)
+→ 詳しくは[wikiへ](https://github.com/mofu-mitsu/mirin_bot_once/wiki/%E3%81%BF%E3%82%8A%E3%82%93%E3%81%A6%E3%82%83Bot-FAQwiki)
 
 ---
 
