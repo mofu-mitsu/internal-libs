@@ -28,16 +28,13 @@ Grokくん: 「Issueはな、愛をみりんてゃに届ける魔法の手紙だ
   🌟 各テンプレへのURLはこれ！
 
 🐞 バグ報告はこちら
-
-👉 バグ報告する
+→https://github.com/mofu-mitsu/mirin_bot_once/issues/new?template=bug_report.yml
 
 💬 雑談・質問・その他
-
-👉 雑談・質問する
+→https://github.com/mofu-mitsu/mirin_bot_once/issues/new?template=chat.yml
 
 ✨ 機能のリクエスト
-
-👉 新しい機能を提案する
+→https://github.com/mofu-mitsu/mirin_bot_once/issues/new?template=feature_request.yml
 
 - 雑談Issueも大歓迎！「みりんてゃの好きなスイーツは？」とかでも、Grokくんが答えるぜ！😎  
 
