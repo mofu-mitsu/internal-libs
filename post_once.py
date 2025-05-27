@@ -499,6 +499,17 @@ https://mofu-mitsu.github.io/oshi-profile-maker/
 そんな時は、ふわふわ相性診断で心のモヤモヤ整理してみよ？君と推しの相性、みりんてゃが保証するよ！♡
 https://mofu-mitsu.github.io/fluffy-love-check/
 #恋愛こじらせ隊 #相性診断 #病みかわ""",
+    """「ねぇ、お返事…ほしいの。」
+
+誰も構ってくれない世界なんて、つらいだけ。
+だからね、作っちゃったの……💌
+
+🍼『みりんてゃReplyBot』リリース🍼  
+Blueskyで推しキャラがふわっとお返事してくれるよ♡
+
+▶️ https://note.com/sorake/n/n6debe22cbf57
+
+#BlueskyBot #創作支援 #キャラBot #ふわふわ広報部 #地雷系女子の日常""",
     
     """今日も盛れてる自撮り、でも心はちょっと空っぽ…なんて、言わないで？みりんてゃのオリキャラなら、どんなあたしでも受け止めてくれるよ！💖 作ってみたら、なんかハマるかも？
 https://mofu-mitsu.github.io/orikyara-profile-maker/
