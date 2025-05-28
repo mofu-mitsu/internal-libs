@@ -16,6 +16,45 @@ APP_PASSWORD = os.getenv('APP_PASSWORD')
 POST_MESSAGES = [
     """寂しくてしんじゃいそう……なんちゃって♡ 
 #誰かに見つけてほしい""",
+    """だって…推しが話してた言葉、スルーできなかったの。
+
+だから作ったの、キーワードにそっと反応するBot♡
+
+→ https://note.com/sorake/n/nc6bcd25acc23
+
+#推し活 #BlueskyBot #ふわふわFeedBot""",
+
+    """好きなフレーズだけ…世界に残しておきたかったの。
+
+だからね、反応してくれるBotを作ったの♡
+
+→ https://note.com/sorake/n/nc6bcd25acc23
+
+#BlueskyBot #推し活 #Feed型自動返信""",
+
+    """たったひとことに、全部救われる日もあるじゃん？
+
+だから…推しの言葉、見逃さないBotつくったよ♡
+
+→ https://note.com/sorake/n/nc6bcd25acc23
+
+#BlueskyBot #ふわふわFeedBot #推しに反応する""",
+
+    """推しがふと呟いたその言葉、永遠にしておきたくて。
+
+そっと反応してくれるBot、つくりました♡
+
+→ https://note.com/sorake/n/nc6bcd25acc23
+
+#推し活 #FeedBot #BlueskyBot #ふわふわ系""",
+
+    """気づいてくれるの、たったそれだけで嬉しいよね？
+
+だからBotにお願いしたの…優しく反応して、って♡
+
+→ https://note.com/sorake/n/nc6bcd25acc23
+
+#BlueskyBot #FeedBot #ふわふわ自動反応""",
     """ぎゅーされたいだけの人生だった。
 #メンヘラ""",
     """あたしなんて、いない方がよかった……とか思ってないし♡""",
