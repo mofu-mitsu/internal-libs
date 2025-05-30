@@ -40,6 +40,34 @@ A. `reply_bot.py`の「★ カスタマイズポイント ★」を編集して�
 
 python reply_bot.py
 
+### Q: モデル読み込みでエラーが出る
+**A**: `cyberagent/open-calm-3b`のロード失敗は以下を確認：  
+1. **ライブラリ**：`pip install torch==2.0.1+cpu transformers==4.36.2`（CPUの場合）。  
+2. **キャッシュ**：`rm -rf ~/.cache/huggingface`でクリア。  
+3. **ネットワーク**：Hugging Face接続が不安定なら、リトライ（コードに`load_model_with_retry`実装）。  
+4. **ハードウェア**：GPUなしの場合、`torch.float32`と`device_map="cpu"`を設定。  
+**ログ例**：`❌ Model error: ...`をチェック。
+
+### Q: 「The operation was canceled.」エラーが出る
+**A**: AI生成の中断は以下が原因：  
+1. **メモリ**：RAM不足（7GB超）。軽量モデル（`open-calm-1b`）を試す。  
+2. **タイムアウト**：Actionsの`timeout-minutes: 60`を設定。  
+3. **ネットワーク**：Hugging Faceのダウンロード失敗。キャッシュクリア＆リトライ。  
+**ログ例**：`RAM: XX%`や`GPU: XX/YY MB`を確認。
+
+### Q: GIST_IDが読み込まれずエラー
+**A**: 通常は`.env`やGitHub Secretsに`GIST_ID`を設定（例：`GIST_ID=your_gist_id`）。  
+⚠️ **ただし**、GitHub ActionsでSecretsが読めない場合（例：`GIST_ID is None`）：  
+1. リポジトリのSettings > Secrets and variables > Actionsで`GIST_ID`再設定。  
+2. テスト用に`.yml`に直書き（**公開リポジトリではNG**）。  
+**例**：
+```yaml
+env:
+  GIST_ID: ${{ secrets.GIST_ID }}  # 通常
+# 動かない場合（テスト用）
+env:
+  GIST_ID: your_gist_id_here
+
 ## 🚀 Botの起動方法（GitHub Actions）
 
 ### 1. 手動でBotを実行する
