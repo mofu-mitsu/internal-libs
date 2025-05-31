@@ -66,6 +66,15 @@ rm -rf ~/.cache/huggingface
 
 **備考**: `open-calm-small`はCPUで動作しますが、GPU環境（4GB以上）なら高速化可能。
 
+### Q: 「MulticodecValueError: Invalid multicodec status ‘deprecated’」が出る
+A: atprotoやmultiformatsのバージョンが古い/互換性がないエラー。
+解決:
+1.  requirements.txtを確認：
+`atproto==0.2.1
+python-dotenv==1.0.1
+multiformats==2.0.1`
+2.  .ymlでpip install -r requirements.txtを実行。
+3.  ログで⚠️ リポスト失敗 (URI: ...)をチェック。 備考: エラーが続く場合、サポートに連絡（@your_handle）。
 ---
 ### Q: 同じ投稿に何度も通知が来る
 **A**: いいねは1回だけカウントされますが、通知が複数飛ぶ場合があります。  
