@@ -31,6 +31,15 @@ jobs:
           APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
         run: |
           python repost_bot.py | tee -a logs/repost_bot.log
+      - name: リポスト履歴をコミット
+        run: |
+          git config --global user.name 'GitHub Actions'
+          git config --global user.email 'actions@github.com'
+          git add reposted_uris.txt
+          git commit -m "Update reposted_uris.txt" || echo "No changes to commit"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: ログをアップロード
         if: always()
         uses: actions/upload-artifact@v4
