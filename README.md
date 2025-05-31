@@ -82,6 +82,21 @@ multiformats==2.0.1`
 **解決**: コードは`viewer.like`でいいね済みをスキップ。ログで`いいね済みスキップ`を確認。  
 **備考**: 通知が多い場合、サポートに連絡（https://bsky.app/profile/mofumitsukoubou.bsky.social）。
 
+---
+### Q: 「fatal: unable to access ... 403」エラーが出る
+**原因**：GitHub Actionsのトークン権限不足。
+**解決**：
+1. `Settings > Actions > General`で「Read and write permissions」を有効。
+2. `.github/workflows/repost_bot.yml`で`permissions: contents: write`を確認。
+3. `repost-history`ブランチを使用。
+4. 空の`reposted_uris.txt`をリポジトリに追加：
+   ```bash
+   touch reposted_uris.txt
+   git add reposted_uris.txt
+   git commit -m "Add empty reposted_uris.txt"
+   git push origin main
+---
+
 ## Q: 「The operation was canceled.」エラーが出る
 
 **A**: AI生成の中断は以下の原因：
