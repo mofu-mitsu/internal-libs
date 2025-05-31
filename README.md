@@ -40,20 +40,79 @@ A. `reply_bot.py`の「★ カスタマイズポイント ★」を編集して�
 
 python reply_bot.py
 
-### Q: モデル読み込みでエラーが出る
-**A**: `cyberagent/open-calm-3b`のロード失敗は以下を確認：  
-1. **ライブラリ**：`pip install torch==2.0.1+cpu transformers==4.36.2`（CPUの場合）。  
-2. **キャッシュ**：`rm -rf ~/.cache/huggingface`でクリア。  
-3. **ネットワーク**：Hugging Face接続が不安定なら、リトライ（コードに`load_model_with_retry`実装）。  
-4. **ハードウェア**：GPUなしの場合、`torch.float32`と`device_map="cpu"`を設定。  
-**ログ例**：`❌ Model error: ...`をチェック。
+# ❓ よくある質問（FAQ）
 
-### Q: 「The operation was canceled.」エラーが出る
-**A**: AI生成の中断は以下が原因：  
-1. **メモリ**：RAM不足（7GB超）。軽量モデル（`open-calm-1b`）を試す。  
-2. **タイムアウト**：Actionsの`timeout-minutes: 60`を設定。  
-3. **ネットワーク**：Hugging Faceのダウンロード失敗。キャッシュクリア＆リトライ。  
-**ログ例**：`RAM: XX%`や`GPU: XX/YY MB`を確認。
+## Q: モデル読み込みでエラーが出る
+
+**A**: デフォルトの`cyberagent/open-calm-small`は軽量で低スペック環境でも動作しますが、以下の原因でエラーが出る場合があります：
+
+### 原因1: ライブラリ不一致
+**解決**: 依存性を確認：
+```bash
+pip install torch==2.0.1+cpu transformers==4.36.2 sentencepiece -f https://download.pytorch.org/whl/torch_stable.html
+```
+
+### 原因2: Hugging Faceのキャッシュ破損
+**解決**: キャッシュをクリア：
+```bash
+rm -rf ~/.cache/huggingface
+```
+
+### 原因3: ネットワーク不安定（Hugging Face接続失敗）
+**解決**: コードの`load_model_with_retry`でリトライ（3回）。ネットワークを安定させて再実行。
+
+### 原因4: RAM不足（4GB未満）
+**解決**: メモリ使用量を確認（ログ：`RAM: XX%`）。他のプロセスを終了。
+
+**ログ例**: `❌ Model error: ...`をチェック。
+
+**備考**: `open-calm-small`はCPUで動作しますが、GPU環境（4GB以上）なら高速化可能。
+
+---
+
+## Q: 「The operation was canceled.」エラーが出る
+
+**A**: AI生成の中断は以下の原因：
+
+### 原因1: RAM不足（4GB超）
+**解決**: ログで`RAM: XX%`を確認。他のプロセスを終了。
+
+### 原因2: GitHub Actionsのタイムアウト
+**解決**: `timeout-minutes: 60`を設定（.yml）。
+
+### 原因3: ネットワーク不安定（モデルダウンロード失敗）
+**解決**: キャッシュクリア（`rm -rf ~/.cache/huggingface`）＆再実行。
+
+**ログ例**: `RAM: XX%`や`Generating... Attempt X failed`を確認。
+
+---
+
+## Q: より高品質な生成にしたい（上級者向け）
+
+**A**: `cyberagent/open-calm-small`は軽量ですが、以下のモデルで高品質な生成が可能：
+
+### モデル選択肢
+- **open-calm-1b**: 1Bパラメータ、RAM 6GB以上推奨。バランス型。
+- **open-calm-3b**: 3Bパラメータ、RAM 8GB＋GPU推奨。高品質。
+- **open-calm-7b**: 7Bパラメータ、RAM 16GB＋GPU必須。最高品質。
+
+### 手順
+
+#### 1. reply_bot.pyのモデル名を変更：
+```python
+model_name = "cyberagent/open-calm-3b"  # 例: 3b
+def initialize_model_and_tokenizer(model_name="cyberagent/open-calm-3b"):
+```
+
+#### 2. GPU環境の場合：
+```bash
+pip install torch==2.0.1 transformers==4.36.2
+```
+
+#### 3. メモリ確認
+ログ：`GPU: XX/YY MB`を確認。
+
+**注意**: 大型モデルは低スペック環境でエラー多発。`open-calm-small`推奨。
 
 ### Q: GIST_IDが読み込まれずエラー
 **A**: 通常は`.env`やGitHub Secretsに`GIST_ID`を設定（例：`GIST_ID=your_gist_id`）。  
