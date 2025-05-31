@@ -49,23 +49,62 @@ except Exception as e:
     print(f"❌ ログイン失敗: {e}")
     exit(1)
 
-# 📜 セッション内のリポスト履歴（保険）
+# 📜 セッション内のリポスト履歴
 reposted_uris = set()
+# 永続ストレージファイル
+REPOSTED_FILE = "reposted_uris.txt"
 # 統計用カウンター
 repost_count = 0
 skip_count = 0
 error_count = 0
 
+def load_reposted_uris():
+    """永続リポスト履歴を読み込む"""
+    global reposted_uris
+    if os.path.exists(REPOSTED_FILE):
+        with open(REPOSTED_FILE, 'r') as f:
+            reposted_uris.update(line.strip() for line in f if line.strip())
+        print(f"📂 既存リポスト履歴を読み込み: {len(reposted_uris)}件")
+
+def save_reposted_uri(uri):
+    """リポスト履歴を保存"""
+    with open(REPOSTED_FILE, 'a') as f:
+        f.write(f"{uri}\n")
+    reposted_uris.add(uri)
+
+def has_quoted_post(uri, cid):
+    """引用リポスト済みかチェック"""
+    try:
+        # 自分の投稿をチェック
+        feed = client.app.bsky.feed.get_author_feed(params={"actor": self_did, "limit": 50})
+        for item in feed.feed:
+            post = item.post
+            if hasattr(post.record, 'embed') and post.record.embed:
+                embed = post.record.embed
+                if embed['$type'] == 'app.bsky.embed.record' and embed.record.uri == uri:
+                    return True
+        return False
+    except Exception as e:
+        print(f"⚠️ 引用リポストチェックエラー (URI: {uri}): {e}")
+        return False
+
 def repost_if_needed(uri, cid, text, post, is_quote=False):
     """投稿をリポスト（引用リポスト可）。すでにリpoスト済みならスキップ"""
     global repost_count, skip_count, error_count
+    # リポスト済みチェック（API）
     viewer_repost = post.viewer.repost if hasattr(post, 'viewer') and hasattr(post.viewer, 'repost') else None
     if viewer_repost:
-        print(f"⏩ リポスト済みスキップ: {text[:40]}")
+        print(f"⏩ リポスト済みスキップ (viewer.repost): {text[:40]}")
         skip_count += 1
         return
+    # 引用リポスト済みチェック
+    if is_quote and has_quoted_post(uri, cid):
+        print(f"⏩ 引用リポスト済みスキップ: {text[:40]}")
+        skip_count += 1
+        return
+    # セッション＋永続履歴チェック
     if uri in reposted_uris:
-        print(f"⏩ セッション内スキップ: {text[:40]}")
+        print(f"⏩ 履歴スキップ: {text[:40]}")
         skip_count += 1
         return
     try:
@@ -85,7 +124,7 @@ def repost_if_needed(uri, cid, text, post, is_quote=False):
             )
             print(f"📬 引用リポスト: {comment[:40]} (元: {text[:40]})")
         else:
-            # 通常リポスト（最新API対応）
+            # 通常リポスト
             client.app.bsky.feed.repost.create(
                 repo=client.me.did,
                 record={
@@ -94,14 +133,14 @@ def repost_if_needed(uri, cid, text, post, is_quote=False):
                 }
             )
             print(f"🔄 リポスト: {text[:40]}")
-        reposted_uris.add(uri)
+        save_reposted_uri(uri)
         repost_count += 1
     except Exception as e:
         print(f"⚠️ リポスト失敗 (URI: {uri}): {e}")
         error_count += 1
 
 def auto_repost_timeline():
-    """タイムラインの投稿をチェックし、対象をリポスト（リプ除外）"""
+    """タイムラインの投稿をチェックし、対象をリポスト"""
     global skip_count, error_count
     print("📡 タイムライン巡回中...")
     try:
@@ -113,22 +152,10 @@ def auto_repost_timeline():
             uri = post.uri
             cid = post.cid
             author_did = post.author.did
-
-            # 自己投稿、リプ、メンションはスキップ
-            if author_did == self_did:
-                print(f"⏩ 自己投稿スキップ: {text[:40]}")
+            if author_did == self_did or (hasattr(post.record, 'reply') and post.record.reply) or f"@{HANDLE.lower()}" in text:
+                print(f"⏩ スキップ (自己/リプ/メンション): {text[:40]}")
                 skip_count += 1
                 continue
-            if hasattr(post.record, 'reply') and post.record.reply:
-                print(f"⏩ リプスキップ: {text[:40]}")
-                skip_count += 1
-                continue
-            if f"@{HANDLE.lower()}" in text:
-                print(f"⏩ メンションスキップ: {text[:40]}")
-                skip_count += 1
-                continue
-
-            # キーワード/ハッシュタグマッチでリポスト
             if any(tag.lower() in text for tag in TARGET_HASHTAGS) or any(kw.lower() in text for kw in TARGET_KEYWORDS):
                 is_quote = random.random() < 0.5
                 repost_if_needed(uri, cid, text, post, is_quote=is_quote)
@@ -140,6 +167,7 @@ def start():
     """リポストBotメイン処理"""
     global repost_count, skip_count, error_count
     print(f"🚀 りぽりんBot 起動しました: @{HANDLE}")
+    load_reposted_uris()
     auto_repost_timeline()
     print(f"✅ 実行完了: リポスト {repost_count}件, スキップ {skip_count}件, エラー {error_count}件")
 
