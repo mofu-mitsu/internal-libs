@@ -785,7 +785,7 @@ https://mofu-mitsu.github.io/fluffy-love-check/
     """加工アプリで盛った自分、めっちゃ可愛いけど…心は盛れないんだよね
 でも、推しプロフィールメーカーなら、推しへの愛は無限に盛れるよ！✨ 試してみて！
 https://mofu-mitsu.github.io/oshi-profile-maker/
-#盛り命 #推し活 #やみかわラブレター""",
+#盛り命 #推し活 #やみかわラブレター #みりんの推し紹介""",
 
     """わたしの“かわいい”も“さびしさ”も、  
 ぜんぶここに詰めこんだの。
@@ -866,7 +866,7 @@ https://mofu-mitsu.github.io/
 
 https://mofu-mitsu.github.io/oshi-profile-maker/
 
-#界隈に届けたい #推し尊い""",
+#界隈に届けたい #みりんの推し紹介 #推し尊い""",
     """ねぇ、ほんとはね、
 「相性いいよ♡」って言ってほしかったの。
 
@@ -900,7 +900,7 @@ https://mofu-mitsu.github.io/oshi-profile-maker/
 
 https://mofu-mitsu.github.io/oshi-profile-maker/
 
-#推し活 #創作支援 #プロフィールメーカー""",
+#推し活 #創作支援 #プロフィールメーカー #みりんの推し紹介""",
     """ねぇねぇ♡  
 みりんの作ったやつ、見てくれないと……やだ♡  
 絶対かわいくできるから♡ ほめて〜♡
@@ -923,7 +923,7 @@ https://mofu-mitsu.github.io/oshi-profile-maker/
 
 → https://mofu-mitsu.github.io/oshi-profile-maker/
 
-#推しプロフィールメーカー #推し活""",
+#推しプロフィールメーカー #推し活 #みりんの推し紹介""",
     """みりんてゃが住んでる場所（って勝手に思ってる）！
 推し活・創作・かわいいがぎゅって詰まったとこっ！
 
@@ -938,6 +938,7 @@ https://mofu-mitsu.github.io/
 #推しプロフィールメーカー
 #オリキャラプロフィールメーカー
 #ふわふわ相性診断
+#みりんの推し紹介
 
 → https://mofu-mitsu.github.io/
 
@@ -1024,7 +1025,9 @@ https://mofu-mitsu.github.io/
 https://mofu-mitsu.github.io/fluffy-love-check/""",
     """推し、語るだけじゃ足りなくない？ 推しプロフィールメーカーってのがあるらしいよ
 
-https://mofu-mitsu.github.io/oshi-profile-maker/""",
+https://mofu-mitsu.github.io/oshi-profile-maker/
+
+#みりんの推し紹介""",
     """オリキャラ持ってる人、集合〜！プロフィールかわいく作れるツール見つけた♡
 
 https://mofu-mitsu.github.io/orikyara-profile-maker/""",
