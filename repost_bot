@@ -1,0 +1,146 @@
+# repost_bot.py
+from atproto import Client
+import time
+import os
+import random
+from dotenv import load_dotenv
+
+# ------------------------------
+# ★ カスタマイズポイント: リポスト対象のハッシュタグとキーワード
+# ------------------------------
+# 以下のリストを編集して、リポストする投稿をカスタム！
+# 例: 忍たんBotなら ['#忍者', '#侍'], ['忍者', '侍']
+TARGET_HASHTAGS = [
+    '#地雷女', '#病み垢', '#病みかわ', '#可愛い', '#かわいい', '#メンヘラ',
+    '#猫', '#ねこ', '#量産系', '#オリキャラ', '#推し', '#jirai',
+    '#一次創作', '#オリジナル', '#イラスト', '#推しキャラプロフィールメーカー'
+]
+TARGET_KEYWORDS = [
+    '地雷', '量産', '裏垢', '病み', '可愛い', 'かわいい', 'メンヘラ',
+    '猫', 'ねこ', '相性診断', 'オリキャラ', '推し', 'jirai',
+    '一次創作', 'オリジナル', 'イラスト', 'プロフィールメーカー'
+]
+
+# ------------------------------
+# ★ カスタマイズポイント: 引用リポストのコメント
+# ------------------------------
+# 引用リポスト時にランダムで選ばれるコメント
+REPOST_COMMENTS = [
+    "キラキラ✨ みりんてゃ推しなのっ♡",
+    "ふwaふwa〜！これ超かわいいなのっ♪",
+    "えへ〜♪ 君の投稿、めっちゃ好きだよ♡",
+    "ぎゅっ♡ このポスト、みりんてゃのお気に入り！"
+]
+
+# ✅ 環境変数の読み込み（.env または Secrets）
+load_dotenv()
+HANDLE = os.getenv("HANDLE") or exit("❌ HANDLEが設定されていません")
+APP_PASSWORD = os.getenv("APP_PASSWORD") or exit("❌ APP_PASSWORDが設定されていません")
+
+# 🔐 Blueskyクライアント初期化
+client = Client()
+try:
+    client.login(HANDLE, APP_PASSWORD)
+    print("✅ ログイン成功")
+    self_did = client.me.did
+except Exception as e:
+    print(f"❌ ログイン失敗: {e}")
+    exit(1)
+
+# 📜 セッション内のリポスト履歴（保険）
+reposted_uris = set()
+# 統計用カウンター
+repost_count = 0
+skip_count = 0
+error_count = 0
+
+def repost_if_needed(uri, cid, text, post, is_quote=False):
+    """投稿をリポスト（引用リポスト可）。すでにリポスト済みならスキップ"""
+    global repost_count, skip_count, error_count
+    viewer_repost = post.viewer.repost if hasattr(post, 'viewer') and hasattr(post.viewer, 'repost') else None
+    if viewer_repost:
+        print(f"⏩ リポスト済みスキップ: {text[:40]}")
+        skip_count += 1
+        return
+    if uri in reposted_uris:
+        print(f"⏩ セッション内スキップ: {text[:40]}")
+        skip_count += 1
+        return
+    try:
+        if is_quote:
+            # 引用リポスト
+            comment = random.choice(REPOST_COMMENTS)
+            client.app.bsky.feed.post.create(
+                repo=client.me.did,
+                record={
+                    "text": comment,
+                    "embed": {
+                        "$type": "app.bsky.embed.record",
+                        "record": {"uri": uri, "cid": cid}
+                    },
+                    "createdAt": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+                }
+            )
+            print(f"📬 引用リポスト: {comment[:40]} (元: {text[:40]})")
+        else:
+            # 通常リポスト
+            client.app.bsky.feed.repost.create_repost(
+                {
+                    "repo": client.me.did,
+                    "subject": {"uri": uri, "cid": cid},
+                    "createdAt": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+                }
+            )
+            print(f"🔄 リポスト: {text[:40]}")
+        reposted_uris.add(uri)
+        repost_count += 1
+    except Exception as e:
+        print(f"⚠️ リポスト失敗 (URI: {uri}): {e}")
+        error_count += 1
+
+def auto_repost_timeline():
+    """タイムラインの投稿をチェックし、対象をリポスト（リプ除外）"""
+    global skip_count
+    print("📡 タイムライン巡回中...")
+    try:
+        feed_res = client.app.bsky.feed.get_timeline(params={"limit": 50})
+        feed_items = feed_res.feed
+        for item in feed_items:
+            post = item.post
+            text = post.record.text.lower()
+            uri = post.uri
+            cid = post.cid
+            author_did = post.author.did
+
+            # 自己投稿、リプ、メンションはスキップ
+            if author_did == self_did:
+                print(f"⏩ 自己投稿スキップ: {text[:40]}")
+                skip_count += 1
+                continue
+            if hasattr(post.record, 'reply') and post.record.reply:
+                print(f"⏩ リプスキップ: {text[:40]}")
+                skip_count += 1
+                continue
+            if f"@{HANDLE.lower()}" in text:
+                print(f"⏩ メンションスキップ: {text[:40]}")
+                skip_count += 1
+                continue
+
+            # キーワード/ハッシュタグマッチでリポスト
+            if any(tag.lower() in text for tag in TARGET_HASHTAGS) or any(kw.lower() in text for kw in TARGET_KEYWORDS):
+                # 引用リポスト（50%の確率）
+                is_quote = random.random() < 0.5
+                repost_if_needed(uri, cid, text, post, is_quote=is_quote)
+    except Exception as e:
+        print(f"❌ タイムラインエラー: {e}")
+        error_count += 1
+
+def start():
+    """リポストBotメイン処理"""
+    global repost_count, skip_count, error_count
+    print(f"🚀 りぽりんBot 起動しました: @{HANDLE}")
+    auto_repost_timeline()
+    print(f"✅ 実行完了: リポスト {repost_count}件, スキップ {skip_count}件, エラー {error_count}件")
+
+if __name__ == "__main__":
+    start()
