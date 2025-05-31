@@ -34,7 +34,7 @@ REPOST_COMMENTS = [
     "これ、みりんてゃの心にずきゅんだよ(ˆ⩌⩊⩌ˆ)💘★",
 ]
 
-# ✅ 環境変数の読み込み（.env または Secrets）
+# ✅ 環境変数の読み込み
 load_dotenv()
 HANDLE = os.getenv("HANDLE") or exit("❌ HANDLEが設定されていません")
 APP_PASSWORD = os.getenv("APP_PASSWORD") or exit("❌ APP_PASSWORDが設定されていません")
@@ -57,7 +57,7 @@ skip_count = 0
 error_count = 0
 
 def repost_if_needed(uri, cid, text, post, is_quote=False):
-    """投稿をリポスト（引用リポスト可）。すでにリポスト済みならスキップ"""
+    """投稿をリポスト（引用リポスト可）。すでにリpoスト済みならスキップ"""
     global repost_count, skip_count, error_count
     viewer_repost = post.viewer.repost if hasattr(post, 'viewer') and hasattr(post.viewer, 'repost') else None
     if viewer_repost:
@@ -78,18 +78,18 @@ def repost_if_needed(uri, cid, text, post, is_quote=False):
                     "text": comment,
                     "embed": {
                         "$type": "app.bsky.embed.record",
-                        "record": {"uri": uri, "cid": cid}
+                        "record": {"uri": str(uri), "cid": str(cid)}
                     },
                     "createdAt": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
                 }
             )
             print(f"📬 引用リポスト: {comment[:40]} (元: {text[:40]})")
         else:
-            # 通常リポスト
-            client.app.bsky.feed.repost.create_repost(
-                {
-                    "repo": client.me.did,
-                    "subject": {"uri": uri, "cid": cid},
+            # 通常リポスト（最新API対応）
+            client.app.bsky.feed.repost.create(
+                repo=client.me.did,
+                record={
+                    "subject": {"uri": str(uri), "cid": str(cid)},
                     "createdAt": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
                 }
             )
@@ -102,14 +102,14 @@ def repost_if_needed(uri, cid, text, post, is_quote=False):
 
 def auto_repost_timeline():
     """タイムラインの投稿をチェックし、対象をリポスト（リプ除外）"""
-    global skip_count
+    global skip_count, error_count
     print("📡 タイムライン巡回中...")
     try:
         feed_res = client.app.bsky.feed.get_timeline(params={"limit": 50})
         feed_items = feed_res.feed
         for item in feed_items:
             post = item.post
-            text = post.record.text.lower()
+            text = post.record.text.lower() if hasattr(post.record, 'text') else ""
             uri = post.uri
             cid = post.cid
             author_did = post.author.did
@@ -130,7 +130,6 @@ def auto_repost_timeline():
 
             # キーワード/ハッシュタグマッチでリポスト
             if any(tag.lower() in text for tag in TARGET_HASHTAGS) or any(kw.lower() in text for kw in TARGET_KEYWORDS):
-                # 引用リポスト（50%の確率）
                 is_quote = random.random() < 0.5
                 repost_if_needed(uri, cid, text, post, is_quote=is_quote)
     except Exception as e:
