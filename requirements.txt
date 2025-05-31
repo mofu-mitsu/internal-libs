@@ -12,4 +12,4 @@ accelerate
 
 atproto==0.2.1
 python-dotenv==1.0.1
-multiformats==2.0.1
+multiformats==1.0.3
