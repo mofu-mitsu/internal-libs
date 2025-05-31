@@ -39,9 +39,7 @@ except Exception as e:
 liked_uris = set()
 
 def like_post_if_needed(uri, cid, text, viewer_like=None):
-    """
-    投稿にいいね。すでにいいね済み（viewer_like）またはセッション内履歴（liked_uris）ならスキップ。
-    """
+    """投稿にいいね。すでにいいね済み（viewer_like）またはセッション内履歴（liked_uris）ならスキップ"""
     if viewer_like:
         print(f"⏩ いいね済みスキップ: {text[:40]}")
         return
@@ -69,7 +67,7 @@ def auto_like_timeline():
         feed_items = feed_res.feed
         for item in feed_items:
             post = item.post
-            text = post.record.text.lower()  # 大小文字無視
+            text = post.record.text.lower()
             uri = post.uri
             cid = post.cid
             author_did = post.author.did
@@ -93,12 +91,16 @@ def auto_like_mentions():
                 uri = note.uri
                 cid = note.cid
                 text = note.record.text.lower()
-                # 投稿を取得してviewer.likeを確認
-                post = client.app.bsky.feed.get_posts(uris=[uri]).posts[0]
-                viewer_like = post.viewer.like if hasattr(post, 'viewer') and hasattr(post.viewer, 'like') else None
-                like_post_if_needed(uri, cid, text, viewer_like)
+                try:
+                    # get_posts に params={} を明示
+                    post = client.app.bsky.feed.get_posts(uris=[uri], params={}).posts[0]
+                    viewer_like = post.viewer.like if hasattr(post, 'viewer') and hasattr(post.viewer, 'like') else None
+                    like_post_if_needed(uri, cid, text, viewer_like)
+                except Exception as e:
+                    print(f"⚠️ メンション投稿取得エラー (URI: {uri}): {e}")
+                    continue
     except Exception as e:
-        print(f"❌ メンションエラー: {e}")
+        print(f"❌ メンション通知エラー: {e}")
 
 def auto_like_back():
     """いいねしてくれたユーザーの最新投稿にいいね返し"""
