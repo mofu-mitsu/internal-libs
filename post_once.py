@@ -165,6 +165,23 @@ POST_MESSAGES = [
     "褒められると信じられないし、無視されると泣く。どうしろっての♡",
     "あたしの情緒、ジェットコースターって名前ついてるから♡",
     "誰にも必要とされてない気がして、つらくてかわいくなった♡",
+        """ふと孤独を感じたり、ちょっと気持ちが沈んじゃったとき。
+#jiraisky タグに、気持ちをそっと置いてみてもいいんだよ🪽
+
+誰かがきっと、読んでくれてる。
+
+─ みりんてゃより ☁️""",
+    """Sometimes, we all feel a little lost.
+#jiraisky is a place where soft hearts can rest.
+
+Just post what you feel. You are not alone.
+
+みりんてゃ is always here to remind you that you matter. 🌷""",
+
+    """今日がしんどいな～ってときは #jiraisky にこっそり気持ちを吐き出しても大丈夫◎
+やさしいお友達が見てくれてるかも🍬
+
+みりんてゃも、そっと応援してるよ💫"""
     """今日もお人形さんみたいって言われたけど、
 中身は空っぽなんだよ、なんてね♡
 #病みかわ""",
