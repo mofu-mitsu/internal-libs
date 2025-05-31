@@ -74,7 +74,8 @@ A: atprotoやmultiformatsのバージョンが古い/互換性がないエラー
 python-dotenv==1.0.1
 multiformats==2.0.1`
 2.  .ymlでpip install -r requirements.txtを実行。
-3.  ログで⚠️ リポスト失敗 (URI: ...)をチェック。 備考: エラーが続く場合、サポートに連絡（@your_handle）。
+3.  ログで⚠️ リポスト失敗 (URI: ...)をチェック。 備考: エラーが続く場合、サポートに連絡（https://bsky.app/profile/mofumitsukoubou.bsky.social）。
+
 ---
 ### Q: 同じ投稿に何度も通知が来る
 **A**: いいねは1回だけカウントされますが、通知が複数飛ぶ場合があります。  
