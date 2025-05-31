@@ -1,11 +1,14 @@
 name: Bluesky Repost Bot
+
 on:
   schedule:
     - cron: '*/30 * * * *'  # 30分ごと
   workflow_dispatch:  # 手動実行
+
 concurrency:
   group: bluesky-repost-bot
   cancel-in-progress: true
+
 jobs:
   run-repost-bot:
     runs-on: ubuntu-latest
@@ -17,41 +20,47 @@ jobs:
       - name: リポジトリをチェックアウト
         uses: actions/checkout@v4
         with:
-          ref: main  # メインブランチ
-          fetch-depth: 0  # 全履歴
+          ref: main
+          fetch-depth: 0
+
       - name: Pythonをセットアップ
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
+
       - name: 依存関係インストール
         run: |
           python -m pip install --upgrade pip
           pip install --no-cache-dir -r requirements.txt
+
       - name: ログを保存
         run: |
           mkdir -p logs
           echo "Starting 🚖 りぽりんBot at $(date)" >> logs/repost_bot.log
+
       - name: りぽりんBotを実行
         env:
           HANDLE: ${{ secrets.HANDLE }}
           APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
         run: |
           python repost_bot.py | tee -a logs/repost_bot.log
-   - name: リポスト履歴をコミット
-  run: |
-    git config --global user.name 'GitHub Actions'
-    git config --global user.email 'actions@github.com'
-    git checkout -b repost-history || git checkout repost-history
 
-    if [ -f reposted_uris.txt ]; then
-      git add reposted_uris.txt
-      git commit -m "Update reposted_uris.txt" || echo "No changes to commit"
-      git push origin repost-history --force
-    else
-      echo "No reposted_uris.txt found, skipping commit"
-    fi
-  env:
-    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: リポスト履歴をコミット
+        run: |
+          git config --global user.name 'GitHub Actions'
+          git config --global user.email 'actions@github.com'
+          git checkout -b repost-history || git checkout repost-history
+
+          if [ -f reposted_uris.txt ]; then
+            git add reposted_uris.txt
+            git commit -m "Update reposted_uris.txt" || echo "No changes to commit"
+            git push origin repost-history --force
+          else
+            echo "No reposted_uris.txt found, skipping commit"
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: ログをアップロード
         if: always()
         uses: actions/upload-artifact@v4
