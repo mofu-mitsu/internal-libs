@@ -1,9 +1,11 @@
-atproto==0.2.1
-python-dotenv==1.0.1
-multiformats==1.0.3
+atproto
+python-dotenv
+requests
+
+atproto
 transformers==4.36.2
 torch==2.0.1
 psutil==5.9.8
 sentencepiece==0.2.0
+python-dotenv
 accelerate
-requests
