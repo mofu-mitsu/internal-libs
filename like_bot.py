@@ -90,14 +90,13 @@ def auto_like_mentions():
             if note.reason == "mention":
                 uri = note.uri
                 cid = note.cid
-                # note.record.text の安全チェック
                 text = note.record.text.lower() if hasattr(note, 'record') and hasattr(note.record, 'text') else ""
                 if not text:
                     print(f"⏩ メンション無効スキップ (URI: {uri}): テキストなし")
                     continue
                 try:
-                    # params={} を削除
-                    post = client.app.bsky.feed.get_posts(uris=[uri]).posts[0]
+                    # get_posts に正しい params
+                    post = client.app.bsky.feed.get_posts({"uris": [str(uri)]}).posts[0]
                     viewer_like = post.viewer.like if hasattr(post, 'viewer') and hasattr(post.viewer, 'like') else None
                     like_post_if_needed(uri, cid, text, viewer_like)
                 except Exception as e:
