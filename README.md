@@ -40,8 +40,6 @@ A. `reply_bot.py`の「★ カスタマイズポイント ★」を編集して�
 
 python reply_bot.py
 
-# ❓ よくある質問（FAQ）
-
 ## Q: モデル読み込みでエラーが出る
 
 **A**: デフォルトの`cyberagent/open-calm-small`は軽量で低スペック環境でも動作しますが、以下の原因でエラーが出る場合があります：
