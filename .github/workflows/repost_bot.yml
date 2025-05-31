@@ -10,9 +10,15 @@ jobs:
   run-repost-bot:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    permissions:
+      contents: write  # コミット権限
+      actions: write   # Actions操作
     steps:
       - name: リポジトリをチェックアウト
         uses: actions/checkout@v4
+        with:
+          ref: main  # メインブランチ
+          fetch-depth: 0  # 全履歴
       - name: Pythonをセットアップ
         uses: actions/setup-python@v4
         with:
@@ -35,9 +41,10 @@ jobs:
         run: |
           git config --global user.name 'GitHub Actions'
           git config --global user.email 'actions@github.com'
+          git checkout -b repost-history || git checkout repost-history
           git add reposted_uris.txt
           git commit -m "Update reposted_uris.txt" || echo "No changes to commit"
-          git push
+          git push origin repost-history --force
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: ログをアップロード
