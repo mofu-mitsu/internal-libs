@@ -1,7 +1,7 @@
 name: Bluesky Repost Bot
 on:
   schedule:
-    - cron: '*/10 * * * *'  # 10分ごと
+    - cron: '*/30 * * * *'  # 30分ごと
   workflow_dispatch:  # 手動実行
 concurrency:
   group: bluesky-repost-bot
@@ -20,9 +20,20 @@ jobs:
       - name: 依存関係インストール
         run: |
           python -m pip install --upgrade pip
-          pip install atproto==0.0.4 python-dotenv==1.0.1
+          pip install --no-cache-dir -r requirements.txt
+      - name: ログを保存
+        run: |
+          mkdir -p logs
+          echo "Starting 🚖 りぽりんBot at $(date)" >> logs/repost_bot.log
       - name: りぽりんBotを実行
         env:
           HANDLE: ${{ secrets.HANDLE }}
           APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
-        run: python repost_bot.py
+        run: |
+          python repost_bot.py | tee -a logs/repost_bot.log
+      - name: ログをアップロード
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: repost-bot-logs
+          path: logs/repost_bot.log
