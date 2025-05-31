@@ -13,3 +13,6 @@ accelerate
 atproto==0.2.1
 python-dotenv==1.0.1
 multiformats==1.0.3
+requests>=2.31.0
+# constraints.txt
+typing-extensions>=4.5.0,<5.0.0
