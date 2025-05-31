@@ -67,6 +67,10 @@ rm -rf ~/.cache/huggingface
 **備考**: `open-calm-small`はCPUで動作しますが、GPU環境（4GB以上）なら高速化可能。
 
 ---
+### Q: 同じ投稿に何度も通知が来る
+**A**: いいねは1回だけカウントされますが、通知が複数飛ぶ場合があります。  
+**解決**: コードは`viewer.like`でいいね済みをスキップ。ログで`いいね済みスキップ`を確認。  
+**備考**: 通知が多い場合、サポートに連絡（https://bsky.app/profile/mofumitsukoubou.bsky.social）。
 
 ## Q: 「The operation was canceled.」エラーが出る
 
