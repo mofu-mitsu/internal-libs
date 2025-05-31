@@ -8,8 +8,6 @@ from dotenv import load_dotenv
 # ------------------------------
 # ★ カスタマイズポイント: リポスト対象のハッシュタグとキーワード
 # ------------------------------
-# 以下のリストを編集して、リポストする投稿をカスタム！
-# 例: 忍たんBotなら ['#忍者', '#侍'], ['忍者', '侍']
 TARGET_HASHTAGS = [
     '#オリキャラプロフィールメーカー', '#ふわふわ相性診断', '#推しキャラプロフィールメーカー', '#もふみつ工房', '#みりんてゃ', '#みりんてゃbot',
 ]
@@ -20,7 +18,6 @@ TARGET_KEYWORDS = [
 # ------------------------------
 # ★ カスタマイズポイント: 引用リポストのコメント
 # ------------------------------
-# 引用リポスト時にランダムで選ばれるコメント
 REPOST_COMMENTS = [
     "キラキラ✨ みりんてゃ推しなのっ♡",
     "ふwaふwa〜！これ超かわいいなのっ♪",
@@ -73,10 +70,9 @@ def save_reposted_uri(uri):
     reposted_uris.add(uri)
 
 def has_quoted_post(uri, cid):
-    """引用リポスト済みかチェック"""
+    """引用リポスト済みかチェック（キャッシュ回避）"""
     try:
-        # 自分の投稿をチェック
-        feed = client.app.bsky.feed.get_author_feed(params={"actor": self_did, "limit": 50})
+        feed = client.app.bsky.feed.get_author_feed(params={"actor": self_did, "limit": 100})
         for item in feed.feed:
             post = item.post
             if hasattr(post.record, 'embed') and post.record.embed:
@@ -89,16 +85,21 @@ def has_quoted_post(uri, cid):
         return False
 
 def repost_if_needed(uri, cid, text, post, is_quote=False):
-    """投稿をリポスト（引用リポスト可）。すでにリpoスト済みならスキップ"""
+    """投稿をリポスト（引用リポスト可）。すでにリポスト済みならスキップ"""
     global repost_count, skip_count, error_count
+    # 自己投稿をスキップ
+    if post.author.did == self_did:
+        print(f"⏩ 自己投稿スキップ: {text[:40]}")
+        skip_count += 1
+        return
     # リポスト済みチェック（API）
     viewer_repost = post.viewer.repost if hasattr(post, 'viewer') and hasattr(post.viewer, 'repost') else None
     if viewer_repost:
         print(f"⏩ リポスト済みスキップ (viewer.repost): {text[:40]}")
         skip_count += 1
         return
-    # 引用リポスト済みチェック
-    if is_quote and has_quoted_post(uri, cid):
+    # 引用リポスト済みチェック（常時）
+    if has_quoted_post(uri, cid):
         print(f"⏩ 引用リポスト済みスキップ: {text[:40]}")
         skip_count += 1
         return
@@ -157,6 +158,7 @@ def auto_repost_timeline():
                 skip_count += 1
                 continue
             if any(tag.lower() in text for tag in TARGET_HASHTAGS) or any(kw.lower() in text for kw in TARGET_KEYWORDS):
+                # 引用リポストか通常リポストをランダム選択
                 is_quote = random.random() < 0.5
                 repost_if_needed(uri, cid, text, post, is_quote=is_quote)
     except Exception as e:
