@@ -14,14 +14,14 @@ from atproto import Client, models
 from atproto_client.models import AppBskyFeedPost
 from atproto_client.exceptions import InvokeTimeoutError
 
-# 🔧 get_strong_ref を投稿用にちゃんと動くよう調整
+# 🔧 投稿参照用の強参照生成
 def get_strong_ref_from_post(post_obj):
     return {
         "$type": "com.atproto.repo.strongRef",
         "uri": post_obj.uri,
         "cid": post_obj.cid,
     }
-    
+
 # リポストスキップ用
 def is_quoted_repost(post):
     """引用リポストかチェック"""
@@ -43,6 +43,7 @@ HANDLE = os.environ['HANDLE']
 APP_PASSWORD = os.environ['APP_PASSWORD']
 GIST_TOKEN = os.environ["GIST_TOKEN"]
 print(f"🪪 現在のGIST_TOKEN: {GIST_TOKEN[:8]}...（先頭8文字だけ表示）")
+
 # Blueskyにログイン
 client = Client()
 client.login(HANDLE, APP_PASSWORD)
@@ -50,7 +51,6 @@ client.login(HANDLE, APP_PASSWORD)
 # Gist URL（直書き）
 GIST_RAW_URL_URIS = "https://gist.githubusercontent.com/mofu-mitsu/c16e8c8c997186319763f0e03f3cff8b/raw/replied_uris.json"
 GIST_ID_URIS = "c16e8c8c997186319763f0e03f3cff8b"
-
 GIST_RAW_URL_TEXTS = "https://gist.githubusercontent.com/mofu-mitsu/a149431b226cf7b50ba057be4de7eae9/raw/replied_texts.json"
 GIST_ID_TEXTS = "a149431b226cf7b50ba057be4de7eae9"
 
@@ -102,11 +102,8 @@ def save_replied_uris(replied_uris):
         "Accept": "application/vnd.github+json"
     }
     content = json.dumps(list(replied_uris), ensure_ascii=False, indent=2)
-
-    # バックアップ＆クールダウン
     backup_gist(GIST_ID_URIS, "replied_uris.json", content)
     time.sleep(1)
-
     data = {
         "files": {
             "replied_uris.json": {
@@ -147,11 +144,8 @@ def save_replied_texts(replied_texts):
         "Accept": "application/vnd.github+json"
     }
     content = json.dumps(replied_texts, ensure_ascii=False, indent=2)
-
-    # バックアップ＆クールダウン
     backup_gist(GIST_ID_TEXTS, "replied_texts.json", content)
     time.sleep(1)
-
     data = {
         "files": {
             "replied_texts.json": {
@@ -168,13 +162,13 @@ def save_replied_texts(replied_texts):
         except:
             msg = response.text
         print(f"⚠️ replied_texts保存失敗: {response.status_code} {msg}")
-        
+
 # 🔹 りぽりんBotの履歴（オプション）
 REPOSTED_FILE = "reposted_uris.txt"
 def load_reposted_uris():
     if os.path.exists(REPOSTED_FILE):
         try:
-            with open(REPOSTED_FILE, 'r') as f:
+            with open(REPOSTED_FILE, 'r', encoding='utf-8') as f:
                 uris = set(line.strip() for line in f if line.strip())
                 print(f"✅ 読み込んだ reposted_uris: {len(uris)}件")
                 return uris
@@ -183,7 +177,9 @@ def load_reposted_uris():
             return set()
     return set()
 
-# 特定のキーワードに反応する返答一覧
+# ------------------------------
+# ★ カスタマイズポイント: キーワード返信（REPLY_TABLE）
+# ------------------------------
 KEYWORD_RESPONSES = {
     "みりんてゃちゃん": "てゃちゃん！？てゃちゃんって……かわいすぎる呼び方っ♡ 呼び続けてほしいの〜っ！",
     "みりんてゃー": "え〜ん、のばして呼ばれたら照れちゃうっ♡ 今日も一番かわいいって言ってぇ〜っ！",
@@ -197,7 +193,7 @@ KEYWORD_RESPONSES = {
     "ふわふわ相性診断": "ふたりの相性…ふわふわで、とけちゃいそうっ♡ 結果どうだった〜？教えて教えてっ！",
 }
 
-# Facet（ハッシュタグなど）の位置を取得する関数
+# Facet（ハッシュタグなど）の位置を取得
 from atproto_client.models import AppBskyRichtextFacet
 def generate_facets_from_text(text, hashtags):
     facets = []
@@ -208,7 +204,6 @@ def generate_facets_from_text(text, hashtags):
         byte_end = byte_start + len(tag.encode("utf-8"))
         if byte_start == -1:
             continue
-
         facet = AppBskyRichtextFacet.Facet(
             index=AppBskyRichtextFacet.ByteSlice(
                 byte_start=byte_start,
@@ -218,8 +213,8 @@ def generate_facets_from_text(text, hashtags):
         )
         facets.append(facet)
     return facets
-        
-# 投稿を確認して返信する関数
+
+# 投稿を確認して返信
 def run_once():
     try:
         client = Client()
@@ -229,6 +224,10 @@ def run_once():
         timeline = client.app.bsky.feed.get_timeline(params={"limit": 20})
         feed = timeline.feed
 
+        replied_uris = load_replied_uris()
+        replied_texts = load_replied_texts()
+        reposted_uris = load_reposted_uris()
+
         for post in feed:
             time.sleep(random.uniform(5, 15))
             text = getattr(post.post.record, "text", None)
@@ -236,22 +235,9 @@ def run_once():
             post_id = uri.split('/')[-1]
             author = post.post.author.handle
 
-            # リポストをスキップ
-            if hasattr(post, 'reason') and getattr(post.reason, '$type', None) == 'app.bsky.feed.defs#reasonRepost':
-                print(f"🔁 リポストをスキップ → @{author}: {text}")
-                continue
-
-            # 引用リポストをスキップ
-            if is_quoted_repost(post):
-                print(f"📬 引用リポストをスキップ → @{author}: {text}")
-                continue
-
-            # 最新のreplied_urisを読み込み
+            # 最新のreplied_urisを毎回読み込み
             replied_uris = load_replied_uris()
-            replied_texts = load_replied_texts()
             replied_post_ids = set(uri.split('/')[-1] for uri in replied_uris)
-
-            reposted_uris = load_reposted_uris()
             reposted_post_ids = set(uri.split('/')[-1] for uri in reposted_uris)
 
             print(f"📝 処理対象URI: {uri}")
@@ -260,6 +246,7 @@ def run_once():
             if reposted_uris:
                 print(f"📂 りぽりんBotの履歴 → 件数: {len(reposted_uris)}")
 
+            # スキップ条件
             if author == HANDLE or post_id in replied_post_ids or not text:
                 if post_id in replied_post_ids:
                     print(f"⏩ スキップ（既にリプ済み）→ @{author}: {text}")
@@ -275,13 +262,19 @@ def run_once():
             if post_id in reposted_post_ids:
                 print(f"⏩ スキップ（リポスト済み）→ @{author}: {text}")
                 continue
+            if hasattr(post, 'reason') and getattr(post.reason, '$type', None) == 'app.bsky.feed.defs#reasonRepost':
+                print(f"🔁 リポストをスキップ → @{author}: {text}")
+                continue
+            if is_quoted_repost(post):
+                print(f"📬 引用リポストをスキップ → @{author}: {text}")
+                continue
 
             print(f"👀 チェック中 → @{author}: {text}")
             matched = False
             reply_text = ""
 
             for keyword, response in KEYWORD_RESPONSES.items():
-                if keyword in text:
+                if keyword in text.lower():
                     reply_text = response
                     matched = True
                     print(f"✨ キーワード「{keyword}」にマッチ！")
@@ -300,11 +293,6 @@ def run_once():
             )
 
             try:
-                replied_uris.add(uri)
-                save_replied_uris(replied_uris)
-                replied_texts[text] = True
-                save_replied_texts(replied_texts)
-
                 client.app.bsky.feed.post.create(
                     record=AppBskyFeedPost.Record(
                         text=reply_text,
@@ -314,6 +302,10 @@ def run_once():
                     ),
                     repo=client.me.did
                 )
+                replied_uris.add(uri)
+                save_replied_uris(replied_uris)
+                replied_texts[text] = True
+                save_replied_texts(replied_texts)
                 print(f"✅ 返信しました → @{author}")
                 print(f"📁 保存されたURI一覧（最新5件）: {list(replied_uris)[-5:]}")
             except Exception as e:
