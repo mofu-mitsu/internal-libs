@@ -1,4 +1,3 @@
-# repost_bot.py
 from atproto import Client
 import time
 import os
@@ -77,45 +76,30 @@ def has_quoted_post(uri, cid):
             post = item.post
             if hasattr(post.record, 'embed') and post.record.embed:
                 embed = post.record.embed
-                # 型チェック
                 if hasattr(embed, 'record') and embed.record.uri == uri:
                     print(f"📌 引用リポスト検出: URI={uri}")
                     return True
-                # ログで構造を記録
                 print(f"📋 Embed構造: {embed}")
         print(f"📌 引用リポストなし: URI={uri}")
         return False
     except Exception as e:
         print(f"⚠️ 引用リポストチェックエラー (URI: {uri}): {e}")
         print(f"🚫 安全のためスキップ: URI={uri}")
-        return True  # エラー時はリポストをスキップ
+        return True
 
-def run_repost_bot():
-    # ... (他の部分は前回と同じ)
-    for post in feed:
-        uri = str(post.post.uri)
-        post_id = uri.split('/')[-1]
-        text = getattr(post.post.record, "text", "")
-        author = post.post.author.handle
-
-        # 既存のスキップ条件
-        if uri in reposted_uris or author == HANDLE or not text:
-            print(f"⏩ スキップ（既存条件）→ @{author}: {text}")
-            continue
-
-        # 引用リポストチェック
-        if has_quoted_post(uri, post.post.cid):
-            print(f"⏩ スキップ（引用リポスト済み）→ @{author}: {text}")
-            continue
-            
-    # セッション＋永続履歴チェック
+def repost_if_needed(uri, cid, text, post, is_quote=False):
+    """リポスト処理"""
+    global repost_count, skip_count, error_count
     if uri in reposted_uris:
         print(f"⏩ 履歴スキップ: {text[:40]}")
         skip_count += 1
         return
+    if has_quoted_post(uri, cid):
+        print(f"⏩ スキップ（引用リポスト済み）: {text[:40]}")
+        skip_count += 1
+        return
     try:
         if is_quote:
-            # 引用リポスト
             comment = random.choice(REPOST_COMMENTS)
             client.app.bsky.feed.post.create(
                 repo=client.me.did,
@@ -130,7 +114,6 @@ def run_repost_bot():
             )
             print(f"📬 引用リポスト: {comment[:40]} (元: {text[:40]})")
         else:
-            # 通常リポスト
             client.app.bsky.feed.repost.create(
                 repo=client.me.did,
                 record={
@@ -163,7 +146,6 @@ def auto_repost_timeline():
                 skip_count += 1
                 continue
             if any(tag.lower() in text for tag in TARGET_HASHTAGS) or any(kw.lower() in text for kw in TARGET_KEYWORDS):
-                # 引用リポストか通常リポストをランダム選択
                 is_quote = random.random() < 0.5
                 repost_if_needed(uri, cid, text, post, is_quote=is_quote)
     except Exception as e:
