@@ -227,12 +227,16 @@ def run_once():
                 print(f"🔁 リポストをスキップ → @{author}: {text}")
                 continue
 
+            # 引用リポストをスキップ
+            if is_quoted_repost(post):
+                print(f"📬 引用リポストをスキップ → @{author}: {text}")
+                continue
+
             # 最新のreplied_urisを読み込み
             replied_uris = load_replied_uris()
             replied_texts = load_replied_texts()
             replied_post_ids = set(uri.split('/')[-1] for uri in replied_uris)
 
-            # りぽりんBotの履歴（オプション）
             reposted_uris = load_reposted_uris()
             reposted_post_ids = set(uri.split('/')[-1] for uri in reposted_uris)
 
@@ -242,7 +246,6 @@ def run_once():
             if reposted_uris:
                 print(f"📂 りぽりんBotの履歴 → 件数: {len(reposted_uris)}")
 
-            # スキップ条件
             if author == HANDLE or post_id in replied_post_ids or not text:
                 if post_id in replied_post_ids:
                     print(f"⏩ スキップ（既にリプ済み）→ @{author}: {text}")
@@ -283,7 +286,6 @@ def run_once():
             )
 
             try:
-                # リプライ前にURIを保存
                 replied_uris.add(uri)
                 save_replied_uris(replied_uris)
                 replied_texts[text] = True
@@ -306,6 +308,5 @@ def run_once():
     except InvokeTimeoutError:
         print("⚠️ APIタイムアウト！Bluesky側の応答がないか、接続に時間がかかりすぎたみたい。")
 
-# 🔧 エントリーポイント
 if __name__ == "__main__":
     run_once()
