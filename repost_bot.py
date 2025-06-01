@@ -57,8 +57,10 @@ error_count = 0
 def normalize_uri(uri):
     """URIを正規化（API仕様変更対応）"""
     try:
+        if not uri.startswith('at://'):
+            uri = f"at://{uri.lstrip('/')}"
         parts = uri.split('/')
-        if len(parts) >= 3 and parts[0].startswith('at:'):
+        if len(parts) >= 5:
             return f"at://{parts[2]}/{parts[3]}/{parts[4]}"
         return uri
     except Exception as e:
@@ -68,45 +70,59 @@ def normalize_uri(uri):
 def load_reposted_uris():
     """永続リポスト履歴を読み込む"""
     global reposted_uris
-    reposted_uris = set()  # 初期化
+    reposted_uris.clear()  # 明示的初期化
     if os.path.exists(REPOSTED_FILE):
         try:
-            with open(REPOSTED_FILE, 'r') as f:
-                reposted_uris.update(normalize_uri(line.strip()) for line in f if line.strip())
+            with open(REPOSTED_FILE, 'r', encoding='utf-8') as f:
+                lines = f.readlines()
+                reposted_uris.update(normalize_uri(line.strip()) for line in lines if line.strip())
             print(f"📂 既存リポスト履歴を読み込み: {len(reposted_uris)}件")
+            if reposted_uris:
+                print(f"📜 履歴サンプル: {list(reposted_uris)[:5]}")
         except Exception as e:
             print(f"⚠️ 履歴読み込みエラー: {e}")
     else:
         print(f"📂 {REPOSTED_FILE} が見つかりません。新規作成します")
-        with open(REPOSTED_FILE, 'w') as f:
+        with open(REPOSTED_FILE, 'w', encoding='utf-8') as f:
             pass
 
 def save_reposted_uri(uri):
     """リポスト履歴を保存"""
+    normalized_uri = normalize_uri(uri)
+    if normalized_uri in reposted_uris:
+        print(f"⏩ 履歴保存スキップ（既存）: {normalized_uri}")
+        return
     try:
-        with open(REPOSTED_FILE, 'a') as f:
-            f.write(f"{normalize_uri(uri)}\n")
-        reposted_uris.add(normalize_uri(uri))
-        print(f"💾 履歴保存: {uri}")
+        with open(REPOSTED_FILE, 'a', encoding='utf-8') as f:
+            f.write(f"{normalized_uri}\n")
+        reposted_uris.add(normalized_uri)
+        print(f"💾 履歴保存: {normalized_uri}")
     except Exception as e:
         print(f"⚠️ 履歴保存エラー: {e}")
 
-def has_quoted_post(uri, cid):
-    """引用リポスト済みかチェック（型対応）"""
+def has_reposted(uri, cid):
+    """引用リポストまたは通常リポスト済みかチェック"""
     try:
         feed = client.app.bsky.feed.get_author_feed(params={"actor": self_did, "limit": 100})
+        normalized_uri = normalize_uri(uri)
         for item in feed.feed:
             post = item.post
+            # 引用リポストチェック
             if hasattr(post.record, 'embed') and post.record.embed:
                 embed = post.record.embed
-                if hasattr(embed, 'record') and normalize_uri(embed.record.uri) == normalize_uri(uri):
+                if hasattr(embed, 'record') and normalize_uri(embed.record.uri) == normalized_uri:
                     print(f"📌 引用リポスト検出: URI={uri}")
                     return True
-                print(f"📋 Embed構造: {embed}")
-        print(f"📌 引用リポストなし: URI={uri}")
+            # 通常リポストチェック
+            if hasattr(item, 'reason') and getattr(item.reason, '$type', None) == 'app.bsky.feed.defs#reasonRepost':
+                if normalize_uri(post.uri) == normalized_uri:
+                    print(f"📌 通常リポスト検出: URI={uri}")
+                    return True
+            print(f"📋 投稿構造: {post}")
+        print(f"📌 リポストなし: URI={uri}")
         return False
     except Exception as e:
-        print(f"⚠️ 引用リポストチェックエラー (URI: {uri}): {e}")
+        print(f"⚠️ リポストチェックエラー (URI: {uri}): {e}")
         print(f"🚫 安全のためスキップ: URI={uri}")
         return True
 
@@ -118,8 +134,8 @@ def repost_if_needed(uri, cid, text, post, is_quote=False):
         print(f"⏩ 履歴スキップ: {text[:40]}")
         skip_count += 1
         return
-    if has_quoted_post(uri, cid):
-        print(f"⏩ スキップ（引用リポスト済み）: {text[:40]}")
+    if has_reposted(uri, cid):
+        print(f"⏩ スキップ（リポスト済み）: {text[:40]}")
         skip_count += 1
         return
     try:
@@ -157,7 +173,7 @@ def auto_repost_timeline():
     global skip_count, error_count
     print("📡 タイムライン巡回中...")
     try:
-        feed_res = client.app.bsky.feed.get_timeline(params={"limit": 50, "cursor": None})
+        feed_res = client.app.bsky.feed.get_timeline(params={"limit": 50})
         feed_items = feed_res.feed
         for item in feed_items:
             post = item.post
@@ -165,6 +181,8 @@ def auto_repost_timeline():
             uri = post.uri
             cid = post.cid
             author_did = post.author.did
+            created_at = post.record.created_at if hasattr(post.record, 'created_at') else "不明"
+            print(f"📅 投稿日時: {created_at}")
             if author_did == self_did or (hasattr(post.record, 'reply') and post.record.reply) or f"@{HANDLE.lower()}" in text:
                 print(f"⏩ スキップ (自己/リプ/メンション): {text[:40]}")
                 skip_count += 1
