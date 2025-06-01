@@ -1,8 +1,14 @@
-from atproto import Client
+# 🔽 📦 Pythonの標準ライブラリ
 import time
 import os
 import random
+from datetime import datetime, timedelta
+
+# 🔽 🌱 外部ライブラリ
 from dotenv import load_dotenv
+
+# 🔽 📡 atproto関連
+from atproto import Client
 
 # ------------------------------
 # ★ カスタマイズポイント: リポスト対象のハッシュタグとキーワード
@@ -104,7 +110,7 @@ def has_reposted(uri, cid):
     """引用リポストまたは通常リポスト済みかチェック"""
     try:
         normalized_uri = normalize_uri(uri)
-        # 引用リポストチェック（get_author_feed）
+        # 引用リポストチェック
         feed = client.app.bsky.feed.get_author_feed(params={"actor": self_did, "limit": 100})
         for item in feed.feed:
             post = item.post
@@ -113,13 +119,12 @@ def has_reposted(uri, cid):
                 if hasattr(embed, 'record') and normalize_uri(embed.record.uri) == normalized_uri:
                     print(f"📌 引用リポスト検出: URI={uri}")
                     return True
-        # 通常リポストチェック（listRecords）
+        # 通常リポストチェック
         records = client.com.atproto.repo.list_records(
             params={"repo": self_did, "collection": "app.bsky.feed.repost", "limit": 100}
         )
         for record in records.records:
-            repost_uri = record.value.get('subject', {}).get('uri', '')
-            if normalize_uri(repost_uri) == normalized_uri:
+            if hasattr(record.value, 'subject') and normalize_uri(record.value.subject.uri) == normalized_uri:
                 print(f"📌 通常リポスト検出: URI={uri}")
                 return True
         print(f"📌 リポストなし: URI={uri}")
@@ -184,7 +189,13 @@ def auto_repost_timeline():
             uri = post.uri
             cid = post.cid
             author_did = post.author.did
-            created_at = post.record.created_at if hasattr(post.record, 'created_at') else "不明"
+            created_at = post.record.created_at if hasattr(post.record, 'created_at') else None
+            if created_at:
+                created_at_dt = datetime.fromisoformat(created_at.replace('Z', '+00:00'))
+                if created_at_dt < datetime.now(timezone.utc) - timedelta(days=7):
+                    print(f"⏩ スキップ（古い投稿）: {text[:40]}")
+                    skip_count += 1
+                    continue
             print(f"📅 投稿日時: {created_at}")
             if author_did == self_did or (hasattr(post.record, 'reply') and post.record.reply) or f"@{HANDLE.lower()}" in text:
                 print(f"⏩ スキップ (自己/リプ/メンション): {text[:40]}")
