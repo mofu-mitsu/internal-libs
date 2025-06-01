@@ -54,19 +54,42 @@ repost_count = 0
 skip_count = 0
 error_count = 0
 
+def normalize_uri(uri):
+    """URIを正規化（API仕様変更対応）"""
+    try:
+        parts = uri.split('/')
+        if len(parts) >= 3 and parts[0].startswith('at:'):
+            return f"at://{parts[2]}/{parts[3]}/{parts[4]}"
+        return uri
+    except Exception as e:
+        print(f"⚠️ URI正規化エラー: {e}")
+        return uri
+
 def load_reposted_uris():
     """永続リポスト履歴を読み込む"""
     global reposted_uris
+    reposted_uris = set()  # 初期化
     if os.path.exists(REPOSTED_FILE):
-        with open(REPOSTED_FILE, 'r') as f:
-            reposted_uris.update(line.strip() for line in f if line.strip())
-        print(f"📂 既存リポスト履歴を読み込み: {len(reposted_uris)}件")
+        try:
+            with open(REPOSTED_FILE, 'r') as f:
+                reposted_uris.update(normalize_uri(line.strip()) for line in f if line.strip())
+            print(f"📂 既存リポスト履歴を読み込み: {len(reposted_uris)}件")
+        except Exception as e:
+            print(f"⚠️ 履歴読み込みエラー: {e}")
+    else:
+        print(f"📂 {REPOSTED_FILE} が見つかりません。新規作成します")
+        with open(REPOSTED_FILE, 'w') as f:
+            pass
 
 def save_reposted_uri(uri):
     """リポスト履歴を保存"""
-    with open(REPOSTED_FILE, 'a') as f:
-        f.write(f"{uri}\n")
-    reposted_uris.add(uri)
+    try:
+        with open(REPOSTED_FILE, 'a') as f:
+            f.write(f"{normalize_uri(uri)}\n")
+        reposted_uris.add(normalize_uri(uri))
+        print(f"💾 履歴保存: {uri}")
+    except Exception as e:
+        print(f"⚠️ 履歴保存エラー: {e}")
 
 def has_quoted_post(uri, cid):
     """引用リポスト済みかチェック（型対応）"""
@@ -76,7 +99,7 @@ def has_quoted_post(uri, cid):
             post = item.post
             if hasattr(post.record, 'embed') and post.record.embed:
                 embed = post.record.embed
-                if hasattr(embed, 'record') and embed.record.uri == uri:
+                if hasattr(embed, 'record') and normalize_uri(embed.record.uri) == normalize_uri(uri):
                     print(f"📌 引用リポスト検出: URI={uri}")
                     return True
                 print(f"📋 Embed構造: {embed}")
@@ -90,7 +113,8 @@ def has_quoted_post(uri, cid):
 def repost_if_needed(uri, cid, text, post, is_quote=False):
     """リポスト処理"""
     global repost_count, skip_count, error_count
-    if uri in reposted_uris:
+    normalized_uri = normalize_uri(uri)
+    if normalized_uri in reposted_uris:
         print(f"⏩ 履歴スキップ: {text[:40]}")
         skip_count += 1
         return
@@ -133,7 +157,7 @@ def auto_repost_timeline():
     global skip_count, error_count
     print("📡 タイムライン巡回中...")
     try:
-        feed_res = client.app.bsky.feed.get_timeline(params={"limit": 50})
+        feed_res = client.app.bsky.feed.get_timeline(params={"limit": 50, "cursor": None})
         feed_items = feed_res.feed
         for item in feed_items:
             post = item.post
