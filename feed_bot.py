@@ -22,6 +22,7 @@ def get_strong_ref_from_post(post_obj):
         "cid": post_obj.cid,
     }
     
+# リポストスキップ用
 def is_quoted_repost(post):
     """引用リポストかチェック"""
     try:
