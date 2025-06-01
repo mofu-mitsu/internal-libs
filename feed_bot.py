@@ -21,6 +21,19 @@ def get_strong_ref_from_post(post_obj):
         "uri": post_obj.uri,
         "cid": post_obj.cid,
     }
+    
+def is_quoted_repost(post):
+    """引用リポストかチェック"""
+    try:
+        if hasattr(post.post.record, 'embed') and post.post.record.embed:
+            embed = post.post.record.embed
+            if hasattr(embed, 'record'):
+                print(f"📌 引用リポスト検出: URI={embed.record.uri}")
+                return True
+        return False
+    except Exception as e:
+        print(f"⚠️ 引用リポストチェックエラー: {e}")
+        return False
 
 # .envファイルを読み込む
 load_dotenv()
