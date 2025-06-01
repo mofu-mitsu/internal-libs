@@ -70,39 +70,44 @@ def save_reposted_uri(uri):
     reposted_uris.add(uri)
 
 def has_quoted_post(uri, cid):
-    """引用リポスト済みかチェック（キャッシュ回避）"""
+    """引用リポスト済みかチェック（型対応）"""
     try:
         feed = client.app.bsky.feed.get_author_feed(params={"actor": self_did, "limit": 100})
         for item in feed.feed:
             post = item.post
             if hasattr(post.record, 'embed') and post.record.embed:
                 embed = post.record.embed
-                if embed['$type'] == 'app.bsky.embed.record' and embed.record.uri == uri:
+                # 型チェック
+                if hasattr(embed, 'record') and embed.record.uri == uri:
+                    print(f"📌 引用リポスト検出: URI={uri}")
                     return True
+                # ログで構造を記録
+                print(f"📋 Embed構造: {embed}")
+        print(f"📌 引用リポストなし: URI={uri}")
         return False
     except Exception as e:
         print(f"⚠️ 引用リポストチェックエラー (URI: {uri}): {e}")
-        return False
+        print(f"🚫 安全のためスキップ: URI={uri}")
+        return True  # エラー時はリポストをスキップ
 
-def repost_if_needed(uri, cid, text, post, is_quote=False):
-    """投稿をリポスト（引用リポスト可）。すでにリポスト済みならスキップ"""
-    global repost_count, skip_count, error_count
-    # 自己投稿をスキップ
-    if post.author.did == self_did:
-        print(f"⏩ 自己投稿スキップ: {text[:40]}")
-        skip_count += 1
-        return
-    # リポスト済みチェック（API）
-    viewer_repost = post.viewer.repost if hasattr(post, 'viewer') and hasattr(post.viewer, 'repost') else None
-    if viewer_repost:
-        print(f"⏩ リポスト済みスキップ (viewer.repost): {text[:40]}")
-        skip_count += 1
-        return
-    # 引用リポスト済みチェック（常時）
-    if has_quoted_post(uri, cid):
-        print(f"⏩ 引用リポスト済みスキップ: {text[:40]}")
-        skip_count += 1
-        return
+def run_repost_bot():
+    # ... (他の部分は前回と同じ)
+    for post in feed:
+        uri = str(post.post.uri)
+        post_id = uri.split('/')[-1]
+        text = getattr(post.post.record, "text", "")
+        author = post.post.author.handle
+
+        # 既存のスキップ条件
+        if uri in reposted_uris or author == HANDLE or not text:
+            print(f"⏩ スキップ（既存条件）→ @{author}: {text}")
+            continue
+
+        # 引用リポストチェック
+        if has_quoted_post(uri, post.post.cid):
+            print(f"⏩ スキップ（引用リポスト済み）→ @{author}: {text}")
+            continue
+            
     # セッション＋永続履歴チェック
     if uri in reposted_uris:
         print(f"⏩ 履歴スキップ: {text[:40]}")
