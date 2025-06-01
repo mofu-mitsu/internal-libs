@@ -2,7 +2,7 @@
 import time
 import os
 import random
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 
 # 🔽 🌱 外部ライブラリ
 from dotenv import load_dotenv
@@ -191,11 +191,14 @@ def auto_repost_timeline():
             author_did = post.author.did
             created_at = post.record.created_at if hasattr(post.record, 'created_at') else None
             if created_at:
-                created_at_dt = datetime.fromisoformat(created_at.replace('Z', '+00:00'))
-                if created_at_dt < datetime.now(timezone.utc) - timedelta(days=7):
-                    print(f"⏩ スキップ（古い投稿）: {text[:40]}")
-                    skip_count += 1
-                    continue
+                try:
+                    created_at_dt = datetime.fromisoformat(created_at.replace('Z', '+00:00'))
+                    if created_at_dt < datetime.now(timezone.utc) - timedelta(days=7):
+                        print(f"⏩ スキップ（古い投稿）: {text[:40]}")
+                        skip_count += 1
+                        continue
+                except ValueError:
+                    print(f"⚠️ 日時パースエラー: {created_at}")
             print(f"📅 投稿日時: {created_at}")
             if author_did == self_did or (hasattr(post.record, 'reply') and post.record.reply) or f"@{HANDLE.lower()}" in text:
                 print(f"⏩ スキップ (自己/リプ/メンション): {text[:40]}")
