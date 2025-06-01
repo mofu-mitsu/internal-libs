@@ -70,7 +70,7 @@ def normalize_uri(uri):
 def load_reposted_uris():
     """永続リポスト履歴を読み込む"""
     global reposted_uris
-    reposted_uris.clear()  # 明示的初期化
+    reposted_uris.clear()
     if os.path.exists(REPOSTED_FILE):
         try:
             with open(REPOSTED_FILE, 'r', encoding='utf-8') as f:
@@ -103,22 +103,25 @@ def save_reposted_uri(uri):
 def has_reposted(uri, cid):
     """引用リポストまたは通常リポスト済みかチェック"""
     try:
-        feed = client.app.bsky.feed.get_author_feed(params={"actor": self_did, "limit": 100})
         normalized_uri = normalize_uri(uri)
+        # 引用リポストチェック（get_author_feed）
+        feed = client.app.bsky.feed.get_author_feed(params={"actor": self_did, "limit": 100})
         for item in feed.feed:
             post = item.post
-            # 引用リポストチェック
             if hasattr(post.record, 'embed') and post.record.embed:
                 embed = post.record.embed
                 if hasattr(embed, 'record') and normalize_uri(embed.record.uri) == normalized_uri:
                     print(f"📌 引用リポスト検出: URI={uri}")
                     return True
-            # 通常リポストチェック
-            if hasattr(item, 'reason') and getattr(item.reason, '$type', None) == 'app.bsky.feed.defs#reasonRepost':
-                if normalize_uri(post.uri) == normalized_uri:
-                    print(f"📌 通常リポスト検出: URI={uri}")
-                    return True
-            print(f"📋 投稿構造: {post}")
+        # 通常リポストチェック（listRecords）
+        records = client.com.atproto.repo.list_records(
+            params={"repo": self_did, "collection": "app.bsky.feed.repost", "limit": 100}
+        )
+        for record in records.records:
+            repost_uri = record.value.get('subject', {}).get('uri', '')
+            if normalize_uri(repost_uri) == normalized_uri:
+                print(f"📌 通常リポスト検出: URI={uri}")
+                return True
         print(f"📌 リポストなし: URI={uri}")
         return False
     except Exception as e:
