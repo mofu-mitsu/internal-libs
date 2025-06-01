@@ -154,6 +154,20 @@ def save_replied_texts(replied_texts):
         except:
             msg = response.text
         print(f"⚠️ replied_texts保存失敗: {response.status_code} {msg}")
+        
+# 🔹 りぽりんBotの履歴（オプション）
+REPOSTED_FILE = "reposted_uris.txt"
+def load_reposted_uris():
+    if os.path.exists(REPOSTED_FILE):
+        try:
+            with open(REPOSTED_FILE, 'r') as f:
+                uris = set(line.strip() for line in f if line.strip())
+                print(f"✅ 読み込んだ reposted_uris: {len(uris)}件")
+                return uris
+        except Exception as e:
+            print(f"⚠️ reposted_uris読み込みエラー: {e}")
+            return set()
+    return set()
 
 # 特定のキーワードに反応する返答一覧
 KEYWORD_RESPONSES = {
@@ -196,17 +210,7 @@ def run_once():
     try:
         client = Client()
         client.login(HANDLE, APP_PASSWORD)
-
         print("📨 投稿を確認中…")
-        replied_uris = load_replied_uris()
-        replied_texts = set(load_replied_texts())
-
-        print(f"📄 保存済みURI読み込み完了 → 件数: {len(replied_uris)}")
-        print(f"🗂 保存済みテキスト読み込み完了 → 件数: {len(replied_texts)}")
-        print(f"🔍 URIサンプル: {list(replied_uris)[:5]}")
-        print(f"🔍 テキストサンプル: {list(replied_texts)[:5]}")
-
-        replied_post_ids = set(uri.split('/')[-1] for uri in replied_uris)
 
         timeline = client.app.bsky.feed.get_timeline(params={"limit": 20})
         feed = timeline.feed
@@ -218,15 +222,27 @@ def run_once():
             post_id = uri.split('/')[-1]
             author = post.post.author.handle
 
-            print(f"📝 処理対象URI: {uri}")
-            print(f"📂 保存済みURIsの一部: {list(replied_uris)[-5:]}")
-            print(f"🆔 投稿ID: {post_id}")
-
-            # 🚫 リプライ投稿ならスキップ
-            if hasattr(post.post.record, "reply") and post.post.record.reply is not None:
-                print(f"📭 スキップ（リプライ投稿）→ @{author}: {text}")
+            # リポストをスキップ
+            if hasattr(post, 'reason') and getattr(post.reason, '$type', None) == 'app.bsky.feed.defs#reasonRepost':
+                print(f"🔁 リポストをスキップ → @{author}: {text}")
                 continue
 
+            # 最新のreplied_urisを読み込み
+            replied_uris = load_replied_uris()
+            replied_texts = load_replied_texts()
+            replied_post_ids = set(uri.split('/')[-1] for uri in replied_uris)
+
+            # りぽりんBotの履歴（オプション）
+            reposted_uris = load_reposted_uris()
+            reposted_post_ids = set(uri.split('/')[-1] for uri in reposted_uris)
+
+            print(f"📝 処理対象URI: {uri}")
+            print(f"📄 保存済みURI読み込み完了 → 件数: {len(replied_uris)}")
+            print(f"🗂 保存済みテキスト読み込み完了 → 件数: {len(replied_texts)}")
+            if reposted_uris:
+                print(f"📂 りぽりんBotの履歴 → 件数: {len(reposted_uris)}")
+
+            # スキップ条件
             if author == HANDLE or post_id in replied_post_ids or not text:
                 if post_id in replied_post_ids:
                     print(f"⏩ スキップ（既にリプ済み）→ @{author}: {text}")
@@ -235,6 +251,12 @@ def run_once():
                     print(f"⏩ スキップ（自分の投稿）→ @{author}: {text}")
                 elif not text:
                     print(f"⏩ スキップ（テキストなし）→ @{author}")
+                continue
+            if hasattr(post.post.record, "reply") and post.post.record.reply is not None:
+                print(f"📭 スキップ（リプライ投稿）→ @{author}: {text}")
+                continue
+            if post_id in reposted_post_ids:
+                print(f"⏩ スキップ（リポスト済み）→ @{author}: {text}")
                 continue
 
             print(f"👀 チェック中 → @{author}: {text}")
@@ -261,6 +283,12 @@ def run_once():
             )
 
             try:
+                # リプライ前にURIを保存
+                replied_uris.add(uri)
+                save_replied_uris(replied_uris)
+                replied_texts[text] = True
+                save_replied_texts(replied_texts)
+
                 client.app.bsky.feed.post.create(
                     record=AppBskyFeedPost.Record(
                         text=reply_text,
@@ -270,31 +298,14 @@ def run_once():
                     ),
                     repo=client.me.did
                 )
-            except Exception as e:
-                print(f"⚠️ 返信エラー: {e}")
-            else:
-                replied_uris.add(uri)
-                replied_texts.add(text)
                 print(f"✅ 返信しました → @{author}")
                 print(f"📁 保存されたURI一覧（最新5件）: {list(replied_uris)[-5:]}")
-                print(f"🗂 現在の保存数: {len(replied_uris)} 件")
-
-        try:
-            save_replied_uris(replied_uris)
-            print(f"💾 URI保存成功 → 合計: {len(replied_uris)} 件")
-            print(f"📁 最新URI一覧: {list(replied_uris)[-5:]}")
-
-            save_replied_texts({t: True for t in replied_texts})
-            print(f"💾 テキスト保存成功 → 合計: {len(replied_texts)} 件")
-            print("📦 最新保存テキスト（抜粋）:")
-            print(json.dumps(list(replied_texts)[-5:], ensure_ascii=False, indent=2))
-
-        except Exception as e:
-            print(f"❌ 保存失敗: {e}")
+            except Exception as e:
+                print(f"⚠️ 返信エラー: {e}")
 
     except InvokeTimeoutError:
         print("⚠️ APIタイムアウト！Bluesky側の応答がないか、接続に時間がかかりすぎたみたい。")
-        
+
 # 🔧 エントリーポイント
 if __name__ == "__main__":
     run_once()
