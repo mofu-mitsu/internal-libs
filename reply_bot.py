@@ -208,10 +208,22 @@ FIRST_PERSON = "みりんてゃ"  # 一人称（例: "私", "君", "あたし", 
 import re
 import random
 
+import re
+
 def clean_output(text):
+    # 改行が連続する場合は1つにまとめる
     text = re.sub(r'\n{2,}', '\n', text)
-    text = re.sub(r'[^\w\sぁ-んァ-ン一-龯。、！？!?♡（）「」♪〜ー…w笑]+', '', text)
+
+    # 顔文字にありがちな記号も許容するようホワイトリスト拡張
+    face_char_whitelist = 'ฅ๑•ω•ฅﾐ・o｡≧≦｡っ☆彡≡≒'
+
+    # 不要な記号の除去（ホワイトリストにある文字は残す）
+    allowed = rf'[^\w\sぁ-んァ-ン一-龯。、！？!?♡（）「」♪〜ー…w笑{face_char_whitelist}]+'
+    text = re.sub(allowed, '', text)
+
+    # 記号の連続を1つにまとめる（「！！」→「！」）
     text = re.sub(r'[。、！？]{2,}', lambda m: m.group(0)[0], text)
+
     return text.strip()
 
 def is_output_safe(text):
