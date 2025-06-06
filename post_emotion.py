@@ -16,32 +16,20 @@ def generate_poem(weather, day_of_week):
     model = AutoModelForCausalLM.from_pretrained("cyberagent/open-calm-1b")
     generator = pipeline("text-generation", model=model, tokenizer=tokenizer)
 
-    prompt = f"""
-    {weather}の{day_of_week}にぴったりな、みりんてゃらしい可愛くて癒される短いポエムを書いてください。
-    →
-    """.strip()
-
-    output = generator(
-        prompt,
-        max_length=100,
-        do_sample=True,
-        temperature=0.8,
-        top_p=0.95,
-        return_full_text=False  # プロンプト重複を防ぐ
-    )[0]['generated_text']
-
-    generated_poem = output.strip()
+    prompt = f"{weather}の{day_of_week}に合う、みりんてゃらしい癒し系の**一言ポエム**を作ってください。セリフ形式ではなく、詩的で短く、優しい文体にしてください。"
+    output = generator(prompt, max_length=60, do_sample=True, temperature=0.8)[0]['generated_text']
+    generated_poem = output[len(prompt):].strip()  # プロンプト部分を除去
 
     # デバッグ用ログ
     print(f"Prompt: {prompt}")
-    print(f"Output: {output}")
+    print(f"Raw Output: {output}")
     print(f"Final Poem: {generated_poem}")
 
-    # 空欄回避
-    if not generated_poem or generated_poem.isspace():
-        return "みりんてゃ、言葉を探しにお散歩に出かけちゃったみたい...またすぐ帰ってくるね♡"
+    # 内容フィルター（セリフや異常を弾く）
+    if any(word in generated_poem for word in ["僕", "あなた", "大好き", "頑張ってる"]):
+        return "えへへ〜♡ 何か変になっちゃったなのっ！また挑戦するね♪"
 
-    # 内容フィルター
+    # 小雪さん対策フィルター
     if any(word in generated_poem for word in ["プロフィール", "【", "さん", "美魔女", "商品", "ニュース"]):
         return "えへへ〜♡ 何か変になっちゃったなのっ！また挑戦するね♪"
 
