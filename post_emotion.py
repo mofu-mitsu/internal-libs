@@ -42,6 +42,10 @@ def generate_poem(weather, day_of_week):
     with open("poem_log.txt", "a", encoding="utf-8") as f:
         f.write(f"{datetime.now()}: {generated_poem}\n")
 
+    # 哲学モード検知
+    if "詩は" in generated_poem and "作者の心" in generated_poem and "サイバー" in generated_poem:
+        return "みりんてゃ、サイバー空間でポem迷子になっちゃったみたい♡ ちょっと探してくるね…！"
+
     # NGワード置換
     generated_poem = clean_poem(generated_poem)
 
