@@ -8,7 +8,17 @@
 
 ### Q. セットアップがうまくいきません
 A. Pythonと必要なライブラリがインストールされているか確認してみてください。  
-→ 詳しくは[wikiへ](https://github.com/mofu-mitsu/mirin_bot_once/wiki/Setup-Guide)
+
+### Q. Pythonのバージョンは何を使えばいい？
+A. Python 3.8以上推奨。`python --version`で確認。3.10がベスト！
+
+### Q. BlueskyのアカウントやApp Passwordはどうやって作る？
+A. [Bluesky](https://bsky.app)の「Settings > App Passwords」で作成。`HANDLE`は`@your_handle.bsky.social`。
+→ 詳細: [Bluesky公式](https://bsky.app/support)
+
+### Q. GitHub Secretsの設定方法は？
+A. リポジトリの「Settings > Secrets and variables > Actions」で`HANDLE`, `APP_PASSWORD`, `GIST_TOKEN_REPLY`, `GIST_ID`を追加。
+→ 手順: [GitHub Docs](https://docs.github.com/en/actions/security-guides/encrypted-secrets)
 
 ### Q. GIST_TOKEN_REPLYが見つかりません
 A. GitHub Secretsに正しく登録されているか確認してください。  
@@ -16,7 +26,6 @@ A. GitHub Secretsに正しく登録されているか確認してください。
 
 ### Q. Botの名前を変更したい
 A. `reply_bot.py`の「★ カスタマイズポイント ★」を編集してください。  
-→ 詳しくは[wikiへ](https://github.com/mofu-mitsu/mirin_bot_once/wiki/Setup-Guide)
 
 ---
 
