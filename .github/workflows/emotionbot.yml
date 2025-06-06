@@ -2,30 +2,45 @@ name: 💭 Emotion Bot
 
 on:
   schedule:
-    - cron: '5 23 * * *'  # JST 8:05（UTC 23:05）
+    - cron: '5 23 * * *'  # JST 8:05
   workflow_dispatch:
 
 jobs:
   run-emotion-bot:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
       - name: 📥 リポジトリをチェックアウト
         uses: actions/checkout@v3
 
+      - name: 🔄 Hugging Faceのキャッシュを削除
+        run: |
+          rm -rf ~/.cache/huggingface
+
+      - name: 🧹 pipキャッシュをクリア
+        run: |
+          pip cache purge
+
       - name: 🐍 Pythonセットアップ
         uses: actions/setup-python@v4
         with:
-          python-version: '3.9'
+          python-version: '3.10'
 
-      - name: 📦 依存ライブラリをインストール
+      - name: 📦 ライブラリをインストール
         run: |
-          pip install -r requirements.txt
+          pip install --upgrade pip
+          pip install torch==2.0.1 transformers==4.36.2 sentencepiece==0.2.0
+          pip install -U accelerate
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-      - name: 🔐 シークレットを環境変数として書き出し
+      - name: 🔐 シークレットを書き出し
         run: |
           echo "HANDLE=${{ secrets.HANDLE }}" >> .env
           echo "APP_PASSWORD=${{ secrets.APP_PASSWORD }}" >> .env
+
+      - name: 📋 確認のためパッケージ一覧を表示
+        run: pip list
 
       - name: 🚀 Botを実行
         run: python post_emotion.py
