@@ -17,28 +17,27 @@ def generate_poem(weather, day_of_week):
     generator = pipeline("text-generation", model=model, tokenizer=tokenizer)
 
     prompt = f"""
-    {weather}の{day_of_week}にぴったりな、みりんてゃらしい一言ポエムを詩的な文体で書いてください。
-    美容・ニュース・インフルエンサー・商品紹介のような内容は含めないでください。
-    また、文章の中に人名（特に女性名）やプロフィール紹介文は含めないでください。
-    可愛くて癒される、短めの詩的な言葉にしてください。
+    {weather}の{day_of_week}にぴったりな、みりんてゃらしい可愛くて癒される短いポエムを書いてください。
+    →
     """.strip()
 
     output = generator(
         prompt,
-        max_length=100,  # 余裕を持たせる
+        max_length=100,
         do_sample=True,
         temperature=0.8,
-        top_p=0.95  # サンプリング安定化
+        top_p=0.95,
+        return_full_text=False  # プロンプト重複を防ぐ
     )[0]['generated_text']
 
-    generated_poem = output[len(prompt):].strip()
+    generated_poem = output.strip()
 
     # デバッグ用ログ
     print(f"Prompt: {prompt}")
-    print(f"Raw Output: {output}")
+    print(f"Output: {output}")
     print(f"Final Poem: {generated_poem}")
 
-    # 空欄回避おまじない
+    # 空欄回避
     if not generated_poem or generated_poem.isspace():
         return "みりんてゃ、言葉を探しにお散歩に出かけちゃったみたい...またすぐ帰ってくるね♡"
 
