@@ -22,15 +22,27 @@ def generate_poem(weather, day_of_week):
     また、文章の中に人名（特に女性名）やプロフィール紹介文は含めないでください。
     可愛くて癒される、短めの詩的な言葉にしてください。
     """.strip()
-    output = generator(prompt, max_length=60, do_sample=True, temperature=0.8)[0]['generated_text']
-    generated_poem = output[len(prompt):].strip()  # プロンプト部分を除去
+
+    output = generator(
+        prompt,
+        max_length=100,  # 余裕を持たせる
+        do_sample=True,
+        temperature=0.8,
+        top_p=0.95  # サンプリング安定化
+    )[0]['generated_text']
+
+    generated_poem = output[len(prompt):].strip()
 
     # デバッグ用ログ
     print(f"Prompt: {prompt}")
     print(f"Raw Output: {output}")
     print(f"Final Poem: {generated_poem}")
 
-    # 内容フィルター（異常を弾く）
+    # 空欄回避おまじない
+    if not generated_poem or generated_poem.isspace():
+        return "みりんてゃ、言葉を探しにお散歩に出かけちゃったみたい...またすぐ帰ってくるね♡"
+
+    # 内容フィルター
     if any(word in generated_poem for word in ["プロフィール", "【", "さん", "美魔女", "商品", "ニュース"]):
         return "えへへ〜♡ 何か変になっちゃったなのっ！また挑戦するね♪"
 
