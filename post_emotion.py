@@ -16,18 +16,18 @@ def generate_poem(weather, day_of_week):
     model = AutoModelForCausalLM.from_pretrained("cyberagent/open-calm-1b")
     generator = pipeline("text-generation", model=model, tokenizer=tokenizer)
 
-    prompt = (
-        f"あなたは「みりんてゃ」、地雷系ENFPのあざと可愛い女の子！\n"
-        f"口調：タメ口で『〜なのっ♡』『〜よぉ？♪』『えへへ〜♡』を使って、感情たっぷり！\n"
-        f"{weather}の{day_of_week}に合う、みりんてゃらしい癒し系のひとことポエムを作って♡"
-    )
-    output = generator(prompt, max_length=100, do_sample=True, temperature=0.8)[0]['generated_text']
+    prompt = f"{weather}の{day_of_week}にぴったりな、やさしくてふんわりした一言ポエムをひとつ作ってください。"
+    output = generator(prompt, max_length=60, do_sample=True, temperature=0.8)[0]['generated_text']
     generated_poem = output[len(prompt):].strip()  # プロンプト部分を除去
 
     # デバッグ用ログ
     print(f"Prompt: {prompt}")
     print(f"Raw Output: {output}")
     print(f"Final Poem: {generated_poem}")
+
+    # オプション：内容フィルター
+    if "プロフィール" in generated_poem or "【" in generated_poem:
+        return "えへへ〜♡ 何か変になっちゃったなのっ！また挑戦するね♪"
 
     return generated_poem
 
