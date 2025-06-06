@@ -374,6 +374,3 @@ A. 以下を確認してください：
 
 ### Q. 問題が解決しない場合は？
 A. [カスタマーサポート](#customer-support)へ！GoogleフォームやblueskyのDMで気軽にどうぞ♡
-
-## 📚 もっと知りたい？
-詳細なFAQやカスタマイズ例は[Wiki](https://github.com/mofu-mitsu/mirin_bot_once/wiki/Customization-Guide)へ！
