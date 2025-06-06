@@ -1,0 +1,31 @@
+name: Post Image Bot
+
+on:
+  schedule:
+    # 1日3回（朝8時、昼12時、夜20時）に投稿
+    - cron: "0 8,12,20 * * *"
+  workflow_dispatch: # 手動実行もできるように
+
+jobs:
+  post-image:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install atproto python-dotenv
+
+      - name: Run post_image.py
+        env:
+          HANDLE: ${{ secrets.HANDLE }}
+          APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
+        run: python post_image.py
