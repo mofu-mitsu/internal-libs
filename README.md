@@ -165,6 +165,32 @@ multiformats==2.0.1`
 - **open-calm-3b**: 3Bパラメータ、RAM 8GB＋GPU推奨。高品質。
 - **open-calm-7b**: 7Bパラメータ、RAM 16GB＋GPU必須。最高品質。
 
+## その他のモデル
+**A:**  
+`generate_reply_via_local_model` 関数の中にある `model_name`（※約294行目あたり）を変更しよう。  
+例：`"meta-llama/Llama-3-8b"`  
+※HuggingFaceのアクセストークンが必要だよ！
+
+---
+
+## 返信が変になる！
+**A:**  
+- `DANGER_ZONE` にNGワードを追加してみて。
+- `temperature` を下げてみよう（例：`0.7`）。  
+　→ ランダム性が減って、安定した返信になりやすいよ。
+- ログを見て、生成されたテキストをチェック！
+
+---
+
+## 長時間動かすと重くなる！
+**A:**  
+モデルのメモリ解放を試してみよう！  
+`initialize_model_and_tokenizer()` の中で以下のように設定して、定期的にリセットできるようにすると◎：
+
+```python
+model = None
+tokenizer = None
+
 ### Q. どんなキャラにできる？
 **A:**  
 クマちゃん、ツンデレ姫、忍者、ギャル、なんでもOK！  
