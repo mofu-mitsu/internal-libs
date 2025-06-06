@@ -49,6 +49,39 @@ A. `reply_bot.py`の「★ カスタマイズポイント ★」を編集して�
 
 python reply_bot.py
 
+## エラー関連
+### Q. エラー「404 Not Found」が出ました
+A. `GIST_ID`や`GIST_TOKEN_REPLY`が間違ってる可能性。GistのURL（例：`https://gist.github.com/your_username/12345abcde`）の`12345abcde`を確認。
+
+### Q. エラー「CUDA out of memory」
+A. GPUメモリ不足。`torch.cuda.empty_cache()`を試すか、CPUで実行（`device_map="cpu"`）。
+
+### Q. モデルがロードできません
+A. `cyberagent/open-calm-3b`のダウンロードに失敗した可能性。`transformers==4.36.2`とインターネット接続を確認。
+
+# エラー対処
+
+## エラー「ModuleNotFoundError」
+- **原因**: ライブラリ未インストール。
+- **解決**: `pip install -r requirements.txt`を実行。`requirements.txt`に`atproto`, `transformers==4.36.2`など記載。
+
+## エラー「GIST_TOKEN_REPLYが見つかりません」
+- **原因**: `.env`やSecretsに`GIST_TOKEN_REPLY`未設定。
+- **解決**: GitHubでGistトークン生成（スコープ：`gist`）。`.env`に`GIST_TOKEN_REPLY=your_token`。
+
+## Gistのエラーが出る！
+**A:**  
+- `GIST_TOKEN_REPLY` と `GIST_ID` が正しいかチェック！
+- Gistが「**公開設定**」になってるか確認してね。
+- `replied.json` が空でもOK！（`[]`の状態）
+
+## リプが来ない
+- **原因**: ログに「⚠️ スキップ」が出てる可能性。
+- **解決**:
+  1. `@your_handle`が正しいか確認。
+  2. Blueskyの通知設定（「Mentions」有効）。
+  3. ログで「⏭️ すでに処理済み」「メンションなし」をチェック。
+
 ## Q: モデル読み込みでエラーが出る
 
 **A**: デフォルトの`cyberagent/open-calm-small`は軽量で低スペック環境でも動作しますが、以下の原因でエラーが出る場合があります：
@@ -131,6 +164,31 @@ multiformats==2.0.1`
 - **open-calm-1b**: 1Bパラメータ、RAM 6GB以上推奨。バランス型。
 - **open-calm-3b**: 3Bパラメータ、RAM 8GB＋GPU推奨。高品質。
 - **open-calm-7b**: 7Bパラメータ、RAM 16GB＋GPU必須。最高品質。
+
+### Q. どんなキャラにできる？
+**A:**  
+クマちゃん、ツンデレ姫、忍者、ギャル、なんでもOK！  
+`BOT_NAME` や `FIRST_PERSON` を変更して、`REPLY_TABLE` や `SAFE_WORDS` を調整すればキャラの雰囲気が作れるよ！
+
+### Q. キャラをクマちゃんにしたい
+A. `reply_bot.py`で：
+```python
+BOT_NAME = "クマちゃん"
+FIRST_PERSON = "ボク"
+intro_lines = [f"くまっ、{BOT_NAME}だよー！"]
+```
+
+### Q. キャラを忍者にしたい
+A. `reply_bot.py`で：
+```python
+BOT_NAME = "忍たん"
+FIRST_PERSON = "拙者"
+intro_lines = [
+    f"シュッ！{BOT_NAME}、参上！",
+    f"忍びの{BOT_NAME}、キミを守るでござる！"
+]
+prompt = f"あなたは『{BOT_NAME}』、クールな忍者！一人称は『{FIRST_PERSON}』！\n「〜でござる！」「シュッ！」な口調で！"
+``` 
 
 ### 手順
 
