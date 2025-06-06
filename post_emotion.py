@@ -6,12 +6,19 @@ from dotenv import load_dotenv
 from pathlib import Path
 import requests
 from datetime import datetime
+from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
 
 # ------------------------------
-# ★ ポエム生成（ダミー）
+# ★ ポエム生成（open-calm-1b使用）
 # ------------------------------
 def generate_poem(weather, day_of_week):
-    return f"💭【今日の気分予報】 空が{weather}で、{day_of_week}の優しい風が吹いてる…。みりんてゃ、ぬいぐるみを抱いてぼんやり。 →おすすめ：冷たいお茶でほっと一息♡"
+    tokenizer = AutoTokenizer.from_pretrained("cyberagent/open-calm-1b")
+    model = AutoModelForCausalLM.from_pretrained("cyberagent/open-calm-1b")
+    generator = pipeline("text-generation", model=model, tokenizer=tokenizer)
+
+    prompt = f"{weather}の{day_of_week}に合う、みりんてゃらしい癒し系のひとことポエムを作って♡"
+    output = generator(prompt, max_length=100, do_sample=True, temperature=0.8)[0]['generated_text']
+    return output.strip()
 
 # ------------------------------
 # ★ 天気取得
