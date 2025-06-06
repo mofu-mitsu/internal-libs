@@ -9,14 +9,21 @@ from datetime import datetime
 from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
 
 # ------------------------------
-# ★ ポエム生成（open-calm-1b使用）
+# ★ NGワードカウントと置換処理
 # ------------------------------
+def count_ng_words(poem):
+    ng_words = ["プロフィール", "【", "さん", "美魔女", "商品", "ニュース", "応募規約", "未発表", "応募作品", "字程度"]
+    return sum(word in poem for word in ng_words)
+
 def clean_poem(poem):
-    ng_words = ["プロフィール", "【", "さん", "美魔女", "商品", "ニュース", "応募規約"]
+    ng_words = ["プロフィール", "【", "さん", "美魔女", "商品", "ニュース", "応募規約", "未発表", "応募作品", "字程度"]
     for word in ng_words:
         poem = poem.replace(word, "○○")
     return poem
 
+# ------------------------------
+# ★ ポエム生成（open-calm-1b使用）
+# ------------------------------
 def generate_poem(weather, day_of_week):
     tokenizer = AutoTokenizer.from_pretrained("cyberagent/open-calm-1b")
     model = AutoModelForCausalLM.from_pretrained("cyberagent/open-calm-1b")
@@ -37,6 +44,10 @@ def generate_poem(weather, day_of_week):
 
     # NGワード置換
     generated_poem = clean_poem(generated_poem)
+
+    # NGワードが3つ以上なら再生成
+    if count_ng_words(generated_poem) > 2:
+        return "みりんてゃ、おやつ食べながら考えてたら、ポエムがどっかいっちゃったみたい…またすぐ届けるね♡"
 
     # 空欄対策
     if not generated_poem.strip():
