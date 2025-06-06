@@ -11,6 +11,12 @@ from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
 # ------------------------------
 # ★ ポエム生成（open-calm-1b使用）
 # ------------------------------
+def clean_poem(poem):
+    ng_words = ["プロフィール", "【", "さん", "美魔女", "商品", "ニュース", "応募規約"]
+    for word in ng_words:
+        poem = poem.replace(word, "○○")
+    return poem
+
 def generate_poem(weather, day_of_week):
     tokenizer = AutoTokenizer.from_pretrained("cyberagent/open-calm-1b")
     model = AutoModelForCausalLM.from_pretrained("cyberagent/open-calm-1b")
@@ -25,13 +31,16 @@ def generate_poem(weather, day_of_week):
     print(f"Raw Output: {output}")
     print(f"Final Poem: {generated_poem}")
 
-    # 内容フィルター（セリフや異常を弾く）
-    if any(word in generated_poem for word in ["僕", "あなた", "大好き", "頑張ってる"]):
-        return "えへへ〜♡ 何か変になっちゃったなのっ！また挑戦するね♪"
+    # ログ保存
+    with open("poem_log.txt", "a", encoding="utf-8") as f:
+        f.write(f"{datetime.now()}: {generated_poem}\n")
 
-    # 小雪さん対策フィルター
-    if any(word in generated_poem for word in ["プロフィール", "【", "さん", "美魔女", "商品", "ニュース"]):
-        return "えへへ〜♡ 何か変になっちゃったなのっ！また挑戦するね♪"
+    # NGワード置換
+    generated_poem = clean_poem(generated_poem)
+
+    # 空欄対策
+    if not generated_poem.strip():
+        return "みりんてゃ、言葉を探しにお散歩に出かけちゃったみたい...またすぐ帰ってくるね♡"
 
     return generated_poem
 
