@@ -47,13 +47,18 @@ def generate_poem(weather, day_of_week):
     generator = pipeline("text-generation", model=model, tokenizer=tokenizer)
 
     print(f"DEBUG: Starting generation - Weather: {weather}, Day: {day_of_week}")
-    prompt = f"{weather}の{day_of_week}。静かな午後、みりんてゃが空を見て、ふと心に浮かんだ優しいつぶやきを、1〜2文で。繰り返しを使わず、詩的で癒される文にしてください。"
+    prompt = f"{weather}の{day_of_week}。空を見上げたとき、みりんてゃの心にふっと浮かんだことを、やさしい言葉で短く表現してください。投稿規定の説明ではなく、ふんわりした一言で。"
     print(f"DEBUG: Prompt: {prompt}")
 
     output = generator(prompt, max_length=100, do_sample=True, temperature=0.6, repetition_penalty=1.2)[0]['generated_text']
     print(f"DEBUG: Raw Output: {output}")
     generated_poem = output[len(prompt):].strip()
     print(f"DEBUG: Generated Poem (raw strip): {generated_poem}")
+
+    # 投稿系文頭チェックで再生成
+    if any(generated_poem.strip().startswith(word) for word in ["投稿", "作品", "規定", "応募"]):
+        print(f"DEBUG: Detected post-related start - Poem: {generated_poem}")
+        return "みりんてゃ、ちょっと真面目すぎたかも…もう一回書き直してみるね🍵"
 
     # デバッグ用ログ
     print(f"Prompt: {prompt}")
