@@ -14,25 +14,27 @@ from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
 def count_ng_words(poem):
     ng_words = [
         "プロフィール", "【", "さん", "美魔女", "商品", "ニュース", "応募規約",
-        "弊社", "投稿作品", "作品", "応募", "締切", "募集", "キャンペーン",
-        "ホームページ", "記載", "注意事項", "規定", "承諾", "掲載", "SNS",
-        "送信", "応募方法", "書式", "未発表", "発表", "入選", "特典"
+        "投稿締め切り", "投稿規定", "作品", "ご応募", "コンクール", "掲載", "ポエム・コラム",
+        "弊社", "投稿作品", "応募", "締切", "募集", "キャンペーン", "ホームページ",
+        "記載", "注意事項", "規定", "承諾", "SNS", "送信", "応募方法", "書式",
+        "未発表", "発表", "入選", "特典"
     ]
     return sum(word in poem for word in ng_words)
 
 def clean_poem(poem):
     ng_words = [
         "プロフィール", "【", "さん", "美魔女", "商品", "ニュース", "応募規約",
-        "弊社", "投稿作品", "作品", "応募", "締切", "募集", "キャンペーン",
-        "ホームページ", "記載", "注意事項", "規定", "承諾", "掲載", "SNS",
-        "送信", "応募方法", "書式", "未発表", "発表", "入選", "特典"
+        "投稿締め切り", "投稿規定", "作品", "ご応募", "コンクール", "掲載", "ポエム・コラム",
+        "弊社", "投稿作品", "応募", "締切", "募集", "キャンペーン", "ホームページ",
+        "記載", "注意事項", "規定", "承諾", "SNS", "送信", "応募方法", "書式",
+        "未発表", "発表", "入選", "特典"
     ]
     for word in ng_words:
         poem = poem.replace(word, "○○")
     return poem
 
 # ------------------------------
-# ★ ポエム生成（open-calm-3b使用）
+# ★ ポエム生成（open-calm-1b使用）
 # ------------------------------
 def generate_poem(weather, day_of_week):
     tokenizer = AutoTokenizer.from_pretrained("cyberagent/open-calm-3b")  # 3b試したい場合は"cyberagent/open-calm-3b"
@@ -40,7 +42,7 @@ def generate_poem(weather, day_of_week):
     generator = pipeline("text-generation", model=model, tokenizer=tokenizer)
 
     print(f"DEBUG: Starting generation - Weather: {weather}, Day: {day_of_week}")
-    prompt = f"{weather}の{day_of_week}。みりんてゃが空を見上げて、ふと思ったことを、やさしい言葉で綴ってください。ポエムというより、心のつぶやきのような、ふわっとした雰囲気で。"
+    prompt = f"{weather}の{day_of_week}、空を見上げて、ふと思ったことを、みりんてゃらしくやさしく短くつぶやいてください。説明やセリフではなく、雰囲気のある文章で。"
     print(f"DEBUG: Prompt: {prompt}")
 
     output = generator(prompt, max_length=100, do_sample=True, temperature=0.8)[0]['generated_text']
@@ -71,9 +73,9 @@ def generate_poem(weather, day_of_week):
         print(f"DEBUG: NG words count > 2 - Poem: {generated_poem}, Count: {count_ng_words(generated_poem)}")
         return "みりんてゃ、おやつ食べながら考えてたら、ポエムがどっかいっちゃったみたい…またすぐ届けるね♡"
 
-    # 空欄対策
+    # 空欄対策（デバッグ追加）
     if not generated_poem.strip():
-        print(f"DEBUG: Poem is empty or whitespace only - Poem: {generated_poem}")
+        print(f"DEBUG: Poem is empty or whitespace only - Poem: {generated_poem}, Output: {output}")
         return "みりんてゃ、言葉を探しにお散歩に出かけちゃったみたい...またすぐ帰ってくるね♡"
 
     print(f"DEBUG: Final Poem: {generated_poem}")
