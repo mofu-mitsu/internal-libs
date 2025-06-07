@@ -12,11 +12,21 @@ from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
 # ★ NGワードカウントと置換処理
 # ------------------------------
 def count_ng_words(poem):
-    ng_words = ["プロフィール", "【", "さん", "美魔女", "商品", "ニュース", "応募規約", "未発表", "応募作品", "字程度", "弊社", "ホームページ"]
+    ng_words = [
+        "プロフィール", "【", "さん", "美魔女", "商品", "ニュース", "応募規約",
+        "弊社", "投稿作品", "作品", "応募", "締切", "募集", "キャンペーン",
+        "ホームページ", "記載", "注意事項", "規定", "承諾", "掲載", "SNS",
+        "送信", "応募方法", "書式", "未発表", "発表", "入選", "特典"
+    ]
     return sum(word in poem for word in ng_words)
 
 def clean_poem(poem):
-    ng_words = ["プロフィール", "【", "さん", "美魔女", "商品", "ニュース", "応募規約", "未発表", "応募作品", "字程度", "弊社", "ホームページ"]
+    ng_words = [
+        "プロフィール", "【", "さん", "美魔女", "商品", "ニュース", "応募規約",
+        "弊社", "投稿作品", "作品", "応募", "締切", "募集", "キャンペーン",
+        "ホームページ", "記載", "注意事項", "規定", "承諾", "掲載", "SNS",
+        "送信", "応募方法", "書式", "未発表", "発表", "入選", "特典"
+    ]
     for word in ng_words:
         poem = poem.replace(word, "○○")
     return poem
@@ -25,12 +35,12 @@ def clean_poem(poem):
 # ★ ポエム生成（open-calm-3b使用）
 # ------------------------------
 def generate_poem(weather, day_of_week):
-    tokenizer = AutoTokenizer.from_pretrained("cyberagent/open-calm-3b")
-    model = AutoModelForCausalLM.from_pretrained("cyberagent/open-calm-3b")
+    tokenizer = AutoTokenizer.from_pretrained("cyberagent/open-calm-3b")  # 3bに戻す場合は"cyberagent/open-calm-3b"
+    model = AutoModelForCausalLM.from_pretrained("cyberagent/open-calm-3b")  # 3bに戻す場合は"cyberagent/open-calm-3b"
     generator = pipeline("text-generation", model=model, tokenizer=tokenizer)
 
-    prompt = f"{weather}の{day_of_week}にぴったりな、みりんてゃがふと思った優しい一言を、短い詩のような雰囲気で書いてください。セリフ形式ではなく、ふんわり癒し系でお願いします。"
-    output = generator(prompt, max_length=60, do_sample=True, temperature=0.8)[0]['generated_text']
+    prompt = f"{weather}の{day_of_week}。みりんてゃが空を見上げて、ふと思ったことを、やさしい言葉で綴ってください。ポエムというより、心のつぶやきのような、ふわっとした雰囲気で。"
+    output = generator(prompt, max_length=100, do_sample=True, temperature=0.8)[0]['generated_text']
     generated_poem = output[len(prompt):].strip()  # プロンプト部分を除去
 
     # デバッグ用ログ
