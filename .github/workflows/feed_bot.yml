@@ -2,7 +2,7 @@ name: Bluesky Feed Bot
 
 on:
   schedule:
-    - cron: "*/30 * * * *"  # 30分ごと
+    - cron: "0 */1 * * *"  # 1時間ごと
   workflow_dispatch:        # 手動実行も可
 
 jobs:
