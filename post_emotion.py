@@ -14,7 +14,8 @@ from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
 def count_ng_words(poem):
     ng_words = [
         "プロフィール", "【", "さん", "美魔女", "商品", "ニュース", "応募規約",
-        "投稿締め切り", "投稿規定", "作品", "ご応募", "コンクール", "掲載", "ポエム・コラム",
+        "投稿締め切り", "投稿規定", "作品", "ご応募", "コンクール", "掲載",
+        "ポエム・コラム", "みりんてゃらしい文章で" * 2,  # 繰り返し防止
         "弊社", "投稿作品", "応募", "締切", "募集", "キャンペーン", "ホームページ",
         "記載", "注意事項", "規定", "承諾", "SNS", "送信", "応募方法", "書式",
         "未発表", "発表", "入選", "特典"
@@ -24,7 +25,8 @@ def count_ng_words(poem):
 def clean_poem(poem):
     ng_words = [
         "プロフィール", "【", "さん", "美魔女", "商品", "ニュース", "応募規約",
-        "投稿締め切り", "投稿規定", "作品", "ご応募", "コンクール", "掲載", "ポエム・コラム",
+        "投稿締め切り", "投稿規定", "作品", "ご応募", "コンクール", "掲載",
+        "ポエム・コラム", "みりんてゃらしい文章で" * 2,  # 繰り返し防止
         "弊社", "投稿作品", "応募", "締切", "募集", "キャンペーン", "ホームページ",
         "記載", "注意事項", "規定", "承諾", "SNS", "送信", "応募方法", "書式",
         "未発表", "発表", "入選", "特典"
@@ -42,10 +44,10 @@ def generate_poem(weather, day_of_week):
     generator = pipeline("text-generation", model=model, tokenizer=tokenizer)
 
     print(f"DEBUG: Starting generation - Weather: {weather}, Day: {day_of_week}")
-    prompt = f"{weather}の{day_of_week}、空を見上げて、ふと思ったことを、みりんてゃらしくやさしく短くつぶやいてください。説明やセリフではなく、雰囲気のある文章で。"
+    prompt = f"{weather}の{day_of_week}、空を見上げてふと思った、優しくて可愛い気持ちを短い文章で表現してください。"
     print(f"DEBUG: Prompt: {prompt}")
 
-    output = generator(prompt, max_length=100, do_sample=True, temperature=0.8)[0]['generated_text']
+    output = generator(prompt, max_length=100, do_sample=True, temperature=0.6)[0]['generated_text']  # temperature 0.7→0.6
     print(f"DEBUG: Raw Output: {output}")
     generated_poem = output[len(prompt):].strip()
     print(f"DEBUG: Generated Poem (raw strip): {generated_poem}")
