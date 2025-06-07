@@ -12,11 +12,11 @@ from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
 # ★ NGワードカウントと置換処理
 # ------------------------------
 def count_ng_words(poem):
-    ng_words = ["プロフィール", "【", "さん", "美魔女", "商品", "ニュース", "応募規約", "未発表", "応募作品", "字程度"]
+    ng_words = ["プロフィール", "【", "さん", "美魔女", "商品", "ニュース", "応募規約", "未発表", "応募作品", "字程度", "弊社", "ホームページ"]
     return sum(word in poem for word in ng_words)
 
 def clean_poem(poem):
-    ng_words = ["プロフィール", "【", "さん", "美魔女", "商品", "ニュース", "応募規約", "未発表", "応募作品", "字程度"]
+    ng_words = ["プロフィール", "【", "さん", "美魔女", "商品", "ニュース", "応募規約", "未発表", "応募作品", "字程度", "弊社", "ホームページ"]
     for word in ng_words:
         poem = poem.replace(word, "○○")
     return poem
@@ -29,7 +29,7 @@ def generate_poem(weather, day_of_week):
     model = AutoModelForCausalLM.from_pretrained("cyberagent/open-calm-1b")
     generator = pipeline("text-generation", model=model, tokenizer=tokenizer)
 
-    prompt = f"{weather}の{day_of_week}に合う、みりんてゃらしい癒し系の**一言ポエム**を作ってください。セリフ形式ではなく、詩的で短く、優しい文体にしてください。"
+    prompt = f"{weather}の{day_of_week}にぴったりな、みりんてゃがふと思った優しい一言を、短い詩のような雰囲気で書いてください。セリフ形式ではなく、ふんわり癒し系でお願いします。"
     output = generator(prompt, max_length=60, do_sample=True, temperature=0.8)[0]['generated_text']
     generated_poem = output[len(prompt):].strip()  # プロンプト部分を除去
 
@@ -44,7 +44,7 @@ def generate_poem(weather, day_of_week):
 
     # 哲学モード検知
     if "詩は" in generated_poem and "作者の心" in generated_poem and "サイバー" in generated_poem:
-        return "みりんてゃ、サイバー空間でポem迷子になっちゃったみたい♡ ちょっと探してくるね…！"
+        return "みりんてゃ、サイバー空間でポエム迷子になっちゃったみたい♡ ちょっと探してくるね…！"
 
     # NGワード置換
     generated_poem = clean_poem(generated_poem)
