@@ -42,8 +42,8 @@ def clean_poem(poem):
 # ★ ポエム生成（open-calm-1b使用）
 # ------------------------------
 def generate_poem(weather, day_of_week):
-    tokenizer = AutoTokenizer.from_pretrained("cyberagent/open-calm-1b")  # 3b試したい場合は"cyberagent/open-calm-3b"
-    model = AutoModelForCausalLM.from_pretrained("cyberagent/open-calm-1b")  # 3b試したい場合は"cyberagent/open-calm-3b"
+    tokenizer = AutoTokenizer.from_pretrained("cyberagent/open-calm-3b")  # 3b試したい場合は"cyberagent/open-calm-3b"
+    model = AutoModelForCausalLM.from_pretrained("cyberagent/open-calm-3b")  # 3b試したい場合は"cyberagent/open-calm-3b"
     generator = pipeline("text-generation", model=model, tokenizer=tokenizer)
 
     print(f"DEBUG: Starting generation - Weather: {weather}, Day: {day_of_week}")
