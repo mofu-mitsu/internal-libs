@@ -2,7 +2,7 @@ name: Post Image Bot
 
 on:
   schedule:
-    # 月曜8時、金曜20時に投稿（週2回）
+    # 木曜20時に投稿（週1回）
     - cron: "0 20 * * 4" # 木曜の夜20時
   workflow_dispatch: # 手動実行もできるように
 
