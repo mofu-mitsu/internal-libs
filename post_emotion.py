@@ -22,11 +22,11 @@ def clean_poem(poem):
     return poem
 
 # ------------------------------
-# ★ ポエム生成（open-calm-1b使用）
+# ★ ポエム生成（open-calm-3b使用）
 # ------------------------------
 def generate_poem(weather, day_of_week):
-    tokenizer = AutoTokenizer.from_pretrained("cyberagent/open-calm-1b")
-    model = AutoModelForCausalLM.from_pretrained("cyberagent/open-calm-1b")
+    tokenizer = AutoTokenizer.from_pretrained("cyberagent/open-calm-3b")
+    model = AutoModelForCausalLM.from_pretrained("cyberagent/open-calm-3b")
     generator = pipeline("text-generation", model=model, tokenizer=tokenizer)
 
     prompt = f"{weather}の{day_of_week}にぴったりな、みりんてゃがふと思った優しい一言を、短い詩のような雰囲気で書いてください。セリフ形式ではなく、ふんわり癒し系でお願いします。"
