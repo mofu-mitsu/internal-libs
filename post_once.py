@@ -241,12 +241,6 @@ Botが代わりにリポストしてくれたおかげで、誰かの心にも�
 #jiraisky にタグつけて、そっとつぶやいてる""",
     """見ないでって言いながら、
 ほんとはちょっとだけ見ててほしいの　#jiraisky """,
-    """ふと孤独を感じたり、ちょっと気持ちが沈んじゃったとき。
-#jiraisky タグに、気持ちをそっと置いてみてもいいんだよ🪽
-
-誰かがきっと、読んでくれてる。
-
-─ みりんてゃより ☁️""",
 
     """Sometimes, we all feel a little lost.
 #jiraisky is a place where soft hearts can rest.
