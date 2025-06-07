@@ -15,7 +15,7 @@ def count_ng_words(poem):
     ng_words = [
         "プロフィール", "【", "さん", "美魔女", "商品", "ニュース", "応募規約",
         "投稿締め切り", "投稿規定", "作品", "ご応募", "コンクール", "掲載",
-        "ポエム・コラム", "みりんてゃらしい文章で" * 2,  # 繰り返し防止
+        "ポエム・コラム", "みりんてゃらしい文章で" * 2,
         "弊社", "投稿作品", "応募", "締切", "募集", "キャンペーン", "ホームページ",
         "記載", "注意事項", "規定", "承諾", "SNS", "送信", "応募方法", "書式",
         "未発表", "発表", "入選", "特典"
@@ -26,11 +26,14 @@ def clean_poem(poem):
     ng_words = [
         "プロフィール", "【", "さん", "美魔女", "商品", "ニュース", "応募規約",
         "投稿締め切り", "投稿規定", "作品", "ご応募", "コンクール", "掲載",
-        "ポエム・コラム", "みりんてゃらしい文章で" * 2,  # 繰り返し防止
+        "ポエム・コラム", "みりんてゃらしい文章で" * 2,
         "弊社", "投稿作品", "応募", "締切", "募集", "キャンペーン", "ホームページ",
         "記載", "注意事項", "規定", "承諾", "SNS", "送信", "応募方法", "書式",
         "未発表", "発表", "入選", "特典"
     ]
+    # 繰り返し検出フィルター
+    if poem.count("いつも、") >= 3:
+        return "みりんてゃ、ちょっと考えすぎちゃったみたい…お茶でも飲んで仕切り直すね☕️"
     for word in ng_words:
         poem = poem.replace(word, "○○")
     return poem
@@ -39,15 +42,15 @@ def clean_poem(poem):
 # ★ ポエム生成（open-calm-1b使用）
 # ------------------------------
 def generate_poem(weather, day_of_week):
-    tokenizer = AutoTokenizer.from_pretrained("cyberagent/open-calm-3b")  # 3b試したい場合は"cyberagent/open-calm-3b"
-    model = AutoModelForCausalLM.from_pretrained("cyberagent/open-calm-3b")  # 3b試したい場合は"cyberagent/open-calm-3b"
+    tokenizer = AutoTokenizer.from_pretrained("cyberagent/open-calm-1b")  # 3b試したい場合は"cyberagent/open-calm-3b"
+    model = AutoModelForCausalLM.from_pretrained("cyberagent/open-calm-1b")  # 3b試したい場合は"cyberagent/open-calm-3b"
     generator = pipeline("text-generation", model=model, tokenizer=tokenizer)
 
     print(f"DEBUG: Starting generation - Weather: {weather}, Day: {day_of_week}")
-    prompt = f"{weather}の{day_of_week}、空を見上げてふと思った、優しくて可愛い気持ちを短い文章で表現してください。"
+    prompt = f"{weather}の{day_of_week}。静かな午後、みりんてゃが空を見て、ふと心に浮かんだ優しいつぶやきを、1〜2文で。繰り返しを使わず、詩的で癒される文にしてください。"
     print(f"DEBUG: Prompt: {prompt}")
 
-    output = generator(prompt, max_length=100, do_sample=True, temperature=0.6)[0]['generated_text']  # temperature 0.7→0.6
+    output = generator(prompt, max_length=100, do_sample=True, temperature=0.6, repetition_penalty=1.2)[0]['generated_text']
     print(f"DEBUG: Raw Output: {output}")
     generated_poem = output[len(prompt):].strip()
     print(f"DEBUG: Generated Poem (raw strip): {generated_poem}")
