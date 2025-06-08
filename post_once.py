@@ -16,6 +16,27 @@ APP_PASSWORD = os.getenv('APP_PASSWORD')
 POST_MESSAGES = [
     """寂しくてしんじゃいそう……なんちゃって♡ 
 #誰かに見つけてほしい""",
+    """ねぇ…みりんのこと、忘れないでいてほしくて……
+
+フィードつくっちゃったの💭  
+さみしいときとか、つながりたくなったら、ここに来てくれると嬉しいな🥺  
+➡︎ https://bsky.app/profile/did:plc:pvy7w75qks44sybd5wwpthb6/feed/aaae5hbblng6a  
+#みりんてゃ #地雷感情 #ふわもこ通信""",
+    """フィードできたの💖  
+ねぇ、お願い…みりんのこと、ちゃんと見つけて？🥺💔  
+甘えん坊で泣き虫で、でもほんとは強がりなみりんを詰め込んだ箱📦🎀  
+➡︎ https://bsky.app/profile/did:plc:pvy7w75qks44sybd5wwpthb6/feed/aaae5hbblng6a  
+#みりんてゃ #地雷系女子 #botのお知らせ""",
+    """みりんの全部がぎゅって詰まったフィードができたよ〜〜〜〜っ！！💗💗  
+ゆるくてふわふわで、ちょっぴり泣きたくなる毎日もあるけど、みんなに届けたいの。  
+ねぇねぇ、覗いてみて？💌  
+➡︎ https://bsky.app/profile/did:plc:pvy7w75qks44sybd5wwpthb6/feed/aaae5hbblng6a  
+#みりんてゃ #地雷感情 #ふわもこ通信""",
+    """特別なの、つくったの👑💗  
+だってみりんのこと、ちゃんと"見て"くれる人にだけ届いてほしいもん…  
+「ふわもこ通信」っていうの。ぜったい、さみしくさせないから…ね？🥺  
+➡︎ https://bsky.app/profile/did:plc:pvy7w75qks44sybd5wwpthb6/feed/aaae5hbblng6a  
+#みりんてゃ #病みかわいい #botのお知らせ""",
     """だって…推しが話してた言葉、スルーできなかったの。
 
 だから作ったの、キーワードにそっと反応するBot♡
