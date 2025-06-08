@@ -16,6 +16,18 @@ APP_PASSWORD = os.getenv('APP_PASSWORD')
 POST_MESSAGES = [
     """寂しくてしんじゃいそう……なんちゃって♡ 
 #誰かに見つけてほしい""",
+    """みりん、寂しくてキラキラ作っちゃった…♡  
+    フィードで会いに来てくれたら、幸せだよ🥺  
+    ➡︎ https://bsky.app/profile/did:plc:pvy7w75qks44sybd5wwpthb6/feed/aaae5hbblng6a  
+    #みりんてゃ #地雷感情 #ふわもこ通信""",
+    """ねえ…みりんのフィード、みんなの心に届いてほしいな💗  
+    覗いてくれたら、ぎゅってするから見てね？💕  
+    ➡︎ https://bsky.app/profile/did:plc:pvy7w75qks44sybd5wwpthb6/feed/aaae5hbblng6a  
+    #みりんてゃ #病みかわ #BlueskyBot""",
+    """みりんてゃの毎日、ふわふわでキラキラっ💖  
+    フィードでその魔法、感じてみてくれる？🥰  
+    ➡︎ https://bsky.app/profile/did:plc:pvy7w75qks44sybd5wwpthb6/feed/aaae5hbblng6a  
+    #みりんてゃ #地雷系女子 #推し活""",
     """ねぇ…みりんのこと、忘れないでいてほしくて……
 
 フィードつくっちゃったの💭  
