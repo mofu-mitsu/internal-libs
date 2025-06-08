@@ -6,16 +6,15 @@ from dotenv import load_dotenv
 # ------------------------------
 # ★ カスタマイズポイント: いいね対象のハッシュタグとキーワード
 # ------------------------------
-
 TARGET_HASHTAGS = [
-    '#地雷女', '#病み垢', '#病みかわ', '#可愛い', '#かわいい', '#メンヘラ','#bot', 
-    '#猫', '#ねこ', '#量産系', '#オリキャラ', '#推し', '#jirai','#みりんてゃ',
+    '#地雷女', '#病み垢', '#病みかわ', '#可愛い', '#かわいい', '#メンヘラ', '#bot', 
+    '#猫', '#ねこ', '#量産系', '#オリキャラ', '#推し', '#jirai', '#みりんてゃ',
     '#一次創作', '#オリジナル', '#イラスト', '#推しキャラプロフィールメーカー'
 ]
 TARGET_KEYWORDS = [
-    '地雷', '量産', '裏垢', '病み', '可愛い', 'かわいい', 'メンヘラ','bot', 'Bot',
-    '猫', 'ねこ', '相性診断', 'オリキャラ', '推し', 'jirai','みりんてゃ',
-    '一次創作', 'オリジナル', 'イラスト', 'プロフィールメーカー','チャッピー供養ギャラリー',
+    '地雷', '量産', '裏垢', '病み', '可愛い', 'かわいい', 'メンヘラ', 'bot', 'Bot',
+    '猫', 'ねこ', '相性診断', 'オリキャラ', '推し', 'jirai', 'みりんてゃ',
+    '一次創作', 'オリジナル', 'イラスト', 'プロフィールメーカー', 'チャッピー供養ギャラリー',
 ]
 
 # ✅ 環境変数の読み込み
@@ -77,8 +76,8 @@ def auto_like_timeline():
             if author_did == self_did:
                 print(f"⏩ 自己投稿スキップ: {text[:40]}")
                 continue
-            if hasattr(post.record, "reply"):
-                print(f"⏩ リプライスキップ: {text[:40]}")
+            if hasattr(post.record, "reply") and not is_priority_post(text):
+                print(f"⏩ リプライスキップ (非@HANDLE): {text[:40]}")
                 continue
             if any(tag.lower() in text for tag in TARGET_HASHTAGS) or any(kw.lower() in text for kw in TARGET_KEYWORDS) or is_priority_post(text):
                 viewer_like = post.viewer.like if hasattr(post, 'viewer') and hasattr(post.viewer, 'like') else None
@@ -127,7 +126,7 @@ def auto_like_back():
                 if user_did == self_did:
                     print(f"⏩ 自己いいねスキップ")
                     continue
-                feed_res = client.app.bsky.feed.get_author_feed(params={"actor": user_did, "limit": 5})  # 5件チェック
+                feed_res = client.app.bsky.feed.get_author_feed(params={"actor": user_did, "limit": 5})
                 posts = feed_res.feed
                 if not posts:
                     print(f"⏩ 投稿なしスキップ: {user_did}")
@@ -142,7 +141,7 @@ def auto_like_back():
                     cid = post.cid
                     viewer_like = post.viewer.like if hasattr(post, 'viewer') and hasattr(post.viewer, 'like') else None
                     like_post_if_needed(uri, cid, text, viewer_like)
-                    break  # 1件いいねしたら終了
+                    break
     except Exception as e:
         print(f"❌ いいね返しエラー: {e}")
 
