@@ -12,6 +12,8 @@ from pathlib import Path
 import re
 import unicodedata
 import mimetypes
+from PIL import Image
+import io
 
 # ------------------------------
 # ★ 認証情報（.envに書くよ！）
@@ -34,10 +36,32 @@ IMAGE_POSTS = load_image_posts()
 # ------------------------------
 # ★ 画像アップロード処理（拡張子に応じてMIMEタイプも自動設定！）
 # ------------------------------
-def upload_image(client, image_path):
-    with open(image_path, "rb") as f:
-        img_data = f.read()
-    # content_typeは不要！upload_blobはバイナリだけ渡す
+
+def upload_image(client, image_path, max_size_kb=976):
+    img = Image.open(image_path)
+
+    # 一時バッファにJPEG/PNGとして保存
+    buffer = io.BytesIO()
+    format = "JPEG" if img.format != "PNG" else "PNG"
+
+    # 画質を落としながら圧縮ループ（JPEG向け）
+    quality = 95
+    while True:
+        buffer.seek(0)
+        buffer.truncate(0)
+        if format == "JPEG":
+            img.convert("RGB").save(buffer, format="JPEG", quality=quality, optimize=True)
+        else:
+            img.save(buffer, format="PNG", optimize=True)
+
+        size_kb = buffer.tell() / 1024
+        if size_kb <= max_size_kb or quality <= 20:
+            break
+        quality -= 5  # 画質を段階的に下げる
+
+    # アップロード
+    buffer.seek(0)
+    img_data = buffer.read()
     response = client.com.atproto.repo.upload_blob(img_data)
     return response.blob
 
