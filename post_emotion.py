@@ -40,7 +40,7 @@ def clean_poem(poem):
     return poem
 
 # ------------------------------
-# ★ ポエム生成（open-calm-1b使用）
+# ★ ポエム生成（open-calm-3b使用）
 # ------------------------------
 def generate_poem(weather, day_of_week):
     tokenizer = AutoTokenizer.from_pretrained("cyberagent/open-calm-3b")  # 3b試したい場合は"cyberagent/open-calm-3b"
@@ -51,7 +51,7 @@ def generate_poem(weather, day_of_week):
     prompt = f"{weather}の{day_of_week}。みりんてゃが空を見上げて、ふわっと浮かんだやさしい詩を一言でつぶやく。"
     print(f"DEBUG: Prompt: {prompt}")
 
-    output = generator(prompt, max_length=100, do_sample=True, temperature=0.6, repetition_penalty=1.2)[0]['generated_text']
+    output = generator(prompt, max_length=150, do_sample=True, temperature=0.6, repetition_penalty=1.2)[0]['generated_text']
     print(f"DEBUG: Raw Output: {output}")
     generated_poem = output[len(prompt):].strip()
     print(f"DEBUG: Generated Poem (raw strip): {generated_poem}")
@@ -99,7 +99,9 @@ def get_weather():
     response = requests.get(url)
     print(f"DEBUG: Weather API response status: {response.status_code}")
     if response.status_code == 200:
-        text = response.json()[0]["timeSeries"][0]["areas"][0]["weathers"][0].lower()
+        data = response.json()
+        # 最新の予報を取得（0番目が最新）
+        text = data[0]["timeSeries"][0]["areas"][0]["weathers"][0].lower()
         print(f"DEBUG: Raw weather data: {text}")
         for keyword, label in WEATHER_KEYWORDS.items():
             if keyword in text:
