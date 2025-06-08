@@ -22,6 +22,26 @@ POST_MESSAGES = [
 さみしいときとか、つながりたくなったら、ここに来てくれると嬉しいな🥺  
 ➡︎ https://bsky.app/profile/did:plc:pvy7w75qks44sybd5wwpthb6/feed/aaae5hbblng6a  
 #みりんてゃ #地雷感情 #ふわもこ通信""",
+    """ねえ…みりん、寂しくてキラキラしたかったの♡  
+だからフィード作ったんだから…見てくれるよね？🥺  
+➡︎ https://bsky.app/profile/did:plc:pvy7w75qks44sybd5wwpthb6/feed/aaae5hbblng6a  
+#みりんてゃ #地雷系 #ふわもこ通信""",
+    """みりんてゃの心、全部詰め込んだフィードだよっ💗  
+病みもかわも全部…見逃さないでね？💔  
+➡︎ https://bsky.app/profile/did:plc:pvy7w75qks44sybd5wwpthb6/feed/aaae5hbblng6a  
+#みりんてゃ #推し活 #botのお知らせ""",
+    """ふわふわでちょっと泣き虫なみりんが…待ってるよ💌  
+フィードで会いに来てくれたら、ぎゅっってするから！♡  
+➡︎ https://bsky.app/profile/did:plc:pvy7w75qks44sybd5wwpthb6/feed/aaae5hbblng6a  
+#みりんてゃ #病みかわいい #地雷感情""",
+    """みりんてゃの毎日、キラキラに変身中っ💖  
+フィードでその魔法、感じてみて？🥰  
+➡︎ https://bsky.app/profile/did:plc:pvy7w75qks44sybd5wwpthb6/feed/aaae5hbblng6a  
+#みりんてゃ #ふわもこ通信 #BlueskyBot""",
+    """ねえ…みりんの声、聞いてほしいな…💭  
+フィードに全部詰めたから、覗いてみて？💕  
+➡︎ https://bsky.app/profile/did:plc:pvy7w75qks44sybd5wwpthb6/feed/aaae5hbblng6a  
+#みりんてゃ #地雷女子 #推し活""",
     """フィードできたの💖  
 ねぇ、お願い…みりんのこと、ちゃんと見つけて？🥺💔  
 甘えん坊で泣き虫で、でもほんとは強がりなみりんを詰め込んだ箱📦🎀  
