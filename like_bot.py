@@ -1,4 +1,3 @@
-# like_bot.py
 from atproto import Client
 import time
 import os
@@ -7,8 +6,7 @@ from dotenv import load_dotenv
 # ------------------------------
 # ★ カスタマイズポイント: いいね対象のハッシュタグとキーワード
 # ------------------------------
-# 以下のリストを編集して、いいねする投稿をカスタム！
-# 例: 忍たんBotなら ['#忍者', '#侍'], ['忍者', '侍']
+
 TARGET_HASHTAGS = [
     '#地雷女', '#病み垢', '#病みかわ', '#可愛い', '#かわいい', '#メンヘラ','#bot', 
     '#猫', '#ねこ', '#量産系', '#オリキャラ', '#推し', '#jirai','#みりんてゃ',
@@ -20,7 +18,7 @@ TARGET_KEYWORDS = [
     '一次創作', 'オリジナル', 'イラスト', 'プロフィールメーカー','チャッピー供養ギャラリー',
 ]
 
-# ✅ 環境変数の読み込み（.env または Secrets）
+# ✅ 環境変数の読み込み
 load_dotenv()
 HANDLE = os.getenv("HANDLE") or exit("❌ HANDLEが設定されていません")
 APP_PASSWORD = os.getenv("APP_PASSWORD") or exit("❌ APP_PASSWORDが設定されていません")
@@ -29,17 +27,17 @@ APP_PASSWORD = os.getenv("APP_PASSWORD") or exit("❌ APP_PASSWORDが設定さ�
 client = Client()
 try:
     client.login(HANDLE, APP_PASSWORD)
-    print("✅ ログイン成功")
+    print(f"✅ ログイン成功: @{HANDLE}")
     self_did = client.me.did
 except Exception as e:
     print(f"❌ ログイン失敗: {e}")
     exit(1)
 
-# 📜 セッション内のいいね履歴（保険）
+# 📜 セッション内のいいね履歴
 liked_uris = set()
 
 def like_post_if_needed(uri, cid, text, viewer_like=None):
-    """投稿にいいね。すでにいいね済み（viewer_like）またはセッション内履歴（liked_uris）ならスキップ"""
+    """投稿にいいね。すでにいいね済みならスキップ"""
     if viewer_like:
         print(f"⏩ いいね済みスキップ: {text[:40]}")
         return
@@ -57,10 +55,14 @@ def like_post_if_needed(uri, cid, text, viewer_like=None):
         liked_uris.add(uri)
         print(f"❤️ いいね: {text[:40]}")
     except Exception as e:
-        print(f"⚠️ いいね失敗: {e}")
+        print(f"⚠️ いいね失敗 (URI: {uri}): {e}")
+
+def is_priority_post(text):
+    """@HANDLEを含む投稿を優先判定"""
+    return f"@{HANDLE.lower()}" in text.lower()
 
 def auto_like_timeline():
-    """タイムラインの投稿をチェックし、対象にいいね"""
+    """タイムラインの投稿をチェック、対象にいいね"""
     print("📡 タイムライン巡回中...")
     try:
         feed_res = client.app.bsky.feed.get_timeline(params={"limit": 50})
@@ -75,14 +77,17 @@ def auto_like_timeline():
             if author_did == self_did:
                 print(f"⏩ 自己投稿スキップ: {text[:40]}")
                 continue
-            if any(tag.lower() in text for tag in TARGET_HASHTAGS) or any(kw.lower() in text for kw in TARGET_KEYWORDS):
+            if hasattr(post.record, "reply"):
+                print(f"⏩ リプライスキップ: {text[:40]}")
+                continue
+            if any(tag.lower() in text for tag in TARGET_HASHTAGS) or any(kw.lower() in text for kw in TARGET_KEYWORDS) or is_priority_post(text):
                 viewer_like = post.viewer.like if hasattr(post, 'viewer') and hasattr(post.viewer, 'like') else None
                 like_post_if_needed(uri, cid, text, viewer_like)
     except Exception as e:
         print(f"❌ タイムラインエラー: {e}")
 
 def auto_like_mentions():
-    """メンション通知にいいね"""
+    """メンション通知にいいね、@HANDLE優先"""
     print("🔔 メンションチェック中...")
     try:
         notes = client.app.bsky.notification.list_notifications(params={"limit": 50}).notifications
@@ -95,8 +100,14 @@ def auto_like_mentions():
                     print(f"⏩ メンション無効スキップ (URI: {uri}): テキストなし")
                     continue
                 try:
-                    # get_posts に正しい params
-                    post = client.app.bsky.feed.get_posts({"uris": [str(uri)]}).posts[0]
+                    posts = client.app.bsky.feed.get_posts({"uris": [str(uri)]}).posts
+                    if not posts:
+                        print(f"⚠️ メンション投稿取得失敗（空）(URI: {uri})")
+                        continue
+                    post = posts[0]
+                    if hasattr(post.record, "reply") and not is_priority_post(text):
+                        print(f"⏩ リプライスキップ (非@HANDLE): {text[:40]}")
+                        continue
                     viewer_like = post.viewer.like if hasattr(post, 'viewer') and hasattr(post.viewer, 'like') else None
                     like_post_if_needed(uri, cid, text, viewer_like)
                 except Exception as e:
@@ -106,7 +117,7 @@ def auto_like_mentions():
         print(f"❌ メンション通知エラー: {e}")
 
 def auto_like_back():
-    """いいねしてくれたユーザーの最新投稿にいいね返し"""
+    """いいねしてくれたユーザーの最新投稿（リプライ除外）にいいね返し"""
     print("🔁 いいね返し中...")
     try:
         notes = client.app.bsky.notification.list_notifications(params={"limit": 50}).notifications
@@ -116,17 +127,22 @@ def auto_like_back():
                 if user_did == self_did:
                     print(f"⏩ 自己いいねスキップ")
                     continue
-                feed_res = client.app.bsky.feed.get_author_feed(params={"actor": user_did, "limit": 1})
+                feed_res = client.app.bsky.feed.get_author_feed(params={"actor": user_did, "limit": 5})  # 5件チェック
                 posts = feed_res.feed
                 if not posts:
                     print(f"⏩ 投稿なしスキップ: {user_did}")
                     continue
-                post = posts[0].post
-                uri = post.uri
-                cid = post.cid
-                text = post.record.text.lower()
-                viewer_like = post.viewer.like if hasattr(post, 'viewer') and hasattr(post.viewer, 'like') else None
-                like_post_if_needed(uri, cid, text, viewer_like)
+                for feed_post in posts:
+                    post = feed_post.post
+                    text = post.record.text.lower()
+                    if hasattr(post.record, "reply"):
+                        print(f"⏩ リプライスキップ: {text[:40]}")
+                        continue
+                    uri = post.uri
+                    cid = post.cid
+                    viewer_like = post.viewer.like if hasattr(post, 'viewer') and hasattr(post.viewer, 'like') else None
+                    like_post_if_needed(uri, cid, text, viewer_like)
+                    break  # 1件いいねしたら終了
     except Exception as e:
         print(f"❌ いいね返しエラー: {e}")
 
