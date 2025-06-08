@@ -15,7 +15,7 @@ TARGET_HASHTAGS = [
 TARGET_KEYWORDS = [
     '地雷', '量産', '裏垢', '病み', '可愛い', 'かわいい', 'メンヘラ', 'bot', 'Bot',
     '猫', 'ねこ', '相性診断', 'オリキャラ', '推し', 'jirai', 'みりんてゃ',
-    '創作', 'オリジナル', 'イラスト', 'プロフィールメーカー', 'チャッピー供養ギャラリー',
+    '一次創作', 'オリジナル', 'イラスト', 'プロフィールメーカー', 'チャッピー供養ギャラリー',
 ]
 
 # ✅ 環境変数の読み込み
@@ -77,9 +77,9 @@ def auto_like_timeline():
             if author_did == self_did:
                 print(f"⏩ 自己投稿スキップ: {text[:40]}")
                 continue
-            reply = getattr(post.record, "reply", None)
-            if reply is not None and not is_priority_post(text):
-                print(f"⏩ リプライスキップ (非@mirinchuuu, reply={reply}): {text[:40]}")
+            is_reply = getattr(post.record, "reply", None) is not None
+            if is_reply and not is_priority_post(text):
+                print(f"⏩ リプライスキップ (非@mirinchuuu, reply={getattr(post.record, 'reply', None)}): {text[:40]}")
                 continue
             if any(tag.lower() in text for tag in TARGET_HASHTAGS) or any(kw.lower() in text for kw in TARGET_KEYWORDS) or is_priority_post(text):
                 viewer_like = post.viewer.like if hasattr(post, 'viewer') and hasattr(post.viewer, 'like') else None
@@ -96,7 +96,8 @@ def auto_like_mentions():
         notes = client.app.bsky.notification.list_notifications(params={"limit": 50}).notifications
         print("📜 通知一覧:")
         for note in notes:
-            print(f"  - 理由: {note.reason}, URI: {note.uri}, テキスト: {getattr(note.record, 'text', 'なし')[:40]}")
+            text = getattr(note.record, 'text', 'なし')[:40]
+            print(f"  - 理由: {note.reason}, URI: {note.uri}, テキスト: {text}, 投稿者: {note.author.handle}")
         for note in notes:
             if note.reason == "mention":
                 uri = note.uri
@@ -111,9 +112,9 @@ def auto_like_mentions():
                         print(f"⚠️ メンション投稿取得失敗（空）(URI: {uri})")
                         continue
                     post = posts[0]
-                    reply = getattr(post.record, "reply", None)
-                    if reply is not None and not is_priority_post(text):
-                        print(f"⏩ リプライスキップ (非@mirinchuuu, reply={reply}): {text[:40]}")
+                    is_reply = getattr(post.record, "reply", None) is not None
+                    if is_reply and not is_priority_post(text):
+                        print(f"⏩ リプライスキップ (非@mirinchuuu, reply={getattr(post.record, 'reply', None)}): {text[:40]}")
                         continue
                     viewer_like = post.viewer.like if hasattr(post, 'viewer') and hasattr(post.viewer, 'like') else None
                     like_post_if_needed(uri, cid, text, viewer_like)
@@ -142,9 +143,9 @@ def auto_like_back():
                 for feed_post in posts:
                     post = feed_post.post
                     text = post.record.text.lower()
-                    reply = getattr(post.record, "reply", None)
-                    if reply is not None and not is_priority_post(text):
-                        print(f"⏩ リプライスキップ (非@mirinchuuu, reply={reply}): {text[:40]}")
+                    is_reply = getattr(post.record, "reply", None) is not None
+                    if is_reply and not is_priority_post(text):
+                        print(f"⏩ リプライスキップ (非@mirinchuuu, reply={getattr(post.record, 'reply', None)}): {text[:40]}")
                         continue
                     uri = post.uri
                     cid = post.cid
