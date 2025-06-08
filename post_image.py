@@ -36,7 +36,7 @@ IMAGE_POSTS = load_image_posts()
 def upload_image(client, image_path):
     with open(image_path, "rb") as f:
         img_data = f.read()
-    response = client.com.atproto.repo.uploadBlob(img_data, {"content_type": "image/jpeg"})
+    response = client.com.atproto.repo.upload_blob(img_data, content_type="image/jpeg")
     return response.blob
 
 # ------------------------------
