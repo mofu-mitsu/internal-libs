@@ -37,8 +37,8 @@ IMAGE_POSTS = load_image_posts()
 def upload_image(client, image_path):
     with open(image_path, "rb") as f:
         img_data = f.read()
-    mime_type = mimetypes.guess_type(image_path)[0] or "image/jpeg"
-    response = client.com.atproto.repo.upload_blob(img_data, content_type=mime_type)
+    # content_typeは不要！upload_blobはバイナリだけ渡す
+    response = client.com.atproto.repo.upload_blob(img_data)
     return response.blob
 
 # ------------------------------
