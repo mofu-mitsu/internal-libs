@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 from pathlib import Path
 import re
 import unicodedata
+import mimetypes
 
 # ------------------------------
 # ★ 認証情報（.envに書くよ！）
@@ -31,12 +32,13 @@ def load_image_posts():
 IMAGE_POSTS = load_image_posts()
 
 # ------------------------------
-# ★ 画像アップロード処理
+# ★ 画像アップロード処理（拡張子に応じてMIMEタイプも自動設定！）
 # ------------------------------
 def upload_image(client, image_path):
     with open(image_path, "rb") as f:
         img_data = f.read()
-    response = client.com.atproto.repo.upload_blob(img_data, content_type="image/jpeg")
+    mime_type = mimetypes.guess_type(image_path)[0] or "image/jpeg"
+    response = client.com.atproto.repo.upload_blob(img_data, content_type=mime_type)
     return response.blob
 
 # ------------------------------
@@ -100,7 +102,7 @@ client.login(HANDLE, APP_PASSWORD)
 # 画像投稿データをランダムに選択
 post_data = random.choice(IMAGE_POSTS)
 message = normalize_text(post_data["text"])
-image_path = os.path.join("images", post_data["image"])
+image_path = post_data["image"] if "images/" in post_data["image"] else os.path.join("images", post_data["image"])
 alt_text = post_data["alt"]
 
 hashtags = [word for word in message.split() if word.startswith("#")]
