@@ -1,6 +1,7 @@
 from atproto import Client
 import time
 import os
+import re
 from dotenv import load_dotenv
 
 # ------------------------------
@@ -14,7 +15,7 @@ TARGET_HASHTAGS = [
 TARGET_KEYWORDS = [
     '地雷', '量産', '裏垢', '病み', '可愛い', 'かわいい', 'メンヘラ', 'bot', 'Bot',
     '猫', 'ねこ', '相性診断', 'オリキャラ', '推し', 'jirai', 'みりんてゃ',
-    '創作', 'オリジナル', 'イラスト', 'プロフィールメーカー', 'チャッピー供養ギャラリー',
+    '一次創作', 'オリジナル', 'イラスト', 'プロフィールメーカー', 'チャッピー供養ギャラリー',
 ]
 
 # ✅ 環境変数の読み込み
@@ -57,8 +58,9 @@ def like_post_if_needed(uri, cid, text, viewer_like=None):
         print(f"⚠️ いいね失敗 (URI: {uri}): {e}")
 
 def is_priority_post(text):
-    """@HANDLEを含む投稿を優先判定"""
-    return f"@{HANDLE.lower()}" in text.lower()
+    """@HANDLEを含む投稿を正規表現で判定"""
+    pattern = re.escape(HANDLE.lower()).replace("\\.", "\\.?")
+    return bool(re.search(f"@{pattern}", text.lower()))
 
 def auto_like_timeline():
     """タイムラインの投稿をチェック、対象にいいね"""
@@ -77,11 +79,13 @@ def auto_like_timeline():
                 print(f"⏩ 自己投稿スキップ: {text[:40]}")
                 continue
             if hasattr(post.record, "reply") and not is_priority_post(text):
-                print(f"⏩ リプライスキップ (非@HANDLE): {text[:40]}")
+                print(f"⏩ リプライスキップ (非@HANDLE, reply={post.record.reply}): {text[:40]}")
                 continue
             if any(tag.lower() in text for tag in TARGET_HASHTAGS) or any(kw.lower() in text for kw in TARGET_KEYWORDS) or is_priority_post(text):
                 viewer_like = post.viewer.like if hasattr(post, 'viewer') and hasattr(post.viewer, 'like') else None
                 like_post_if_needed(uri, cid, text, viewer_like)
+            else:
+                print(f"⏩ 条件外スキップ: {text[:40]}")
     except Exception as e:
         print(f"❌ タイムラインエラー: {e}")
 
@@ -105,7 +109,7 @@ def auto_like_mentions():
                         continue
                     post = posts[0]
                     if hasattr(post.record, "reply") and not is_priority_post(text):
-                        print(f"⏩ リプライスキップ (非@HANDLE): {text[:40]}")
+                        print(f"⏩ リプライスキップ (非@HANDLE, reply={post.record.reply}): {text[:40]}")
                         continue
                     viewer_like = post.viewer.like if hasattr(post, 'viewer') and hasattr(post.viewer, 'like') else None
                     like_post_if_needed(uri, cid, text, viewer_like)
@@ -134,8 +138,8 @@ def auto_like_back():
                 for feed_post in posts:
                     post = feed_post.post
                     text = post.record.text.lower()
-                    if hasattr(post.record, "reply"):
-                        print(f"⏩ リプライスキップ: {text[:40]}")
+                    if hasattr(post.record, "reply") and not is_priority_post(text):
+                        print(f"⏩ リプライスキップ (非@HANDLE, reply={post.record.reply}): {text[:40]}")
                         continue
                     uri = post.uri
                     cid = post.cid
