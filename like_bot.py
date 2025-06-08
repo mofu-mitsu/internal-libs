@@ -14,7 +14,7 @@ TARGET_HASHTAGS = [
 TARGET_KEYWORDS = [
     '地雷', '量産', '裏垢', '病み', '可愛い', 'かわいい', 'メンヘラ', 'bot', 'Bot',
     '猫', 'ねこ', '相性診断', 'オリキャラ', '推し', 'jirai', 'みりんてゃ',
-    '一次創作', 'オリジナル', 'イラスト', 'プロフィールメーカー', 'チャッピー供養ギャラリー',
+    '創作', 'オリジナル', 'イラスト', 'プロフィールメーカー', 'チャッピー供養ギャラリー',
 ]
 
 # ✅ 環境変数の読み込み
@@ -65,8 +65,12 @@ def is_reply_to_self(post):
     reply = getattr(post.record, "reply", None)
     if reply is None:
         return False
-    parent_uri = getattr(reply, "parent", {}).get("uri", "")
-    return parent_uri.startswith(f"at://{self_did}/")
+    try:
+        parent_uri = reply.parent.uri if hasattr(reply, "parent") and reply.parent else ""
+        return parent_uri.startswith(f"at://{self_did}/")
+    except AttributeError as e:
+        print(f"⚠️ リプライ親URI取得エラー: {e}, reply={reply}")
+        return False
 
 def auto_like_timeline():
     """タイムラインの投稿をチェック、対象にいいね"""
