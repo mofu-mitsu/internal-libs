@@ -31,10 +31,8 @@ def clean_poem(poem):
         "記載", "注意事項", "規定", "承諾", "SNS", "送信", "応募方法", "書式",
         "未発表", "発表", "入選", "特典", "料理", "番組", "レシピ", "先生", "NHK", "にんじん"
     ]
-    # 繰り返し検出フィルター
     if poem.count("いつも、") >= 3:
         return "みりんてゃ、ちょっと考えすぎちゃったみたい…お茶でも飲んで仕切り直すね☕️"
-    # 投稿系文頭チェック（poemを使用）
     if any(poem.strip().startswith(word) for word in ["投稿", "作品", "規定", "応募"]):
         return "みりんてゃ、ちょっと真面目すぎたかも…もう一回書き直してみるね🍵"
     for word in ng_words:
@@ -50,7 +48,7 @@ def generate_poem(weather, day_of_week):
     generator = pipeline("text-generation", model=model, tokenizer=tokenizer)
 
     print(f"DEBUG: Starting generation - Weather: {weather}, Day: {day_of_week}")
-    prompt = f"{weather}の{day_of_week}。みりんてゃがぽつりとつぶやいた、やさしくて静かな一言。"
+    prompt = f"{weather}の{day_of_week}。みりんてゃが空を見上げて、ふわっと浮かんだやさしい詩を一言でつぶやく。"
     print(f"DEBUG: Prompt: {prompt}")
 
     output = generator(prompt, max_length=100, do_sample=True, temperature=0.6, repetition_penalty=1.2)[0]['generated_text']
@@ -58,30 +56,24 @@ def generate_poem(weather, day_of_week):
     generated_poem = output[len(prompt):].strip()
     print(f"DEBUG: Generated Poem (raw strip): {generated_poem}")
 
-    # デバッグ用ログ
     print(f"Prompt: {prompt}")
     print(f"Raw Output: {output}")
     print(f"Final Poem (before processing): {generated_poem}")
 
-    # ログ保存
     with open("poem_log.txt", "a", encoding="utf-8") as f:
         f.write(f"{datetime.now()}: {generated_poem}\n")
 
-    # 哲学モード検知
     if "詩は" in generated_poem and "作者の心" in generated_poem and "サイバー" in generated_poem:
         print(f"DEBUG: Philosophy mode detected - Poem: {generated_poem}")
         return "みりんてゃ、サイバー空間でポエム迷子になっちゃったみたい♡ ちょっと探してくるね…！"
 
-    # NGワード置換
     generated_poem = clean_poem(generated_poem)
     print(f"DEBUG: After clean_poem: {generated_poem}")
 
-    # NGワードが3つ以上なら再生成
     if count_ng_words(generated_poem) > 2:
         print(f"DEBUG: NG words count > 2 - Poem: {generated_poem}, Count: {count_ng_words(generated_poem)}")
         return "みりんてゃ、おやつ食べながら考えてたら、ポエムがどっかいっちゃったみたい…またすぐ届けるね♡"
 
-    # 空欄対策（デバッグ追加）
     if not generated_poem.strip():
         print(f"DEBUG: Poem is empty or whitespace only - Poem: {generated_poem}, Output: {output}")
         return "みりんてゃ、言葉を探しにお散歩に出かけちゃったみたい...またすぐ帰ってくるね♡"
