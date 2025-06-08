@@ -18,7 +18,7 @@ def count_ng_words(poem):
         "ポエム・コラム", "みりんてゃらしい文章で" * 2,
         "弊社", "投稿作品", "応募", "締切", "募集", "キャンペーン", "ホームページ",
         "記載", "注意事項", "規定", "承諾", "SNS", "送信", "応募方法", "書式",
-        "未発表", "発表", "入選", "特典"
+        "未発表", "発表", "入選", "特典", "料理", "番組", "レシピ", "先生", "NHK", "にんじん"
     ]
     return sum(word in poem for word in ng_words)
 
@@ -29,11 +29,13 @@ def clean_poem(poem):
         "ポエム・コラム", "みりんてゃらしい文章で" * 2,
         "弊社", "投稿作品", "応募", "締切", "募集", "キャンペーン", "ホームページ",
         "記載", "注意事項", "規定", "承諾", "SNS", "送信", "応募方法", "書式",
-        "未発表", "発表", "入選", "特典"
+        "未発表", "発表", "入選", "特典", "料理", "番組", "レシピ", "先生", "NHK", "にんじん"
     ]
     # 繰り返し検出フィルター
     if poem.count("いつも、") >= 3:
         return "みりんてゃ、ちょっと考えすぎちゃったみたい…お茶でも飲んで仕切り直すね☕️"
+    if any(generated_poem.strip().startswith(word) for word in ["投稿", "作品", "規定", "応募"]):
+        return "みりんてゃ、ちょっと真面目すぎたかも…もう一回書き直してみるね🍵"
     for word in ng_words:
         poem = poem.replace(word, "○○")
     return poem
@@ -47,18 +49,13 @@ def generate_poem(weather, day_of_week):
     generator = pipeline("text-generation", model=model, tokenizer=tokenizer)
 
     print(f"DEBUG: Starting generation - Weather: {weather}, Day: {day_of_week}")
-    prompt = f"{weather}の{day_of_week}。空を見上げたとき、みりんてゃの心にふっと浮かんだことを、やさしい言葉で短く表現してください。投稿規定の説明ではなく、ふんわりした一言で。"
+    prompt = f"{weather}の{day_of_week}。みりんてゃがぽつりとつぶやいた、やさしくて静かな一言。"
     print(f"DEBUG: Prompt: {prompt}")
 
     output = generator(prompt, max_length=100, do_sample=True, temperature=0.6, repetition_penalty=1.2)[0]['generated_text']
     print(f"DEBUG: Raw Output: {output}")
     generated_poem = output[len(prompt):].strip()
     print(f"DEBUG: Generated Poem (raw strip): {generated_poem}")
-
-    # 投稿系文頭チェックで再生成
-    if any(generated_poem.strip().startswith(word) for word in ["投稿", "作品", "規定", "応募"]):
-        print(f"DEBUG: Detected post-related start - Poem: {generated_poem}")
-        return "みりんてゃ、ちょっと真面目すぎたかも…もう一回書き直してみるね🍵"
 
     # デバッグ用ログ
     print(f"Prompt: {prompt}")
