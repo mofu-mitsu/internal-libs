@@ -37,7 +37,8 @@ def clean_poem(poem):
         return "みりんてゃ、ちょっと真面目すぎたかも…もう一回書き直してみるね🍵"
     # 「。」が3つ以上で終了
     if poem.count("。") >= 3:
-        return poem.split("。")[0] + "。。"  # 3つ目まででカット
+        parts = poem.split("。")
+        return "。".join(parts[:3]) + "。。"  # 3文まででカット
     for word in ng_words:
         poem = poem.replace(word, "○○")
     return poem
