@@ -4,10 +4,14 @@ import os
 import json
 import time
 import random
+import requests
+from io import BytesIO
 
 # 🔽 🌱 外部ライブラリ
 from dotenv import load_dotenv
 from transformers import AutoModelForCausalLM, AutoTokenizer
+from PIL import Image
+from collections import Counter
 
 # 🔽 📡 atproto関連
 from atproto import Client, models
@@ -18,6 +22,11 @@ from atproto_client.exceptions import InvokeTimeoutError
 MODEL_NAME = "cyberagent/open-calm-1b"  # モデル名
 tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 model = AutoModelForCausalLM.from_pretrained(MODEL_NAME)
+
+# 環境変数読み込み
+load_dotenv()  # .envファイルから読み込み（なくてもSecretsで動作）
+HANDLE = os.environ.get("HANDLE")
+APP_PASSWORD = os.environ.get("APP_PASSWORD")
 
 def open_calm_reply(image_url, text="", context="ふわもこ共感", lang="ja"):
     prompt = f"{context}: 画像: {image_url}, テキスト: {text}, 言語: {lang}"
@@ -32,17 +41,77 @@ def open_calm_reply(image_url, text="", context="ふわもこ共感", lang="ja")
 
 def is_mutual_follow(client, handle):
     try:
-        follows = client.app.bsky.graph.getFollows(actor=handle, limit=100)
-        following = [f.handle for f in follows.follows]
-        my_follows = [f.handle for f in client.app.bsky.graph.getFollows(actor=HANDLE, limit=100).follows]
-        return HANDLE in following and handle in my_follows
+        their_follows = client.app.bsky.graph.get_follows(params={"actor": handle, "limit": 100})
+        their_following = [f.handle for f in their_follows.follows]
+        my_follows = client.app.bsky.graph.get_follows(params={"actor": os.environ.get("HANDLE"), "limit": 100})
+        my_following = [f.handle for f in my_follows.follows]
+        return os.environ.get("HANDLE") in their_following and handle in my_following
     except Exception as e:
         print(f"⚠️ 相互フォロー判定エラー: {e}")
         return False
 
-def process_image(image_url):
-    # 簡易実装：画像URLをテキストとして扱う（本格的には画像処理ライブラリ必要）
-    return "ふわふわ" in image_url or "もこもこ" in image_url or "かわいい" in image_url  # 仮判定
+def get_blob_image_url(cid):
+    return f"https://bsky.social/xrpc/com.atproto.sync.getBlob?cid={cid}"
+
+def download_image_from_blob(cid, access_token):
+    try:
+        if not access_token:
+            print("⚠️ アクセストークンが取得できませんでした")
+            return None
+
+        url = get_blob_image_url(cid)
+        headers = {
+            "Authorization": f"Bearer {access_token}"
+        }
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
+        return Image.open(BytesIO(response.content))
+    except Exception as e:
+        print(f"⚠️ 画像ダウンロード失敗: {e}")
+        return None
+
+def process_image(image_data, text="", access_token=None):
+    if not hasattr(image_data, 'image') or not hasattr(image_data.image, 'ref') or not hasattr(image_data.image.ref, 'link'):
+        print("⚠️ 画像CIDが見つかりません")
+        return False
+
+    cid = image_data.image.ref.link
+    print(f"DEBUG: CID = {cid}")
+
+    try:
+        # Blobから画像を取得
+        img = download_image_from_blob(cid, access_token)
+        if img is None:
+            print("⚠️ 画像取得失敗")
+            return False
+
+        # Pillowで解析
+        img = img.resize((50, 50))
+        colors = img.getdata()
+        color_counts = Counter(colors)
+        common_colors = color_counts.most_common(5)
+
+        # 淡い色（白、ピンク系）が多いかチェック
+        fluffy_count = 0
+        for color in common_colors:
+            r, g, b = color[0][:3]
+            if (r > 200 and g > 200 and b > 200) or (r > 200 and g < 150 and b < 150):
+                fluffy_count += 1
+        if fluffy_count >= 2:
+            print("🎉 ふわもこ色検出！")
+            return True
+
+        # 文字列マッチングのバックアップ
+        check_text = text.lower()
+        keywords = ["ふわふわ", "もこもこ", "かわいい", "fluffy", "cute", "soft"]
+        if any(keyword in check_text for keyword in keywords):
+            print("🎉 ふわもこキーワード検出！")
+            return True
+
+        return False
+    except Exception as e:
+        print(f"⚠️ 画像解析エラー: {e}")
+        return False
 
 def is_quoted_repost(post):
     try:
@@ -71,7 +140,7 @@ def load_reposted_uris_for_check():
 
 def detect_language(client, handle):
     try:
-        profile = client.app.bsky.actor.getProfile(actor=handle)
+        profile = client.app.bsky.actor.get_profile(params={"actor": handle})
         bio = profile.display_name.lower() + " " + getattr(profile, "description", "").lower()
         if any(kw in bio for kw in ["日本語", "日本", "にほん"]):
             return "ja"
@@ -133,8 +202,11 @@ def save_fuwamoko_uri(uri):
 def run_once():
     try:
         client = Client()
-        client.login(HANDLE, APP_PASSWORD)
-        print("📨 ふわもこ共感Bot起動中…")
+        session = client.com.atproto.server.create_session(
+            models.ComAtprotoServerCreateSession.Params(identifier=HANDLE, password=APP_PASSWORD)
+        )
+        access_jwt = session.access_jwt  # トークン取得
+        print(f"📨💖 ふわもこ共感Bot起動中… トークン取得: {access_jwt[:10]}...")
 
         timeline = client.app.bsky.feed.get_timeline(params={"limit": 20})
         feed = timeline.feed
@@ -142,7 +214,9 @@ def run_once():
         load_fuwamoko_uris()
         reposted_uris = load_reposted_uris_for_check()
 
-        for post in feed:
+        # 最新投稿1件だけ処理
+        for post in sorted(feed, key=lambda x: x.post.indexed_at, reverse=True)[:1]:
+            print(f"DEBUG: Post indexed_at = {post.post.indexed_at}")
             time.sleep(random.uniform(5, 15))
             text = getattr(post.post.record, "text", "")
             uri = str(post.post.uri)
@@ -154,10 +228,12 @@ def run_once():
                 continue
 
             if embed and hasattr(embed, 'images') and is_mutual_follow(client, author):
-                image_url = embed.images[0].thumb
-                if process_image(image_url) and random.random() < 0.5:  # 50%確率
+                image_data = embed.images[0]
+                print(f"DEBUG: image_data = {image_data}")
+                print(f"DEBUG: image_data keys = {getattr(image_data, '__dict__', 'not a dict')}")
+                if process_image(image_data, text, access_token=access_jwt) and random.random() < 0.5:  # 50%確率
                     lang = detect_language(client, author)
-                    reply_text = open_calm_reply(image_url, text, lang=lang)
+                    reply_text = open_calm_reply("", text, lang=lang)  # image_url不要
                     print(f"✨ ふわもこ共感成功 → @{author}: {text} (言語: {lang})")
 
                     reply_ref = AppBskyFeedPost.ReplyRef(
@@ -180,6 +256,8 @@ def run_once():
 
     except InvokeTimeoutError:
         print("⚠️ APIタイムアウト！")
+    except Exception as e:
+        print(f"⚠️ ログインまたは実行エラー: {e}")
 
 if __name__ == "__main__":
     load_dotenv()
