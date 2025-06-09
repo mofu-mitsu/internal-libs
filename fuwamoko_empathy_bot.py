@@ -19,14 +19,15 @@ from atproto_client.models import AppBskyFeedPost
 from atproto_client.exceptions import InvokeTimeoutError
 
 # 🔽 🧠 Transformers用設定
-MODEL_NAME = "cyberagent/open-calm-1b"  # モデル名
+MODEL_NAME = "cyberagent/open-calm-1b"
 tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 model = AutoModelForCausalLM.from_pretrained(MODEL_NAME)
 
 # 環境変数読み込み
-load_dotenv()  # .envファイルから読み込み（なくてもSecretsで動作）
+load_dotenv()
 HANDLE = os.environ.get("HANDLE")
 APP_PASSWORD = os.environ.get("APP_PASSWORD")
+SESSION_FILE = "session_string.txt"
 
 def open_calm_reply(image_url, text="", context="ふわもこ共感", lang="ja"):
     prompt = f"{context}: 画像: {image_url}, テキスト: {text}, 言語: {lang}"
@@ -51,47 +52,54 @@ def is_mutual_follow(client, handle):
         return False
 
 def get_blob_image_url(cid):
-    return f"https://bsky.social/xrpc/com.atproto.sync.getBlob?cid={cid}"
+    return f"https://cdn.bsky.app/img/feed_full/plain/{cid}@jpeg"
 
-def download_image_from_blob(cid, access_token):
-    try:
-        if not access_token:
-            print("⚠️ アクセストークンが取得できませんでした")
-            return None
+def download_image_from_blob(cid, client, repo=None):
+    cdn_urls = [
+        f"https://cdn.bsky.app/img/feed_full/plain/{cid}@jpeg",
+        f"https://cdn.bsky.app/img/feed_full/plain/{cid}",
+        f"https://cdn.bsky.app/img/feed/plain/{cid}@jpeg",
+        f"https://cdn.bsky.app/img/feed/plain/{cid}",
+        f"https://cdn.bsky.app/blob/{cid}",
+    ]
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
+    }
+    
+    for url in cdn_urls:
+        print(f"DEBUG: Trying CDN URL: {url}")
+        try:
+            response = requests.get(url, stream=True, timeout=10, headers=headers)
+            response.raise_for_status()
+            print("✅ CDN画像取得成功！")
+            return Image.open(BytesIO(response.content))
+        except requests.exceptions.RequestException as e:
+            print(f"⚠️ CDN画像取得失敗 ({url}): {e}")
+        except Exception as e:
+            print(f"⚠️ CDN画像取得失敗 (予期せぬエラー - {url}): {e}")
+    
+    print("❌ 全CDNパターンで画像取得失敗")
+    return None
 
-        url = get_blob_image_url(cid)
-        headers = {
-            "Authorization": f"Bearer {access_token}"
-        }
-        response = requests.get(url, headers=headers, timeout=10)
-        response.raise_for_status()
-        return Image.open(BytesIO(response.content))
-    except Exception as e:
-        print(f"⚠️ 画像ダウンロード失敗: {e}")
-        return None
-
-def process_image(image_data, text="", access_token=None):
+def process_image(image_data, text="", client=None, post=None):
     if not hasattr(image_data, 'image') or not hasattr(image_data.image, 'ref') or not hasattr(image_data.image.ref, 'link'):
         print("⚠️ 画像CIDが見つかりません")
         return False
 
     cid = image_data.image.ref.link
-    print(f"DEBUG: CID = {cid}")
+    print(f"DEBUG: CID={cid}")
 
     try:
-        # Blobから画像を取得
-        img = download_image_from_blob(cid, access_token)
+        img = download_image_from_blob(cid, client)
         if img is None:
             print("⚠️ 画像取得失敗")
             return False
 
-        # Pillowで解析
         img = img.resize((50, 50))
         colors = img.getdata()
         color_counts = Counter(colors)
         common_colors = color_counts.most_common(5)
 
-        # 淡い色（白、ピンク系）が多いかチェック
         fluffy_count = 0
         for color in common_colors:
             r, g, b = color[0][:3]
@@ -101,7 +109,6 @@ def process_image(image_data, text="", access_token=None):
             print("🎉 ふわもこ色検出！")
             return True
 
-        # 文字列マッチングのバックアップ
         check_text = text.lower()
         keywords = ["ふわふわ", "もこもこ", "かわいい", "fluffy", "cute", "soft"]
         if any(keyword in check_text for keyword in keywords):
@@ -142,11 +149,11 @@ def detect_language(client, handle):
     try:
         profile = client.app.bsky.actor.get_profile(params={"actor": handle})
         bio = profile.display_name.lower() + " " + getattr(profile, "description", "").lower()
-        if any(kw in bio for kw in ["日本語", "日本", "にほん"]):
+        if any(kw in bio for kw in ["日本語", "日本", "にほん", "japanese"]):
             return "ja"
         elif any(kw in bio for kw in ["english", "us", "uk"]):
             return "en"
-        return "ja"  # デフォルト
+        return "ja"
     except Exception as e:
         print(f"⚠️ 言語判定エラー: {e}")
         return "ja"
@@ -189,24 +196,47 @@ def load_fuwamoko_uris():
 def save_fuwamoko_uri(uri):
     normalized_uri = normalize_uri(uri)
     if normalized_uri in fuwamoko_uris and (datetime.now(timezone.utc) - fuwamoko_uris[normalized_uri]).days < 1:
-        print(f"⏩ 履歴保存スキップ（1日1回）: {normalized_uri}")
+        print(f"⩗ 履歴保存スキップ（1日1回）: {normalized_uri}")
         return
     try:
         with open(FUWAMOKO_FILE, 'a', encoding='utf-8') as f:
             f.write(f"{normalized_uri}|{datetime.now(timezone.utc).isoformat()}\n")
         fuwamoko_uris[normalized_uri] = datetime.now(timezone.utc)
-        print(f"💾 履歴保存: {normalized_uri}")
+        print(f"💾 履歴保存: uri={normalized_uri}")
     except Exception as e:
         print(f"⚠️ 履歴保存エラー: {e}")
+
+def load_session_string():
+    if os.path.exists(SESSION_FILE):
+        try:
+            with open(SESSION_FILE, 'r', encoding='utf-8') as f:
+                session_str = f.read().strip()
+                print(f"✅ セッション文字列読み込み: {session_str[:10]}...")
+                return session_str
+        except Exception as e:
+            print(f"⚠️ セッション文字列読み込みエラー: {e}")
+    return None
+
+def save_session_string(session_str):
+    try:
+        with open(SESSION_FILE, 'w', encoding='utf-8') as f:
+            f.write(session_str)
+        print(f"💾 セッション文字列保存: {session_str[:10]}...")
+    except Exception as e:
+        print(f"⚠️ セッション文字列保存エラー: {e}")
 
 def run_once():
     try:
         client = Client()
-        session = client.com.atproto.server.create_session(
-            models.ComAtprotoServerCreateSession.Params(identifier=HANDLE, password=APP_PASSWORD)
-        )
-        access_jwt = session.access_jwt  # トークン取得
-        print(f"📨💖 ふわもこ共感Bot起動中… トークン取得: {access_jwt[:10]}...")
+        session_str = load_session_string()
+        if session_str:
+            client.login(session_string=session_str)
+            print(f"📨💖 ふわもこ共感Bot起動！ セッション再利用: {session_str[:10]}...")
+        else:
+            client.login(login=HANDLE, password=APP_PASSWORD)
+            session_str = client.export_session_string()
+            save_session_string(session_str)
+            print(f"📨💖 ふわもこ共感Bot起動！ 新規セッション: {session_str[:10]}...")
 
         timeline = client.app.bsky.feed.get_timeline(params={"limit": 20})
         feed = timeline.feed
@@ -214,26 +244,56 @@ def run_once():
         load_fuwamoko_uris()
         reposted_uris = load_reposted_uris_for_check()
 
-        # 最新投稿1件だけ処理
         for post in sorted(feed, key=lambda x: x.post.indexed_at, reverse=True)[:1]:
-            print(f"DEBUG: Post indexed_at = {post.post.indexed_at}")
-            time.sleep(random.uniform(5, 15))
+            print(f"DEBUG: Post indexed_at={post.post.indexed_at}")
+            print(f"DEBUG: Post author={post.post.author.handle}, URI={post.post.uri}")
+            # 投稿のJSON構造をログ出力
+            post_dict = {
+                "uri": post.post.uri,
+                "cid": post.post.cid,
+                "author": post.post.author.handle,
+                "did": post.post.author.did,
+                "text": getattr(post.post.record, "text", ""),
+                "embed": getattr(post.post.record, "embed", None)
+            }
+            print(f"DEBUG: Post JSON={json.dumps(post_dict, default=str, ensure_ascii=False)}")
+            
+            time.sleep(random.uniform(5, 10))
             text = getattr(post.post.record, "text", "")
             uri = str(post.post.uri)
             post_id = uri.split('/')[-1]
             author = post.post.author.handle
             embed = getattr(post.post.record, "embed", None)
 
+            # 投稿詳細を取得
+            try:
+                thread = client.app.bsky.feed.get_post_thread(params={"uri": uri, "depth": 1})
+                print(f"DEBUG: Thread data={json.dumps(thread.__dict__, default=str, ensure_ascii=False)}")
+            except Exception as e:
+                print(f"⚠️ get_post_threadエラー: {e}")
+
+            image_data_list = []
+            if embed and hasattr(embed, 'images') and embed.images:
+                print("DEBUG: Found direct embedded images")
+                image_data_list = embed.images
+            elif embed and hasattr(embed, 'record') and hasattr(embed.record, 'embed') and hasattr(embed.record.embed, 'images') and embed.record.embed.images:
+                print("DEBUG: Found embedded images in quoted post")
+                image_data_list = embed.record.embed.images
+                print(f"DEBUG: Quoted post author={embed.record.author.handle}, DID={embed.record.author.did}")
+            else:
+                print("DEBUG: No images found in post")
+                continue
+
             if uri in fuwamoko_uris or author == HANDLE or is_quoted_repost(post) or post_id in reposted_uris:
                 continue
 
-            if embed and hasattr(embed, 'images') and is_mutual_follow(client, author):
-                image_data = embed.images[0]
-                print(f"DEBUG: image_data = {image_data}")
-                print(f"DEBUG: image_data keys = {getattr(image_data, '__dict__', 'not a dict')}")
-                if process_image(image_data, text, access_token=access_jwt) and random.random() < 0.5:  # 50%確率
+            if image_data_list and is_mutual_follow(client, author):
+                image_data = image_data_list[0]
+                print(f"DEBUG: image_data={image_data}")
+                print(f"DEBUG: image_data keys={getattr(image_data, '__dict__', 'not a dict')}")
+                if process_image(image_data, text, client=client, post=post) and random.random() < 0.5:
                     lang = detect_language(client, author)
-                    reply_text = open_calm_reply("", text, lang=lang)  # image_url不要
+                    reply_text = open_calm_reply("", text, lang=lang)
                     print(f"✨ ふわもこ共感成功 → @{author}: {text} (言語: {lang})")
 
                     reply_ref = AppBskyFeedPost.ReplyRef(
