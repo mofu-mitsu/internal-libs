@@ -35,10 +35,12 @@ def clean_poem(poem):
         return "みりんてゃ、ちょっと考えすぎちゃったみたい…お茶でも飲んで仕切り直すね☕️"
     if any(poem.strip().startswith(word) for word in ["投稿", "作品", "規定", "応募"]):
         return "みりんてゃ、ちょっと真面目すぎたかも…もう一回書き直してみるね🍵"
-    # 「。」が3つ以上で終了
-    if poem.count("。") >= 3:
-        parts = poem.split("。")
-        return "。".join(parts[:3]) + "。。"  # 3文まででカット
+        
+    # 「文っぽい区切り」が3つ以上ある場合はカット
+    sentences = re.split(r'[。！？!?〜]+', poem)
+    if len(sentences) >= 4:
+        return "。".join(sentences[:3]) + "。。"
+
     for word in ng_words:
         poem = poem.replace(word, "○○")
     return poem
