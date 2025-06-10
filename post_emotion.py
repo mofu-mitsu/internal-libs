@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from pathlib import Path
 import requests
 from datetime import datetime
+import re
 from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
 
 # ------------------------------
@@ -35,7 +36,7 @@ def clean_poem(poem):
         return "みりんてゃ、ちょっと考えすぎちゃったみたい…お茶でも飲んで仕切り直すね☕️"
     if any(poem.strip().startswith(word) for word in ["投稿", "作品", "規定", "応募"]):
         return "みりんてゃ、ちょっと真面目すぎたかも…もう一回書き直してみるね🍵"
-        
+
     # 「文っぽい区切り」が3つ以上ある場合はカット
     sentences = re.split(r'[。！？!?〜]+', poem)
     if len(sentences) >= 4:
@@ -46,15 +47,15 @@ def clean_poem(poem):
     return poem
 
 # ------------------------------
-# ★ ポエム生成（open-calm-3b使用）
+# ★ ポエム生成（open-calm-1b使用）
 # ------------------------------
 def generate_poem(weather, day_of_week):
-    tokenizer = AutoTokenizer.from_pretrained("cyberagent/open-calm-3b")  # 3b試したい場合は"cyberagent/open-calm-3b"
-    model = AutoModelForCausalLM.from_pretrained("cyberagent/open-calm-3b")  # 3b試したい場合は"cyberagent/open-calm-3b"
+    tokenizer = AutoTokenizer.from_pretrained("cyberagent/open-calm-1b")  # 3b試したい場合は"cyberagent/open-calm-3b"
+    model = AutoModelForCausalLM.from_pretrained("cyberagent/open-calm-1b")  # 3b試したい場合は"cyberagent/open-calm-3b"
     generator = pipeline("text-generation", model=model, tokenizer=tokenizer)
 
     print(f"DEBUG: Starting generation - Weather: {weather}, Day: {day_of_week}")
-    prompt = f"{weather}の{day_of_week}。みりんてゃが空を見上げて、ふわっと浮かんだやさしい詩を一言でつぶやく。"
+    prompt = f"{weather}の{day_of_week}。みりんてゃが空を見上げて、ふわっと浮かんだやさしい詩を一言でつぶやき、その続きをそっとつぶやく。"
     print(f"DEBUG: Prompt: {prompt}")
 
     output = generator(prompt, max_length=150, do_sample=True, temperature=0.6, repetition_penalty=1.2)[0]['generated_text']
