@@ -7,6 +7,7 @@ from pathlib import Path
 import requests
 from datetime import datetime
 import re
+from pytz import timezone
 from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
 
 # ------------------------------
@@ -37,10 +38,11 @@ def clean_poem(poem):
     if any(poem.strip().startswith(word) for word in ["投稿", "作品", "規定", "応募"]):
         return "みりんてゃ、ちょっと真面目すぎたかも…もう一回書き直してみるね🍵"
 
-    # 「文っぽい区切り」が3つ以上ある場合はカット
+    # 「文っぽい区切り」を正規表現でカウント
     sentences = re.split(r'[。！？!?〜]+', poem)
     if len(sentences) >= 4:
-        return "。".join(sentences[:3]) + "。。"
+        cleaned_parts = ["。".join(sentences[:3]) + "。。"]
+        return cleaned_parts[0]
 
     for word in ng_words:
         poem = poem.replace(word, "○○")
@@ -68,7 +70,7 @@ def generate_poem(weather, day_of_week):
     print(f"Final Poem (before processing): {generated_poem}")
 
     with open("poem_log.txt", "a", encoding="utf-8") as f:
-        f.write(f"{datetime.now()}: {generated_poem}\n")
+        f.write(f"{datetime.now(timezone('Asia/Tokyo'))}: {generated_poem}\n")
 
     if "詩は" in generated_poem and "作者の心" in generated_poem and "サイバー" in generated_poem:
         print(f"DEBUG: Philosophy mode detected - Poem: {generated_poem}")
@@ -134,7 +136,7 @@ print(f"DEBUG: Attempting login with HANDLE: {HANDLE}")
 client.login(HANDLE, APP_PASSWORD)
 print(f"DEBUG: Login successful")
 
-now = datetime.now()
+now = datetime.now(timezone('Asia/Tokyo'))
 weather = get_weather()
 day_of_week = get_day_of_week(now)
 message = generate_poem(weather, day_of_week)
