@@ -229,6 +229,8 @@ def generate_facets_from_text(text, hashtags):
     return facets
 
 # 投稿を確認して返信
+# ... (既存コードは省略)
+
 def run_once():
     try:
         client = Client()
@@ -241,16 +243,15 @@ def run_once():
         replied_uris = load_replied_uris()
         replied_texts = load_replied_texts()
         reposted_uris = load_reposted_uris()
-        fuwamoko_uris = load_fuwamoko_uris()  # ふわもこBotの履歴追加
+        fuwamoko_uris = load_fuwamoko_uris()
 
         for post in feed:
-            time.sleep(random.uniform(5, 15))
+            time.sleep(random.uniform(10, 20))  # 間隔を10-20秒に拡張
             text = getattr(post.post.record, "text", None)
             uri = str(post.post.uri)
             post_id = uri.split('/')[-1]
             author = post.post.author.handle
 
-            # 最新の履歴を毎回読み込み
             replied_uris = load_replied_uris()
             replied_post_ids = set(uri.split('/')[-1] for uri in replied_uris)
             reposted_post_ids = set(uri.split('/')[-1] for uri in reposted_uris)
