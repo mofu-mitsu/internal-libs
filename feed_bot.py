@@ -36,6 +36,20 @@ def is_quoted_repost(post):
         print(f"⚠️ 引用リポストチェックエラー: {e}")
         return False
 
+# ふわもこBotの履歴読み込み
+def load_fuwamoko_uris():
+    FUWAMOKO_FILE = "fuwamoko_empathy_uris.txt"
+    if os.path.exists(FUWAMOKO_FILE):
+        try:
+            with open(FUWAMOKO_FILE, 'r', encoding='utf-8') as f:
+                uris = {line.split('|')[0].strip() for line in f if line.strip()}
+                print(f"✅ 読み込んだ fuwamoko_uris: {len(uris)}件")
+                return uris
+        except Exception as e:
+            print(f"⚠️ fuwamoko_uris読み込みエラー: {e}")
+            return set()
+    return set()
+
 # .envファイルを読み込む
 load_dotenv()
 HF_API_TOKEN = os.getenv("HF_API_TOKEN")
@@ -164,8 +178,8 @@ def save_replied_texts(replied_texts):
         print(f"⚠️ replied_texts保存失敗: {response.status_code} {msg}")
 
 # 🔹 りぽりんBotの履歴（オプション）
-REPOSTED_FILE = "reposted_uris.txt"
 def load_reposted_uris():
+    REPOSTED_FILE = "reposted_uris.txt"
     if os.path.exists(REPOSTED_FILE):
         try:
             with open(REPOSTED_FILE, 'r', encoding='utf-8') as f:
@@ -227,6 +241,7 @@ def run_once():
         replied_uris = load_replied_uris()
         replied_texts = load_replied_texts()
         reposted_uris = load_reposted_uris()
+        fuwamoko_uris = load_fuwamoko_uris()  # ふわもこBotの履歴追加
 
         for post in feed:
             time.sleep(random.uniform(5, 15))
@@ -235,22 +250,27 @@ def run_once():
             post_id = uri.split('/')[-1]
             author = post.post.author.handle
 
-            # 最新のreplied_urisを毎回読み込み
+            # 最新の履歴を毎回読み込み
             replied_uris = load_replied_uris()
             replied_post_ids = set(uri.split('/')[-1] for uri in replied_uris)
             reposted_post_ids = set(uri.split('/')[-1] for uri in reposted_uris)
+            fuwamoko_post_ids = set(uri.split('/')[-1] for uri in fuwamoko_uris)
 
             print(f"📝 処理対象URI: {uri}")
             print(f"📄 保存済みURI読み込み完了 → 件数: {len(replied_uris)}")
             print(f"🗂 保存済みテキスト読み込み完了 → 件数: {len(replied_texts)}")
             if reposted_uris:
                 print(f"📂 りぽりんBotの履歴 → 件数: {len(reposted_uris)}")
+            if fuwamoko_uris:
+                print(f"🐾 ふわもこBotの履歴 → 件数: {len(fuwamoko_uris)}")
 
             # スキップ条件
-            if author == HANDLE or post_id in replied_post_ids or not text:
+            if author == HANDLE or post_id in replied_post_ids or post_id in fuwamoko_post_ids or not text:
                 if post_id in replied_post_ids:
                     print(f"⏩ スキップ（既にリプ済み）→ @{author}: {text}")
                     print(f"    🔁 スキップ理由：ID一致 → {post_id}")
+                elif post_id in fuwamoko_post_ids:
+                    print(f"⏩ スキップ（ふわもこBotでリプ済み）→ @{author}: {text}")
                 elif author == HANDLE:
                     print(f"⏩ スキップ（自分の投稿）→ @{author}: {text}")
                 elif not text:
