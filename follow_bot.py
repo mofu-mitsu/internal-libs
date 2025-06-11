@@ -2,11 +2,37 @@ from atproto import Client, models
 import os
 from dotenv import load_dotenv
 
-
 # .env 読み込み
 load_dotenv()
 HANDLE = os.getenv("HANDLE")
 APP_PASSWORD = os.getenv("APP_PASSWORD")
+
+
+# 怪しいユーザー判定関数
+def is_suspicious_user(profile):
+    suspicious_keywords = ["援交", "nsfw", "副業", "稼げる", "大人", "出会い", "無料", "click", "副収入"]
+    suspicious_domains = ["xyz", "click", "cash", "club"]
+
+    display_name = profile.display_name or ""
+    description = profile.description or ""
+    handle = profile.handle or ""
+    avatar = profile.avatar
+
+    # 表示名・説明に危険ワードが含まれてるか？
+    for keyword in suspicious_keywords:
+        if keyword.lower() in display_name.lower() or keyword.lower() in description.lower():
+            return True
+
+    # ドメインが怪しい（例：username@xyz）
+    if any(handle.endswith(f".{domain}") for domain in suspicious_domains):
+        return True
+
+    # アイコンなし
+    if avatar is None:
+        return True
+
+    return False
+
 
 def start():
     client = Client()
@@ -24,19 +50,24 @@ def start():
     to_follow = follower_handles - following_handles
     to_unfollow = following_handles - follower_handles
 
-    # フォロバ処理
+    # フォロバ処理（信頼できるアカウントのみ）
     for did in to_follow:
         try:
+            profile = client.app.bsky.actor.get_profile(actor=did)
+            if is_suspicious_user(profile):
+                print(f"⚠️ 怪しいアカウントをスキップ: {profile.handle}")
+                continue
+
             follow_record = models.AppBskyGraphFollow.Record(
                 subject=did,
                 created_at=client.get_current_time_iso()
             )
             client.app.bsky.graph.follow.create(repo=self_did, record=follow_record)
-            print(f"✅ フォロバしました: {did}")
+            print(f"✅ フォロバしました: {profile.handle}")
         except Exception as e:
-            print(f"❌ フォロー失敗: {did} - {e}")
+            print(f"❌ フォロバ失敗: {did} - {e}")
 
-    # フォロー解除処理（delete_record で対応）
+    # フォロー解除処理
     try:
         repo_follows = client.com.atproto.repo.list_records(params={
             "repo": self_did,
@@ -62,6 +93,7 @@ def start():
 
     except Exception as e:
         print(f"❌ フォロー解除全体で失敗: {e}")
+
 
 if __name__ == "__main__":
     start()
