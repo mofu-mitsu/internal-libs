@@ -41,7 +41,7 @@ def clean_poem(poem):
     # 「文っぽい区切り」を正規表現でカウント
     sentences = re.split(r'[。！？!?〜]+', poem)
     if len(sentences) >= 4:
-        cleaned_parts = ["。".join(sentences[:3]) + "。。"]
+        cleaned_parts = ["。".join(sentences[:3]) + "…"]  # 「。。」を「…」に変更
         return cleaned_parts[0]
 
     for word in ng_words:
