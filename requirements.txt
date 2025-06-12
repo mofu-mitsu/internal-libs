@@ -3,6 +3,7 @@ atproto==0.0.61
 python-dotenv==1.0.1
 requests>=2.31.0
 multiformats==0.3.1.post4  # ← これが正解！
+pytz
 
 # ─── リプ系Bot用（AI等） ───
 transformers==4.36.2
