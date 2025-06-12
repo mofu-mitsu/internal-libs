@@ -40,26 +40,34 @@ IMAGE_POSTS = load_image_posts()
 def upload_image(client, image_path, max_size_kb=976):
     img = Image.open(image_path)
 
-    # 一時バッファにJPEG/PNGとして保存
-    buffer = io.BytesIO()
-    format = "JPEG" if img.format != "PNG" else "PNG"
+    # 強制リサイズ（デカすぎる画像は縮小）
+    max_dimension = 1024
+    if max(img.size) > max_dimension:
+        ratio = max_dimension / max(img.size)
+        new_size = (int(img.width * ratio), int(img.height * ratio))
+        img = img.resize(new_size, Image.LANCZOS)
 
-    # 画質を落としながら圧縮ループ（JPEG向け）
+    # 透過画像だったらJPEGにする
+    force_jpeg = img.mode in ["RGBA", "LA"]
+    format = "JPEG" if force_jpeg or img.format != "PNG" else "PNG"
+
+    buffer = io.BytesIO()
     quality = 95
+
     while True:
         buffer.seek(0)
         buffer.truncate(0)
+
         if format == "JPEG":
-            img.convert("RGB").save(buffer, format="JPEG", quality=quality, optimize=True)
+            img.convert("RGB").save(buffer, format="JPEG", quality=quality, optimize=True, progressive=True)
         else:
-            img.save(buffer, format="PNG", optimize=True)
+            img.convert("P", palette=Image.ADAPTIVE, colors=256).save(buffer, format="PNG", optimize=True)
 
         size_kb = buffer.tell() / 1024
         if size_kb <= max_size_kb or quality <= 20:
             break
-        quality -= 5  # 画質を段階的に下げる
+        quality -= 5
 
-    # アップロード
     buffer.seek(0)
     img_data = buffer.read()
     response = client.com.atproto.repo.upload_blob(img_data)
