@@ -53,7 +53,7 @@ def start():
     # フォロバ処理（信頼できるアカウントのみ）
     for did in to_follow:
         try:
-            profile = client.app.bsky.actor.get_profile(actor=did)
+            profile = client.app.bsky.actor.get_profile(params={"actor": did})
             if is_suspicious_user(profile):
                 print(f"⚠️ 怪しいアカウントをスキップ: {profile.handle}")
                 continue
