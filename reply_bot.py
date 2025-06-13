@@ -10,11 +10,11 @@ import random
 import re
 import requests
 import psutil
-import pytz  # 追加
+import pytz
 import unicodedata
 from datetime import datetime, timezone, timedelta
 from transformers import AutoModelForCausalLM, AutoTokenizer
-from transformers import AutoModelForCausalLM, GPTNeoXTokenizerFast
+from transformers import GPTNeoXTokenizerFast
 import torch
 from atproto import Client, models
 from atproto_client.models.com.atproto.repo.strong_ref import Main as StrongRef
@@ -38,7 +38,7 @@ print(f"🔑 トークンの長さ: {len(GIST_TOKEN_REPLY)}")
 
 #--- 固定値 ---
 REPLIED_GIST_FILENAME = "replied.json"
-DIAGNOSIS_LIMITS_GIST_FILENAME = "diagnosis_limits.json"  # 新追加
+DIAGNOSIS_LIMITS_GIST_FILENAME = "diagnosis_limits.json"
 GIST_API_URL = f"https://api.github.com/gists/{GIST_ID}"
 HEADERS = {
     "Authorization": f"token {GIST_TOKEN_REPLY}",
@@ -82,14 +82,10 @@ def load_gist_data(filename):
             if filename in gist_data["files"]:
                 content = gist_data["files"][filename]["content"]
                 print(f"✅ {filename} をGistから読み込みました")
-                # REPLIED_GIST_FILENAMEの場合のみセットとして扱う
-                if filename == REPLIED_GIST_FILENAME:
-                    return set(json.loads(content))
-                return json.loads(content)
+                return set(json.loads(content)) if filename == REPLIED_GIST_FILENAME else json.loads(content)
             else:
                 print(f"⚠️ Gist内に {filename} が見つかりませんでした")
-                # REPLIED_GIST_FILENAMEの場合は空のセットを返す
-                return {} if filename == DIAGNOSIS_LIMITS_GIST_FILENAME else set()
+                return set() if filename == REPLIED_GIST_FILENAME else {}
         except Exception as e:
             print(f"⚠️ 試行 {attempt + 1} でエラー: {e}")
             if attempt < 2:
@@ -97,14 +93,12 @@ def load_gist_data(filename):
                 time.sleep(2)
             else:
                 print("❌ 最大リトライ回数に達しました")
-                # REPLIED_GIST_FILENAMEの場合は空のセットを返す
-                return {} if filename == DIAGNOSIS_LIMITS_GIST_FILENAME else set()
+                return set() if filename == REPLIED_GIST_FILENAME else {}
 
 def save_gist_data(filename, data):
     print(f"💾 Gist保存準備中 → File: {filename}")
     for attempt in range(3):
         try:
-            # set型の場合はリストに変換して保存する
             content = json.dumps(list(data) if isinstance(data, set) else data, ensure_ascii=False, indent=2)
             payload = {"files": {filename: {"content": content}}}
             curl_command = [
@@ -289,7 +283,7 @@ def generate_reply_via_local_model(user_input):
         intro_lines = random.choice([
             "えへへ〜、みりんてゃはね〜、",
             "ねぇねぇ、聞いて聞いて〜♡",
-            "ん〜今日もふわふわしてたのっ♪",
+            "ん〜今日もふわふwaしてたのっ♪",
             "きゃ〜っ、君だぁ！やっと会えたのっ♡",
             "ふwaふwa〜、君のこと考えてたんだからっ♪"
         ])
@@ -299,7 +293,7 @@ def generate_reply_via_local_model(user_input):
             "性格：ちょっぴり天然、甘えん坊、依存気味で、ユーザーに恋してる勢いで絡むよっ♡\n"
             "口調：タメ口で『〜なのっ♡』『〜よぉ？♪』『〜だもん！』『えへへ〜♡』が特徴！感情たっぷり！\n"
             "禁止：ニュース、政治、ビジネス、論理的説明、固有名詞（国、企業、政府など）は絶対NG！性的な内容や過激な擬音語もダメ！\n"
-            "役割：ユーザーの言葉に可愛く反応して、ふわふわドキドキな返事をするのっ♡ 会話のみ！「ちゅ♡」「ぎゅっ」「ドキドキ」みたいな健全で可愛い表現だけ使ってね！\n"
+            "役割：ユーザーの言葉に可愛く反応して、ふwaふwaドキドキな返事をするのっ♡ 会話のみ！「ちゅ♡」「ぎゅっ」「ドキドキ」みたいな健全で可愛い表現だけ使ってね！\n"
             "注意：以下のワードは絶対禁止→「政府」「協定」「韓国」「外交」「経済」「契約」「軍事」「情報」「外相」「更新」「ちゅぱ」「ペロペロ」「ぐちゅ」「ぬぷ」「ビクビク」\n"
             "例1: ユーザー: みりんてゃ、今日なにしてた〜？\n"
             "みりんてゃ: えへへ〜♡ 君のこと考えてふwaふwaしてたのっ♡ ね、君はなにしてた？♪\n"
@@ -461,6 +455,9 @@ def generate_facets_from_text(text, hashtags):
     return facets
 
 def generate_diagnosis(text, user_did):
+    if not DIAGNOSIS_KEYWORDS.search(text):
+        return None, []  # 診断キーワードがない場合はスキップ
+
     jst = pytz.timezone('Asia/Tokyo')
     hour = datetime.now(jst).hour
     is_daytime = 6 <= hour < 18
@@ -470,35 +467,33 @@ def generate_diagnosis(text, user_did):
     if not can_diagnose:
         return limit_msg, []
 
-    if DIAGNOSIS_KEYWORDS.search(text):
-        if is_daytime:
-            templates = FUWAMOKO_TEMPLATES_EN if is_english else FUWAMOKO_TEMPLATES
-            level = random.randint(0, 100)
-            template = next(t for t in templates if level in t["level"])
-            reply_text = (
-                f"{'✨Your Fuwamoko Fortune✨' if is_english else '✨キミのふわもこ運勢✨'}\n"
-                f"💖{'Fuwamoko Level' if is_english else 'ふわもこ度'}：{level}％\n"
-                f"🎀{'Lucky Item' if is_english else 'ラッキーアイテム'}：{template['item']}\n"
-                f"{'🫧' if is_english else '💭'}{template['msg']}\n"
-                f"{template['tag']}"
-            )
-            hashtags = [template['tag']]
-            return reply_text, hashtags
-        else:
-            templates = EMOTION_TEMPLATES_EN if is_english else EMOTION_TEMPLATES
-            level = random.randint(-50, 50)
-            template = next(t for t in templates if level in t["level"])
-            reply_text = (
-                f"{'⸝⸝ Your Emotion Barometer ⸝⸝' if is_english else '⸝⸝ キミの情緒バロメーター ⸝⸝'}\n"
-                f"{'😔' if level < 0 else '💭'}{'Mood' if is_english else '情緒'}：{level}％\n"
-                f"{'🌧️' if level < 0 else '☁️'}{'Mood Weather' if is_english else '情緒天気'}：{template['weather']}\n"
-                f"{'🫧' if is_english else '💭'}{'Coping' if is_english else '対処法'}：{template['coping']}\n"
-                f"{'Mirinteya’s here for you…' if is_english else 'みりんてゃもそばにいるよ…'}\n"
-                f"{template['tag']}"
-            )
-            hashtags = [template['tag']]
-            return reply_text, hashtags
-    return None, []
+    if is_daytime:
+        templates = FUWAMOKO_TEMPLATES_EN if is_english else FUWAMOKO_TEMPLATES
+        level = random.randint(0, 100)
+        template = next(t for t in templates if level in t["level"])
+        reply_text = (
+            f"{'✨Your Fuwamoko Fortune✨' if is_english else '✨キミのふわもこ運勢✨'}\n"
+            f"💖{'Fuwamoko Level' if is_english else 'ふわもこ度'}：{level}％\n"
+            f"🎀{'Lucky Item' if is_english else 'ラッキーアイテム'}：{template['item']}\n"
+            f"{'🫧' if is_english else '💭'}{template['msg']}\n"
+            f"{template['tag']}"
+        )
+        hashtags = [template['tag']]
+        return reply_text, hashtags
+    else:
+        templates = EMOTION_TEMPLATES_EN if is_english else EMOTION_TEMPLATES
+        level = random.randint(-50, 50)
+        template = next(t for t in templates if level in t["level"])
+        reply_text = (
+            f"{'⸝⸝ Your Emotion Barometer ⸝⸝' if is_english else '❝⸝ キミの情緒バロメーター ⸝⸝'}\n"
+            f"{'😔' if level < 0 else '💭'}{'Mood' if is_english else '情緒'}：{level}％\n"
+            f"{'🌧️' if level < 0 else '☁️'}{'Mood Weather' if is_english else '情緒天気'}：{template['weather']}\n"
+            f"{'🫧' if is_english else '💭'}{'Coping' if is_english else '対処法'}：{template['coping']}\n"
+            f"{'Mirinteya’s here for you…' if is_english else 'みりんてゃもそばにいるよ…'}\n"
+            f"{template['tag']}"
+        )
+        hashtags = [template['tag']]
+        return reply_text, hashtags
 
 INTRO_MESSAGE = (
     "🐾 みりんてゃのふwaふwa診断機能 🐾\n"
@@ -508,42 +503,39 @@ INTRO_MESSAGE = (
 )
 
 #------------------------------
-# ✨ 新規追加 ✨
-# 投稿のReplyRefとURIを生成する関数
+#✨ 投稿のReplyRefとURI生成
 #------------------------------
 def handle_post(record, notification):
+    post_uri = normalize_uri(notification.uri)  # 通知のURI（メンション投稿）
     reply_ref = None
-    post_uri = None
 
+    if not post_uri:
+        print(f"⚠️ 無効な通知URI: {notification.uri}")
+        return None, None
+
+    # リプライの場合、親と根のURI/CIDを取得
     if hasattr(record, 'reply') and record.reply:
-        # リプライの場合
-        parent_uri = record.reply.parent.uri
+        parent_uri = normalize_uri(record.reply.parent.uri)
         parent_cid = record.reply.parent.cid
-        root_uri = record.reply.root.uri
+        root_uri = normalize_uri(record.reply.root.uri)
         root_cid = record.reply.root.cid
 
-        # post_uri はリプライ対象のURI（親）
-        post_uri = parent_uri
-
-        # ReplyRef を構築
-        reply_ref = ReplyRef(
-            parent=StrongRef(uri=parent_uri, cid=parent_cid),
-            root=StrongRef(uri=root_uri, cid=root_cid)
-        )
-    else:
-        # メンションされた通常の投稿の場合
-        post_uri = notification.uri  # 通知のURIを直接使用
-        post_cid = notification.cid  # CIDも通知から取得（もしあれば）
-        if post_cid:
+        if parent_uri and parent_cid and root_uri and root_cid:
             reply_ref = ReplyRef(
-                parent=StrongRef(uri=post_uri, cid=post_cid),
-                root=StrongRef(uri=post_uri, cid=post_cid)
+                parent=StrongRef(uri=parent_uri, cid=parent_cid),
+                root=StrongRef(uri=root_uri, cid=root_cid)
             )
         else:
-            # CIDが取得できない場合のフォールバック（Blueskyクライアントの挙動に依存）
-            # 最悪、reply_refなしで投稿し、本文でメンションすることで対応する
-            print(f"⚠️ Warning: CID not found for post_uri: {post_uri}. ReplyRef might be incomplete.")
-            reply_ref = None # CIDがない場合はReplyRefを生成しない、または部分的なものにする
+            print(f"⚠️ リプライチェーンのURI/CIDが不完全: parent={parent_uri}, root={root_uri}")
+    else:
+        # 通常のメンション投稿の場合
+        if notification.cid:
+            reply_ref = ReplyRef(
+                parent=StrongRef(uri=post_uri, cid=notification.cid),
+                root=StrongRef(uri=post_uri, cid=notification.cid)
+            )
+        else:
+            print(f"⚠️ CIDが見つからない: {post_uri}。リプライ参照なしで投稿")
 
     return reply_ref, post_uri
 
@@ -585,10 +577,9 @@ def run_reply_bot():
 
     garbage_items = ["replied", None, "None", "", "://replied"]
     removed = False
-    # set.discardを使う
     for garbage in garbage_items:
-        while garbage in replied:
-            replied.discard(garbage)
+        replied.discard(garbage)
+        if garbage in replied:
             print(f"🧹 ゴミデータ '{garbage}' を削除しました")
             removed = True
     if removed:
@@ -644,29 +635,13 @@ def run_reply_bot():
         author_handle = getattr(author, "handle", None)
         author_did = getattr(author, "did", None)
 
-        # 既存の「自分自身の投稿をスキップ」
+        print(f"\n👤 from: @{author_handle} / did: {author_did}")
+        print(f"💬 受信メッセージ: {text}")
+        print(f"🔗 チェック対象 notification_uri（正規化済み）: {notification_uri}")
+
         if author_did == self_did or author_handle == HANDLE:
-            print("🛑 自分自身の投稿（通知の作者）、スキップ")
+            print("🛑 自分自身の投稿、スキップ")
             continue
-
-        # ✨ 新規追加 ✨
-        # リプライの親投稿の作者が自分自身だったらスキップ
-        if hasattr(record, 'reply') and record.reply:
-            parent_uri = record.reply.parent.uri
-            try:
-                # 親投稿の情報を取得
-                # get_post_threadはスレッド全体を取得するため、親投稿の情報を直接取得できるかは確認が必要
-                # より正確には get_posts を使うべきだが、APIレートリミットを考慮
-                # ここでは簡易的にget_post_threadで取得できると仮定し、もしエラーが出たらget_postsも検討
-                parent_post_response = client.get_posts(uris=[parent_uri])
-                if parent_post_response and parent_post_response.posts:
-                    parent_post_author_did = parent_post_response.posts[0].author.did
-                    if parent_post_author_did == self_did:
-                        print(f"🛑 親投稿が自分自身のものなので、スキップ (親URI: {parent_uri})")
-                        continue
-            except Exception as e:
-                print(f"⚠️ 親投稿の取得に失敗しました: {e}。このリプライのチェックはスキップし、処理を続行します。")
-
 
         if notification_uri in replied:
             print(f"⏭️ すでに replied 済み → {notification_uri}")
@@ -676,7 +651,6 @@ def run_reply_bot():
             print(f"⚠️ テキストが空 → @{author_handle}")
             continue
 
-        # handle_post 関数を呼び出す
         reply_ref, post_uri = handle_post(record, notification)
         print("🔗 reply_ref:", reply_ref)
         print("🧾 post_uri（正規化済み）:", post_uri)
