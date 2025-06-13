@@ -209,7 +209,7 @@ def save_gist_data(filename, data):
 #🆕 診断機能
 #------------------------------
 DIAGNOSIS_KEYWORDS = re.compile(
-    r"ふわもこ運勢|情緒診断|みりんてゃ情緒は|運勢|占い|診断|占って"
+    r"ふわもこ運勢|情緒診断|みりんてゃ情緒は|運勢|占い|診断して|占って"
     r"|Fuwamoko Fortune|Emotion Check|Mirinteya Mood|Tell me my fortune|diagnose|Fortune",
     re.IGNORECASE
 )
