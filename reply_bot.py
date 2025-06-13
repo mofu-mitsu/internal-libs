@@ -89,17 +89,22 @@ def load_gist_data(filename):
             if filename in gist_data["files"]:
                 replied_content = gist_data["files"][filename]["content"]
                 print(f"📄 生の{filename}内容:\n{replied_content}")
-                raw_uris = json.loads(replied_content)
-                replied = set(uri for uri in (normalize_uri(u) for u in raw_uris) if uri)
-                print(f"✅ {filename} をGistから読み込みました（件数: {len(replied)}）")
-                if replied:
-                    print("📁 最新URI一覧（正規化済み）:")
-                    for uri in list(replied)[-5:]:
-                        print(f" - {uri}")
-                return replied
+                if filename == REPLIED_GIST_FILENAME:
+                    raw_uris = json.loads(replied_content)
+                    replied = set(uri for uri in (normalize_uri(u) for u in raw_uris) if uri)
+                    print(f"✅ {filename} をGistから読み込みました（件数: {len(replied)}）")
+                    if replied:
+                        print("📁 最新URI一覧（正規化済み）:")
+                        for uri in list(replied)[-5:]:
+                            print(f" - {uri}")
+                    return replied
+                else:  # diagnosis_limits.json用
+                    data = json.loads(replied_content)
+                    print(f"✅ {filename} をGistから読み込みました（件数: {len(data)}）")
+                    return data
             else:
                 print(f"⚠️ Gist内に {filename} が見つかりませんでした")
-                return set()
+                return set() if filename == REPLIED_GIST_FILENAME else {}
         except Exception as e:
             print(f"⚠️ 試行 {attempt + 1} でエラー: {e}")
             if attempt < 2:
@@ -107,7 +112,7 @@ def load_gist_data(filename):
                 time.sleep(2)
             else:
                 print("❌ 最大リトライ回数に達しました")
-                return set()
+                return set() if filename == REPLIED_GIST_FILENAME else {}
 
 def save_replied(replied_set):
     print("💾 Gist保存準備中...")
@@ -117,7 +122,6 @@ def save_replied(replied_set):
     print(f"🔑 トークンの先頭5文字: {GIST_TOKEN_REPLY[:5]}")
     print(f"🔑 トークンの末尾5文字: {GIST_TOKEN_REPLY[-5:]}")
 
-    # cleaned_setを新しいsetとして作成、replied_setを直接変更しない
     cleaned_set = set(uri for uri in replied_set if normalize_uri(uri))
     print(f"🧹 保存前にクリーニング（件数: {len(cleaned_set)}）")
     if cleaned_set:
@@ -154,6 +158,42 @@ def save_replied(replied_set):
                 else:
                     print("⚠️ 保存内容が反映されていません")
                     raise Exception("保存内容の反映に失敗")
+            else:
+                raise Exception(f"Gist保存失敗: {result.stderr}")
+        except Exception as e:
+            print(f"⚠️ 試行 {attempt + 1} でエラー: {e}")
+            if attempt < 2:
+                print(f"⏳ リトライします（{attempt + 2}/3）")
+                time.sleep(2)
+            else:
+                print("❌ 最大リトライ回数に達しました")
+                return False
+
+def save_gist_data(filename, data):
+    print(f"💾 Gist保存準備中 → File: {filename}")
+    for attempt in range(3):
+        try:
+            content = json.dumps(data, ensure_ascii=False, indent=2)
+            payload = {"files": {filename: {"content": content}}}
+            print("🛠 PATCH 送信内容（payload）:")
+            print(json.dumps(payload, indent=2, ensure_ascii=False))
+
+            curl_command = [
+                "curl", "-X", "PATCH", GIST_API_URL,
+                "-H", f"Authorization: token {GIST_TOKEN_REPLY}",
+                "-H", "Accept: application/vnd.github+json",
+                "-H", "Content-Type: application/json",
+                "-d", json.dumps(payload, ensure_ascii=False)
+            ]
+            result = subprocess.run(curl_command, capture_output=True, text=True)
+            print(f"📥 試行 {attempt + 1} レスポンスステータス: {result.returncode}")
+            print(f"📥 レスポンス本文: {result.stdout[:500]}...（省略）")
+            print(f"📥 エラー出力: {result.stderr}")
+
+            if result.returncode == 0:
+                print(f"💾 {filename} をGistに保存しました")
+                time.sleep(2)  # キャッシュ反映待ち
+                return True
             else:
                 raise Exception(f"Gist保存失敗: {result.stderr}")
         except Exception as e:
@@ -394,58 +434,11 @@ def generate_reply_via_local_model(user_input):
 #------------------------------
 #🆕 診断機能
 #------------------------------
-DIAGNOSIS_KEYWORDS = re.compile(
-    r"ふわもこ運勢|情緒診断|みりんてゃ情緒は|運勢|占い|診断|占って"
-    r"|Fuwamoko Fortune|Emotion Check|Mirinteya Mood|Tell me my fortune|diagnose|Fortune",
-    re.IGNORECASE
-)
-
-FUWAMOKO_TEMPLATES = [
-    {"level": range(90, 101), "item": "ピンクリボン", "msg": "超あまあま♡ 推し活でキラキラしよ！", "tag": "#ふわもこ診断"},
-    {"level": range(85, 90), "item": "きらきらレターセット", "msg": "今日は推しにお手紙書いてみよ♡ 感情だだもれでOK！", "tag": "#ふわもこ診断"},
-    {"level": range(70, 85), "item": "パステルマスク", "msg": "ふわふわ気分♪ 推しの画像見て癒されよ～！", "tag": "#ふわもこ診断"},
-    {"level": range(60, 70), "item": "チュルチュルキャンディ", "msg": "テンション高め！甘いものでさらにご機嫌に〜♡", "tag": "#ふわもこ診断"},
-    {"level": range(50, 60), "item": "ハートクッキー", "msg": "まあまあふわもこ！推しに想い伝えちゃお♡", "tag": "#ふわもこ診断"},
-    {"level": range(40, 50), "item": "ふわもこマスコット", "msg": "ちょっとゆる〜く、推し動画でまったりタイム🌙", "tag": "#ふわもこ診断"},
-    {"level": range(30, 40), "item": "星のキーホルダー", "msg": "ちょっとしょんぼり…推しの曲で元気出そ！", "tag": "#ふわもこ診断"},
-    {"level": range(0, 30), "item": "ふわもこ毛布", "msg": "ふwaふwa不足…みりんてゃがぎゅーってするよ♡", "tag": "#ふわもこ診断"},
-]
-
-EMOTION_TEMPLATES = [
-    {"level": range(40, 51), "coping": "推しと妄想デート♡", "weather": "晴れ時々キラキラ", "msg": "みりんてゃも一緒にときめくよ！", "tag": "#みりんてゃ情緒天気"},
-    {"level": range(20, 40), "coping": "甘いもの食べてほっこり", "weather": "薄曇り", "msg": "キミの笑顔、みりんてゃ待ってるよ♡", "tag": "#みりんてゃ情緒天気"},
-    {"level": range(0, 20), "coping": "推しの声で脳内会話", "weather": "もやもや曇り", "msg": "妄想会話で乗り切って…！みりんてゃが一緒にうなずくよ♡", "tag": "#みりんてゃ情緒天気"},
-    {"level": range(-10, 0), "coping": "推しの画像で脳溶かそ", "weather": "くもり", "msg": "みりんてゃ、そっとそばにいるよ…", "tag": "#みりんてゃ情緒天気"},
-    {"level": range(-30, -10), "coping": "推しの曲で心リセット", "weather": "くもり時々涙", "msg": "泣いてもいいよ、みりんてゃがいるから…", "tag": "#みりんてゃ情緒天気"},
-    {"level": range(-45, -30), "coping": "ぬいにぎって深呼吸", "weather": "しとしと雨", "msg": "しょんぼりでも…ぬいと、みりんてゃがいるから大丈夫♡", "tag": "#みりんてゃ情緒天気"},
-    {"level": range(-50, -45), "coping": "ふわもこ動画で寝逃げ", "weather": "小雨ぽつぽつ", "msg": "明日また頑張ろ、みりんてゃ応援してる…", "tag": "#みりんてゃ情緒天気"},
-]
-
-FUWAMOKO_TEMPLATES_EN = [
-    {"level": range(90, 101), "item": "Pink Ribbon", "msg": "Super sweet vibe♡ Shine with your oshi!", "tag": "#FuwamokoFortune"},
-    {"level": range(85, 90), "item": "Glittery Letter Set", "msg": "Write your oshi a sweet letter today♡ Let your feelings sparkle!", "tag": "#FuwamokoFortune"},
-    {"level": range(70, 85), "item": "Pastel Mask", "msg": "Fluffy mood♪ Get cozy with oshi pics!", "tag": "#FuwamokoFortune"},
-    {"level": range(60, 70), "item": "Swirly Candy Pop", "msg": "High-energy mood! Sweet treats to boost your sparkle level♡", "tag": "#FuwamokoFortune"},
-    {"level": range(50, 60), "item": "Heart Cookie", "msg": "Kinda fuwamoko! Tell your oshi you love 'em♡", "tag": "#FuwamokoFortune"},
-    {"level": range(40, 50), "item": "Fluffy Mascot Plush", "msg": "Take it easy~ Watch your oshi’s videos and relax 🌙", "tag": "#FuwamokoFortune"},
-    {"level": range(30, 40), "item": "Star Keychain", "msg": "Feeling down… Cheer up with oshi’s song!", "tag": "#FuwamokoFortune"},
-    {"level": range(0, 30), "item": "Fluffy Blanket", "msg": "Low on fuwa-fuwa… Mirinteya hugs you tight♡", "tag": "#FuwamokoFortune"},
-]
-
-EMOTION_TEMPLATES_EN = [
-    {"level": range(40, 51), "coping": "Daydream a date with your oshi♡", "weather": "Sunny with sparkles", "msg": "Mirinteya’s sparkling with you!", "tag": "#MirinteyaMood"},
-    {"level": range(20, 40), "coping": "Eat sweets and chill", "weather": "Light clouds", "msg": "Mirinteya’s waiting for your smile♡", "tag": "#MirinteyaMood"},
-    {"level": range(0, 20), "coping": "Talk to your oshi in your mind", "weather": "Foggy and cloudy", "msg": "Let your imagination help you through… Mirinteya’s nodding with you♡", "tag": "#MirinteyaMood"},
-    {"level": range(-10, 0), "coping": "Melt your brain with oshi pics", "weather": "Cloudy", "msg": "Mirinteya’s right by your side…", "tag": "#MirinteyaMood"},
-    {"level": range(-30, -10), "coping": "Reset with oshi’s song", "weather": "Cloudy with tears", "msg": "It’s okay to cry, Mirinteya’s here…", "tag": "#MirinteyaMood"},
-    {"level": range(-45, -30), "coping": "Hug your plushie and breathe deep", "weather": "Gentle rain", "msg": "Feeling gloomy… But your plushie and Mirinteya are here for you♡", "tag": "#MirinteyaMood"},
-    {"level": range(-50, -45), "coping": "Binge fuwamoko vids and sleep", "weather": "Light rain", "msg": "Let’s try again tomorrow, Mirinteya’s rooting for you…", "tag": "#MirinteyaMood"},
-]
-
 def check_diagnosis_limit(user_did, is_daytime):
     jst = pytz.timezone('Asia/Tokyo')
     today = datetime.now(jst).date().isoformat()
     limits = load_gist_data(DIAGNOSIS_LIMITS_GIST_FILENAME)
+    print(f"📊 limits の型: {type(limits)} / 内容: {limits}")  # デバッグログ追加
 
     period = "day" if is_daytime else "night"
     if user_did in limits and limits[user_did].get(period) == today:
@@ -455,12 +448,12 @@ def check_diagnosis_limit(user_did, is_daytime):
         limits[user_did] = {}
     limits[user_did][period] = today
 
-    if not save_replied(replied_set=limits):  # ここをsave_repliedに統一
+    if not save_gist_data(DIAGNOSIS_LIMITS_GIST_FILENAME, limits):  # 辞書を直接保存
         print("⚠️ 診断制限の保存に失敗しました")
         return False, "ごめんね、みりんてゃ今ちょっと忙しいの…また後でね？♡"
 
     return True, None
-
+    
 def generate_facets_from_text(text, hashtags):
     text_bytes = text.encode("utf-8")
     facets = []
