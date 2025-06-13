@@ -19,7 +19,7 @@ APP_PASSWORD = os.getenv('APP_PASSWORD')
 DAY_POST_MESSAGES = [
     """🎀みりんてゃの魔法紹介①✨
 「💬自動リプライBot」
-みりんてゃのポストにリプか@mirinteyaで呼んだら、ふわっとお返事♡
+みりんてゃのポストにリプか@mirinchuuu.bsky.social で呼んだら、ふわっとお返事♡
 気まぐれな返信、キミの心に届く？💖
 #みりんてゃの魔法""",
     """🎀みりんてゃの魔法紹介②✨
@@ -74,7 +74,7 @@ NIGHT_POST_MESSAGES = [
     """⸝⸝ みりんてゃの魔法紹介① ⸝⸝
 『💬自動リプライBot』
 返事くれるの、キミだけでいいな…なんてね
-@mirinteyaで呼んだら、そっと返すよ🫧
+@mirinchuuu.bsky.social で呼んだら、そっと返すよ🫧
 #病み期 #みりんてゃの魔法""",
     """⸝⸝ みりんてゃの魔法紹介② ⸝⸝
 『📰FeedBot』
