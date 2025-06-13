@@ -503,6 +503,49 @@ INTRO_MESSAGE = (
 )
 
 #------------------------------
+#✨ 投稿のReplyRefとURI生成
+#------------------------------
+def handle_post(record, notification):
+    post_uri = getattr(notification, "uri", None)
+    post_cid = getattr(notification, "cid", None)
+
+    if post_uri and post_cid:
+        parent_ref = StrongRef(uri=normalize_uri(post_uri), cid=post_cid)
+        root_ref = getattr(getattr(record, "reply", None), "root", parent_ref) if hasattr(record, "reply") else parent_ref
+        reply_ref = ReplyRef(parent=parent_ref, root=root_ref)
+        print(f"🔍 handle_post - reply_ref: parent={parent_ref.uri}, root={root_ref.uri}")
+        return reply_ref, normalize_uri(post_uri)
+    return None, normalize_uri(post_uri)
+
+#------------------------------
+#📬 ポスト取得・返信
+#------------------------------
+def fetch_bluesky_posts():
+    client = Client()
+    client.login(HANDLE, APP_PASSWORD)
+    posts = client.get_timeline(limit=50).feed
+    unreplied = []
+    for post in posts:
+        if post.post.author.handle != HANDLE and not post.post.viewer.reply:
+            unreplied.append({
+                "post_id": post.post.uri,
+                "text": post.post.record.text
+            })
+    return unreplied
+
+def post_replies_to_bluesky():
+    client = Client()  # 先に定義
+    client.login(HANDLE, APP_PASSWORD)
+    unreplied = fetch_bluesky_posts()
+    for post in unreplied:
+        try:
+            reply = generate_reply_via_local_model(post["text"])
+            client.send_post(text=reply, reply_to={"uri": post["post_id"]})
+            print(f"📤 投稿成功: {reply}")
+        except Exception as e:
+            print(f"❌ 投稿エラー: {e}")
+
+#------------------------------
 #📁 Gist操作
 #------------------------------
 def load_gist_data(filename):
@@ -548,12 +591,67 @@ def load_gist_data(filename):
                 print("❌ 最大リトライ回数に達しました")
                 return set()
 
+def save_replied(replied_set):
+    print("💾 Gist保存準備中...")
+    print(f"🔗 URL: {GIST_API_URL}")
+    print(f"🔐 ヘッダーの内容:\n{json.dumps(HEADERS, indent=2)}")
+    print(f"🔑 トークンの長さ: {len(GIST_TOKEN_REPLY)}")
+    print(f"🔑 トークンの先頭5文字: {GIST_TOKEN_REPLY[:5]}")
+    print(f"🔑 トークンの末尾5文字: {GIST_TOKEN_REPLY[-5:]}")
+
+    cleaned_set = set(uri for uri in replied_set if normalize_uri(uri))
+    print(f"🧹 保存前にクリーニング（件数: {len(cleaned_set)}）")
+    if cleaned_set:
+        print("📁 保存予定URI一覧（最新5件）:")
+        for uri in list(cleaned_set)[-5:]:
+            print(f" - {uri}")
+
+    for attempt in range(3):
+        try:
+            content = json.dumps(list(cleaned_set), ensure_ascii=False, indent=2)
+            payload = {"files": {REPLIED_GIST_FILENAME: {"content": content}}}
+            print("🛠 PATCH 送信内容（payload）:")
+            print(json.dumps(payload, indent=2, ensure_ascii=False))
+
+            curl_command = [
+                "curl", "-X", "PATCH", GIST_API_URL,
+                "-H", f"Authorization: token {GIST_TOKEN_REPLY}",
+                "-H", "Accept: application/vnd.github+json",
+                "-H", "Content-Type: application/json",
+                "-d", json.dumps(payload, ensure_ascii=False)
+            ]
+            result = subprocess.run(curl_command, capture_output=True, text=True)
+            print(f"📥 試行 {attempt + 1} レスポンスステータス: {result.returncode}")
+            print(f"📥 レスポンス本文: {result.stdout[:500]}...（省略）")
+            print(f"📥 エラー出力: {result.stderr}")
+
+            if result.returncode == 0:
+                print(f"💾 replied.json をGistに保存しました（件数: {len(cleaned_set)}）")
+                time.sleep(2)  # キャッシュ反映待ち
+                new_replied = load_gist_data(REPLIED_GIST_FILENAME)
+                if cleaned_set.issubset(new_replied):
+                    print("✅ 保存内容が正しく反映されました")
+                    return True
+                else:
+                    print("⚠️ 保存内容が反映されていません")
+                    raise Exception("保存内容の反映に失敗")
+            else:
+                raise Exception(f"Gist保存失敗: {result.stderr}")
+        except Exception as e:
+            print(f"⚠️ 試行 {attempt + 1} でエラー: {e}")
+            if attempt < 2:
+                print(f"⏳ リトライします（{attempt + 2}/3）")
+                time.sleep(2)
+            else:
+                print("❌ 最大リトライ回数に達しました")
+                return False
+
 #------------------------------
 #📬 メイン処理
 #------------------------------
 def run_reply_bot():
     self_did = client.me.did
-    replied = load_gist_data(REPLIED_GIST_FILENAME)  # filenameを渡す
+    replied = load_gist_data(REPLIED_GIST_FILENAME)
     print(f"📘 replied の型: {type(replied)} / 件数: {len(replied)}")
 
     garbage_items = ["replied", None, "None", "", "://replied"]
@@ -632,7 +730,7 @@ def run_reply_bot():
             print(f"⚠️ テキストが空 → @{author_handle}")
             continue
 
-        reply_ref, post_uri = handle_post(record, notification)
+        reply_ref, post_uri = handle_post(record, notification)  # ここで呼び出し
         print(f"🔍 run_reply_bot - post_uri: {post_uri}, reply_ref: {reply_ref}")
 
         reply_text, hashtags = generate_diagnosis(text, author_did)  # 診断ロジック維持
