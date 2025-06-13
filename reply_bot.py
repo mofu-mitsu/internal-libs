@@ -352,7 +352,7 @@ def generate_diagnosis(text, user_did):
         return reply_text, hashtags
 
 INTRO_MESSAGE = (
-    "🐾 みりんてゃのふwaふwa診断機能 🐾\n"
+    "🐾 みりんてゃのふわふわ診断機能 🐾\n"
     "🌼 昼（6:00〜17:59）：#ふわもこ診断\n"
     "🌙 夜（18:00〜5:59）：#みりんてゃ情緒天気\n"
     "💬「ふわもこ運勢」「情緒診断」「占って」などで今日のキミを診断するよ♡"
