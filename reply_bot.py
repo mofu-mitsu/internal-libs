@@ -517,8 +517,8 @@ def handle_post(record, notification):
     if hasattr(record, 'reply') and record.reply:
         parent_uri = normalize_uri(record.reply.parent.uri)
         parent_cid = record.reply.parent.cid
-        root_uri = normalize_uri(getattr(record.reply, 'root', {}).get('uri', post_uri))
-        root_cid = getattr(record.reply, 'root', {}).get('cid', notification.cid)
+        root_uri = normalize_uri(getattr(record.reply.root, 'uri', post_uri)) if hasattr(record.reply, 'root') else post_uri
+        root_cid = getattr(record.reply.root, 'cid', notification.cid) if hasattr(record.reply, 'root') else notification.cid
         if parent_uri and parent_cid and root_uri:
             reply_ref = ReplyRef(
                 parent=StrongRef(uri=parent_uri, cid=parent_cid),
@@ -540,10 +540,9 @@ def handle_post(record, notification):
 #------------------------------
 #📬 ポスト取得・返信
 #------------------------------
-def fetch_bluesky_posts():
+def fetch_bluesky_posts(self_did):
     client = Client()
     client.login(HANDLE, APP_PASSWORD)
-    self_did = client.me.did  # 自分のDIDをここで取得
     print(f"🔍 fetch_bluesky_posts - self_did: {self_did}")
 
     posts = client.get_timeline(limit=50).feed
@@ -561,7 +560,7 @@ def fetch_bluesky_posts():
     return unreplied
 
 def post_replies_to_bluesky():
-    unreplied = fetch_bluesky_posts()
+    unreplied = fetch_bluesky_posts(client.me.did)  # self_didを渡す
     client = Client()
     client.login(HANDLE, APP_PASSWORD)
     for post in unreplied:
@@ -576,7 +575,7 @@ def post_replies_to_bluesky():
 #📬 メイン処理
 #------------------------------
 def run_reply_bot():
-    self_did = client.me.did  # ここでも再確認
+    self_did = client.me.did  # ここで取得
     print(f"🔍 run_reply_bot - self_did: {self_did}")
     replied = load_gist_data(REPLIED_GIST_FILENAME)
     print(f"📘 replied の型: {type(replied)} / 件数: {len(replied)}")
