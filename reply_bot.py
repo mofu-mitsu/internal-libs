@@ -506,53 +506,27 @@ INTRO_MESSAGE = (
 #✨ 投稿のReplyRefとURI生成
 #------------------------------
 def handle_post(record, notification):
-    post_uri = normalize_uri(notification.uri)  # 通知のURIを優先
-    reply_ref = None
+    post_uri = getattr(notification, "uri", None)
+    post_cid = getattr(notification, "cid", None)
 
-    if not post_uri:
-        print(f"⚠️ 無効な通知URI: {notification.uri}")
-        return None, None
-
-    # リプライチェーンがある場合、親と根を明確に設定
-    if hasattr(record, 'reply') and record.reply:
-        parent_uri = normalize_uri(record.reply.parent.uri)
-        parent_cid = record.reply.parent.cid
-        root_uri = normalize_uri(getattr(record.reply.root, 'uri', post_uri)) if hasattr(record.reply, 'root') else post_uri
-        root_cid = getattr(record.reply.root, 'cid', notification.cid) if hasattr(record.reply, 'root') else notification.cid
-        if parent_uri and parent_cid and root_uri:
-            reply_ref = ReplyRef(
-                parent=StrongRef(uri=parent_uri, cid=parent_cid),
-                root=StrongRef(uri=root_uri, cid=root_cid if root_cid else None)
-            )
-            print(f"🔍 handle_post - reply_ref details: parent={parent_uri}, root={root_uri}, parent_did={getattr(record.reply.parent, 'did', 'N/A')}, root_did={getattr(record.reply.root, 'did', 'N/A') if hasattr(record.reply, 'root') else 'N/A'}")
-        else:
-            print(f"⚠️ リプライチェーンの親/根URI/CIDが不完全: parent={parent_uri}, root={root_uri}")
-    elif notification.cid:
-        reply_ref = ReplyRef(
-            parent=StrongRef(uri=post_uri, cid=notification.cid),
-            root=StrongRef(uri=post_uri, cid=notification.cid)
-        )
-        print(f"🔍 handle_post - reply_ref details: parent={post_uri}, root={post_uri}")
-
-    print(f"🔍 handle_post - post_uri: {post_uri}, reply_ref: {reply_ref}")
-    return reply_ref, post_uri
+    if post_uri and post_cid:
+        parent_ref = StrongRef(uri=normalize_uri(post_uri), cid=post_cid)
+        root_ref = getattr(getattr(record, "reply", None), "root", parent_ref) if hasattr(record, "reply") else parent_ref
+        reply_ref = ReplyRef(parent=parent_ref, root=root_ref)
+        print(f"🔍 handle_post - reply_ref: parent={parent_ref.uri}, root={root_ref.uri}")
+        return reply_ref, normalize_uri(post_uri)
+    return None, normalize_uri(post_uri)
 
 #------------------------------
 #📬 ポスト取得・返信
 #------------------------------
-def fetch_bluesky_posts(self_did):
+def fetch_bluesky_posts():
     client = Client()
     client.login(HANDLE, APP_PASSWORD)
-    print(f"🔍 fetch_bluesky_posts - self_did: {self_did}")
-
     posts = client.get_timeline(limit=50).feed
     unreplied = []
     for post in posts:
-        # Bot自身の投稿はスキップ
-        if post.post.author.did == self_did:
-            print(f"🛑 スキップ: Bot自身の投稿 - {post.post.uri}")
-            continue
-        if not post.post.viewer.reply:
+        if post.post.author.handle != HANDLE and not post.post.viewer.reply:
             unreplied.append({
                 "post_id": post.post.uri,
                 "text": post.post.record.text
@@ -560,9 +534,9 @@ def fetch_bluesky_posts(self_did):
     return unreplied
 
 def post_replies_to_bluesky():
-    unreplied = fetch_bluesky_posts(client.me.did)  # self_didを渡す
-    client = Client()
+    client = Client()  # 先に定義
     client.login(HANDLE, APP_PASSWORD)
+    unreplied = fetch_bluesky_posts()
     for post in unreplied:
         try:
             reply = generate_reply_via_local_model(post["text"])
@@ -575,21 +549,20 @@ def post_replies_to_bluesky():
 #📬 メイン処理
 #------------------------------
 def run_reply_bot():
-    self_did = client.me.did  # ここで取得
-    print(f"🔍 run_reply_bot - self_did: {self_did}")
-    replied = load_gist_data(REPLIED_GIST_FILENAME)
+    self_did = client.me.did
+    replied = load_gist_data()
     print(f"📘 replied の型: {type(replied)} / 件数: {len(replied)}")
 
     garbage_items = ["replied", None, "None", "", "://replied"]
     removed = False
     for garbage in garbage_items:
-        replied.discard(garbage)
-        if garbage in replied:
+        while garbage in replied:
+            replied.remove(garbage)
             print(f"🧹 ゴミデータ '{garbage}' を削除しました")
             removed = True
     if removed:
         print(f"💾 ゴミデータ削除後にrepliedを保存します")
-        if not save_gist_data(REPLIED_GIST_FILENAME, replied):
+        if not save_replied(replied):
             print("❌ ゴミデータ削除後の保存に失敗しました")
             return
 
@@ -605,7 +578,7 @@ def run_reply_bot():
     reply_count = 0
 
     for notification in notifications:
-        notification_uri = normalize_uri(getattr(notification, "uri", None) or getattr(notification, "reasonSubject", None))
+        notification_uri = getattr(notification, "uri", None) or getattr(notification, "reasonSubject", None)
         if not notification_uri:
             record = getattr(notification, "record", None)
             author = getattr(notification, "author", None)
@@ -613,10 +586,10 @@ def run_reply_bot():
                 continue
             text = getattr(record, "text", "")
             author_handle = getattr(author, "handle", "")
-            notification_uri = f"{author_handle}:{text}"
+            notification_uri = f"{author_handle}:{text}"  # 仮キーをそのまま使う
             print(f"⚠️ notification_uri が取得できなかったので、仮キーで対応 → {notification_uri}")
 
-        print(f"📌 チェック中 notification_uri（正規化済み）: {notification_uri}")
+        print(f"📌 チェック中 notification_uri: {notification_uri}")
         print(f"📂 保存済み replied（全件）: {list(replied)}")
 
         if reply_count >= MAX_REPLIES:
@@ -630,8 +603,8 @@ def run_reply_bot():
             continue
 
         text = getattr(record, "text", None)
-        if f"@{HANDLE}" not in text and (not hasattr(record, "reply") or not record.reply):
-            continue
+        if f"@{HANDLE}" not in text and (not hasattr(record, "reply") or not record.reply or not record.reply.parent):
+            continue  # reply.parentがない場合もスキップ
 
         if not author:
             print("⚠️ author情報なし、スキップ")
@@ -642,17 +615,11 @@ def run_reply_bot():
 
         print(f"\n👤 from: @{author_handle} / did: {author_did}")
         print(f"💬 受信メッセージ: {text}")
-        print(f"🔗 チェック対象 notification_uri（正規化済み）: {notification_uri}")
+        print(f"🔗 チェック対象 notification_uri: {notification_uri}")
 
-        # 自己リプのダブルチェック
         if author_did == self_did or author_handle == HANDLE:
             print("🛑 自分自身の投稿、スキップ")
             continue
-        if hasattr(record, "reply") and record.reply:
-            reply_to_author_did = getattr(record.reply.parent, "did", None)
-            if reply_to_author_did == self_did:
-                print("🛑 自リプなのでスキップ")
-                continue
 
         if notification_uri in replied:
             print(f"⏭️ すでに replied 済み → {notification_uri}")
@@ -665,16 +632,10 @@ def run_reply_bot():
         reply_ref, post_uri = handle_post(record, notification)
         print(f"🔍 run_reply_bot - post_uri: {post_uri}, reply_ref: {reply_ref}")
 
-        reply_text, hashtags = generate_diagnosis(text, author_did)
+        reply_text, hashtags = generate_diagnosis(text, author_did)  # 診断ロジック維持
         if not reply_text:
-            for keyword, response in REPLY_TABLE.items():
-                if keyword in text:
-                    reply_text = response.format(BOT_NAME=BOT_NAME)
-                    hashtags = []
-                    break
-            if not reply_text:
-                reply_text = generate_reply_via_local_model(text)
-                hashtags = []
+            reply_text = generate_reply_via_local_model(text)  # フォールバック
+            hashtags = []
 
         print("🤖 生成された返信:", reply_text)
 
@@ -687,7 +648,7 @@ def run_reply_bot():
                 "text": reply_text,
                 "createdAt": datetime.now(timezone.utc).isoformat(),
             }
-            if reply_ref:  # reply_refが存在する場合のみ追加
+            if reply_ref:
                 post_data["reply"] = reply_ref
             if hashtags:
                 post_data["facets"] = generate_facets_from_text(reply_text, hashtags)
@@ -697,18 +658,15 @@ def run_reply_bot():
                 repo=client.me.did
             )
 
-            normalized_uri = normalize_uri(notification_uri)
-            if normalized_uri:
-                replied.add(normalized_uri)
-                if not save_gist_data(REPLIED_GIST_FILENAME, replied):
-                    print(f"❌ URI保存失敗 → {normalized_uri}")
+            if notification_uri:  # 仮キーをそのまま保存
+                replied.add(notification_uri)
+                if not save_replied(replied):
+                    print(f"❌ URI保存失敗 → {notification_uri}")
                     continue
 
-                print(f"✅ @{author_handle} に返信完了！ → {normalized_uri}")
+                print(f"✅ @{author_handle} に返信完了！ → {notification_uri}")
                 print(f"💾 URI保存成功 → 合計: {len(replied)} 件")
-                print(f"📁 最新URI一覧（正規化済み）: {list(replied)[-5:]}")
-            else:
-                print(f"⚠️ 正規化されたURIが無効 → {notification_uri}")
+                print(f"📁 最新URI一覧: {list(replied)[-5:]}")
 
             reply_count += 1
             time.sleep(REPLY_INTERVAL)
