@@ -1,6 +1,6 @@
 #------------------------------
 #🌐 基本ライブラリ・API
-# ------------------------------
+#------------------------------
 import os
 import json
 import subprocess
@@ -21,9 +21,9 @@ from dotenv import load_dotenv
 import urllib.parse
 from transformers import BitsAndBytesConfig
 
-# ------------------------------
-# 🔐 環境変数
-# ------------------------------
+#------------------------------
+#🔐 環境変数
+#------------------------------
 load_dotenv()
 HANDLE = os.getenv("HANDLE") or exit("❌ HANDLEが設定されていません")
 APP_PASSWORD = os.getenv("APP_PASSWORD") or exit("❌ APP_PASSWORDが設定されていません")
@@ -34,7 +34,7 @@ print(f"✅ 環境変数読み込み完了: HANDLE={HANDLE[:8]}..., GIST_ID={GIS
 print(f"🧪 GIST_TOKEN_REPLY: {repr(GIST_TOKEN_REPLY)[:8]}...")
 print(f"🔑 トークンの長さ: {len(GIST_TOKEN_REPLY)}")
 
-# --- 固定値 ---
+#--- 固定値 ---
 REPLIED_GIST_FILENAME = "replied.json"
 GIST_API_URL = f"https://api.github.com/gists/{GIST_ID}"
 HEADERS = {
@@ -44,9 +44,9 @@ HEADERS = {
 }
 LOCK_FILE = "bot.lock"
 
-# ------------------------------
-# 🔗 URI正規化
-# ------------------------------
+#------------------------------
+#🔗 URI正規化
+#------------------------------
 def normalize_uri(uri):
     if not uri or not isinstance(uri, str) or uri in ["replied", "", "None"]:
         return None
@@ -60,9 +60,9 @@ def normalize_uri(uri):
     except Exception:
         return None
 
-# ------------------------------
-# 📁 Gist操作
-# ------------------------------
+#------------------------------
+#📁 Gist操作
+#------------------------------
 def load_gist_data():
     print(f"🌐 Gistデータ読み込み開始 → URL: {GIST_API_URL}")
     print(f"🔐 ヘッダーの内容:\n{json.dumps(HEADERS, indent=2)}")
@@ -106,7 +106,7 @@ def load_gist_data():
                 print("❌ 最大リトライ回数に達しました")
                 return set()
 
-# --- replied.json 保存 ---
+#--- replied.json 保存 ---
 def save_replied(replied_set):
     print("💾 Gist保存準備中...")
     print(f"🔗 URL: {GIST_API_URL}")
@@ -162,12 +162,12 @@ def save_replied(replied_set):
                 print("❌ 最大リトライ回数に達しました")
                 return False
 
-# --- HuggingFace API設定 ---
+#--- HuggingFace API設定 ---
 HF_API_URL = "https://api-inference.huggingface.co/"
 
-# ------------------------------
-# 📬 Blueskyログイン
-# ------------------------------
+#------------------------------
+#📬 Blueskyログイン
+#------------------------------
 try:
     client = Client()
     client.login(HANDLE, APP_PASSWORD)
@@ -176,54 +176,40 @@ except Exception as e:
     print(f"❌ Blueskyログインに失敗しました: {e}")
     exit(1)
 
-# ------------------------------
-# ★ カスタマイズポイント1: キーワード返信（REPLY_TABLE）
-# ------------------------------
+#------------------------------
+#★ カスタマイズポイント1: キーワード返信（REPLY_TABLE）
+#------------------------------
 REPLY_TABLE = {
     "使い方": "使い方は「♡推しプロフィールメーカー♡」のページにあるよ〜！かんたんっ♪",
     "作ったよ": "えっ…ほんと？ありがとぉ♡ 見せて見せてっ！",
     "きたよ": "きゅ〜ん♡ 来てくれてとびきりの「すきっ」プレゼントしちゃう♡",
     "フォローした": "ありがとぉ♡ みりんてゃ、超よろこびダンス中〜っ！",
-    # 追加例: "おはよう": "おは！{BOT_NAME}、キミの朝をハッピーにしちゃうよ！"
 }
-# ヒント: キーワードは部分一致。{BOT_NAME}でキャラ名を動的に挿入可能！
+#ヒント: キーワードは部分一致。{BOT_NAME}でキャラ名を動的に挿入可能！
 
-# ------------------------------
-# ★ カスタマイズポイント2: 安全/危険ワード
-# ------------------------------
+#------------------------------
+#★ カスタマイズポイント2: 安全/危険ワード
+#------------------------------
 SAFE_WORDS = ["ちゅ", "ぎゅっ", "ドキドキ", "ぷにっ", "すりすり", "なでなで"]
 DANGER_ZONE = ["ちゅぱ", "ちゅぱちゅぷ", "ペロペロ", "ぐちゅ", "ぬぷ", "ビクビク"]
-# ヒント: SAFE_WORDSはOKな表現、DANGER_ZONEはNGワード。キャラの雰囲気に合わせて！
+#ヒント: SAFE_WORDSはOKな表現、DANGER_ZONEはNGワード。キャラの雰囲気に合わせて！
 
-# ------------------------------
-# ★ カスタマイズポイント3: キャラ設定
-# ------------------------------
-BOT_NAME = "みりんてゃ"  # キャラ名（例: "クマちゃん", "ツンデレ姫"）
-FIRST_PERSON = "みりんてゃ"  # 一人称（例: "私", "君", "あたし", "ボク"）
-# ヒント: BOT_NAMEは返信や正規表現で使用。FIRST_PERSONはプロンプトで固定。
+#------------------------------
+#★ カスタマイズポイント3: キャラ設定
+#------------------------------
+BOT_NAME = "みりんてゃ"
+FIRST_PERSON = "みりんてゃ"
+#ヒント: BOT_NAMEは返信や正規表現で使用。FIRST_PERSONはプロンプトで固定。
 
-# ------------------------------
-# 🧹 テキスト処理
-# ------------------------------
-import re
-import random
-
-import re
-
+#------------------------------
+#🧹 テキスト処理
+#------------------------------
 def clean_output(text):
-    # 改行が連続する場合は1つにまとめる
     text = re.sub(r'\n{2,}', '\n', text)
-
-    # 顔文字にありがちな記号も許容するようホワイトリスト拡張
     face_char_whitelist = 'ฅ๑•ω•ฅﾐ・o｡≧≦｡っ☆彡≡≒'
-
-    # 不要な記号の除去（ホワイトリストにある文字は残す）
     allowed = rf'[^\w\sぁ-んァ-ン一-龯。、！？!?♡（）「」♪〜ー…w笑{face_char_whitelist}]+'
     text = re.sub(allowed, '', text)
-
-    # 記号の連続を1つにまとめる（「！！」→「！」）
     text = re.sub(r'[。、！？]{2,}', lambda m: m.group(0)[0], text)
-
     return text.strip()
 
 def is_output_safe(text):
@@ -232,12 +218,10 @@ def is_output_safe(text):
 def clean_sentence_ending(reply):
     reply = clean_output(reply)
     reply = reply.split("\n")[0].strip()
-
     reply = re.sub(rf"^{BOT_NAME}\s*[:：]\s*", "", reply)
     reply = re.sub(r"^ユーザー\s*[:：]\s*", "", reply)
     reply = re.sub(r"([！？笑])。$", r"\1", reply)
 
-    # 一人称チェック
     if FIRST_PERSON != "俺" and "俺" in reply:
         print(f"⚠️ 意図しない一人称『俺』検知: {reply}")
         return random.choice([
@@ -246,7 +230,6 @@ def clean_sentence_ending(reply):
             f"ね、ね、{BOT_NAME}、君ともっとお話ししたいのっ♡"
         ])
 
-    # NGワードチェック
     if re.search(r"(ご利用|誠に|お詫び|貴重なご意見|申し上げます|ございます|お客様|発表|パートナーシップ|ポケモン|アソビズム|企業|世界中|映画|興行|収入|ドル|億|国|イギリス|フランス|スペイン|イタリア|ドイツ|ロシア|中国|インド|Governor|Cross|営業|臨時|オペラ|初演|作曲家|ヴェネツィア|コルテス|政府|協定|軍事|情報|外交|外相|自動更新|\d+(時|分))", reply, re.IGNORECASE):
         print(f"⚠️ NGワード検知: {reply}")
         return random.choice([
@@ -255,7 +238,6 @@ def clean_sentence_ending(reply):
             f"ん〜〜変な話に！{BOT_NAME}、君のこと大好きだから、構ってくれる？♡"
         ])
 
-    # 危険ワードチェック
     if not is_output_safe(reply):
         print(f"⚠️ 危険ワード検知: {reply}")
         return random.choice([
@@ -264,7 +246,6 @@ def clean_sentence_ending(reply):
             f"うぅ、なんか変なこと言っちゃった！{BOT_NAME}、君なしじゃダメなのっ♡"
         ])
 
-    # 意味不明な返信 or 長さ不足の防止
     if not re.search(r"[ぁ-んァ-ン一-龥ー]", reply) or len(reply) < 8:
         return random.choice([
             f"えへへ〜♡ {BOT_NAME}、ふwaふwaしちゃった！君のことずーっと好きだよぉ？♪",
@@ -272,16 +253,14 @@ def clean_sentence_ending(reply):
             f"うぅ、なんか分かんないけど…{BOT_NAME}、君なしじゃダメなのっ♡"
         ])
 
-    # 終わりが味気ない場合、キャラっぽい語尾を追加
     if not re.search(r"[。！？♡♪笑]$", reply):
-        reply += random.choice([ "♡", "♪"])
+        reply += random.choice(["♡", "♪"])
 
     return reply
 
-
-# ------------------------------
-# 🤖 モデル初期化
-# ------------------------------
+#------------------------------
+#🤖 モデル初期化
+#------------------------------
 model = None
 tokenizer = None
 
@@ -294,30 +273,28 @@ def initialize_model_and_tokenizer(model_name="cyberagent/open-calm-1b"):
         print(f"📤 {datetime.now(timezone.utc).isoformat()} ｜ モデル読み込み中…")
         model = AutoModelForCausalLM.from_pretrained(
             model_name,
-            torch_dtype=torch.float32,  # float32にも変更可能
+            torch_dtype=torch.float32,
             device_map="auto"
         ).eval()
         print(f"📤 {datetime.now(timezone.utc).isoformat()} ｜ モデル読み込み完了")
     return model, tokenizer
-    
-# ------------------------------
-# ★ カスタマイズポイント4: 返信生成（generate_reply_via_local_model）
-# ------------------------------
+
+#------------------------------
+#★ カスタマイズポイント4: 返信生成（generate_reply_via_local_model）
+#------------------------------
 def generate_reply_via_local_model(user_input):
     model_name = "cyberagent/open-calm-1b"
-    # 失敗時のメッセージ
     failure_messages = [
         "えへへ、ごめんね〜〜今ちょっと調子悪いみたい……またお話しよ？♡",
         "うぅ、ごめん〜…上手くお返事できなかったの。ちょっと待ってて？♡",
         "あれれ？みりんてゃ、おねむかも…またあとで頑張るねっ！♡"
     ]
-    # フォールバック返信
     fallback_cute_lines = [
         "えへへ〜♡ みりんてゃ、君のこと考えるとドキドキなのっ♪",
         "今日も君に甘えたい気分なのっ♡ ぎゅーってして？",
         "だ〜いすきっ♡ ね、ね、もっと構ってくれる？"
     ]
-    # 特定パターン返信
+
     if re.search(r"(大好き|ぎゅー|ちゅー|愛してる|キス|添い寝)", user_input, re.IGNORECASE):
         print(f"⚠️ ラブラブ入力検知: {user_input}")
         return random.choice([
@@ -347,14 +324,12 @@ def generate_reply_via_local_model(user_input):
             print("⚠️ GPU未検出、CPUで実行")
 
         model, tokenizer = initialize_model_and_tokenizer(model_name)
-        # イントロライン
         intro_lines = random.choice([
             "えへへ〜、みりんてゃはね〜、",
             "ねぇねぇ、聞いて聞いて〜♡",
             "ん〜今日もふwaふwaしてたのっ♪",
             "きゃ〜っ、君だぁ！やっと会えたのっ♡",
             "ふwaふwa〜、君のこと考えてたんだからっ♪"
-            # 追加例: f"やっほー！{BOT_NAME}、キミに会えて超ハッピー！"
         ])
         prompt = (
             f"{intro_lines}\n"
@@ -386,8 +361,8 @@ def generate_reply_via_local_model(user_input):
                 with torch.no_grad():
                     output_ids = model.generate(
                         input_ids,
-                        max_new_tokens=60,  # 短めで事故減
-                        temperature=0.8,   # 暴走抑えめ
+                        max_new_tokens=60,
+                        temperature=0.8,
                         top_p=0.9,
                         do_sample=True,
                         pad_token_id=tokenizer.eos_token_id,
@@ -419,6 +394,124 @@ def generate_reply_via_local_model(user_input):
         print(f"❌ モデル読み込みエラー: {e}")
         return random.choice(failure_messages)
 
+#------------------------------
+#🆕 診断機能（新追加）
+#------------------------------
+#診断キーワード
+DIAGNOSIS_KEYWORDS = re.compile(
+    r"ふwaもこ運勢|情緒診断|みりんてゃ情緒は|今日の運勢|占い|診断して|占って"
+    r"|Fuwamoko Fortune|Emotion Check|Mirinteya Mood|Tell me my fortune|diagnose",
+    re.IGNORECASE
+)
+
+#ふわもこ運勢テンプレ
+FUWAMOKO_TEMPLATES = [
+    {"level": range(90, 101), "item": "ピンクリボン", "msg": "超あまあま♡ 推し活でキラキラしよ！", "tag": "#ふwaもこ診断"},
+    {"level": range(70, 90), "item": "パステルマスク", "msg": "ふwaふwa気分♪ 推しの画像見て癒されよ～！", "tag": "#ふwaもこ診断"},
+    {"level": range(50, 70), "item": "ハートクッキー", "msg": "まあまあふwaもこ！推しに想い伝えちゃお♡", "tag": "#ふwaもこ診断"},
+    {"level": range(30, 50), "item": "星のキーホルダー", "msg": "ちょっとしょんぼり…推しの曲で元気出そ！", "tag": "#ふwaもこ診断"},
+    {"level": range(0, 30), "item": "ふwaもこ毛布", "msg": "ふwaもこ不足…みりんてゃがぎゅーってするよ♡", "tag": "#ふwaもこ診断"},
+]
+
+#情緒バロメーターテンプレ
+EMOTION_TEMPLATES = [
+    {"level": range(40, 51), "coping": "推しと妄想デート♡", "weather": "晴れ時々キラキラ", "msg": "みりんてゃも一緒にときめくよ！", "tag": "#みりんてゃ情緒天気"},
+    {"level": range(10, 40), "coping": "甘いもの食べてほっこり", "weather": "薄曇り", "msg": "キミの笑顔、みりんてゃ待ってるよ♡", "tag": "#みりんてゃ情緒天気"},
+    {"level": range(-10, 10), "coping": "推しの画像で脳溶かそ", "weather": "くもり", "msg": "みりんてゃ、そっとそばにいるよ…", "tag": "#みりんてゃ情緒天気"},
+    {"level": range(-30, -10), "coping": "推しの曲で心リセット", "weather": "くもり時々涙", "msg": "泣いてもいいよ、みりんてゃがいるから…", "tag": "#みりんてゃ情緒天気"},
+    {"level": range(-50, -30), "coping": "ふwaもこ動画で寝逃げ", "weather": "小雨ぽつぽつ", "msg": "明日また頑張ろ、みりんてゃ応援してる…", "tag": "#みりんてゃ情緒天気"},
+]
+
+#英語テンプレ
+FUWAMOKO_TEMPLATES_EN = [
+    {"level": range(90, 101), "item": "Pink Ribbon", "msg": "Super sweet vibe♡ Shine with your oshi!", "tag": "#FuwamokoFortune"},
+    {"level": range(70, 90), "item": "Pastel Mask", "msg": "Fluffy mood♪ Get cozy with oshi pics!", "tag": "#FuwamokoFortune"},
+    {"level": range(50, 70), "item": "Heart Cookie", "msg": "Kinda fuwamoko! Tell your oshi you love 'em♡", "tag": "#FuwamokoFortune"},
+    {"level": range(30, 50), "item": "Star Keychain", "msg": "Feeling down… Cheer up with oshi’s song!", "tag": "#FuwamokoFortune"},
+    {"level": range(0, 30), "item": "Fluffy Blanket", "msg": "Low on fuwamoko… Mirinteya hugs you tight♡", "tag": "#FuwamokoFortune"},
+]
+
+EMOTION_TEMPLATES_EN = [
+    {"level": range(40, 51), "coping": "Daydream a date with your oshi♡", "weather": "Sunny with sparkles", "msg": "Mirinteya’s sparkling with you!", "tag": "#MirinteyaMood"},
+    {"level": range(10, 40), "coping": "Eat sweets and chill", "weather": "Light clouds", "msg": "Mirinteya’s waiting for your smile♡", "tag": "#MirinteyaMood"},
+    {"level": range(-10, 10), "coping": "Melt your brain with oshi pics", "weather": "Cloudy", "msg": "Mirinteya’s right by your side…", "tag": "#MirinteyaMood"},
+    {"level": range(-30, -10), "coping": "Reset with oshi’s song", "weather": "Cloudy with tears", "msg": "It’s okay to cry, Mirinteya’s here…", "tag": "#MirinteyaMood"},
+    {"level": range(-50, -30), "coping": "Binge fuwamoko vids and sleep", "weather": "Light rain", "msg": "Let’s try again tomorrow, Mirinteya’s rooting for you…", "tag": "#MirinteyaMood"},
+]
+
+#回数制限管理
+LIMITS_FILE = "diagnosis_limits.json"
+
+def check_diagnosis_limit(user_did, is_daytime):
+    jst = pytz.timezone('Asia/Tokyo')
+    today = datetime.now(jst).date().isoformat()
+    try:
+        with open(LIMITS_FILE, "r") as f:
+            limits = json.load(f)
+    except:
+        limits = {}
+
+    period = "day" if is_daytime else "night"
+    if user_did in limits and limits[user_did].get(period) == today:
+        return False, "今日はもうこの診断済みだよ〜♡ 明日またね！💖"
+
+    if user_did not in limits:
+        limits[user_did] = {}
+    limits[user_did][period] = today
+
+    with open(LIMITS_FILE, "w") as f:
+        json.dump(limits, f)
+
+    return True, None
+
+#診断生成
+def generate_diagnosis(text, user_did):
+    jst = pytz.timezone('Asia/Tokyo')
+    hour = datetime.now(jst).hour
+    is_daytime = 6 <= hour < 18
+    is_english = re.search(r"Fuwamoko Fortune|Emotion Check|Mirinteya Mood|Tell me my fortune|diagnose", text, re.IGNORECASE)
+
+    can_diagnose, limit_msg = check_diagnosis_limit(user_did, is_daytime)
+    if not can_diagnose:
+        return limit_msg
+
+    if DIAGNOSIS_KEYWORDS.search(text):
+        if is_daytime:
+            templates = FUWAMOKO_TEMPLATES_EN if is_english else FUWAMOKO_TEMPLATES
+            level = random.randint(0, 100)
+            template = next(t for t in templates if level in t["level"])
+            return (
+                f"{'✨Your Fuwamoko Fortune✨' if is_english else '✨キミのふwaもこ運勢✨'}\n"
+                f"💖{'Fuwamoko Level' if is_english else 'ふwaもこ度'}：{level}％\n"
+                f"🎀{'Lucky Item' if is_english else 'ラッキーアイテム'}：{template['item']}\n"
+                f"{'🫧' if is_english else '💭'}{template['msg']}\n"
+                f"{template['tag']}"
+            )
+        else:
+            templates = EMOTION_TEMPLATES_EN if is_english else EMOTION_TEMPLATES
+            level = random.randint(-50, 50)
+            template = next(t for t in templates if level in t["level"])
+            return (
+                f"{'⸝⸝ Your Emotion Barometer ⸝⸝' if is_english else '⸝⸝ キミの情緒バロメーター ⸝⸝'}\n"
+                f"{'😔' if level < 0 else '💭'}{'Mood' if is_english else '情緒'}：{level}％\n"
+                f"{'🌧️' if level < 0 else '☁️'}{'Mood Weather' if is_english else '情緒天気'}：{template['weather']}\n"
+                f"{'🫧' if is_english else '💭'}{'Coping' if is_english else '対処法'}：{template['coping']}\n"
+                f"{'Mirinteya’s here for you…' if is_english else 'みりんてゃもそばにいるよ…'}\n"
+                f"{template['tag']}"
+            )
+    return None
+
+#診断機能紹介
+INTRO_MESSAGE = (
+    "🐾 みりんてゃのふwaもこ診断機能 🐾\n"
+    "🌼 昼（6:00〜17:59）：#ふwaもこ診断\n"
+    "🌙 夜（18:00〜5:59）：#みりんてゃ情緒天気\n"
+    "💬「ふwaもこ運勢」「情緒診断」「占って」などで今日のキミを診断するよ♡"
+)
+
+#------------------------------
+#📬 ポスト取得・返信（既存関数）
+#------------------------------
 def fetch_bluesky_posts():
     client = Client()
     client.login(HANDLE, APP_PASSWORD)
@@ -444,9 +537,9 @@ def post_replies_to_bluesky():
         except Exception as e:
             print(f"❌ 投稿エラー: {e}")
 
-# ------------------------------
-# 📬 メイン処理
-# ------------------------------
+#------------------------------
+#📬 メイン処理
+#------------------------------
 def handle_post(record, notification):
     post_uri = getattr(notification, "uri", None)
     post_cid = getattr(notification, "cid", None)
@@ -461,10 +554,9 @@ def handle_post(record, notification):
 
 def run_reply_bot():
     self_did = client.me.did
-    replied = load_gist_data()  # load_replied()をやめてGist APIに統一
+    replied = load_gist_data()
     print(f"📘 replied の型: {type(replied)} / 件数: {len(replied)}")
 
-    # --- 🧹 replied（URLのセット）を整理 ---
     garbage_items = ["replied", None, "None", "", "://replied"]
     removed = False
     for garbage in garbage_items:
@@ -478,7 +570,6 @@ def run_reply_bot():
             print("❌ ゴミデータ削除後の保存に失敗しました")
             return
 
-    # --- ⛑️ 空じゃなければ初期保存 ---
     if replied:
         print("💾 初期状態のrepliedを保存します")
         if not save_replied(replied):
@@ -554,7 +645,18 @@ def run_reply_bot():
         print("🔗 reply_ref:", reply_ref)
         print("🧾 post_uri（正規化済み）:", post_uri)
 
-        reply_text = generate_reply_via_local_model(text)
+        #診断チェック
+        reply_text = generate_diagnosis(text, author_did)
+        if not reply_text and random.random() < 0.1:  #10%で紹介文
+            reply_text = INTRO_MESSAGE
+        if not reply_text:  #通常のAIリプ
+            for keyword, response in REPLY_TABLE.items():
+                if keyword in text:
+                    reply_text = response.format(BOT_NAME=BOT_NAME)
+                    break
+            if not reply_text:
+                reply_text = generate_reply_via_local_model(text)
+
         print("🤖 生成された返信:", reply_text)
 
         if not reply_text:
