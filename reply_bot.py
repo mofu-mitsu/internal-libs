@@ -279,6 +279,7 @@ def check_diagnosis_limit(user_did, is_daytime):
 def generate_facets_from_text(text, hashtags):
     text_bytes = text.encode("utf-8")
     facets = []
+    # ハッシュタグの処理
     for tag in hashtags:
         tag_bytes = tag.encode("utf-8")
         start = text_bytes.find(tag_bytes)
@@ -293,6 +294,7 @@ def generate_facets_from_text(text, hashtags):
                     "tag": tag.lstrip("#")
                 }]
             })
+    # URLの処理（強化版）
     url_pattern = r'(https?://[^\s]+)'
     for match in re.finditer(url_pattern, text):
         url = match.group(0)
@@ -308,8 +310,9 @@ def generate_facets_from_text(text, hashtags):
                     "uri": url
                 }]
             })
-    return facets
-
+    print(f"🔍 生成されたファセット: {facets}")  # デバッグ用ログ
+    return facets if facets else None
+    
 def generate_diagnosis(text, user_did):
     if not DIAGNOSIS_KEYWORDS.search(text):
         return None, []  # 診断キーワードがない場合はスキップ
