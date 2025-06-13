@@ -67,6 +67,57 @@ DAY_POST_MESSAGES = [
 毎朝8時、天気から感じた詩をみりんてゃが呟くよ☁️
 キミの心にそっと寄り添うね💖
 #みりんてゃの魔法""",
+    """🎀 Mirinteya's Magic Intro ① ✨
+「💬 Auto-Reply Bot」
+Reply to a post or mention @mirinchuuu.bsky.social and get a soft lil’ reply ♡
+A random message from Mirinteya—will it reach your heart? 💖
+#MirinteyasMagic""",
+    """🎀 Mirinteya's Magic Intro ② ✨
+「📰 Feed Bot」
+Tags like #MofumitsuWorkshop and #OshiProfileMaker get noticed!
+Mirinteya is cheering on your creativity~ ♡
+#MirinteyasMagic""",
+    """🎀 Mirinteya's Magic Intro ③ ✨
+「⏰ Scheduled Posts Bot」
+Posting fluffy thoughts about fandom feels and oshi tools ✨
+Let’s make your fandom life even more sparkly! 🌟
+#MirinteyasMagic""",
+    """🎀 Mirinteya's Magic Intro ④ ✨
+「🕒 Time Bot」
+Morning? A soft “Good morning ♡”  
+Night? A whisper, “Feeling a bit lonely…”
+Mirinteya is here with time-based posts all day ⏰
+#MirinteyasMagic""",
+    """🎀 Mirinteya's Magic Intro ⑤ ✨
+「💖 Like Bot」
+Secretly likes posts with #推し活 or #みりんてゃ tags ♡
+Yep, your post reached me~! 💖
+#MirinteyasMagic""",
+    """🎀 Mirinteya's Magic Intro ⑥ ✨
+「👤 Follow Manager Bot」
+If you follow Mirinteya, she’ll quietly follow back ♡  
+Let’s connect in a soft and fluffy way 💭
+#MirinteyasMagic""",
+    """🎀 Mirinteya's Magic Intro ⑦ ✨
+「🔄 Repost Bot」
+Spreading posts with #MirinteyaOshi or #OCProfileMaker!  
+Let’s help your fave shine even brighter ✨
+#MirinteyasMagic""",
+    """🎀 Mirinteya's Magic Intro ⑧ ✨
+「📸 Image Post Bot」
+Every Thursday at 8PM JST: selfy-style or fluffy art of Mirinteya appears ♡  
+Let’s sparkle together~ ✨
+#MirinteyasMagic""",
+    """🎀 Mirinteya's Magic Intro ⑨ ✨
+「🐾 Animal Weather & Fortune Bot」
+Around 9PM JST, cute animals bring Tokyo’s weather + lucky fortune 🍀  
+Softly wishing you a lovely tomorrow!
+#MirinteyasMagic""",
+    """🎀 Mirinteya's Magic Intro ⑩ ✨
+「🌤️ Emotion Bot」
+Every morning at 8AM JST, a little poem inspired by the weather ☁️  
+Let Mirinteya gently be by your side 💖
+#MirinteyasMagic""",
 ]
 
 # 夜用ポスト（病みかわ）
