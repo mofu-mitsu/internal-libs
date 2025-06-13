@@ -73,7 +73,7 @@ def load_gist_data(filename):
             curl_command = [
                 "curl", "-X", "GET", GIST_API_URL,
                 "-H", f"Authorization: token {GIST_TOKEN_REPLY}",
-                "-H", "Accept": "application/vnd.github+json"
+                "-H", "Accept: application/vnd.github+json" # ここを修正！
             ]
             result = subprocess.run(curl_command, capture_output=True, text=True)
             if result.returncode != 0:
@@ -82,13 +82,13 @@ def load_gist_data(filename):
             if filename in gist_data["files"]:
                 content = gist_data["files"][filename]["content"]
                 print(f"✅ {filename} をGistから読み込みました")
-                # ここを修正！ファイルの内容をセットに変換する
-                if filename == REPLIED_GIST_FILENAME: # REPLIED_GIST_FILENAMEの場合のみセットとして扱う
+                # REPLIED_GIST_FILENAMEの場合のみセットとして扱う
+                if filename == REPLIED_GIST_FILENAME:
                     return set(json.loads(content))
                 return json.loads(content)
             else:
                 print(f"⚠️ Gist内に {filename} が見つかりませんでした")
-                # ここを修正！REPLIED_GIST_FILENAMEの場合は空のセットを返す
+                # REPLIED_GIST_FILENAMEの場合は空のセットを返す
                 return {} if filename == DIAGNOSIS_LIMITS_GIST_FILENAME else set()
         except Exception as e:
             print(f"⚠️ 試行 {attempt + 1} でエラー: {e}")
@@ -97,21 +97,21 @@ def load_gist_data(filename):
                 time.sleep(2)
             else:
                 print("❌ 最大リトライ回数に達しました")
-                # ここを修正！REPLIED_GIST_FILENAMEの場合は空のセットを返す
+                # REPLIED_GIST_FILENAMEの場合は空のセットを返す
                 return {} if filename == DIAGNOSIS_LIMITS_GIST_FILENAME else set()
 
 def save_gist_data(filename, data):
     print(f"💾 Gist保存準備中 → File: {filename}")
     for attempt in range(3):
         try:
-            # ここを修正！set型の場合はリストに変換して保存する
+            # set型の場合はリストに変換して保存する
             content = json.dumps(list(data) if isinstance(data, set) else data, ensure_ascii=False, indent=2)
             payload = {"files": {filename: {"content": content}}}
             curl_command = [
                 "curl", "-X", "PATCH", GIST_API_URL,
-                "-H", f"Authorization": f"token {GIST_TOKEN_REPLY}",
-                "-H", "Accept": "application/vnd.github+json",
-                "-H", "Content-Type": "application/json",
+                "-H", f"Authorization: token {GIST_TOKEN_REPLY}",
+                "-H", "Accept: application/vnd.github+json",
+                "-H", "Content-Type: application/json",
                 "-d", json.dumps(payload, ensure_ascii=False)
             ]
             result = subprocess.run(curl_command, capture_output=True, text=True)
