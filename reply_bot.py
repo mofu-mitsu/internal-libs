@@ -470,7 +470,40 @@ def initialize_model_and_tokenizer(model_name="cyberagent/open-calm-1b"):
     return model, tokenizer
 
 #------------------------------
-#★ カスタマイズポイント4: 返信生成
+# ★ カスタマイズポイント5: グッズ提案ロジック（←4の上にこれ追加！）
+#------------------------------
+PRODUCT_KEYWORDS = {
+    "おすすめグッズ教えて": "ふわもこLoverなあなたにピッタリなアイテムはこちらっ♡",
+    "ぬい撮りアイテムない？": "撮影映え命♡のあなたに：おすすめはこの背景布っ！",
+    "最近寝れない…": "みりんてゃが夜のお守りを選んできたよ〜☁️",
+    "推し活捗るやつ！": "神アクスタケース、これ使ってる人多いっぽ！🧸💕",
+    "みりんてゃおすすメ〜": "今いちばんバズってる可愛いアイテム教えちゃうっ☆"
+}
+
+def generate_product_reply(keyword, app_id="1055088369869282145", affiliate_id="3d94ea21.0d257908.3d94ea22.0ed11c6e"):
+    api_url = "https://app.rakuten.co.jp/services/api/IchibaItem/Search/20170706"
+    params = {
+        "applicationId": app_id,
+        "keyword": keyword.split("！")[0] if "！" in keyword else keyword,
+        "hits": 1,
+        "format": "json"
+    }
+    try:
+        response = requests.get(api_url, params=params)
+        data = response.json()
+        if data["Items"]:
+            item = data["Items"][0]["Item"]
+            product_url = item["itemUrl"].split("?")[0]
+            affiliate_link = f"https://hb.afl.rakuten.co.jp/hgc/{affiliate_id}/?pc={product_url}"
+            reply = f"{PRODUCT_KEYWORDS[keyword]} → {affiliate_link}"
+            return reply
+        else:
+            return "えへへ、みりんてゃ今探し中なのっ♡ また後で聞いてね！"
+    except Exception:
+        return "うぅ、ごめんね〜今ちょっとバタバタなの…またね？♡"
+
+#------------------------------
+# ★ カスタマイズポイント4: 返信生成（ここが統合済み！）
 #------------------------------
 def generate_reply_via_local_model(user_input):
     model_name = "cyberagent/open-calm-1b"
@@ -484,6 +517,11 @@ def generate_reply_via_local_model(user_input):
         "今日も君に甘えたい気分なのっ♡ ぎゅーってして？",
         "だ〜いすきっ♡ ね、ね、もっと構ってくれる？"
     ]
+    # 💡 まずグッズ系キーワードが含まれていたら専用返信！
+    for keyword in PRODUCT_KEYWORDS.keys():
+        if keyword in user_input:
+            print(f"🎀 グッズキーワード検知: {keyword}")
+            return generate_product_reply(keyword)
 
     if re.search(r"(大好き|ぎゅー|ちゅー|愛してる|キス|添い寝)", user_input, re.IGNORECASE):
         print(f"⚠️ ラブラブ入力検知: {user_input}")
