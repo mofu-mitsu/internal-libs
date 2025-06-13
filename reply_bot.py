@@ -206,6 +206,159 @@ def save_gist_data(filename, data):
                 return False
 
 #------------------------------
+#🆕 診断機能
+#------------------------------
+DIAGNOSIS_KEYWORDS = re.compile(
+    r"ふわもこ運勢|情緒診断|みりんてゃ情緒は|運勢|占い|診断|占って"
+    r"|Fuwamoko Fortune|Emotion Check|Mirinteya Mood|Tell me my fortune|diagnose|Fortune",
+    re.IGNORECASE
+)
+
+FUWAMOKO_TEMPLATES = [
+    {"level": range(90, 101), "item": "ピンクリボン", "msg": "超あまあま♡ 推し活でキラキラしよ！", "tag": "#ふわもこ診断"},
+    {"level": range(85, 90), "item": "きらきらレターセット", "msg": "今日は推しにお手紙書いてみよ♡ 感情だだもれでOK！", "tag": "#ふわもこ診断"},
+    {"level": range(70, 85), "item": "パステルマスク", "msg": "ふわふわ気分♪ 推しの画像見て癒されよ～！", "tag": "#ふわもこ診断"},
+    {"level": range(60, 70), "item": "チュルチュルキャンディ", "msg": "テンション高め！甘いものでさらにご機嫌に〜♡", "tag": "#ふわもこ診断"},
+    {"level": range(50, 60), "item": "ハートクッキー", "msg": "まあまあふわもこ！推しに想い伝えちゃお♡", "tag": "#ふわもこ診断"},
+    {"level": range(40, 50), "item": "ふわもこマスコット", "msg": "ちょっとゆる〜く、推し動画でまったりタイム🌙", "tag": "#ふわもこ診断"},
+    {"level": range(30, 40), "item": "星のキーホルダー", "msg": "ちょっとしょんぼり…推しの曲で元気出そ！", "tag": "#ふわもこ診断"},
+    {"level": range(0, 30), "item": "ふわもこ毛布", "msg": "ふwaふwa不足…みりんてゃがぎゅーってするよ♡", "tag": "#ふわもこ診断"},
+]
+
+EMOTION_TEMPLATES = [
+    {"level": range(40, 51), "coping": "推しと妄想デート♡", "weather": "晴れ時々キラキラ", "msg": "みりんてゃも一緒にときめくよ！", "tag": "#みりんてゃ情緒天気"},
+    {"level": range(20, 40), "coping": "甘いもの食べてほっこり", "weather": "薄曇り", "msg": "キミの笑顔、みりんてゃ待ってるよ♡", "tag": "#みりんてゃ情緒天気"},
+    {"level": range(0, 20), "coping": "推しの声で脳内会話", "weather": "もやもや曇り", "msg": "妄想会話で乗り切って…！みりんてゃが一緒にうなずくよ♡", "tag": "#みりんてゃ情緒天気"},
+    {"level": range(-10, 0), "coping": "推しの画像で脳溶かそ", "weather": "くもり", "msg": "みりんてゃ、そっとそばにいるよ…", "tag": "#みりんてゃ情緒天気"},
+    {"level": range(-30, -10), "coping": "推しの曲で心リセット", "weather": "くもり時々涙", "msg": "泣いてもいいよ、みりんてゃがいるから…", "tag": "#みりんてゃ情緒天気"},
+    {"level": range(-45, -30), "coping": "ぬいにぎって深呼吸", "weather": "しとしと雨", "msg": "しょんぼりでも…ぬいと、みりんてゃがいるから大丈夫♡", "tag": "#みりんてゃ情緒天気"},
+    {"level": range(-50, -45), "coping": "ふわもこ動画で寝逃げ", "weather": "小雨ぽつぽつ", "msg": "明日また頑張ろ、みりんてゃ応援してる…", "tag": "#みりんてゃ情緒天気"},
+]
+
+FUWAMOKO_TEMPLATES_EN = [
+    {"level": range(90, 101), "item": "Pink Ribbon", "msg": "Super sweet vibe♡ Shine with your oshi!", "tag": "#FuwamokoFortune"},
+    {"level": range(85, 90), "item": "Glittery Letter Set", "msg": "Write your oshi a sweet letter today♡ Let your feelings sparkle!", "tag": "#FuwamokoFortune"},
+    {"level": range(70, 85), "item": "Pastel Mask", "msg": "Fluffy mood♪ Get cozy with oshi pics!", "tag": "#FuwamokoFortune"},
+    {"level": range(60, 70), "item": "Swirly Candy Pop", "msg": "High-energy mood! Sweet treats to boost your sparkle level♡", "tag": "#FuwamokoFortune"},
+    {"level": range(50, 60), "item": "Heart Cookie", "msg": "Kinda fuwamoko! Tell your oshi you love 'em♡", "tag": "#FuwamokoFortune"},
+    {"level": range(40, 50), "item": "Fluffy Mascot Plush", "msg": "Take it easy~ Watch your oshi’s videos and relax 🌙", "tag": "#FuwamokoFortune"},
+    {"level": range(30, 40), "item": "Star Keychain", "msg": "Feeling down… Cheer up with oshi’s song!", "tag": "#FuwamokoFortune"},
+    {"level": range(0, 30), "item": "Fluffy Blanket", "msg": "Low on fuwa-fuwa… Mirinteya hugs you tight♡", "tag": "#FuwamokoFortune"},
+]
+
+EMOTION_TEMPLATES_EN = [
+    {"level": range(40, 51), "coping": "Daydream a date with your oshi♡", "weather": "Sunny with sparkles", "msg": "Mirinteya’s sparkling with you!", "tag": "#MirinteyaMood"},
+    {"level": range(20, 40), "coping": "Eat sweets and chill", "weather": "Light clouds", "msg": "Mirinteya’s waiting for your smile♡", "tag": "#MirinteyaMood"},
+    {"level": range(0, 20), "coping": "Talk to your oshi in your mind", "weather": "Foggy and cloudy", "msg": "Let your imagination help you through… Mirinteya’s nodding with you♡", "tag": "#MirinteyaMood"},
+    {"level": range(-10, 0), "coping": "Melt your brain with oshi pics", "weather": "Cloudy", "msg": "Mirinteya’s right by your side…", "tag": "#MirinteyaMood"},
+    {"level": range(-30, -10), "coping": "Reset with oshi’s song", "weather": "Cloudy with tears", "msg": "It’s okay to cry, Mirinteya’s here…", "tag": "#MirinteyaMood"},
+    {"level": range(-45, -30), "coping": "Hug your plushie and breathe deep", "weather": "Gentle rain", "msg": "Feeling gloomy… But your plushie and Mirinteya are here for you♡", "tag": "#MirinteyaMood"},
+    {"level": range(-50, -45), "coping": "Binge fuwamoko vids and sleep", "weather": "Light rain", "msg": "Let’s try again tomorrow, Mirinteya’s rooting for you…", "tag": "#MirinteyaMood"},
+]
+
+def check_diagnosis_limit(user_did, is_daytime):
+    jst = pytz.timezone('Asia/Tokyo')
+    today = datetime.now(jst).date().isoformat()
+    limits = load_gist_data(DIAGNOSIS_LIMITS_GIST_FILENAME)
+    print(f"📊 limits の型: {type(limits)} / 内容: {limits}")  # デバッグログ追加
+
+    period = "day" if is_daytime else "night"
+    if user_did in limits and limits[user_did].get(period) == today:
+        return False, "今日はもうこの診断済みだよ〜♡ 明日またね！💖"
+
+    if user_did not in limits:
+        limits[user_did] = {}
+    limits[user_did][period] = today
+
+    if not save_gist_data(DIAGNOSIS_LIMITS_GIST_FILENAME, limits):  # 辞書を直接保存
+        print("⚠️ 診断制限の保存に失敗しました")
+        return False, "ごめんね、みりんてゃ今ちょっと忙しいの…また後でね？♡"
+
+    return True, None
+
+def generate_facets_from_text(text, hashtags):
+    text_bytes = text.encode("utf-8")
+    facets = []
+    for tag in hashtags:
+        tag_bytes = tag.encode("utf-8")
+        start = text_bytes.find(tag_bytes)
+        if start != -1:
+            facets.append({
+                "index": {
+                    "byteStart": start,
+                    "byteEnd": start + len(tag_bytes)
+                },
+                "features": [{
+                    "$type": "app.bsky.richtext.facet#tag",
+                    "tag": tag.lstrip("#")
+                }]
+            })
+    url_pattern = r'(https?://[^\s]+)'
+    for match in re.finditer(url_pattern, text):
+        url = match.group(0)
+        start = text_bytes.find(url.encode("utf-8"))
+        if start != -1:
+            facets.append({
+                "index": {
+                    "byteStart": start,
+                    "byteEnd": start + len(url.encode("utf-8"))
+                },
+                "features": [{
+                    "$type": "app.bsky.richtext.facet#link",
+                    "uri": url
+                }]
+            })
+    return facets
+
+def generate_diagnosis(text, user_did):
+    if not DIAGNOSIS_KEYWORDS.search(text):
+        return None, []  # 診断キーワードがない場合はスキップ
+
+    jst = pytz.timezone('Asia/Tokyo')
+    hour = datetime.now(jst).hour
+    is_daytime = 6 <= hour < 18
+    is_english = re.search(r"Fuwamoko Fortune|Emotion Check|Mirinteya Mood|Tell me my fortune|diagnose|Fortune", text, re.IGNORECASE)
+
+    can_diagnose, limit_msg = check_diagnosis_limit(user_did, is_daytime)
+    if not can_diagnose:
+        return limit_msg, []
+
+    if is_daytime:
+        templates = FUWAMOKO_TEMPLATES_EN if is_english else FUWAMOKO_TEMPLATES
+        level = random.randint(0, 100)
+        template = next(t for t in templates if level in t["level"])
+        reply_text = (
+            f"{'✨Your Fuwamoko Fortune✨' if is_english else '✨キミのふわもこ運勢✨'}\n"
+            f"💖{'Fuwamoko Level' if is_english else 'ふわもこ度'}：{level}％\n"
+            f"🎀{'Lucky Item' if is_english else 'ラッキーアイテム'}：{template['item']}\n"
+            f"{'🫧' if is_english else '💭'}{template['msg']}\n"
+            f"{template['tag']}"
+        )
+        hashtags = [template['tag']]
+        return reply_text, hashtags
+    else:
+        templates = EMOTION_TEMPLATES_EN if is_english else EMOTION_TEMPLATES
+        level = random.randint(-50, 50)
+        template = next(t for t in templates if level in t["level"])
+        reply_text = (
+            f"{'⸝⸝ Your Emotion Barometer ⸝⸝' if is_english else '⸝⸝ キミの情緒バロメーター ⸝⸝'}\n"
+            f"{'😔' if level < 0 else '💭'}{'Mood' if is_english else '情緒'}：{level}％\n"
+            f"{'🌧️' if level < 0 else '☁️'}{'Mood Weather' if is_english else '情緒天気'}：{template['weather']}\n"
+            f"{'🫧' if is_english else '💭'}{'Coping' if is_english else '対処法'}：{template['coping']}\n"
+            f"{'Mirinteya’s here for you…' if is_english else 'みりんてゃもそばにいるよ…'}\n"
+            f"{template['tag']}"
+        )
+        hashtags = [template['tag']]
+        return reply_text, hashtags
+
+INTRO_MESSAGE = (
+    "🐾 みりんてゃのふwaふwa診断機能 🐾\n"
+    "🌼 昼（6:00〜17:59）：#ふわもこ診断\n"
+    "🌙 夜（18:00〜5:59）：#みりんてゃ情緒天気\n"
+    "💬「ふわもこ運勢」「情緒診断」「占って」などで今日のキミを診断するよ♡"
+)
+
+#------------------------------
 #📬 Blueskyログイン
 #------------------------------
 try:
@@ -430,111 +583,6 @@ def generate_reply_via_local_model(user_input):
     except Exception as e:
         print(f"❌ モデル読み込みエラー: {e}")
         return random.choice(failure_messages)
-
-#------------------------------
-#🆕 診断機能
-#------------------------------
-def check_diagnosis_limit(user_did, is_daytime):
-    jst = pytz.timezone('Asia/Tokyo')
-    today = datetime.now(jst).date().isoformat()
-    limits = load_gist_data(DIAGNOSIS_LIMITS_GIST_FILENAME)
-    print(f"📊 limits の型: {type(limits)} / 内容: {limits}")  # デバッグログ追加
-
-    period = "day" if is_daytime else "night"
-    if user_did in limits and limits[user_did].get(period) == today:
-        return False, "今日はもうこの診断済みだよ〜♡ 明日またね！💖"
-
-    if user_did not in limits:
-        limits[user_did] = {}
-    limits[user_did][period] = today
-
-    if not save_gist_data(DIAGNOSIS_LIMITS_GIST_FILENAME, limits):  # 辞書を直接保存
-        print("⚠️ 診断制限の保存に失敗しました")
-        return False, "ごめんね、みりんてゃ今ちょっと忙しいの…また後でね？♡"
-
-    return True, None
-    
-def generate_facets_from_text(text, hashtags):
-    text_bytes = text.encode("utf-8")
-    facets = []
-    for tag in hashtags:
-        tag_bytes = tag.encode("utf-8")
-        start = text_bytes.find(tag_bytes)
-        if start != -1:
-            facets.append({
-                "index": {
-                    "byteStart": start,
-                    "byteEnd": start + len(tag_bytes)
-                },
-                "features": [{
-                    "$type": "app.bsky.richtext.facet#tag",
-                    "tag": tag.lstrip("#")
-                }]
-            })
-    url_pattern = r'(https?://[^\s]+)'
-    for match in re.finditer(url_pattern, text):
-        url = match.group(0)
-        start = text_bytes.find(url.encode("utf-8"))
-        if start != -1:
-            facets.append({
-                "index": {
-                    "byteStart": start,
-                    "byteEnd": start + len(url.encode("utf-8"))
-                },
-                "features": [{
-                    "$type": "app.bsky.richtext.facet#link",
-                    "uri": url
-                }]
-            })
-    return facets
-
-def generate_diagnosis(text, user_did):
-    if not DIAGNOSIS_KEYWORDS.search(text):
-        return None, []  # 診断キーワードがない場合はスキップ
-
-    jst = pytz.timezone('Asia/Tokyo')
-    hour = datetime.now(jst).hour
-    is_daytime = 6 <= hour < 18
-    is_english = re.search(r"Fuwamoko Fortune|Emotion Check|Mirinteya Mood|Tell me my fortune|diagnose|Fortune", text, re.IGNORECASE)
-
-    can_diagnose, limit_msg = check_diagnosis_limit(user_did, is_daytime)
-    if not can_diagnose:
-        return limit_msg, []
-
-    if is_daytime:
-        templates = FUWAMOKO_TEMPLATES_EN if is_english else FUWAMOKO_TEMPLATES
-        level = random.randint(0, 100)
-        template = next(t for t in templates if level in t["level"])
-        reply_text = (
-            f"{'✨Your Fuwamoko Fortune✨' if is_english else '✨キミのふわもこ運勢✨'}\n"
-            f"💖{'Fuwamoko Level' if is_english else 'ふわもこ度'}：{level}％\n"
-            f"🎀{'Lucky Item' if is_english else 'ラッキーアイテム'}：{template['item']}\n"
-            f"{'🫧' if is_english else '💭'}{template['msg']}\n"
-            f"{template['tag']}"
-        )
-        hashtags = [template['tag']]
-        return reply_text, hashtags
-    else:
-        templates = EMOTION_TEMPLATES_EN if is_english else EMOTION_TEMPLATES
-        level = random.randint(-50, 50)
-        template = next(t for t in templates if level in t["level"])
-        reply_text = (
-            f"{'⸝⸝ Your Emotion Barometer ⸝⸝' if is_english else '⸝⸝ キミの情緒バロメーター ⸝⸝'}\n"
-            f"{'😔' if level < 0 else '💭'}{'Mood' if is_english else '情緒'}：{level}％\n"
-            f"{'🌧️' if level < 0 else '☁️'}{'Mood Weather' if is_english else '情緒天気'}：{template['weather']}\n"
-            f"{'🫧' if is_english else '💭'}{'Coping' if is_english else '対処法'}：{template['coping']}\n"
-            f"{'Mirinteya’s here for you…' if is_english else 'みりんてゃもそばにいるよ…'}\n"
-            f"{template['tag']}"
-        )
-        hashtags = [template['tag']]
-        return reply_text, hashtags
-
-INTRO_MESSAGE = (
-    "🐾 みりんてゃのふwaふwa診断機能 🐾\n"
-    "🌼 昼（6:00〜17:59）：#ふわもこ診断\n"
-    "🌙 夜（18:00〜5:59）：#みりんてゃ情緒天気\n"
-    "💬「ふわもこ運勢」「情緒診断」「占って」などで今日のキミを診断するよ♡"
-)
 
 #------------------------------
 #✨ 投稿のReplyRefとURI生成
