@@ -485,7 +485,7 @@ def generate_diagnosis(text, user_did):
         level = random.randint(-50, 50)
         template = next(t for t in templates if level in t["level"])
         reply_text = (
-            f"{'⸝⸝ Your Emotion Barometer ⸝⸝' if is_english else '❝⸝ キミの情緒バロメーター ⸝⸝'}\n"
+            f"{'⸝⸝ Your Emotion Barometer ⸝⸝' if is_english else '⸝⸝ キミの情緒バロメーター ⸝⸝'}\n"
             f"{'😔' if level < 0 else '💭'}{'Mood' if is_english else '情緒'}：{level}％\n"
             f"{'🌧️' if level < 0 else '☁️'}{'Mood Weather' if is_english else '情緒天気'}：{template['weather']}\n"
             f"{'🫧' if is_english else '💭'}{'Coping' if is_english else '対処法'}：{template['coping']}\n"
@@ -506,37 +506,31 @@ INTRO_MESSAGE = (
 #✨ 投稿のReplyRefとURI生成
 #------------------------------
 def handle_post(record, notification):
-    post_uri = normalize_uri(notification.uri)  # 通知のURI（メンション投稿）
+    post_uri = normalize_uri(notification.uri)  # 通知のURIを優先
     reply_ref = None
 
     if not post_uri:
         print(f"⚠️ 無効な通知URI: {notification.uri}")
         return None, None
 
-    # リプライの場合、親と根のURI/CIDを取得
+    # リプライチェーンがある場合、通知URIを基点に簡易調整
     if hasattr(record, 'reply') and record.reply:
         parent_uri = normalize_uri(record.reply.parent.uri)
         parent_cid = record.reply.parent.cid
-        root_uri = normalize_uri(record.reply.root.uri)
-        root_cid = record.reply.root.cid
-
-        if parent_uri and parent_cid and root_uri and root_cid:
+        if parent_uri and parent_cid:
             reply_ref = ReplyRef(
                 parent=StrongRef(uri=parent_uri, cid=parent_cid),
-                root=StrongRef(uri=root_uri, cid=root_cid)
+                root=StrongRef(uri=post_uri, cid=notification.cid) if notification.cid else StrongRef(uri=post_uri)
             )
         else:
-            print(f"⚠️ リプライチェーンのURI/CIDが不完全: parent={parent_uri}, root={root_uri}")
-    else:
-        # 通常のメンション投稿の場合
-        if notification.cid:
-            reply_ref = ReplyRef(
-                parent=StrongRef(uri=post_uri, cid=notification.cid),
-                root=StrongRef(uri=post_uri, cid=notification.cid)
-            )
-        else:
-            print(f"⚠️ CIDが見つからない: {post_uri}。リプライ参照なしで投稿")
+            print(f"⚠️ リプライチェーンの親URI/CIDが不完全: {parent_uri}")
+    elif notification.cid:
+        reply_ref = ReplyRef(
+            parent=StrongRef(uri=post_uri, cid=notification.cid),
+            root=StrongRef(uri=post_uri, cid=notification.cid)
+        )
 
+    print(f"🔍 handle_post - post_uri: {post_uri}, reply_ref: {reply_ref}")
     return reply_ref, post_uri
 
 #------------------------------
@@ -652,13 +646,9 @@ def run_reply_bot():
             continue
 
         reply_ref, post_uri = handle_post(record, notification)
-        print("🔗 reply_ref:", reply_ref)
-        print("🧾 post_uri（正規化済み）:", post_uri)
+        print(f"🔍 run_reply_bot - post_uri: {post_uri}, reply_ref: {reply_ref}")
 
         reply_text, hashtags = generate_diagnosis(text, author_did)
-        if not reply_text and random.random() < 0.1:
-            reply_text = INTRO_MESSAGE
-            hashtags = ["#ふわもこ診断", "#みりんてゃ情緒天気"]
         if not reply_text:
             for keyword, response in REPLY_TABLE.items():
                 if keyword in text:
@@ -679,9 +669,8 @@ def run_reply_bot():
             post_data = {
                 "text": reply_text,
                 "createdAt": datetime.now(timezone.utc).isoformat(),
+                "reply": {"uri": notification.uri}  # 通知URIを強制的にリプライ先
             }
-            if reply_ref:
-                post_data["reply"] = reply_ref
             if hashtags:
                 post_data["facets"] = generate_facets_from_text(reply_text, hashtags)
 
