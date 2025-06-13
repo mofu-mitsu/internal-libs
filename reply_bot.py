@@ -73,7 +73,7 @@ def load_gist_data(filename):
             curl_command = [
                 "curl", "-X", "GET", GIST_API_URL,
                 "-H", f"Authorization: token {GIST_TOKEN_REPLY}",
-                "-H", "Accept: application/vnd.github+json"
+                "-H", "Accept": "application/vnd.github+json"
             ]
             result = subprocess.run(curl_command, capture_output=True, text=True)
             if result.returncode != 0:
@@ -82,9 +82,13 @@ def load_gist_data(filename):
             if filename in gist_data["files"]:
                 content = gist_data["files"][filename]["content"]
                 print(f"✅ {filename} をGistから読み込みました")
+                # ここを修正！ファイルの内容をセットに変換する
+                if filename == REPLIED_GIST_FILENAME: # REPLIED_GIST_FILENAMEの場合のみセットとして扱う
+                    return set(json.loads(content))
                 return json.loads(content)
             else:
                 print(f"⚠️ Gist内に {filename} が見つかりませんでした")
+                # ここを修正！REPLIED_GIST_FILENAMEの場合は空のセットを返す
                 return {} if filename == DIAGNOSIS_LIMITS_GIST_FILENAME else set()
         except Exception as e:
             print(f"⚠️ 試行 {attempt + 1} でエラー: {e}")
@@ -93,19 +97,21 @@ def load_gist_data(filename):
                 time.sleep(2)
             else:
                 print("❌ 最大リトライ回数に達しました")
+                # ここを修正！REPLIED_GIST_FILENAMEの場合は空のセットを返す
                 return {} if filename == DIAGNOSIS_LIMITS_GIST_FILENAME else set()
 
 def save_gist_data(filename, data):
     print(f"💾 Gist保存準備中 → File: {filename}")
     for attempt in range(3):
         try:
-            content = json.dumps(data, ensure_ascii=False, indent=2)
+            # ここを修正！set型の場合はリストに変換して保存する
+            content = json.dumps(list(data) if isinstance(data, set) else data, ensure_ascii=False, indent=2)
             payload = {"files": {filename: {"content": content}}}
             curl_command = [
                 "curl", "-X", "PATCH", GIST_API_URL,
-                "-H", f"Authorization: token {GIST_TOKEN_REPLY}",
-                "-H", "Accept: application/vnd.github+json",
-                "-H", "Content-Type: application/json",
+                "-H", f"Authorization": f"token {GIST_TOKEN_REPLY}",
+                "-H", "Accept": "application/vnd.github+json",
+                "-H", "Content-Type": "application/json",
                 "-d", json.dumps(payload, ensure_ascii=False)
             ]
             result = subprocess.run(curl_command, capture_output=True, text=True)
@@ -532,18 +538,6 @@ def post_replies_to_bluesky():
 #------------------------------
 #📬 メイン処理
 #------------------------------
-def handle_post(record, notification):
-    post_uri = getattr(notification, "uri", None)
-    post_cid = getattr(notification, "cid", None)
-
-    if StrongRef and ReplyRef and post_uri and post_cid:
-        parent_ref = StrongRef(uri=post_uri, cid=post_cid)
-        root_ref = getattr(getattr(record, "reply", None), "root", parent_ref)
-        reply_ref = ReplyRef(parent=parent_ref, root=root_ref)
-        return reply_ref, normalize_uri(post_uri)
-
-    return None, normalize_uri(post_uri)
-
 def run_reply_bot():
     self_did = client.me.did
     replied = load_gist_data(REPLIED_GIST_FILENAME)
@@ -551,9 +545,10 @@ def run_reply_bot():
 
     garbage_items = ["replied", None, "None", "", "://replied"]
     removed = False
+    # ここを修正！list.removeではなくset.discardを使う
     for garbage in garbage_items:
-        while garbage in replied:
-            replied.remove(garbage)
+        while garbage in replied: # setはin演算子で存在確認可能
+            replied.discard(garbage) # set.discardは要素がなくてもエラーにならない
             print(f"🧹 ゴミデータ '{garbage}' を削除しました")
             removed = True
     if removed:
@@ -562,13 +557,14 @@ def run_reply_bot():
             print("❌ ゴミデータ削除後の保存に失敗しました")
             return
 
-    if replied:
-        print("💾 初期状態のrepliedを保存します")
-        if not save_gist_data(REPLIED_GIST_FILENAME, replied):
-            print("❌ 初期保存に失敗しました")
-            return
-    else:
-        print("⚠️ replied が空なので初期保存はスキップ")
+    # repliedがset型なので、このブロックは不要
+    # if replied:
+    #     print("💾 初期状態のrepliedを保存します")
+    #     if not save_gist_data(REPLIED_GIST_FILENAME, replied):
+    #         print("❌ 初期保存に失敗しました")
+    #         return
+    # else:
+    #     print("⚠️ replied が空なので初期保存はスキップ")
 
     try:
         notifications = client.app.bsky.notification.list_notifications(params={"limit": 25}).notifications
@@ -594,7 +590,7 @@ def run_reply_bot():
             print(f"⚠️ notification_uri が取得できなかったので、仮キーで対応 → {notification_uri}")
 
         print(f"📌 チェック中 notification_uri（正規化済み）: {notification_uri}")
-        print(f"📂 保存済み replied（全件）: {list(replied)}")
+        print(f"📂 保存済み replied（全件）: {list(replied)}") # set型をリストとして表示
 
         if reply_count >= MAX_REPLIES:
             print(f"⏹️ 最大返信数（{MAX_REPLIES}）に達したので終了します")
@@ -674,7 +670,7 @@ def run_reply_bot():
 
             normalized_uri = normalize_uri(notification_uri)
             if normalized_uri:
-                replied.add(normalized_uri)
+                replied.add(normalized_uri) # ここはset型なのでaddでOK！
                 if not save_gist_data(REPLIED_GIST_FILENAME, replied):
                     print(f"❌ URI保存失敗 → {normalized_uri}")
                     continue
