@@ -644,13 +644,29 @@ def run_reply_bot():
         author_handle = getattr(author, "handle", None)
         author_did = getattr(author, "did", None)
 
-        print(f"\n👤 from: @{author_handle} / did: {author_did}")
-        print(f"💬 受信メッセージ: {text}")
-        print(f"🔗 チェック対象 notification_uri（正規化済み）: {notification_uri}")
-
+        # 既存の「自分自身の投稿をスキップ」
         if author_did == self_did or author_handle == HANDLE:
-            print("🛑 自分自身の投稿、スキップ")
+            print("🛑 自分自身の投稿（通知の作者）、スキップ")
             continue
+
+        # ✨ 新規追加 ✨
+        # リプライの親投稿の作者が自分自身だったらスキップ
+        if hasattr(record, 'reply') and record.reply:
+            parent_uri = record.reply.parent.uri
+            try:
+                # 親投稿の情報を取得
+                # get_post_threadはスレッド全体を取得するため、親投稿の情報を直接取得できるかは確認が必要
+                # より正確には get_posts を使うべきだが、APIレートリミットを考慮
+                # ここでは簡易的にget_post_threadで取得できると仮定し、もしエラーが出たらget_postsも検討
+                parent_post_response = client.get_posts(uris=[parent_uri])
+                if parent_post_response and parent_post_response.posts:
+                    parent_post_author_did = parent_post_response.posts[0].author.did
+                    if parent_post_author_did == self_did:
+                        print(f"🛑 親投稿が自分自身のものなので、スキップ (親URI: {parent_uri})")
+                        continue
+            except Exception as e:
+                print(f"⚠️ 親投稿の取得に失敗しました: {e}。このリプライのチェックはスキップし、処理を続行します。")
+
 
         if notification_uri in replied:
             print(f"⏭️ すでに replied 済み → {notification_uri}")
