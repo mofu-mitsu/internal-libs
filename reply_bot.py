@@ -73,7 +73,7 @@ def load_gist_data(filename):
             curl_command = [
                 "curl", "-X", "GET", GIST_API_URL,
                 "-H", f"Authorization: token {GIST_TOKEN_REPLY}",
-                "-H", "Accept: application/vnd.github+json" # ここを修正！
+                "-H", "Accept: application/vnd.github+json"
             ]
             result = subprocess.run(curl_command, capture_output=True, text=True)
             if result.returncode != 0:
@@ -508,6 +508,46 @@ INTRO_MESSAGE = (
 )
 
 #------------------------------
+# ✨ 新規追加 ✨
+# 投稿のReplyRefとURIを生成する関数
+#------------------------------
+def handle_post(record, notification):
+    reply_ref = None
+    post_uri = None
+
+    if hasattr(record, 'reply') and record.reply:
+        # リプライの場合
+        parent_uri = record.reply.parent.uri
+        parent_cid = record.reply.parent.cid
+        root_uri = record.reply.root.uri
+        root_cid = record.reply.root.cid
+
+        # post_uri はリプライ対象のURI（親）
+        post_uri = parent_uri
+
+        # ReplyRef を構築
+        reply_ref = ReplyRef(
+            parent=StrongRef(uri=parent_uri, cid=parent_cid),
+            root=StrongRef(uri=root_uri, cid=root_cid)
+        )
+    else:
+        # メンションされた通常の投稿の場合
+        post_uri = notification.uri  # 通知のURIを直接使用
+        post_cid = notification.cid  # CIDも通知から取得（もしあれば）
+        if post_cid:
+            reply_ref = ReplyRef(
+                parent=StrongRef(uri=post_uri, cid=post_cid),
+                root=StrongRef(uri=post_uri, cid=post_cid)
+            )
+        else:
+            # CIDが取得できない場合のフォールバック（Blueskyクライアントの挙動に依存）
+            # 最悪、reply_refなしで投稿し、本文でメンションすることで対応する
+            print(f"⚠️ Warning: CID not found for post_uri: {post_uri}. ReplyRef might be incomplete.")
+            reply_ref = None # CIDがない場合はReplyRefを生成しない、または部分的なものにする
+
+    return reply_ref, post_uri
+
+#------------------------------
 #📬 ポスト取得・返信
 #------------------------------
 def fetch_bluesky_posts():
@@ -545,10 +585,10 @@ def run_reply_bot():
 
     garbage_items = ["replied", None, "None", "", "://replied"]
     removed = False
-    # ここを修正！list.removeではなくset.discardを使う
+    # set.discardを使う
     for garbage in garbage_items:
-        while garbage in replied: # setはin演算子で存在確認可能
-            replied.discard(garbage) # set.discardは要素がなくてもエラーにならない
+        while garbage in replied:
+            replied.discard(garbage)
             print(f"🧹 ゴミデータ '{garbage}' を削除しました")
             removed = True
     if removed:
@@ -556,15 +596,6 @@ def run_reply_bot():
         if not save_gist_data(REPLIED_GIST_FILENAME, replied):
             print("❌ ゴミデータ削除後の保存に失敗しました")
             return
-
-    # repliedがset型なので、このブロックは不要
-    # if replied:
-    #     print("💾 初期状態のrepliedを保存します")
-    #     if not save_gist_data(REPLIED_GIST_FILENAME, replied):
-    #         print("❌ 初期保存に失敗しました")
-    #         return
-    # else:
-    #     print("⚠️ replied が空なので初期保存はスキップ")
 
     try:
         notifications = client.app.bsky.notification.list_notifications(params={"limit": 25}).notifications
@@ -590,7 +621,7 @@ def run_reply_bot():
             print(f"⚠️ notification_uri が取得できなかったので、仮キーで対応 → {notification_uri}")
 
         print(f"📌 チェック中 notification_uri（正規化済み）: {notification_uri}")
-        print(f"📂 保存済み replied（全件）: {list(replied)}") # set型をリストとして表示
+        print(f"📂 保存済み replied（全件）: {list(replied)}")
 
         if reply_count >= MAX_REPLIES:
             print(f"⏹️ 最大返信数（{MAX_REPLIES}）に達したので終了します")
@@ -629,6 +660,7 @@ def run_reply_bot():
             print(f"⚠️ テキストが空 → @{author_handle}")
             continue
 
+        # handle_post 関数を呼び出す
         reply_ref, post_uri = handle_post(record, notification)
         print("🔗 reply_ref:", reply_ref)
         print("🧾 post_uri（正規化済み）:", post_uri)
@@ -670,7 +702,7 @@ def run_reply_bot():
 
             normalized_uri = normalize_uri(notification_uri)
             if normalized_uri:
-                replied.add(normalized_uri) # ここはset型なのでaddでOK！
+                replied.add(normalized_uri)
                 if not save_gist_data(REPLIED_GIST_FILENAME, replied):
                     print(f"❌ URI保存失敗 → {normalized_uri}")
                     continue
