@@ -517,13 +517,14 @@ def handle_post(record, notification):
     if hasattr(record, 'reply') and record.reply:
         parent_uri = normalize_uri(record.reply.parent.uri)
         parent_cid = record.reply.parent.cid
-        root_uri = normalize_uri(record.reply.root.uri) if hasattr(record.reply, 'root') and record.reply.root else post_uri
-        root_cid = record.reply.root.cid if hasattr(record.reply, 'root') and record.reply.root else notification.cid
+        root_uri = normalize_uri(getattr(record.reply, 'root', {}).get('uri', post_uri))
+        root_cid = getattr(record.reply, 'root', {}).get('cid', notification.cid)
         if parent_uri and parent_cid and root_uri:
             reply_ref = ReplyRef(
                 parent=StrongRef(uri=parent_uri, cid=parent_cid),
                 root=StrongRef(uri=root_uri, cid=root_cid if root_cid else None)
             )
+            print(f"🔍 handle_post - reply_ref details: parent={parent_uri}, root={root_uri}, parent_did={getattr(record.reply.parent, 'did', 'N/A')}, root_did={getattr(record.reply.root, 'did', 'N/A') if hasattr(record.reply, 'root') else 'N/A'}")
         else:
             print(f"⚠️ リプライチェーンの親/根URI/CIDが不完全: parent={parent_uri}, root={root_uri}")
     elif notification.cid:
@@ -531,6 +532,7 @@ def handle_post(record, notification):
             parent=StrongRef(uri=post_uri, cid=notification.cid),
             root=StrongRef(uri=post_uri, cid=notification.cid)
         )
+        print(f"🔍 handle_post - reply_ref details: parent={post_uri}, root={post_uri}")
 
     print(f"🔍 handle_post - post_uri: {post_uri}, reply_ref: {reply_ref}")
     return reply_ref, post_uri
@@ -541,10 +543,17 @@ def handle_post(record, notification):
 def fetch_bluesky_posts():
     client = Client()
     client.login(HANDLE, APP_PASSWORD)
+    self_did = client.me.did  # 自分のDIDをここで取得
+    print(f"🔍 fetch_bluesky_posts - self_did: {self_did}")
+
     posts = client.get_timeline(limit=50).feed
     unreplied = []
     for post in posts:
-        if post.post.author.handle != HANDLE and not post.post.viewer.reply:
+        # Bot自身の投稿はスキップ
+        if post.post.author.did == self_did:
+            print(f"🛑 スキップ: Bot自身の投稿 - {post.post.uri}")
+            continue
+        if not post.post.viewer.reply:
             unreplied.append({
                 "post_id": post.post.uri,
                 "text": post.post.record.text
@@ -567,7 +576,8 @@ def post_replies_to_bluesky():
 #📬 メイン処理
 #------------------------------
 def run_reply_bot():
-    self_did = client.me.did
+    self_did = client.me.did  # ここでも再確認
+    print(f"🔍 run_reply_bot - self_did: {self_did}")
     replied = load_gist_data(REPLIED_GIST_FILENAME)
     print(f"📘 replied の型: {type(replied)} / 件数: {len(replied)}")
 
@@ -635,9 +645,15 @@ def run_reply_bot():
         print(f"💬 受信メッセージ: {text}")
         print(f"🔗 チェック対象 notification_uri（正規化済み）: {notification_uri}")
 
+        # 自己リプのダブルチェック
         if author_did == self_did or author_handle == HANDLE:
             print("🛑 自分自身の投稿、スキップ")
             continue
+        if hasattr(record, "reply") and record.reply:
+            reply_to_author_did = getattr(record.reply.parent, "did", None)
+            if reply_to_author_did == self_did:
+                print("🛑 自リプなのでスキップ")
+                continue
 
         if notification_uri in replied:
             print(f"⏭️ すでに replied 済み → {notification_uri}")
