@@ -513,17 +513,19 @@ def handle_post(record, notification):
         print(f"⚠️ 無効な通知URI: {notification.uri}")
         return None, None
 
-    # リプライチェーンがある場合、通知URIを基点に簡易調整
+    # リプライチェーンがある場合、親と根を明確に設定
     if hasattr(record, 'reply') and record.reply:
         parent_uri = normalize_uri(record.reply.parent.uri)
         parent_cid = record.reply.parent.cid
-        if parent_uri and parent_cid:
+        root_uri = normalize_uri(record.reply.root.uri) if hasattr(record.reply, 'root') and record.reply.root else post_uri
+        root_cid = record.reply.root.cid if hasattr(record.reply, 'root') and record.reply.root else notification.cid
+        if parent_uri and parent_cid and root_uri:
             reply_ref = ReplyRef(
                 parent=StrongRef(uri=parent_uri, cid=parent_cid),
-                root=StrongRef(uri=post_uri, cid=notification.cid) if notification.cid else StrongRef(uri=post_uri)
+                root=StrongRef(uri=root_uri, cid=root_cid if root_cid else None)
             )
         else:
-            print(f"⚠️ リプライチェーンの親URI/CIDが不完全: {parent_uri}")
+            print(f"⚠️ リプライチェーンの親/根URI/CIDが不完全: parent={parent_uri}, root={root_uri}")
     elif notification.cid:
         reply_ref = ReplyRef(
             parent=StrongRef(uri=post_uri, cid=notification.cid),
@@ -669,8 +671,9 @@ def run_reply_bot():
             post_data = {
                 "text": reply_text,
                 "createdAt": datetime.now(timezone.utc).isoformat(),
-                "reply": {"uri": notification.uri}  # 通知URIを強制的にリプライ先
             }
+            if reply_ref:  # reply_refが存在する場合のみ追加
+                post_data["reply"] = reply_ref
             if hashtags:
                 post_data["facets"] = generate_facets_from_text(reply_text, hashtags)
 
