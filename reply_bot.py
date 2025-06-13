@@ -399,18 +399,18 @@ def generate_reply_via_local_model(user_input):
 #------------------------------
 #診断キーワード
 DIAGNOSIS_KEYWORDS = re.compile(
-    r"ふwaもこ運勢|情緒診断|みりんてゃ情緒は|今日の運勢|占い|診断して|占って"
-    r"|Fuwamoko Fortune|Emotion Check|Mirinteya Mood|Tell me my fortune|diagnose",
+    r"ふわもこ運勢|情緒診断|みりんてゃ情緒は|運勢|占い|診断|占って"
+    r"|Fuwamoko Fortune|Emotion Check|Mirinteya Mood|Tell me my fortune|diagnose|Fortune",
     re.IGNORECASE
 )
 
 #ふわもこ運勢テンプレ
 FUWAMOKO_TEMPLATES = [
-    {"level": range(90, 101), "item": "ピンクリボン", "msg": "超あまあま♡ 推し活でキラキラしよ！", "tag": "#ふwaもこ診断"},
-    {"level": range(70, 90), "item": "パステルマスク", "msg": "ふwaふwa気分♪ 推しの画像見て癒されよ～！", "tag": "#ふwaもこ診断"},
-    {"level": range(50, 70), "item": "ハートクッキー", "msg": "まあまあふwaもこ！推しに想い伝えちゃお♡", "tag": "#ふwaもこ診断"},
-    {"level": range(30, 50), "item": "星のキーホルダー", "msg": "ちょっとしょんぼり…推しの曲で元気出そ！", "tag": "#ふwaもこ診断"},
-    {"level": range(0, 30), "item": "ふwaもこ毛布", "msg": "ふwaもこ不足…みりんてゃがぎゅーってするよ♡", "tag": "#ふwaもこ診断"},
+    {"level": range(90, 101), "item": "ピンクリボン", "msg": "超あまあま♡ 推し活でキラキラしよ！", "tag": "#ふわもこ診断"},
+    {"level": range(70, 90), "item": "パステルマスク", "msg": "ふわふわ気分♪ 推しの画像見て癒されよ～！", "tag": "#ふわもこ診断"},
+    {"level": range(50, 70), "item": "ハートクッキー", "msg": "まあまあふわもこ！推しに想い伝えちゃお♡", "tag": "#ふわもこ診断"},
+    {"level": range(30, 50), "item": "星のキーホルダー", "msg": "ちょっとしょんぼり…推しの曲で元気出そ！", "tag": "#ふわもこ診断"},
+    {"level": range(0, 30), "item": "ふわもこ毛布", "msg": "ふわもこ不足…みりんてゃがぎゅーってするよ♡", "tag": "#ふわもこ診断"},
 ]
 
 #情緒バロメーターテンプレ
@@ -419,7 +419,7 @@ EMOTION_TEMPLATES = [
     {"level": range(10, 40), "coping": "甘いもの食べてほっこり", "weather": "薄曇り", "msg": "キミの笑顔、みりんてゃ待ってるよ♡", "tag": "#みりんてゃ情緒天気"},
     {"level": range(-10, 10), "coping": "推しの画像で脳溶かそ", "weather": "くもり", "msg": "みりんてゃ、そっとそばにいるよ…", "tag": "#みりんてゃ情緒天気"},
     {"level": range(-30, -10), "coping": "推しの曲で心リセット", "weather": "くもり時々涙", "msg": "泣いてもいいよ、みりんてゃがいるから…", "tag": "#みりんてゃ情緒天気"},
-    {"level": range(-50, -30), "coping": "ふwaもこ動画で寝逃げ", "weather": "小雨ぽつぽつ", "msg": "明日また頑張ろ、みりんてゃ応援してる…", "tag": "#みりんてゃ情緒天気"},
+    {"level": range(-50, -30), "coping": "ふわもこ動画で寝逃げ", "weather": "小雨ぽつぽつ", "msg": "明日また頑張ろ、みりんてゃ応援してる…", "tag": "#みりんてゃ情緒天気"},
 ]
 
 #英語テンプレ
@@ -481,8 +481,8 @@ def generate_diagnosis(text, user_did):
             level = random.randint(0, 100)
             template = next(t for t in templates if level in t["level"])
             return (
-                f"{'✨Your Fuwamoko Fortune✨' if is_english else '✨キミのふwaもこ運勢✨'}\n"
-                f"💖{'Fuwamoko Level' if is_english else 'ふwaもこ度'}：{level}％\n"
+                f"{'✨Your Fuwamoko Fortune✨' if is_english else '✨キミのふわもこ運勢✨'}\n"
+                f"💖{'Fuwamoko Level' if is_english else 'ふわもこ度'}：{level}％\n"
                 f"🎀{'Lucky Item' if is_english else 'ラッキーアイテム'}：{template['item']}\n"
                 f"{'🫧' if is_english else '💭'}{template['msg']}\n"
                 f"{template['tag']}"
@@ -503,10 +503,10 @@ def generate_diagnosis(text, user_did):
 
 #診断機能紹介
 INTRO_MESSAGE = (
-    "🐾 みりんてゃのふwaもこ診断機能 🐾\n"
-    "🌼 昼（6:00〜17:59）：#ふwaもこ診断\n"
+    "🐾 みりんてゃのふわもこ診断機能 🐾\n"
+    "🌼 昼（6:00〜17:59）：#ふわもこ診断\n"
     "🌙 夜（18:00〜5:59）：#みりんてゃ情緒天気\n"
-    "💬「ふwaもこ運勢」「情緒診断」「占って」などで今日のキミを診断するよ♡"
+    "💬「ふわもこ運勢」「情緒診断」「占って」などで今日のキミを診断するよ♡"
 )
 
 #------------------------------
