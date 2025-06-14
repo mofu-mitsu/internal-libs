@@ -486,7 +486,7 @@ def generate_product_reply(keyword, app_id="1055088369869282145", affiliate_id="
         return "うぅ、ごめんね〜今ちょっとバタバタなの…またね？♡", []
 
 #------------------------------
-# ★ カスタマイズポイント4: 返信生成（ここが統合済み！）
+# ★ カスタマイズポイント4: 返信生成
 #------------------------------
 def generate_reply_via_local_model(user_input):
     model_name = "cyberagent/open-calm-1b"
@@ -504,7 +504,9 @@ def generate_reply_via_local_model(user_input):
     for keyword in PRODUCT_KEYWORDS.keys():
         if keyword in user_input:
             print(f"🎀 グッズキーワード検知: {keyword}")
-            return generate_product_reply(keyword)
+            reply, hashtags = generate_product_reply(keyword)  # タプルを分解
+            print(f"🛍️ グッズ返信: {reply}, ハッシュタグ: {hashtags}")
+            return reply  # 文字列だけ返す
 
     if re.search(r"(大好き|ぎゅー|ちゅー|愛してる|キス|添い寝)", user_input, re.IGNORECASE):
         print(f"⚠️ ラブラブ入力検知: {user_input}")
@@ -538,7 +540,7 @@ def generate_reply_via_local_model(user_input):
         intro_lines = random.choice([
             "えへへ〜、みりんてゃはね〜、",
             "ねぇねぇ、聞いて聞いて〜♡",
-            "ん〜今日もふわふわしてたのっ♪",
+            "ん〜今日もふwaふwaしてたのっ♪",
             "きゃ〜っ、君だぁ！やっと会えたのっ♡",
             "ふwaふwa〜、君のこと考えてたんだからっ♪"
         ])
@@ -548,10 +550,10 @@ def generate_reply_via_local_model(user_input):
             "性格：ちょっぴり天然、甘えん坊、依存気味で、ユーザーに恋してる勢いで絡むよっ♡\n"
             "口調：タメ口で『〜なのっ♡』『〜よぉ？♪』『〜だもん！』『えへへ〜♡』が特徴！感情たっぷり！\n"
             "禁止：ニュース、政治、ビジネス、論理的説明、固有名詞（国、企業、政府など）は絶対NG！性的な内容や過激な擬音語もダメ！\n"
-            "役割：ユーザーの言葉に可愛く反応して、ふわふわドキドキな返事をするのっ♡ 会話のみ！「ちゅ♡」「ぎゅっ」「ドキドキ」みたいな健全で可愛い表現だけ使ってね！\n"
+            "役割：ユーザーの言葉に可愛く反応して、ふwaふwaドキドキな返事をするのっ♡ 会話のみ！「ちゅ♡」「ぎゅっ」「ドキドキ」みたいな健全で可愛い表現だけ使ってね！\n"
             "注意：以下のワードは絶対禁止→「政府」「協定」「韓国」「外交」「経済」「契約」「軍事」「情報」「外相」「更新」「ちゅぱ」「ペロペロ」「ぐちゅ」「ぬぷ」「ビクビク」\n"
             "例1: ユーザー: みりんてゃ、今日なにしてた〜？\n"
-            "みりんてゃ: えへへ〜♡ 君のこと考えてふわふわしてたのっ♡ ね、君はなにしてた？♪\n"
+            "みりんてゃ: えへへ〜♡ 君のこと考えてふwaふwaしてたのっ♡ ね、君はなにしてた？♪\n"
             "例2: ユーザー: みりんてゃ、好きだよ！\n"
             "みりんてゃ: え〜っ、ほんと！？君にそう言われるとドキドキしちゃうよぉ？♡ もっと言ってなのっ♪\n\n"
             f"ユーザー: {user_input}\n"
@@ -738,18 +740,17 @@ def run_reply_bot():
         reply_text, hashtags = generate_diagnosis(text, author_did)  # 診断ロジック維持
         if not reply_text:
             reply_text = generate_reply_via_local_model(text)  # フォールバック
+            print(f"🔄 フォールバック返信: {repr(reply_text)}")
+            # generate_reply_via_local_model は文字列を返すので、hashtags は空のまま
             hashtags = []
 
         # デバッグ: reply_text の内容と型を確認
         print(f"🤖 生成された返信: {repr(reply_text)} (型: {type(reply_text)})")
         if not isinstance(reply_text, str) or not reply_text.strip():
             reply_text = "えへへ〜♡ みりんてゃ、ちょっとおねむかも…またお話しよ？♡"
+            hashtags = []
 
         print("🤖 最終返信内容:", repr(reply_text))
-
-        if not reply_text:
-            print("⚠️ 返信テキストが生成されていません")
-            continue
 
         try:
             post_data = {
