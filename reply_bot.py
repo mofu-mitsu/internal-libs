@@ -632,13 +632,20 @@ def handle_post(record, notification):
     post_cid = getattr(notification, "cid", None)
 
     if post_uri and post_cid:
-        parent_ref = StrongRef(uri=normalize_uri(post_uri), cid=post_cid)
-        root_ref = getattr(getattr(record, "reply", None), "root", parent_ref) if hasattr(record, "reply") else parent_ref
-        reply_ref = ReplyRef(parent=parent_ref, root=root_ref)
-        print(f"🔍 handle_post - reply_ref: parent={parent_ref.uri}, root={root_ref.uri}")
+        parent_ref = {"uri": normalize_uri(post_uri), "cid": post_cid}
+        root_ref = (
+            {"uri": normalize_uri(record.reply.root.uri), "cid": record.reply.root.cid}
+            if hasattr(record, "reply") and record.reply and record.reply.root
+            else parent_ref
+        )
+        reply_ref = {
+            "parent": parent_ref,
+            "root": root_ref
+        }
+        print(f"🔍 handle_post - reply_ref: parent={parent_ref['uri']}, root={root_ref['uri']}")
         return reply_ref, normalize_uri(post_uri)
     return None, normalize_uri(post_uri)
-
+    
 #------------------------------
 #📬 ポスト取得・返信
 #------------------------------
@@ -775,6 +782,7 @@ def run_reply_bot():
             }
             if reply_ref:
                 post_data["reply"] = reply_ref
+                print(f"📋 ReplyRef追加: {reply_ref}")
             
             # 常にfacetsを生成（URLリンク化を保証）
             facets = generate_facets_from_text(reply_text, hashtags)
@@ -805,6 +813,22 @@ def run_reply_bot():
         except Exception as e:
             print(f"⚠️ 投稿失敗: {e}")
             traceback.print_exc()
+            if "JSON serializable" in str(e):
+                print("⚠️ ReplyRefシリアライズエラー検知、リプライなしで再試行")
+                try:
+                    post_data.pop("reply", None)  # リプライ情報を削除
+                    client.app.bsky.feed.post.create(
+                        record=post_data,
+                        repo=client.me.did
+                    )
+                    print(f"✅ @{author_handle} にリプライなしで投稿完了！ → {notification_uri}")
+                    replied.add(notification_uri)
+                    save_replied(replied)
+                    reply_count += 1
+                    time.sleep(REPLY_INTERVAL)
+                except Exception as retry_e:
+                    print(f"⚠️ リトライも失敗: {retry_e}")
+                    traceback.print_exc()
 
 if __name__ == "__main__":
     print("🤖 Reply Bot 起動中…")
