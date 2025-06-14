@@ -260,72 +260,40 @@ def check_diagnosis_limit(user_did, is_daytime):
     jst = pytz.timezone('Asia/Tokyo')
     today = datetime.now(jst).date().isoformat()
     limits = load_gist_data(DIAGNOSIS_LIMITS_GIST_FILENAME)
-    print(f"📊 limits の型: {type(limits)} / 内容: {limits}")  # デバッグログ追加
-
     period = "day" if is_daytime else "night"
     if user_did in limits and limits[user_did].get(period) == today:
         return False, "今日はもうこの診断済みだよ〜♡ 明日またね！💖"
-
     if user_did not in limits:
         limits[user_did] = {}
     limits[user_did][period] = today
-
-    if not save_gist_data(DIAGNOSIS_LIMITS_GIST_FILENAME, limits):  # 辞書を直接保存
-        print("⚠️ 診断制限の保存に失敗しました")
+    if not save_gist_data(DIAGNOSIS_LIMITS_GIST_FILENAME, limits):
         return False, "ごめんね、みりんてゃ今ちょっと忙しいの…また後でね？♡"
-
     return True, None
 
 def generate_facets_from_text(text, hashtags):
     text_bytes = text.encode("utf-8")
     facets = []
-    # ハッシュタグの処理
-    for tag in hashtags:
-        tag_bytes = tag.encode("utf-8")
-        start = text_bytes.find(tag_bytes)
-        if start != -1:
-            facets.append({
-                "index": {
-                    "byteStart": start,
-                    "byteEnd": start + len(tag_bytes)
-                },
-                "features": [{
-                    "$type": "app.bsky.richtext.facet#tag",
-                    "tag": tag.lstrip("#")
-                }]
-            })
-    # URLの処理（強化版）
     url_pattern = r'(https?://[^\s]+)'
     for match in re.finditer(url_pattern, text):
         url = match.group(0)
         start = text_bytes.find(url.encode("utf-8"))
         if start != -1:
             facets.append({
-                "index": {
-                    "byteStart": start,
-                    "byteEnd": start + len(url.encode("utf-8"))
-                },
-                "features": [{
-                    "$type": "app.bsky.richtext.facet#link",
-                    "uri": url
-                }]
+                "index": {"byteStart": start, "byteEnd": start + len(url.encode("utf-8"))},
+                "features": [{"$type": "app.bsky.richtext.facet#link", "uri": url}]
             })
-    print(f"🔍 生成されたファセット: {facets}")  # デバッグ用ログ
     return facets if facets else None
-    
+
 def generate_diagnosis(text, user_did):
     if not DIAGNOSIS_KEYWORDS.search(text):
-        return None, []  # 診断キーワードがない場合はスキップ
-
+        return None, []
     jst = pytz.timezone('Asia/Tokyo')
     hour = datetime.now(jst).hour
     is_daytime = 6 <= hour < 18
     is_english = re.search(r"Fuwamoko Fortune|Emotion Check|Mirinteya Mood|Tell me my fortune|diagnose|Fortune", text, re.IGNORECASE)
-
     can_diagnose, limit_msg = check_diagnosis_limit(user_did, is_daytime)
     if not can_diagnose:
         return limit_msg, []
-
     if is_daytime:
         templates = FUWAMOKO_TEMPLATES_EN if is_english else FUWAMOKO_TEMPLATES
         level = random.randint(0, 100)
@@ -334,11 +302,9 @@ def generate_diagnosis(text, user_did):
             f"{'✨Your Fuwamoko Fortune✨' if is_english else '✨キミのふわもこ運勢✨'}\n"
             f"💖{'Fuwamoko Level' if is_english else 'ふわもこ度'}：{level}％\n"
             f"🎀{'Lucky Item' if is_english else 'ラッキーアイテム'}：{template['item']}\n"
-            f"{'🫧' if is_english else '💭'}{template['msg']}\n"
-            f"{template['tag']}"
+            f"{'🫧' if is_english else '💭'}{template['msg']}"
         )
-        hashtags = [template['tag']]
-        return reply_text, hashtags
+        return reply_text, []
     else:
         templates = EMOTION_TEMPLATES_EN if is_english else EMOTION_TEMPLATES
         level = random.randint(-50, 50)
@@ -348,16 +314,14 @@ def generate_diagnosis(text, user_did):
             f"{'😔' if level < 0 else '💭'}{'Mood' if is_english else '情緒'}：{level}％\n"
             f"{'🌧️' if level < 0 else '☁️'}{'Mood Weather' if is_english else '情緒天気'}：{template['weather']}\n"
             f"{'🫧' if is_english else '💭'}{'Coping' if is_english else '対処法'}：{template['coping']}\n"
-            f"{'Mirinteya’s here for you…' if is_english else 'みりんてゃもそばにいるよ…'}\n"
-            f"{template['tag']}"
+            f"{'Mirinteya’s here for you…' if is_english else 'みりんてゃもそばにいるよ…'}"
         )
-        hashtags = [template['tag']]
-        return reply_text, hashtags
+        return reply_text, []
 
 INTRO_MESSAGE = (
     "🐾 みりんてゃのふわふわ診断機能 🐾\n"
-    "🌼 昼（6:00〜17:59）：#ふわもこ診断\n"
-    "🌙 夜（18:00〜5:59）：#みりんてゃ情緒天気\n"
+    "🌼 昼（6:00〜17:59）：ふわもこ運勢をチェック！\n"
+    "🌙 夜（18:00〜5:59）：情緒バロメーターを覗いてみて！\n"
     "💬「ふわもこ運勢」「情緒診断」「占って」などで今日のキミを診断するよ♡"
 )
 
@@ -475,35 +439,35 @@ def initialize_model_and_tokenizer(model_name="cyberagent/open-calm-1b"):
 #------------------------------
 # ★ カスタマイズポイント5: グッズ提案ロジック（←4の上にこれ追加！）
 #------------------------------
-PRODUCT_KEYWORDS = {
-    "おすすめグッズ": "ふわもこLoverなあなたにピッタリなアイテムはこちらっ♡",
-    "ぬい撮り": "撮影映え命♡のあなたに：おすすめはこの背景布っ！",
-    "寝れない": "みりんてゃが夜のお守りを選んできたよ〜☁️",
-    "推し活": "神アクスタケース、これ使ってる人多いっぽい！🧸💕",
-    "可愛いアイテム": "今いちばんバズってる可愛いアイテム教えちゃうっ☆"
-}
-
 def generate_product_reply(keyword, app_id="1055088369869282145", affiliate_id="3d94ea21.0d257908.3d94ea22.0ed11c6e"):
     api_url = "https://app.rakuten.co.jp/services/api/IchibaItem/Search/20170706"
+    keywords = {
+        "おすすめグッズ": "推し活 グッズ",
+        "ぬい撮り": "ぬいぐるみ 背景布",
+        "寝れない": "安眠 グッズ",
+        "推し活": "推し活 収納",
+        "可愛いアイテム": "可愛い インテリア"
+    }
     params = {
         "applicationId": app_id,
-        "keyword": keyword.split("！")[0] if "！" in keyword else keyword,
-        "hits": 1,
+        "keyword": keywords.get(keyword, keyword),
+        "hits": 3,  # 複数候補からランダム選択
         "format": "json"
     }
     try:
         response = requests.get(api_url, params=params)
         data = response.json()
         if data["Items"]:
-            item = data["Items"][0]["Item"]
+            items = data["Items"]
+            item = random.choice(items)["Item"]
             product_url = item["itemUrl"].split("?")[0]
             affiliate_link = f"https://hb.afl.rakuten.co.jp/hgc/{affiliate_id}/?pc={product_url}"
             reply = f"{PRODUCT_KEYWORDS[keyword]} → {affiliate_link}"
-            return reply
+            return reply, [f"#{keyword.replace('？', '').replace('…', '')}"]
         else:
-            return "えへへ、みりんてゃ今探し中なのっ♡ また後で聞いてね！"
+            return "えへへ、みりんてゃ今探し中なのっ♡ また後で聞いてね！", []
     except Exception:
-        return "うぅ、ごめんね〜今ちょっとバタバタなの…またね？♡"
+        return "うぅ、ごめんね〜今ちょっとバタバタなの…またね？♡", []
 
 #------------------------------
 # ★ カスタマイズポイント4: 返信生成（ここが統合済み！）
