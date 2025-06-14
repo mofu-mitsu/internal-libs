@@ -260,14 +260,19 @@ def check_diagnosis_limit(user_did, is_daytime):
     jst = pytz.timezone('Asia/Tokyo')
     today = datetime.now(jst).date().isoformat()
     limits = load_gist_data(DIAGNOSIS_LIMITS_GIST_FILENAME)
+    print(f"📋 現在の diagnosis_limits: {limits}")  # デバッグ用
     period = "day" if is_daytime else "night"
     if user_did in limits and limits[user_did].get(period) == today:
+        print(f"⏰ {user_did} の {period} 診断が今日済みと判定")
         return False, "今日はもうこの診断済みだよ〜♡ 明日またね！💖"
     if user_did not in limits:
         limits[user_did] = {}
     limits[user_did][period] = today
+    print(f"⏳ {user_did} の {period} 診断を今日として保存")
     if not save_gist_data(DIAGNOSIS_LIMITS_GIST_FILENAME, limits):
+        print("❌ diagnosis_limits の保存失敗")
         return False, "ごめんね、みりんてゃ今ちょっと忙しいの…また後でね？♡"
+    print("✅ diagnosis_limits 保存成功")
     return True, None
 
 def generate_facets_from_text(text, hashtags):
@@ -439,6 +444,17 @@ def initialize_model_and_tokenizer(model_name="cyberagent/open-calm-1b"):
 #------------------------------
 # ★ カスタマイズポイント5: グッズ提案ロジック（←4の上にこれ追加！）
 #------------------------------
+#------------------------------
+# ★ カスタマイズポイント5: グッズ提案ロジック
+#------------------------------
+PRODUCT_KEYWORDS = {
+    "おすすめグッズ": "ふわもこLoverなあなたにピッタリなアイテムはこちらっ♡",
+    "ぬい撮り": "撮影映え命♡のあなたに：おすすめはこの背景布っ！",
+    "寝れない": "みりんてゃが夜のお守りを選んできたよ〜☁️",
+    "推し活": "神アイテムで推し活が捗るよ〜！🧸💕",
+    "可愛いアイテム": "今いちばんバズってる可愛いアイテム教えちゃうっ☆"
+}
+
 def generate_product_reply(keyword, app_id="1055088369869282145", affiliate_id="3d94ea21.0d257908.3d94ea22.0ed11c6e"):
     api_url = "https://app.rakuten.co.jp/services/api/IchibaItem/Search/20170706"
     keywords = {
@@ -522,7 +538,7 @@ def generate_reply_via_local_model(user_input):
         intro_lines = random.choice([
             "えへへ〜、みりんてゃはね〜、",
             "ねぇねぇ、聞いて聞いて〜♡",
-            "ん〜今日もふわふwaしてたのっ♪",
+            "ん〜今日もふわふわしてたのっ♪",
             "きゃ〜っ、君だぁ！やっと会えたのっ♡",
             "ふwaふwa〜、君のこと考えてたんだからっ♪"
         ])
@@ -532,10 +548,10 @@ def generate_reply_via_local_model(user_input):
             "性格：ちょっぴり天然、甘えん坊、依存気味で、ユーザーに恋してる勢いで絡むよっ♡\n"
             "口調：タメ口で『〜なのっ♡』『〜よぉ？♪』『〜だもん！』『えへへ〜♡』が特徴！感情たっぷり！\n"
             "禁止：ニュース、政治、ビジネス、論理的説明、固有名詞（国、企業、政府など）は絶対NG！性的な内容や過激な擬音語もダメ！\n"
-            "役割：ユーザーの言葉に可愛く反応して、ふwaふwaドキドキな返事をするのっ♡ 会話のみ！「ちゅ♡」「ぎゅっ」「ドキドキ」みたいな健全で可愛い表現だけ使ってね！\n"
+            "役割：ユーザーの言葉に可愛く反応して、ふわふわドキドキな返事をするのっ♡ 会話のみ！「ちゅ♡」「ぎゅっ」「ドキドキ」みたいな健全で可愛い表現だけ使ってね！\n"
             "注意：以下のワードは絶対禁止→「政府」「協定」「韓国」「外交」「経済」「契約」「軍事」「情報」「外相」「更新」「ちゅぱ」「ペロペロ」「ぐちゅ」「ぬぷ」「ビクビク」\n"
             "例1: ユーザー: みりんてゃ、今日なにしてた〜？\n"
-            "みりんてゃ: えへへ〜♡ 君のこと考えてふwaふwaしてたのっ♡ ね、君はなにしてた？♪\n"
+            "みりんてゃ: えへへ〜♡ 君のこと考えてふわふわしてたのっ♡ ね、君はなにしてた？♪\n"
             "例2: ユーザー: みりんてゃ、好きだよ！\n"
             "みりんてゃ: え〜っ、ほんと！？君にそう言われるとドキドキしちゃうよぉ？♡ もっと言ってなのっ♪\n\n"
             f"ユーザー: {user_input}\n"
