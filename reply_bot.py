@@ -740,7 +740,12 @@ def run_reply_bot():
             reply_text = generate_reply_via_local_model(text)  # フォールバック
             hashtags = []
 
-        print("🤖 生成された返信:", reply_text)
+        # デバッグ: reply_text の内容と型を確認
+        print(f"🤖 生成された返信: {repr(reply_text)} (型: {type(reply_text)})")
+        if not isinstance(reply_text, str) or not reply_text.strip():
+            reply_text = "えへへ〜♡ みりんてゃ、ちょっとおねむかも…またお話しよ？♡"
+
+        print("🤖 最終返信内容:", repr(reply_text))
 
         if not reply_text:
             print("⚠️ 返信テキストが生成されていません")
