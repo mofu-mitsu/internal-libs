@@ -275,7 +275,10 @@ def check_diagnosis_limit(user_did, is_daytime):
     print("✅ diagnosis_limits 保存成功")
     return True, None
 
-def generate_facets_from_text(text, hashtags):
+#------------------------------
+#🆕 Facets生成（URLリンク化を強化）
+#------------------------------
+def generate_facets_from_text(text, hashtags=None):
     text_bytes = text.encode("utf-8")
     facets = []
     url_pattern = r'(https?://[^\s]+)'
@@ -287,6 +290,20 @@ def generate_facets_from_text(text, hashtags):
                 "index": {"byteStart": start, "byteEnd": start + len(url.encode("utf-8"))},
                 "features": [{"$type": "app.bsky.richtext.facet#link", "uri": url}]
             })
+            print(f"🔗 Facet生成: URL={url}, byteStart={start}, byteEnd={start + len(url.encode('utf-8'))}")
+    
+    # ハッシュタグ用のfacets（必要なら追加）
+    if hashtags:
+        for tag in hashtags:
+            tag_start = text.find(tag)
+            if tag_start != -1:
+                tag_bytes = tag.encode("utf-8")
+                facets.append({
+                    "index": {"byteStart": text_bytes.find(tag_bytes), "byteEnd": text_bytes.find(tag_bytes) + len(tag_bytes)},
+                    "features": [{"$type": "app.bsky.richtext.facet#tag", "tag": tag[1:]}]
+                })
+                print(f"🏷️ Facet生成: ハッシュタグ={tag}")
+    
     return facets if facets else None
 
 def generate_diagnosis(text, user_did):
@@ -741,7 +758,6 @@ def run_reply_bot():
         if not reply_text:
             reply_text = generate_reply_via_local_model(text)  # フォールバック
             print(f"🔄 フォールバック返信: {repr(reply_text)}")
-            # generate_reply_via_local_model は文字列を返すので、hashtags は空のまま
             hashtags = []
 
         # デバッグ: reply_text の内容と型を確認
@@ -759,8 +775,14 @@ def run_reply_bot():
             }
             if reply_ref:
                 post_data["reply"] = reply_ref
-            if hashtags:
-                post_data["facets"] = generate_facets_from_text(reply_text, hashtags)
+            
+            # 常にfacetsを生成（URLリンク化を保証）
+            facets = generate_facets_from_text(reply_text, hashtags)
+            if facets:
+                post_data["facets"] = facets
+                print(f"📋 投稿データにfacets追加: {facets}")
+
+            print(f"📤 投稿データ: {json.dumps(post_data, ensure_ascii=False, indent=2)}")
 
             client.app.bsky.feed.post.create(
                 record=post_data,
