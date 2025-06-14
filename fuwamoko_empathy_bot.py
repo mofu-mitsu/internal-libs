@@ -105,11 +105,11 @@ ORIGINAL_TEMPLATES = {
     }
 }
 
-# 🔽 グローバル辞書初期化（チャッピー保護）
+# 🔽 グローバル辞書初期化
 try:
     _ = globals()["HIGH_RISK_WORDS"]
 except KeyError:
-    logging.error("⚠️⚖️ HIGH_RISK_WORDSが未定義。デフォルトを注入します。")
+    logging.error("⚠️ HIGH_RISK_WORDS未定義。デフォルトを注入します。")
     globals()["HIGH_RISK_WORDS"] = [
         "もちもち", "ぷにぷに", "ぷよぷよ", "やわらかい", "むにゅむにゅ", "エロ", "えっち",
         "nude", "nsfw", "naked", "lewd", "18+", "sex", "uncensored"
@@ -118,7 +118,7 @@ except KeyError:
 try:
     _ = globals()["EMOTION_TAGS"]
 except KeyError:
-    logging.error("⚠️⚖️ EMOTION_TAGSが未定義。デフォルトを注入します。")
+    logging.error("⚠️ EMOTION_TAGS未定義。デフォルトを注入します。")
     globals()["EMOTION_TAGS"] = {
         "fuwamoko": ["ふわふわ", "もこもこ", "もふもふ", "fluffy", "fluff", "fluffball", "ふわもこ",
                      "ぽよぽよ", "やわやわ", "きゅるきゅる", "ぽふぽふ", "ふわもふ", "ぽこぽこ"],
@@ -138,7 +138,7 @@ except KeyError:
 try:
     _ = globals()["SAFE_CHARACTER"]
 except KeyError:
-    logging.error("⚠️⚖️ SAFE_CHARACTERが未定義。デフォルトを注入します。")
+    logging.error("⚠️ SAFE_CHARACTER未定義。デフォルトを注入します。")
     globals()["SAFE_CHARACTER"] = {
         "アニメ": ["アニメ", "漫画", "マンガ", "イラスト", "anime", "illustration", "drawing", "anime art", "manga", "fanart"],
         "一次創作": ["一次創作", "オリキャラ", "オリジナル", "創作", "oc", "original character", "my oc"],
@@ -148,14 +148,13 @@ except KeyError:
 try:
     _ = globals()["GENERAL_TAGS"]
 except KeyError:
-    logging.error("⚠️⚖️ GENERAL_TAGSが未定義。デフォルトを注入します。")
+    logging.error("⚠️ GENERAL_TAGS未定義。デフォルトを注入します。")
     globals()["GENERAL_TAGS"] = ["キャラ", "推し", "art", "drawing"]
 
 # テンプレ監査ログ
 TEMPLATE_AUDIT_LOG = "template_audit_log.txt"
 
 def audit_templates_changes(old, new):
-    """テンプレ変更を監視・記録"""
     try:
         if old != new:
             with open(TEMPLATE_AUDIT_LOG, "a", encoding="utf-8") as f:
@@ -163,13 +162,12 @@ def audit_templates_changes(old, new):
                     "timestamp": datetime.now().isoformat(),
                     "before": old,
                     "after": new
-                }, ensure_ascii=False) + "\n")
+                }, ensure_ascii=False, indent=2) + "\n")
             logging.warning("⚠️ テンプレ変更検出")
     except Exception as e:
-        logging.error(f"⚠️⚖️ テンプレ監査エラー: {type(e).__name__}: {e}")
+        logging.error(f"❌ テンプレ監査エラー: {type(e).__name__}: {e}")
 
 def check_template_integrity(templates):
-    """テンプレの改変チェック"""
     if not LOCK_TEMPLATES:
         logging.warning("⚠️ LOCK_TEMPLATES無効、改変リスク")
         return False
@@ -180,7 +178,6 @@ def check_template_integrity(templates):
     return True
 
 def auto_revert_templates(templates):
-    """テンプレをオリジナルに復元"""
     if LOCK_TEMPLATES:
         for key in ORIGINAL_TEMPLATES:
             templates[key] = deepcopy(ORIGINAL_TEMPLATES[key])
@@ -189,8 +186,7 @@ def auto_revert_templates(templates):
     return templates
 
 def is_fluffy_color(r, g, b):
-    """色がふわもこ系（白、ピンク、クリーム、パステルパープル、夜空紫）かを判定"""
-    logging.debug(f"色判定: RGB=({r}, {g}, {b})")
+    logging.debug(f"🧪 色判定: RGB=({r}, {g}, {b})")
     if r > 230 and g > 230 and b > 230:  # 白系
         logging.debug("白系検出")
         return True
@@ -224,11 +220,10 @@ def open_calm_reply(image_url, text="", context="ふわもこ共感", lang="ja")
     ])
     NG_PHRASES = [
         r"(?:投稿|ユーザー|例文|擬音語|マスクット|マスケット|フォーラム|返事|会話|共感)",
-        r"(?:あなた|○○|名前)",
-        r"(?:ふわもこ返信|癒し系)",
+        r"(?:癒し系のふわもこマスコット|投稿内容に対して)",
         r"[■#]{2,}",
         r"!{5,}", r"\?{5,}", r"[!？]{5,}",
-        r"(?:ふわ|もこ|もち|ぽこ){2,}",  # 繰り返しパターン
+        r"(?:(ふわ|もこ|もち|ぽこ)\1{2,})",  # 同一単語の3回以上繰り返しNG
         r"[♪~]{2,}",  # 記号連鎖
         r"#\S+#\S+",  # ハッシュタグ連鎖
     ]
@@ -254,7 +249,7 @@ def open_calm_reply(image_url, text="", context="ふわもこ共感", lang="ja")
             detected_tags.append(tag)
 
     if "food" in detected_tags or any(word.lower() in text.lower() for word in NG_WORDS):
-        logging.debug(f"NGワード/食事検出: {text[:40]}")
+        logging.debug(f"🍽️ NGワード/食事検出: {text[:40]}")
         return random.choice(MOGUMOGU_TEMPLATES_JP) if lang == "ja" else random.choice(MOGUMOGU_TEMPLATES_EN)
     elif "shonbori" in detected_tags:
         return random.choice(SHONBORI_TEMPLATES_JP) if lang == "ja" else random.choice(NORMAL_TEMPLATES_EN)
@@ -289,17 +284,16 @@ def open_calm_reply(image_url, text="", context="ふわもこ共感", lang="ja")
         "ハッシュタグ、記号の連続（♪〜など）、単語の繰り返し（ふわふわふわなど）は禁止です。\n"
         "自然な日本語の文章で、癒し系の雰囲気を保ってください。\n"
         "### 例:\n"
-        "- もふもふの子、超かわいいね！🧸💕\n"
-        "- ふわっとした毛並み、尊いよ！🐾✨\n"
-        "- ちょこんとした姿、癒されるね！🌸😺\n"
-        "- ぽこぽこ感、たまらんね！🌟🧸\n"
-        "- きゅるんとした目、愛らしいよ！🐰💖\n"
-        "- ふわふわな雰囲気、大好きだよ！☁️🌷\n"
-        f"### 投稿:\n{text.strip()[:60]}\n"
+        "- わぁ〜もふもふの子に会えたの？🧸💕\n"
+        "- 今日もふわふわ癒されるね〜🌙✨\n"
+        "- ふわもこで癒される〜♡💖\n"
+        "- そんな表情、かわいすぎるよ〜🐾🌼\n"
+        f"### 投稿:\n{text.strip()[:100]}\n"
         "### ふわもこ返信:"
     )
+    logging.debug(f"🧪 プロンプト確認: {prompt}")
 
-    inputs = tokenizer(prompt, return_tensors="pt", truncation=True, max_length=200).to(model.device)
+    inputs = tokenizer(prompt, return_tensors="pt", truncation=True, max_length=150).to(model.device)
     try:
         outputs = model.generate(
             **inputs,
@@ -307,31 +301,42 @@ def open_calm_reply(image_url, text="", context="ふわもこ共感", lang="ja")
             pad_token_id=tokenizer.pad_token_id,
             do_sample=True,
             temperature=0.7,
-            top_k=40,
+            top_k=50,
             top_p=0.9,
-            no_repeat_ngram_size=3
+            no_repeat_ngram_size=3,
+            stopping_criteria=[lambda ids, scores: "ふわもこ返信:" in tokenizer.decode(ids[0], skip_special_tokens=True)]
         )
-        reply = tokenizer.decode(outputs[0], skip_special_tokens=True).strip()
-        reply = re.sub(r'^.*?###\s*ふわ*も*こ*返信:*\s*', '', reply, flags=re.DOTALL).strip()
-        reply = re.sub(r'^ふわ[\wぁ-んァ-ンー]{0,4}(は|って)', '', reply).strip()
-        reply = re.sub(r'[■\s]+|(ユーザー|投稿|例文|擬音語|マスクット|マスケット|.*?:.*?[:;]|\#.*|[。！？]*)$', '', reply).strip()
+        raw_reply = tokenizer.decode(outputs[0], skip_special_tokens=True).strip()
+        logging.debug(f"🧸 Raw AI出力: {raw_reply}")
 
-        if len(reply) < 10 or len(reply) > 30 or any(re.search(bad, reply.lower()) for bad in NG_PHRASES):
-            logging.warning(f"⏭️ SKIP理由: 長さ or NGフレーズ: {reply[:60]}")
+        reply = re.sub(r'^.*?ふわもこ返信:\s*', '', raw_reply, flags=re.DOTALL).strip()
+        reply = re.sub(r'^.*?(?:あなたは癒し系の|投稿内容に対する:).*?$', '', reply, flags=re.DOTALL).strip()
+
+        if not reply or len(reply) < 5:
+            logging.warning(f"⏭️ SKIP: 空または短すぎ: len={len(reply)}, テキスト: {reply[:60]}")
             return random.choice(NORMAL_TEMPLATES_JP) if lang == "ja" else random.choice(NORMAL_TEMPLATES_EN)
+
+        if len(reply) < 15 or len(reply) > 35:
+            logging.warning(f"⏭️ SKIP: 長さ不適切: len={len(reply)}, テキスト: {reply[:60]}")
+            return random.choice(NORMAL_TEMPLATES_JP) if lang == "ja" else random.choice(NORMAL_TEMPLATES_EN)
+
+        for bad in NG_PHRASES:
+            if re.search(bad, reply.lower()):
+                logging.warning(f"⏭️ SKIP: NGフレーズ検出: {bad}, テキスト: {reply[:60]}")
+                return random.choice(NORMAL_TEMPLATES_JP) if lang == "ja" else random.choice(NORMAL_TEMPLATES_EN)
 
         emoji_count = len(re.findall(r'[😺🐾🧸🌸🌟💕💖✨☁️🌷🐰]', reply))
         if emoji_count < 2 or emoji_count > 3:
-            logging.warning(f"⏭️ SKIP理由: 絵文字数不適切: {emoji_count}, テキスト: {reply[:60]}")
+            logging.warning(f"⏭️ SKIP: 絵文字数不適切: count={emoji_count}, テキスト: {reply[:60]}")
             return random.choice(NORMAL_TEMPLATES_JP) if lang == "ja" else random.choice(NORMAL_TEMPLATES_EN)
 
-        logging.debug(f"🦊 AI生成: {reply}")
+        logging.info(f"🦊 AI生成成功: {reply}")
         return reply
     except Exception as e:
         logging.error(f"❌ AI生成エラー: {type(e).__name__}: {e}")
         return random.choice(NORMAL_TEMPLATES_JP) if lang == "ja" else random.choice(NORMAL_TEMPLATES_EN)
 
-def extract_valid_cid(ref) -> str | None:
+def extract_valid_cid(ref):
     try:
         cid_candidate = str(ref.link) if hasattr(ref, 'link') else str(ref)
         if re.match(r'^baf[a-z0-9]{40,60}$', cid_candidate):
@@ -343,7 +348,6 @@ def extract_valid_cid(ref) -> str | None:
         return None
 
 def check_skin_ratio(img_pil_obj):
-    """肌色比率を計算（PIL Imageオブジェクトを直接受け取る）"""
     try:
         if img_pil_obj is None:
             logging.debug("画像データ無効 (PIL ImageオブジェクトがNone)")
@@ -356,8 +360,8 @@ def check_skin_ratio(img_pil_obj):
             return 0.0
 
         hsv_img = cv2.cvtColor(img_np, cv2.COLOR_BGR2HSV)
-        lower = np.array([5, 20, 70], dtype=np.uint8)
-        upper = np.array([25, 180, 255], dtype=np.uint8)
+        lower = np.array([0, 20, 70], dtype=np.uint8)
+        upper = np.array([20, 255, 255], dtype=np.uint8)
         mask = cv2.inRange(hsv_img, lower, upper)
         skin_colors = img_np[mask > 0]
         if skin_colors.size > 0:
@@ -411,7 +415,7 @@ def download_image_from_blob(cid, client, did=None):
     did_safe = unquote(did) if did else None
     cdn_urls = [
         f"https://cdn.bsky.app/img/feed_thumbnail/plain/{quote(did_safe)}/{quote(cid)}@jpeg" if did_safe else None,
-        f"https://cdn.bsky.app/img/feed_full/plain/{quote(did_safe)}/{quote(cid)}@jpeg" if did_safe else None
+        f"https://cdn.bsky.app/img/feed_fullsize/plain/{quote(did_safe)}/{quote(cid)}@jpeg" if did_safe else None
     ]
     headers = {"User-Agent": "Mozilla/5.0"}
 
@@ -568,16 +572,20 @@ def normalize_uri(uri):
         return uri
 
 def validate_fuwamoko_file():
-    """fuwamoko_empathy_uris.txtの整合性チェック"""
     if not os.path.exists(FUWAMOKO_FILE):
         logging.info("🟢 ふわもこ履歴ファイルが存在しません。新規作成します。")
+        with open(FUWAMOKO_FILE, 'w', encoding='utf-8') as f:
+            f.write("")
         return True
     try:
         with open(FUWAMOKO_FILE, 'r', encoding='utf-8') as f:
             lines = f.readlines()
             for line in lines:
-                if not re.match(r'^at://[^|]+\|\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}(?:\.\d+)?\+\d{2}:\d{2}$', line.strip()):
-                    logging.error(f"❌ 無効な履歴行: {line.strip()}")
+                clean_line = line.strip()
+                if not clean_line:
+                    continue
+                if not re.match(r'^at://[^|]+\|\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}(?:\d{3})?\+\d{2}:\d{2}$', clean_line):
+                    logging.error(f"❌ 無効な履歴行: {repr(clean_line)}")
                     return False
         return True
     except Exception as e:
@@ -585,17 +593,19 @@ def validate_fuwamoko_file():
         return False
 
 def repair_fuwamoko_file():
-    """破損したfuwamoko_empathy_uris.txtを修復"""
     temp_file = FUWAMOKO_FILE + ".tmp"
     valid_lines = []
     if os.path.exists(FUWAMOKO_FILE):
         try:
             with open(FUWAMOKO_FILE, 'r', encoding='utf-8') as f:
                 for line in f:
-                    if re.match(r'^at://[^|]+\|\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}(?:\.\d+)?\+\d{2}:\d{2}$', line.strip()):
+                    clean_line = line.strip()
+                    if not clean_line:
+                        continue
+                    if re.match(r'^at://[^|]+\|\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}(?:\d{3})?\+\d{2}:\d{2}$', clean_line):
                         valid_lines.append(line)
                     else:
-                        logging.warning(f"⏭️ 破損行スキップ: {line.strip()}")
+                        logging.warning(f"⏭️ 破損行スキップ: {repr(clean_line)}")
             with open(temp_file, 'w', encoding='utf-8') as f:
                 f.writelines(valid_lines)
             os.replace(temp_file, FUWAMOKO_FILE)
@@ -626,8 +636,9 @@ def load_fuwamoko_uris():
                             uri, timestamp = line.strip().split("|", 1)
                             normalized_uri = normalize_uri(uri)
                             fuwamoko_uris[normalized_uri] = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
+                            logging.debug(f"🦊 履歴読み込み: {normalized_uri}")
                         except ValueError as e:
-                            logging.error(f"❌ 履歴行解析エラー: {line.strip()}: {e}")
+                            logging.warning(f"⏭️ 破損行スキップ: {repr(line.strip())}: {e}")
                             continue
             logging.info(f"🟢 ふわもこURI読み込み: {len(fuwamoko_uris)}件")
     except Exception as e:
@@ -640,19 +651,24 @@ def save_fuwamoko_uri(uri, indexed_at):
     lock = filelock.FileLock(FUWAMOKO_LOCK, timeout=5.0)
     try:
         with lock:
+            logging.debug(f"🦊 ロック取得: {FUWAMOKO_LOCK}")
             if normalized_uri in fuwamoko_uris and (datetime.now(timezone.utc) - fuwamoko_uris[normalized_uri]).total_seconds() < 24 * 3600:
                 logging.debug(f"⏭️ スキップ: 24時間以内: {normalized_uri}")
                 return
             if isinstance(indexed_at, str):
                 indexed_at = datetime.fromisoformat(indexed_at.replace("Z", "+00:00"))
+            with open(FUWAMOKO_FILE, 'a', encoding='utf-8') as f:
+                f.write(f"{normalized_uri}|{indexed_at.isoformat()}\n")
             fuwamoko_uris[normalized_uri] = indexed_at
-            with open(FUWAMOKO_FILE, 'w', encoding='utf-8') as f:
-                for u, t in fuwamoko_uris.items():
-                    f.write(f"{u}|{t.isoformat()}\n")
             logging.info(f"🟢 履歴保存: {normalized_uri}")
-            if not validate_fuwamoko_file():
-                logging.error("❌ 履歴保存後、ファイル破損検出")
-                repair_fuwamoko_file()
+            with open(FUWAMOKO_FILE, 'r', encoding='utf-8') as f:
+                lines = f.readlines()
+                last_line = lines[-1].strip() if lines else ""
+                if last_line.startswith(normalized_uri):
+                    logging.debug(f"🦊 履歴ファイル確認: 最後の行={last_line}")
+                else:
+                    logging.error(f"❌ 履歴保存失敗: 最後の行={last_line}")
+            load_fuwamoko_uris()
     except filelock.Timeout:
         logging.error(f"❌ ファイルロックタイムアウト: {FUWAMOKO_LOCK}")
     except Exception as e:
@@ -790,10 +806,12 @@ def process_post(post_data, client, fuwamoko_uris, reposted_uris):
             except Exception as e:
                 print(f"❌ 画像処理エラー: {type(e).__name__}: {e} ({post_id}, uri={uri}, cid={actual_post.cid})")
                 logging.error(f"❌ 画像処理エラー: {type(e).__name__}: {e} ({post_id}, uri={uri}, cid={actual_post.cid})")
+                save_fuwamoko_uri(uri, indexed_at)
                 return False
     except Exception as e:
         print(f"❌ 投稿処理エラー: {type(e).__name__}: {e} ({post_id}, uri={uri})")
         logging.error(f"❌ 投稿処理エラー: {type(e).__name__}: {e} ({post_id}, uri={uri})")
+        save_fuwamoko_uri(uri, indexed_at)
         return False
 
 def run_once():
