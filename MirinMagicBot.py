@@ -67,6 +67,18 @@ DAY_POST_MESSAGES = [
 毎朝8時、天気から感じた詩をみりんてゃが呟くよ☁️
 キミの心にそっと寄り添うね💖
 #みりんてゃの魔法""",
+    """🎀みりんてゃの魔法紹介⑪✨
+「🌼ふわもこ診断＆情緒バロメーター」
+時間帯で切り替わる1日1回限定の診断魔法🎀
+📌キーワード：「ふわもこ運勢」「情緒診断」「占い」「運勢」「診断して」など！
+気軽に話しかけてみてね〜♡
+#みりんてゃの魔法"""
+    """🎀みりんてゃの魔法紹介⑫✨
+「🛍️可愛いものセレクターBot」
+楽天でみりんてゃがふわもこ可愛いアイテムを探してくる魔法🧸
+📌キーワード：「おすすめグッズ」「ぬい撮り」「推し活」「可愛いもの」など！
+リプやメンションで話しかけてねっ♡
+    #みりんてゃの魔法"""
     """🎀 Mirinteya's Magic Intro ① ✨
 「💬 Auto-Reply Bot」
 Reply to a post or mention @mirinchuuu.bsky.social and get a soft lil’ reply ♡
@@ -118,6 +130,18 @@ Softly wishing you a lovely tomorrow!
 Every morning at 8AM JST, a little poem inspired by the weather ☁️  
 Let Mirinteya gently be by your side 💖
 #MirinteyasMagic""",
+    """🎀 Mirinteya's Magic Intro ⑪ ✨
+「🌼 Fuwamoko Diagnosis & Emotion Meter」
+One daily magical checkup that switches by time ⏰  
+📌 Keywords: "fortune", "emotion check", "diagnose", "how's my mood?"
+Just say hi or tag Mirinteya to activate it! 💖
+#MirinteyasMagic"""
+    """🎀 Mirinteya's Magic Intro ⑫ ✨
+「🛍️ Cute Item Selector Bot」
+Mirinteya brings cute things via Rakuten, just for you! 🧸  
+📌 Keywords: "おすすめグッズ", "ぬい撮り", "推し活", "可愛いもの"
+Mention or reply to get your item magic! 💌
+#MirinteyasMagic"""
 ]
 
 # 夜用ポスト（病みかわ）
@@ -172,6 +196,17 @@ NIGHT_POST_MESSAGES = [
 朝の空、みりんてゃの心を揺らすんだ…
 キミの1日、詩でそっと寄り添うよ💭
 #病み期 #みりんてゃの魔法""",
+    """⸝⸝ みりんてゃの魔法紹介⑪ ⸝⸝
+『🌼ふわもこ診断＆情緒バロメーター』
+時間帯で中身が変わる、揺れやすい魔法…
+📌「診断して」「占って」「情緒」って呼んでくれたら、ちゃんと応えるよ☁️
+#病み期 #みりんてゃの魔法"""
+    """⸝⸝ みりんてゃの魔法紹介⑫ ⸝⸝
+『🛍️可愛いものセレクターBot』
+おすすめグッズ、って言われたら探しちゃうし…
+可愛いものって呼ばれたら駆けつけちゃうんだよ🧸
+📌リプやメンションで、そっと声かけてね
+#病み期 #みりんてゃの魔法"""
 ]
 
 # facets生成（絵文字対応＆バイト位置対応）
