@@ -509,7 +509,18 @@ def download_image_from_blob(cid, client, did=None):
     logging.error("❌ 画像取得失敗")
     return None
 
+# 🔽 グローバル変数
+MODEL_PATH = "fuwamoko_model.pt"
+
 def process_image(image_data, text="", client=None, post=None):
+    # モデルロード
+    try:
+        fuwamoko_model = torch.jit.load(MODEL_PATH).to("cuda" if torch.cuda.is_available() else "cpu")
+        logging.info(f"🟢 モデルロード成功: {MODEL_PATH}")
+    except Exception as e:
+        logging.error(f"❌ モデルロードエラー: {type(e).__name__}: {e}")
+        return False
+
     if not hasattr(image_data, 'image') or not hasattr(image_data.image, 'ref'):
         logging.debug("画像データ構造異常")
         return False
@@ -518,59 +529,70 @@ def process_image(image_data, text="", client=None, post=None):
     if not cid:
         return False
 
+    # 画像取得と処理
     try:
         author_did = post.post.author.did if post and hasattr(post, 'post') else None
         img = download_image_from_blob(cid, client, did=author_did)
         if img is None:
             logging.warning("⏭️ スキップ: 画像取得失敗（ログは上記）")
             return False
+    except Exception as e:
+        logging.error(f"❌ 画像取得エラー: {type(e).__name__}: {e} (cid={cid})")
+        return False
 
-        resized_img = img.resize((64, 64))
-        hsv_img = cv2.cvtColor(np.array(resized_img), cv2.COLOR_RGB2HSV)
-        bright_colors = [(r, g, b) for (r, g, b), (_, s, v) in zip(resized_img.getdata(), hsv_img.reshape(-1, 3)) if v > 130]
-        color_counts = Counter(bright_colors)
-        top_colors = color_counts.most_common(5)
-        logging.debug(f"トップ5カラー（明度フィルター後）: {[(c[0], c[1]) for c in top_colors]}")
+    # PyTorch用前処理
+    transform = transforms.Compose([
+        transforms.Resize((224, 224)),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+    ])
+    img_tensor = transform(img).unsqueeze(0).to(fuwamoko_model.device)
 
-        fluffy_count = 0
-        bright_color_count = 0
-        food_color_count = 0
-        for color, _ in top_colors:
-            r, g, b = color
-            if is_fluffy_color(r, g, b, bright_colors):
-                fluffy_count += 1
-            if r > 180 and g > 180 and b > 180:
-                bright_color_count += 1
-            if ((150 <= r <= 200 and 150 <= g <= 200 and 150 <= b <= 200) or  # ハム/卵
-                (220 <= r <= 250 and 220 <= g <= 250 and 210 <= b <= 230) or  # おにぎり
-                (230 <= r <= 255 and 200 <= g <= 230 and 130 <= b <= 160) or  # 豆腐
-                (r == 255 and g == 255 and b == 255)):                       # 純白
-                food_color_count += 1
-        logging.debug(f"ふわもこ色カウント: {fluffy_count}, 明るい色数: {bright_color_count}, 食品色数: {food_color_count}")
+# モデル推論以降の修正
+with torch.no_grad():
+    output = fuwamoko_model(img_tensor)
+    _, predicted = torch.max(output, 1)
+    category = ["other", "food", "fuwamoko", "nsfw", "gore"][predicted.item()]
+    logging.debug(f"🧪 PyTorch推論結果: {category}")
 
-        skin_ratio = check_skin_ratio(img)
-        food_ratio = food_color_count / 5 if top_colors else 0.0
-        logging.debug(f"肌色比率: {skin_ratio:.2%}, 食品色比率: {food_ratio:.2%}, ふわもこカラー数: {fluffy_count}")
+# NSFW/goreが検出された場合、即スキップ
+if category in ["nsfw", "gore"]:
+    logging.warning(f"⏭️ スキップ: {category}検出")
+    return False
 
-        if skin_ratio >= 0.5 or food_ratio > 0.2:
-            logging.warning(f"⏭️ スキップ: 肌色比率 {skin_ratio:.2%} ≥ 50% または 食品色比率 {food_ratio:.2%} > 20%")
-            return False
-        elif skin_ratio > 0.4 and fluffy_count == 0:
-            logging.debug("肌色比率高く、ふわもこ色検出ゼロ→NG")
-            return False
-        elif skin_ratio > 0.4 and fluffy_count == 1 and bright_color_count < 3:
-            logging.debug("肌色比率高く、ふわもこ1色＋明色少なめ→NG（単一色疑い）")
-            return False
-        elif skin_ratio > 0.4 and fluffy_count >= 1 and bright_color_count >= 3:
-            logging.info("🟡 肌色多いが、ふわもこ1色＋明色多めで許容")
-            return True
-        elif fluffy_count >= 2:
-            logging.info("🟢 ふわもこ色検出")
-            return True
-        else:
-            logging.warning("⏭️ スキップ: 色条件不足")
-            return False
+# ふわもこが検出された場合、肌色チェックを追加
+if category == "fuwamoko":
+    if skin_ratio >= 0.5:
+        logging.warning("⏭️ スキップ: 肌色比率過多")
+        return False
+    logging.info("🟢 ふわもこ検出（モデル＋肌色チェック）")
+    return True
 
+# モデルがother/foodの場合、色判定を補助的に
+resized_img = img.resize((64, 64))
+hsv_img = cv2.cvtColor(np.array(resized_img), cv2.COLOR_RGB2HSV)
+bright_colors = [(r, g, b) for (r, g, b), (_, s, v) in zip(resized_img.getdata(), hsv_img.reshape(-1, 3)) if v > 130]
+color_counts = Counter(bright_colors)
+top_colors = color_counts.most_common(5)
+logging.debug(f"トップ5カラー: {[(c[0], c[1]) for c in top_colors]}")
+
+fluffy_count = sum(1 for color, _ in top_colors if is_fluffy_color(*color, bright_colors))
+food_color_count = sum(1 for color, _ in top_colors if (
+    (150 <= color[0] <= 200 and 150 <= color[1] <= 200 and 150 <= color[2] <= 200) or  # ハム/卵
+    (220 <= color[0] <= 250 and 220 <= color[1] <= 250 and 210 <= color[2] <= 230) or  # おにぎり
+    (230 <= color[0] <= 255 and 200 <= color[1] <= 230 and 130 <= color[2] <= 160) or  # 豆腐
+    (color[0] == 255 and color[1] == 255 and color[2] == 255)  # 純白
+))
+skin_ratio = check_skin_ratio(img)
+
+logging.debug(f"ふわもこ色: {fluffy_count}, 食品色: {food_color_count}, 肌色比率: {skin_ratio:.2%}")
+if category in ["other", "food"] and fluffy_count >= 2 and food_color_count <= 1 and skin_ratio < 0.5:
+    logging.info("🟢 色判定: ふわもことして承認（モデル補助）")
+    return True
+else:
+    logging.warning("⏭️ スキップ: モデルまたは色判定不足")
+    return False
+        
         check_text = text.lower()
         try:
             if any(word in check_text for word in globals()["HIGH_RISK_WORDS"]):
