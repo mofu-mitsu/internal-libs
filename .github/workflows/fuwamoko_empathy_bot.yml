@@ -1,0 +1,60 @@
+name: Fuwamoko Empathy Bot
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: fuwamoko-empathy
+  cancel-in-progress: true  # 二重起動を防止
+
+jobs:
+  run-fuwamoko-empathy-bot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgl1 libglib2.0-0  # OpenCV用
+
+      - name: Install Python dependencies
+        run: |
+          pip install --upgrade pip setuptools wheel
+          pip install numpy==1.24.4  # opencv-pythonの前にインストール
+          pip install -r requirements.txt
+          pip install torch==2.0.1 transformers==4.36.2 psutil==5.9.8 sentencepiece==0.2.0
+          pip install -U accelerate
+
+      - name: Preload open-calm-small model
+        run: |
+          python -c "
+          from transformers import AutoModelForCausalLM, AutoTokenizer;
+          model = AutoModelForCausalLM.from_pretrained('cyberagent/open-calm-small', cache_dir='.cache');
+          tokenizer = AutoTokenizer.from_pretrained('cyberagent/open-calm-small', cache_dir='.cache');
+          print('Model and tokenizer preloaded!');
+          "
+
+      - name: Run Fuwamoko Empathy Bot
+        env:
+          HANDLE: ${{ secrets.HANDLE }}
+          APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
+          GIST_TOKEN: ${{ secrets.GIST_TOKEN }}
+        run: |
+          python fuwamoko_empathy_bot.py
+
+      - name: Commit fuwamoko_uris
+        run: |
+          git config --global user.name 'Fuwamoko Bot'
+          git config --global user.email 'bot@example.com'
+          git add fuwamoko_empathy_uris.txt
+          git commit -m "Update fuwamoko_uris.txt [skip ci]" || echo "No changes"
+          git push

@@ -1,6 +1,6 @@
 #------------------------------
 #🌐 基本ライブラリ・API
-# ------------------------------
+#------------------------------
 import os
 import json
 import subprocess
@@ -10,9 +10,11 @@ import random
 import re
 import requests
 import psutil
+import pytz
+import unicodedata
 from datetime import datetime, timezone, timedelta
 from transformers import AutoModelForCausalLM, AutoTokenizer
-from transformers import AutoModelForCausalLM, GPTNeoXTokenizerFast
+from transformers import GPTNeoXTokenizerFast
 import torch
 from atproto import Client, models
 from atproto_client.models.com.atproto.repo.strong_ref import Main as StrongRef
@@ -21,9 +23,9 @@ from dotenv import load_dotenv
 import urllib.parse
 from transformers import BitsAndBytesConfig
 
-# ------------------------------
-# 🔐 環境変数
-# ------------------------------
+#------------------------------
+#🔐 環境変数
+#------------------------------
 load_dotenv()
 HANDLE = os.getenv("HANDLE") or exit("❌ HANDLEが設定されていません")
 APP_PASSWORD = os.getenv("APP_PASSWORD") or exit("❌ APP_PASSWORDが設定されていません")
@@ -34,8 +36,9 @@ print(f"✅ 環境変数読み込み完了: HANDLE={HANDLE[:8]}..., GIST_ID={GIS
 print(f"🧪 GIST_TOKEN_REPLY: {repr(GIST_TOKEN_REPLY)[:8]}...")
 print(f"🔑 トークンの長さ: {len(GIST_TOKEN_REPLY)}")
 
-# --- 固定値 ---
+#--- 固定値 ---
 REPLIED_GIST_FILENAME = "replied.json"
+DIAGNOSIS_LIMITS_GIST_FILENAME = "diagnosis_limits.json"
 GIST_API_URL = f"https://api.github.com/gists/{GIST_ID}"
 HEADERS = {
     "Authorization": f"token {GIST_TOKEN_REPLY}",
@@ -44,9 +47,9 @@ HEADERS = {
 }
 LOCK_FILE = "bot.lock"
 
-# ------------------------------
-# 🔗 URI正規化
-# ------------------------------
+#------------------------------
+#🔗 URI正規化
+#------------------------------
 def normalize_uri(uri):
     if not uri or not isinstance(uri, str) or uri in ["replied", "", "None"]:
         return None
@@ -60,10 +63,10 @@ def normalize_uri(uri):
     except Exception:
         return None
 
-# ------------------------------
-# 📁 Gist操作
-# ------------------------------
-def load_gist_data():
+#------------------------------
+#📁 Gist操作
+#------------------------------
+def load_gist_data(filename):
     print(f"🌐 Gistデータ読み込み開始 → URL: {GIST_API_URL}")
     print(f"🔐 ヘッダーの内容:\n{json.dumps(HEADERS, indent=2)}")
 
@@ -83,20 +86,25 @@ def load_gist_data():
                 raise Exception(f"Gist読み込み失敗: {result.stderr}")
 
             gist_data = json.loads(result.stdout)
-            if REPLIED_GIST_FILENAME in gist_data["files"]:
-                replied_content = gist_data["files"][REPLIED_GIST_FILENAME]["content"]
-                print(f"📄 生のreplied.json内容:\n{replied_content}")
-                raw_uris = json.loads(replied_content)
-                replied = set(uri for uri in (normalize_uri(u) for u in raw_uris) if uri)
-                print(f"✅ replied.json をGistから読み込みました（件数: {len(replied)}）")
-                if replied:
-                    print("📁 最新URI一覧（正規化済み）:")
-                    for uri in list(replied)[-5:]:
-                        print(f" - {uri}")
-                return replied
+            if filename in gist_data["files"]:
+                replied_content = gist_data["files"][filename]["content"]
+                print(f"📄 生の{filename}内容:\n{replied_content}")
+                if filename == REPLIED_GIST_FILENAME:
+                    raw_uris = json.loads(replied_content)
+                    replied = set(uri for uri in (normalize_uri(u) for u in raw_uris) if uri)
+                    print(f"✅ {filename} をGistから読み込みました（件数: {len(replied)}）")
+                    if replied:
+                        print("📁 最新URI一覧（正規化済み）:")
+                        for uri in list(replied)[-5:]:
+                            print(f" - {uri}")
+                    return replied
+                else:  # diagnosis_limits.json用
+                    data = json.loads(replied_content)
+                    print(f"✅ {filename} をGistから読み込みました（件数: {len(data)}）")
+                    return data
             else:
-                print(f"⚠️ Gist内に {REPLIED_GIST_FILENAME} が見つかりませんでした")
-                return set()
+                print(f"⚠️ Gist内に {filename} が見つかりませんでした")
+                return set() if filename == REPLIED_GIST_FILENAME else {}
         except Exception as e:
             print(f"⚠️ 試行 {attempt + 1} でエラー: {e}")
             if attempt < 2:
@@ -104,9 +112,8 @@ def load_gist_data():
                 time.sleep(2)
             else:
                 print("❌ 最大リトライ回数に達しました")
-                return set()
+                return set() if filename == REPLIED_GIST_FILENAME else {}
 
-# --- replied.json 保存 ---
 def save_replied(replied_set):
     print("💾 Gist保存準備中...")
     print(f"🔗 URL: {GIST_API_URL}")
@@ -144,7 +151,7 @@ def save_replied(replied_set):
             if result.returncode == 0:
                 print(f"💾 replied.json をGistに保存しました（件数: {len(cleaned_set)}）")
                 time.sleep(2)  # キャッシュ反映待ち
-                new_replied = load_gist_data()
+                new_replied = load_gist_data(REPLIED_GIST_FILENAME)
                 if cleaned_set.issubset(new_replied):
                     print("✅ 保存内容が正しく反映されました")
                     return True
@@ -162,12 +169,187 @@ def save_replied(replied_set):
                 print("❌ 最大リトライ回数に達しました")
                 return False
 
-# --- HuggingFace API設定 ---
-HF_API_URL = "https://api-inference.huggingface.co/"
+def save_gist_data(filename, data):
+    print(f"💾 Gist保存準備中 → File: {filename}")
+    for attempt in range(3):
+        try:
+            content = json.dumps(data, ensure_ascii=False, indent=2)
+            payload = {"files": {filename: {"content": content}}}
+            print("🛠 PATCH 送信内容（payload）:")
+            print(json.dumps(payload, indent=2, ensure_ascii=False))
 
-# ------------------------------
-# 📬 Blueskyログイン
-# ------------------------------
+            curl_command = [
+                "curl", "-X", "PATCH", GIST_API_URL,
+                "-H", f"Authorization: token {GIST_TOKEN_REPLY}",
+                "-H", "Accept: application/vnd.github+json",
+                "-H", "Content-Type: application/json",
+                "-d", json.dumps(payload, ensure_ascii=False)
+            ]
+            result = subprocess.run(curl_command, capture_output=True, text=True)
+            print(f"📥 試行 {attempt + 1} レスポンスステータス: {result.returncode}")
+            print(f"📥 レスポンス本文: {result.stdout[:500]}...（省略）")
+            print(f"📥 エラー出力: {result.stderr}")
+
+            if result.returncode == 0:
+                print(f"💾 {filename} をGistに保存しました")
+                time.sleep(2)  # キャッシュ反映待ち
+                return True
+            else:
+                raise Exception(f"Gist保存失敗: {result.stderr}")
+        except Exception as e:
+            print(f"⚠️ 試行 {attempt + 1} でエラー: {e}")
+            if attempt < 2:
+                print(f"⏳ リトライします（{attempt + 2}/3）")
+                time.sleep(2)
+            else:
+                print("❌ 最大リトライ回数に達しました")
+                return False
+
+#------------------------------
+#🆕 診断機能
+#------------------------------
+DIAGNOSIS_KEYWORDS = re.compile(
+    r"ふわもこ運勢|情緒診断|情緒|運勢|占い|診断して|占って"
+    r"|Fuwamoko Fortune|Emotion Check|Mirinteya Mood|Tell me my fortune|diagnose|Fortune",
+    re.IGNORECASE
+)
+
+FUWAMOKO_TEMPLATES = [
+    {"level": range(90, 101), "item": "ピンクリボン", "msg": "超あまあま♡ 推し活でキラキラしよ！"},
+    {"level": range(85, 90), "item": "きらきらレターセット", "msg": "今日は推しにお手紙書いてみよ♡ 感情だだもれでOK！"},
+    {"level": range(70, 85), "item": "パステルマスク", "msg": "ふわふわ気分♪ 推しの画像見て癒されよ～！"},
+    {"level": range(60, 70), "item": "チュルチュルキャンディ", "msg": "テンション高め！甘いものでさらにご機嫌に〜♡"},
+    {"level": range(50, 60), "item": "ハートクッキー", "msg": "まあまあふわもこ！推しに想い伝えちゃお♡"},
+    {"level": range(40, 50), "item": "ふわもこマスコット", "msg": "ちょっとゆる〜く、推し動画でまったりタイム🌙"},
+    {"level": range(30, 40), "item": "星のキーホルダー", "msg": "ちょっとしょんぼり…推しの曲で元気出そ！"},
+    {"level": range(0, 30), "item": "ふわもこ毛布", "msg": "ふwaふwa不足…みりんてゃがぎゅーってするよ♡"},
+]
+
+EMOTION_TEMPLATES = [
+    {"level": range(40, 51), "coping": "推しと妄想デート♡", "weather": "晴れ時々キラキラ", "msg": "みりんてゃも一緒にときめくよ！"},
+    {"level": range(20, 40), "coping": "甘いもの食べてほっこり", "weather": "薄曇り", "msg": "キミの笑顔、みりんてゃ待ってるよ♡"},
+    {"level": range(0, 20), "coping": "推しの声で脳内会話", "weather": "もやもや曇り", "msg": "妄想会話で乗り切って…！みりんてゃが一緒にうなずくよ♡"},
+    {"level": range(-10, 0), "coping": "推しの画像で脳溶かそ", "weather": "くもり", "msg": "みりんてゃ、そっとそばにいるよ…"},
+    {"level": range(-30, -10), "coping": "推しの曲で心リセット", "weather": "くもり時々涙", "msg": "泣いてもいいよ、みりんてゃがいるから…"},
+    {"level": range(-45, -30), "coping": "ぬいにぎって深呼吸", "weather": "しとしと雨", "msg": "しょんぼりでも…ぬいと、みりんてゃがいるから大丈夫♡"},
+    {"level": range(-50, -45), "coping": "ふわもこ動画で寝逃げ", "weather": "小雨ぽつぽつ", "msg": "明日また頑張ろ、みりんてゃ応援してる…"},
+]
+
+FUWAMOKO_TEMPLATES_EN = [
+    {"level": range(90, 101), "item": "Pink Ribbon", "msg": "Super sweet vibe♡ Shine with your oshi!"},
+    {"level": range(85, 90), "item": "Glittery Letter Set", "msg": "Write your oshi a sweet letter today♡ Let your feelings sparkle!"},
+    {"level": range(70, 85), "item": "Pastel Mask", "msg": "Fluffy mood♪ Get cozy with oshi pics!"},
+    {"level": range(60, 70), "item": "Swirly Candy Pop", "msg": "High-energy mood! Sweet treats to boost your sparkle level♡"},
+    {"level": range(50, 60), "item": "Heart Cookie", "msg": "Kinda fuwamoko! Tell your oshi you love 'em♡"},
+    {"level": range(40, 50), "item": "Fluffy Mascot Plush", "msg": "Take it easy~ Watch your oshi’s videos and relax 🌙"},
+    {"level": range(30, 40), "item": "Star Keychain", "msg": "Feeling down… Cheer up with oshi’s song!"},
+    {"level": range(0, 30), "item": "Fluffy Blanket", "msg": "Low on fuwa-fuwa… Mirinteya hugs you tight♡"},
+]
+
+EMOTION_TEMPLATES_EN = [
+    {"level": range(40, 51), "coping": "Daydream a date with your oshi♡", "weather": "Sunny with sparkles", "msg": "Mirinteya’s sparkling with you!"},
+    {"level": range(20, 40), "coping": "Eat sweets and chill", "weather": "Light clouds", "msg": "Mirinteya’s waiting for your smile♡"},
+    {"level": range(0, 20), "coping": "Talk to your oshi in your mind", "weather": "Foggy and cloudy", "msg": "Let your imagination help you through… Mirinteya’s nodding with you♡"},
+    {"level": range(-10, 0), "coping": "Melt your brain with oshi pics", "weather": "Cloudy", "msg": "Mirinteya’s right by your side…"},
+    {"level": range(-30, -10), "coping": "Reset with oshi’s song", "weather": "Cloudy with tears", "msg": "It’s okay to cry, Mirinteya’s here…"},
+    {"level": range(-45, -30), "coping": "Hug your plushie and breathe deep", "weather": "Gentle rain", "msg": "Feeling gloomy… But your plushie and Mirinteya are here for you♡"},
+    {"level": range(-50, -45), "coping": "Binge fuwamoko vids and sleep", "weather": "Light rain", "msg": "Let’s try again tomorrow, Mirinteya’s rooting for you…"},
+]
+
+def check_diagnosis_limit(user_did, is_daytime):
+    jst = pytz.timezone('Asia/Tokyo')
+    today = datetime.now(jst).date().isoformat()
+    limits = load_gist_data(DIAGNOSIS_LIMITS_GIST_FILENAME)
+    print(f"📋 現在の diagnosis_limits: {limits}")  # デバッグ用
+    period = "day" if is_daytime else "night"
+    if user_did in limits and limits[user_did].get(period) == today:
+        print(f"⏰ {user_did} の {period} 診断が今日済みと判定")
+        return False, "今日はもうこの診断済みだよ〜♡ 明日またね！💖"
+    if user_did not in limits:
+        limits[user_did] = {}
+    limits[user_did][period] = today
+    print(f"⏳ {user_did} の {period} 診断を今日として保存")
+    if not save_gist_data(DIAGNOSIS_LIMITS_GIST_FILENAME, limits):
+        print("❌ diagnosis_limits の保存失敗")
+        return False, "ごめんね、みりんてゃ今ちょっと忙しいの…また後でね？♡"
+    print("✅ diagnosis_limits 保存成功")
+    return True, None
+
+#------------------------------
+#🆕 Facets生成（URLリンク化を強化）
+#------------------------------
+def generate_facets_from_text(text, hashtags=None):
+    text_bytes = text.encode("utf-8")
+    facets = []
+    url_pattern = r'(https?://[^\s]+)'
+    for match in re.finditer(url_pattern, text):
+        url = match.group(0)
+        start = text_bytes.find(url.encode("utf-8"))
+        if start != -1:
+            facets.append({
+                "index": {"byteStart": start, "byteEnd": start + len(url.encode("utf-8"))},
+                "features": [{"$type": "app.bsky.richtext.facet#link", "uri": url}]
+            })
+            print(f"🔗 Facet生成: URL={url}, byteStart={start}, byteEnd={start + len(url.encode('utf-8'))}")
+    
+    # ハッシュタグ用のfacets（必要なら追加）
+    if hashtags:
+        for tag in hashtags:
+            tag_start = text.find(tag)
+            if tag_start != -1:
+                tag_bytes = tag.encode("utf-8")
+                facets.append({
+                    "index": {"byteStart": text_bytes.find(tag_bytes), "byteEnd": text_bytes.find(tag_bytes) + len(tag_bytes)},
+                    "features": [{"$type": "app.bsky.richtext.facet#tag", "tag": tag[1:]}]
+                })
+                print(f"🏷️ Facet生成: ハッシュタグ={tag}")
+    
+    return facets if facets else None
+
+def generate_diagnosis(text, user_did):
+    if not DIAGNOSIS_KEYWORDS.search(text):
+        return None, []
+    jst = pytz.timezone('Asia/Tokyo')
+    hour = datetime.now(jst).hour
+    is_daytime = 6 <= hour < 18
+    is_english = re.search(r"Fuwamoko Fortune|Emotion Check|Mirinteya Mood|Tell me my fortune|diagnose|Fortune", text, re.IGNORECASE)
+    can_diagnose, limit_msg = check_diagnosis_limit(user_did, is_daytime)
+    if not can_diagnose:
+        return limit_msg, []
+    if is_daytime:
+        templates = FUWAMOKO_TEMPLATES_EN if is_english else FUWAMOKO_TEMPLATES
+        level = random.randint(0, 100)
+        template = next(t for t in templates if level in t["level"])
+        reply_text = (
+            f"{'✨Your Fuwamoko Fortune✨' if is_english else '✨キミのふわもこ運勢✨'}\n"
+            f"💖{'Fuwamoko Level' if is_english else 'ふわもこ度'}：{level}％\n"
+            f"🎀{'Lucky Item' if is_english else 'ラッキーアイテム'}：{template['item']}\n"
+            f"{'🫧' if is_english else '💭'}{template['msg']}"
+        )
+        return reply_text, []
+    else:
+        templates = EMOTION_TEMPLATES_EN if is_english else EMOTION_TEMPLATES
+        level = random.randint(-50, 50)
+        template = next(t for t in templates if level in t["level"])
+        reply_text = (
+            f"{'⸝⸝ Your Emotion Barometer ⸝⸝' if is_english else '⸝⸝ キミの情緒バロメーター ⸝⸝'}\n"
+            f"{'😔' if level < 0 else '💭'}{'Mood' if is_english else '情緒'}：{level}％\n"
+            f"{'🌧️' if level < 0 else '☁️'}{'Mood Weather' if is_english else '情緒天気'}：{template['weather']}\n"
+            f"{'🫧' if is_english else '💭'}{'Coping' if is_english else '対処法'}：{template['coping']}\n"
+            f"{'Mirinteya’s here for you…' if is_english else 'みりんてゃもそばにいるよ…'}"
+        )
+        return reply_text, []
+
+INTRO_MESSAGE = (
+    "🐾 みりんてゃのふわふわ診断機能 🐾\n"
+    "🌼 昼（6:00〜17:59）：ふわもこ運勢をチェック！\n"
+    "🌙 夜（18:00〜5:59）：情緒バロメーターを覗いてみて！\n"
+    "💬「ふわもこ運勢」「情緒診断」「占って」などで今日のキミを診断するよ♡"
+)
+
+#------------------------------
+#📬 Blueskyログイン
+#------------------------------
 try:
     client = Client()
     client.login(HANDLE, APP_PASSWORD)
@@ -176,54 +358,37 @@ except Exception as e:
     print(f"❌ Blueskyログインに失敗しました: {e}")
     exit(1)
 
-# ------------------------------
-# ★ カスタマイズポイント1: キーワード返信（REPLY_TABLE）
-# ------------------------------
+#------------------------------
+#★ カスタマイズポイント1: キーワード返信
+#------------------------------
 REPLY_TABLE = {
     "使い方": "使い方は「♡推しプロフィールメーカー♡」のページにあるよ〜！かんたんっ♪",
     "作ったよ": "えっ…ほんと？ありがとぉ♡ 見せて見せてっ！",
     "きたよ": "きゅ〜ん♡ 来てくれてとびきりの「すきっ」プレゼントしちゃう♡",
     "フォローした": "ありがとぉ♡ みりんてゃ、超よろこびダンス中〜っ！",
-    # 追加例: "おはよう": "おは！{BOT_NAME}、キミの朝をハッピーにしちゃうよ！"
 }
-# ヒント: キーワードは部分一致。{BOT_NAME}でキャラ名を動的に挿入可能！
 
-# ------------------------------
-# ★ カスタマイズポイント2: 安全/危険ワード
-# ------------------------------
+#------------------------------
+#★ カスタマイズポイント2: 安全/危険ワード
+#------------------------------
 SAFE_WORDS = ["ちゅ", "ぎゅっ", "ドキドキ", "ぷにっ", "すりすり", "なでなで"]
 DANGER_ZONE = ["ちゅぱ", "ちゅぱちゅぷ", "ペロペロ", "ぐちゅ", "ぬぷ", "ビクビク"]
-# ヒント: SAFE_WORDSはOKな表現、DANGER_ZONEはNGワード。キャラの雰囲気に合わせて！
 
-# ------------------------------
-# ★ カスタマイズポイント3: キャラ設定
-# ------------------------------
-BOT_NAME = "みりんてゃ"  # キャラ名（例: "クマちゃん", "ツンデレ姫"）
-FIRST_PERSON = "みりんてゃ"  # 一人称（例: "私", "君", "あたし", "ボク"）
-# ヒント: BOT_NAMEは返信や正規表現で使用。FIRST_PERSONはプロンプトで固定。
+#------------------------------
+#★ カスタマイズポイント3: キャラ設定
+#------------------------------
+BOT_NAME = "みりんてゃ"
+FIRST_PERSON = "みりんてゃ"
 
-# ------------------------------
-# 🧹 テキスト処理
-# ------------------------------
-import re
-import random
-
-import re
-
+#------------------------------
+#🧹 テキスト処理
+#------------------------------
 def clean_output(text):
-    # 改行が連続する場合は1つにまとめる
     text = re.sub(r'\n{2,}', '\n', text)
-
-    # 顔文字にありがちな記号も許容するようホワイトリスト拡張
     face_char_whitelist = 'ฅ๑•ω•ฅﾐ・o｡≧≦｡っ☆彡≡≒'
-
-    # 不要な記号の除去（ホワイトリストにある文字は残す）
     allowed = rf'[^\w\sぁ-んァ-ン一-龯。、！？!?♡（）「」♪〜ー…w笑{face_char_whitelist}]+'
     text = re.sub(allowed, '', text)
-
-    # 記号の連続を1つにまとめる（「！！」→「！」）
     text = re.sub(r'[。、！？]{2,}', lambda m: m.group(0)[0], text)
-
     return text.strip()
 
 def is_output_safe(text):
@@ -232,12 +397,10 @@ def is_output_safe(text):
 def clean_sentence_ending(reply):
     reply = clean_output(reply)
     reply = reply.split("\n")[0].strip()
-
     reply = re.sub(rf"^{BOT_NAME}\s*[:：]\s*", "", reply)
     reply = re.sub(r"^ユーザー\s*[:：]\s*", "", reply)
     reply = re.sub(r"([！？笑])。$", r"\1", reply)
 
-    # 一人称チェック
     if FIRST_PERSON != "俺" and "俺" in reply:
         print(f"⚠️ 意図しない一人称『俺』検知: {reply}")
         return random.choice([
@@ -246,7 +409,6 @@ def clean_sentence_ending(reply):
             f"ね、ね、{BOT_NAME}、君ともっとお話ししたいのっ♡"
         ])
 
-    # NGワードチェック
     if re.search(r"(ご利用|誠に|お詫び|貴重なご意見|申し上げます|ございます|お客様|発表|パートナーシップ|ポケモン|アソビズム|企業|世界中|映画|興行|収入|ドル|億|国|イギリス|フランス|スペイン|イタリア|ドイツ|ロシア|中国|インド|Governor|Cross|営業|臨時|オペラ|初演|作曲家|ヴェネツィア|コルテス|政府|協定|軍事|情報|外交|外相|自動更新|\d+(時|分))", reply, re.IGNORECASE):
         print(f"⚠️ NGワード検知: {reply}")
         return random.choice([
@@ -255,7 +417,6 @@ def clean_sentence_ending(reply):
             f"ん〜〜変な話に！{BOT_NAME}、君のこと大好きだから、構ってくれる？♡"
         ])
 
-    # 危険ワードチェック
     if not is_output_safe(reply):
         print(f"⚠️ 危険ワード検知: {reply}")
         return random.choice([
@@ -264,7 +425,6 @@ def clean_sentence_ending(reply):
             f"うぅ、なんか変なこと言っちゃった！{BOT_NAME}、君なしじゃダメなのっ♡"
         ])
 
-    # 意味不明な返信 or 長さ不足の防止
     if not re.search(r"[ぁ-んァ-ン一-龥ー]", reply) or len(reply) < 8:
         return random.choice([
             f"えへへ〜♡ {BOT_NAME}、ふwaふwaしちゃった！君のことずーっと好きだよぉ？♪",
@@ -272,20 +432,18 @@ def clean_sentence_ending(reply):
             f"うぅ、なんか分かんないけど…{BOT_NAME}、君なしじゃダメなのっ♡"
         ])
 
-    # 終わりが味気ない場合、キャラっぽい語尾を追加
     if not re.search(r"[。！？♡♪笑]$", reply):
-        reply += random.choice([ "♡", "♪"])
+        reply += random.choice(["♡", "♪"])
 
     return reply
 
-
-# ------------------------------
-# 🤖 モデル初期化
-# ------------------------------
+#------------------------------
+#🤖 モデル初期化
+#------------------------------
 model = None
 tokenizer = None
 
-def initialize_model_and_tokenizer(model_name="cyberagent/open-calm-3b"):
+def initialize_model_and_tokenizer(model_name="cyberagent/open-calm-1b"):
     global model, tokenizer
     if model is None or tokenizer is None:
         print(f"📤 {datetime.now(timezone.utc).isoformat()} ｜ トークナイザ読み込み中…")
@@ -294,30 +452,78 @@ def initialize_model_and_tokenizer(model_name="cyberagent/open-calm-3b"):
         print(f"📤 {datetime.now(timezone.utc).isoformat()} ｜ モデル読み込み中…")
         model = AutoModelForCausalLM.from_pretrained(
             model_name,
-            torch_dtype=torch.float32,  # float32にも変更可能
+            torch_dtype=torch.float32,
             device_map="auto"
         ).eval()
         print(f"📤 {datetime.now(timezone.utc).isoformat()} ｜ モデル読み込み完了")
     return model, tokenizer
-    
-# ------------------------------
-# ★ カスタマイズポイント4: 返信生成（generate_reply_via_local_model）
-# ------------------------------
+
+#------------------------------
+# ★ カスタマイズポイント5: グッズ提案ロジック（←4の上にこれ追加！）
+#------------------------------
+PRODUCT_KEYWORDS = {
+    "おすすめグッズ": "ふわもこLoverなあなたにピッタリなアイテムはこちらっ♡",
+    "ぬい撮り": "撮影映え命♡のあなたに：おすすめはこの背景布っ！",
+    "寝れない": "みりんてゃが夜のお守りを選んできたよ〜☁️",
+    "推し活": "神アイテムで推し活が捗るよ〜！🧸💕",
+    "可愛いアイテム": "今いちばんバズってる可愛いアイテム教えちゃうっ☆",
+    "可愛いもの": "ねぇねぇっ♡とびきり可愛いもの、みりんてゃ見つけちゃったの〜〜っ♪"
+}
+
+def generate_product_reply(keyword, app_id="1055088369869282145", affiliate_id="3d94ea21.0d257908.3d94ea22.0ed11c6e"):
+    api_url = "https://app.rakuten.co.jp/services/api/IchibaItem/Search/20170706"
+    keywords = {
+        "おすすめグッズ": "推し活 グッズ",
+        "ぬい撮り": "ぬいぐるみ 背景布",
+        "寝れない": "安眠 グッズ",
+        "推し活": "推し活 収納",
+        "可愛いアイテム": "可愛い インテリア",
+        "可愛いもの": "可愛い 雑貨"
+    }
+    params = {
+        "applicationId": app_id,
+        "keyword": keywords.get(keyword, keyword),
+        "hits": 3,  # 複数候補からランダム選択
+        "format": "json"
+    }
+    try:
+        response = requests.get(api_url, params=params)
+        data = response.json()
+        if data["Items"]:
+            items = data["Items"]
+            item = random.choice(items)["Item"]
+            product_url = item["itemUrl"].split("?")[0]
+            affiliate_link = f"https://hb.afl.rakuten.co.jp/hgc/{affiliate_id}/?pc={product_url}"
+            reply = f"{PRODUCT_KEYWORDS[keyword]} → {affiliate_link}"
+            return reply, [f"#{keyword.replace('？', '').replace('…', '')}"]
+        else:
+            return "えへへ、みりんてゃ今探し中なのっ♡ また後で聞いてね！", []
+    except Exception:
+        return "うぅ、ごめんね〜今ちょっとバタバタなの…またね？♡", []
+
+#------------------------------
+# ★ カスタマイズポイント4: 返信生成
+#------------------------------
 def generate_reply_via_local_model(user_input):
-    model_name = "cyberagent/open-calm-3b"
-    # 失敗時のメッセージ
+    model_name = "cyberagent/open-calm-1b"
     failure_messages = [
         "えへへ、ごめんね〜〜今ちょっと調子悪いみたい……またお話しよ？♡",
         "うぅ、ごめん〜…上手くお返事できなかったの。ちょっと待ってて？♡",
         "あれれ？みりんてゃ、おねむかも…またあとで頑張るねっ！♡"
     ]
-    # フォールバック返信
     fallback_cute_lines = [
         "えへへ〜♡ みりんてゃ、君のこと考えるとドキドキなのっ♪",
         "今日も君に甘えたい気分なのっ♡ ぎゅーってして？",
         "だ〜いすきっ♡ ね、ね、もっと構ってくれる？"
     ]
-    # 特定パターン返信
+    # 💡 まずグッズ系キーワードが含まれていたら専用返信！
+    for keyword in PRODUCT_KEYWORDS.keys():
+        if keyword in user_input:
+            print(f"🎀 グッズキーワード検知: {keyword}")
+            reply, hashtags = generate_product_reply(keyword)  # タプルを分解
+            print(f"🛍️ グッズ返信: {reply}, ハッシュタグ: {hashtags}")
+            return reply  # 文字列だけ返す
+
     if re.search(r"(大好き|ぎゅー|ちゅー|愛してる|キス|添い寝)", user_input, re.IGNORECASE):
         print(f"⚠️ ラブラブ入力検知: {user_input}")
         return random.choice([
@@ -326,7 +532,7 @@ def generate_reply_via_local_model(user_input):
             "も〜〜〜♡ 好きすぎて胸がぎゅーってなるぅ♡"
         ])
 
-    if re.search(r"(疲れた|しんどい|つらい|泣きたい|ごめん|寝れない)", user_input, re.IGNORECASE):
+    if re.search(r"(疲れた|しんどい|つらい|泣きたい|ごめん)", user_input, re.IGNORECASE):
         print(f"⚠️ 癒し系入力検知: {user_input}")
         return random.choice([
             "うぅ、よしよしなのっ♡ 君が元気になるまで、みりんてゃそばにいるのっ♪",
@@ -347,14 +553,12 @@ def generate_reply_via_local_model(user_input):
             print("⚠️ GPU未検出、CPUで実行")
 
         model, tokenizer = initialize_model_and_tokenizer(model_name)
-        # イントロライン
         intro_lines = random.choice([
             "えへへ〜、みりんてゃはね〜、",
             "ねぇねぇ、聞いて聞いて〜♡",
             "ん〜今日もふwaふwaしてたのっ♪",
             "きゃ〜っ、君だぁ！やっと会えたのっ♡",
             "ふwaふwa〜、君のこと考えてたんだからっ♪"
-            # 追加例: f"やっほー！{BOT_NAME}、キミに会えて超ハッピー！"
         ])
         prompt = (
             f"{intro_lines}\n"
@@ -386,8 +590,8 @@ def generate_reply_via_local_model(user_input):
                 with torch.no_grad():
                     output_ids = model.generate(
                         input_ids,
-                        max_new_tokens=60,  # 短めで事故減
-                        temperature=0.8,   # 暴走抑えめ
+                        max_new_tokens=60,
+                        temperature=0.8,
                         top_p=0.9,
                         do_sample=True,
                         pad_token_id=tokenizer.eos_token_id,
@@ -419,6 +623,31 @@ def generate_reply_via_local_model(user_input):
         print(f"❌ モデル読み込みエラー: {e}")
         return random.choice(failure_messages)
 
+#------------------------------
+#✨ 投稿のReplyRefとURI生成
+#------------------------------
+def handle_post(record, notification):
+    post_uri = getattr(notification, "uri", None)
+    post_cid = getattr(notification, "cid", None)
+
+    if post_uri and post_cid:
+        parent_ref = {"uri": normalize_uri(post_uri), "cid": post_cid}
+        root_ref = (
+            {"uri": normalize_uri(record.reply.root.uri), "cid": record.reply.root.cid}
+            if hasattr(record, "reply") and record.reply and record.reply.root
+            else parent_ref
+        )
+        reply_ref = {
+            "parent": parent_ref,
+            "root": root_ref
+        }
+        print(f"🔍 handle_post - reply_ref: parent={parent_ref['uri']}, root={root_ref['uri']}")
+        return reply_ref, normalize_uri(post_uri)
+    return None, normalize_uri(post_uri)
+    
+#------------------------------
+#📬 ポスト取得・返信
+#------------------------------
 def fetch_bluesky_posts():
     client = Client()
     client.login(HANDLE, APP_PASSWORD)
@@ -433,9 +662,9 @@ def fetch_bluesky_posts():
     return unreplied
 
 def post_replies_to_bluesky():
-    unreplied = fetch_bluesky_posts()
-    client = Client()
+    client = Client()  # 先に定義
     client.login(HANDLE, APP_PASSWORD)
+    unreplied = fetch_bluesky_posts()
     for post in unreplied:
         try:
             reply = generate_reply_via_local_model(post["text"])
@@ -444,27 +673,14 @@ def post_replies_to_bluesky():
         except Exception as e:
             print(f"❌ 投稿エラー: {e}")
 
-# ------------------------------
-# 📬 メイン処理
-# ------------------------------
-def handle_post(record, notification):
-    post_uri = getattr(notification, "uri", None)
-    post_cid = getattr(notification, "cid", None)
-
-    if StrongRef and ReplyRef and post_uri and post_cid:
-        parent_ref = StrongRef(uri=post_uri, cid=post_cid)
-        root_ref = getattr(getattr(record, "reply", None), "root", parent_ref)
-        reply_ref = ReplyRef(parent=parent_ref, root=root_ref)
-        return reply_ref, normalize_uri(post_uri)
-
-    return None, normalize_uri(post_uri)
-
+#------------------------------
+#📬 メイン処理
+#------------------------------
 def run_reply_bot():
     self_did = client.me.did
-    replied = load_gist_data()  # load_replied()をやめてGist APIに統一
-    print(f"📘 replied の型: {type(replied)} / 件数: {len(replied)}")
+    replied = load_gist_data(REPLIED_GIST_FILENAME)
+    print(f"📘 replied の型: {type(replied)} / 件数: {len(replied)} / 内容: {replied}")  # デバッグログ追加
 
-    # --- 🧹 replied（URLのセット）を整理 ---
     garbage_items = ["replied", None, "None", "", "://replied"]
     removed = False
     for garbage in garbage_items:
@@ -478,15 +694,6 @@ def run_reply_bot():
             print("❌ ゴミデータ削除後の保存に失敗しました")
             return
 
-    # --- ⛑️ 空じゃなければ初期保存 ---
-    if replied:
-        print("💾 初期状態のrepliedを保存します")
-        if not save_replied(replied):
-            print("❌ 初期保存に失敗しました")
-            return
-    else:
-        print("⚠️ replied が空なので初期保存はスキップ")
-
     try:
         notifications = client.app.bsky.notification.list_notifications(params={"limit": 25}).notifications
         print(f"🔔 通知総数: {len(notifications)} 件")
@@ -499,7 +706,7 @@ def run_reply_bot():
     reply_count = 0
 
     for notification in notifications:
-        notification_uri = normalize_uri(getattr(notification, "uri", None) or getattr(notification, "reasonSubject", None))
+        notification_uri = getattr(notification, "uri", None) or getattr(notification, "reasonSubject", None)
         if not notification_uri:
             record = getattr(notification, "record", None)
             author = getattr(notification, "author", None)
@@ -507,10 +714,10 @@ def run_reply_bot():
                 continue
             text = getattr(record, "text", "")
             author_handle = getattr(author, "handle", "")
-            notification_uri = f"{author_handle}:{text}"
+            notification_uri = f"{author_handle}:{text}"  # 仮キーをそのまま使う
             print(f"⚠️ notification_uri が取得できなかったので、仮キーで対応 → {notification_uri}")
 
-        print(f"📌 チェック中 notification_uri（正規化済み）: {notification_uri}")
+        print(f"📌 チェック中 notification_uri: {notification_uri}")
         print(f"📂 保存済み replied（全件）: {list(replied)}")
 
         if reply_count >= MAX_REPLIES:
@@ -524,8 +731,8 @@ def run_reply_bot():
             continue
 
         text = getattr(record, "text", None)
-        if f"@{HANDLE}" not in text and (not hasattr(record, "reply") or not record.reply):
-            continue
+        if f"@{HANDLE}" not in text and (not hasattr(record, "reply") or not record.reply or not record.reply.parent):
+            continue  # reply.parentがない場合もスキップ
 
         if not author:
             print("⚠️ author情報なし、スキップ")
@@ -536,7 +743,7 @@ def run_reply_bot():
 
         print(f"\n👤 from: @{author_handle} / did: {author_did}")
         print(f"💬 受信メッセージ: {text}")
-        print(f"🔗 チェック対象 notification_uri（正規化済み）: {notification_uri}")
+        print(f"🔗 チェック対象 notification_uri: {notification_uri}")
 
         if author_did == self_did or author_handle == HANDLE:
             print("🛑 自分自身の投稿、スキップ")
@@ -551,15 +758,21 @@ def run_reply_bot():
             continue
 
         reply_ref, post_uri = handle_post(record, notification)
-        print("🔗 reply_ref:", reply_ref)
-        print("🧾 post_uri（正規化済み）:", post_uri)
+        print(f"🔍 run_reply_bot - post_uri: {post_uri}, reply_ref: {reply_ref}")
 
-        reply_text = generate_reply_via_local_model(text)
-        print("🤖 生成された返信:", reply_text)
-
+        reply_text, hashtags = generate_diagnosis(text, author_did)  # 診断ロジック維持
         if not reply_text:
-            print("⚠️ 返信テキストが生成されていません")
-            continue
+            reply_text = generate_reply_via_local_model(text)  # フォールバック
+            print(f"🔄 フォールバック返信: {repr(reply_text)}")
+            hashtags = []
+
+        # デバッグ: reply_text の内容と型を確認
+        print(f"🤖 生成された返信: {repr(reply_text)} (型: {type(reply_text)})")
+        if not isinstance(reply_text, str) or not reply_text.strip():
+            reply_text = "えへへ〜♡ みりんてゃ、ちょっとおねむかも…またお話しよ？♡"
+            hashtags = []
+
+        print("🤖 最終返信内容:", repr(reply_text))
 
         try:
             post_data = {
@@ -568,24 +781,30 @@ def run_reply_bot():
             }
             if reply_ref:
                 post_data["reply"] = reply_ref
+                print(f"📋 ReplyRef追加: {reply_ref}")
+            
+            # 常にfacetsを生成（URLリンク化を保証）
+            facets = generate_facets_from_text(reply_text, hashtags)
+            if facets:
+                post_data["facets"] = facets
+                print(f"📋 投稿データにfacets追加: {facets}")
+
+            print(f"📤 投稿データ: {json.dumps(post_data, ensure_ascii=False, indent=2)}")
 
             client.app.bsky.feed.post.create(
                 record=post_data,
                 repo=client.me.did
             )
 
-            normalized_uri = normalize_uri(notification_uri)
-            if normalized_uri:
-                replied.add(normalized_uri)
+            if notification_uri:  # 仮キーをそのまま保存
+                replied.add(notification_uri)
                 if not save_replied(replied):
-                    print(f"❌ URI保存失敗 → {normalized_uri}")
+                    print(f"❌ URI保存失敗 → {notification_uri}")
                     continue
 
-                print(f"✅ @{author_handle} に返信完了！ → {normalized_uri}")
+                print(f"✅ @{author_handle} に返信完了！ → {notification_uri}")
                 print(f"💾 URI保存成功 → 合計: {len(replied)} 件")
-                print(f"📁 最新URI一覧（正規化済み）: {list(replied)[-5:]}")
-            else:
-                print(f"⚠️ 正規化されたURIが無効 → {notification_uri}")
+                print(f"📁 最新URI一覧: {list(replied)[-5:]}")
 
             reply_count += 1
             time.sleep(REPLY_INTERVAL)
@@ -593,6 +812,22 @@ def run_reply_bot():
         except Exception as e:
             print(f"⚠️ 投稿失敗: {e}")
             traceback.print_exc()
+            if "JSON serializable" in str(e):
+                print("⚠️ ReplyRefシリアライズエラー検知、リプライなしで再試行")
+                try:
+                    post_data.pop("reply", None)  # リプライ情報を削除
+                    client.app.bsky.feed.post.create(
+                        record=post_data,
+                        repo=client.me.did
+                    )
+                    print(f"✅ @{author_handle} にリプライなしで投稿完了！ → {notification_uri}")
+                    replied.add(notification_uri)
+                    save_replied(replied)
+                    reply_count += 1
+                    time.sleep(REPLY_INTERVAL)
+                except Exception as retry_e:
+                    print(f"⚠️ リトライも失敗: {retry_e}")
+                    traceback.print_exc()
 
 if __name__ == "__main__":
     print("🤖 Reply Bot 起動中…")

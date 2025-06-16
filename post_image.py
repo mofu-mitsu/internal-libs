@@ -11,6 +11,9 @@ from dotenv import load_dotenv
 from pathlib import Path
 import re
 import unicodedata
+import mimetypes
+from PIL import Image
+import io
 
 # ------------------------------
 # ★ 認証情報（.envに書くよ！）
@@ -31,12 +34,43 @@ def load_image_posts():
 IMAGE_POSTS = load_image_posts()
 
 # ------------------------------
-# ★ 画像アップロード処理
+# ★ 画像アップロード処理（拡張子に応じてMIMEタイプも自動設定！）
 # ------------------------------
-def upload_image(client, image_path):
-    with open(image_path, "rb") as f:
-        img_data = f.read()
-    response = client.com.atproto.repo.uploadBlob(img_data, {"content_type": "image/jpeg"})
+
+def upload_image(client, image_path, max_size_kb=976):
+    img = Image.open(image_path)
+
+    # 強制リサイズ（デカすぎる画像は縮小）
+    max_dimension = 1024
+    if max(img.size) > max_dimension:
+        ratio = max_dimension / max(img.size)
+        new_size = (int(img.width * ratio), int(img.height * ratio))
+        img = img.resize(new_size, Image.LANCZOS)
+
+    # 透過画像だったらJPEGにする
+    force_jpeg = img.mode in ["RGBA", "LA"]
+    format = "JPEG" if force_jpeg or img.format != "PNG" else "PNG"
+
+    buffer = io.BytesIO()
+    quality = 95
+
+    while True:
+        buffer.seek(0)
+        buffer.truncate(0)
+
+        if format == "JPEG":
+            img.convert("RGB").save(buffer, format="JPEG", quality=quality, optimize=True, progressive=True)
+        else:
+            img.convert("P", palette=Image.ADAPTIVE, colors=256).save(buffer, format="PNG", optimize=True)
+
+        size_kb = buffer.tell() / 1024
+        if size_kb <= max_size_kb or quality <= 20:
+            break
+        quality -= 5
+
+    buffer.seek(0)
+    img_data = buffer.read()
+    response = client.com.atproto.repo.upload_blob(img_data)
     return response.blob
 
 # ------------------------------
@@ -100,7 +134,7 @@ client.login(HANDLE, APP_PASSWORD)
 # 画像投稿データをランダムに選択
 post_data = random.choice(IMAGE_POSTS)
 message = normalize_text(post_data["text"])
-image_path = os.path.join("images", post_data["image"])
+image_path = post_data["image"] if "images/" in post_data["image"] else os.path.join("images", post_data["image"])
 alt_text = post_data["alt"]
 
 hashtags = [word for word in message.split() if word.startswith("#")]
