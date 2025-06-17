@@ -21,6 +21,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 from collections import Counter
 import torch
 from torchvision import transforms
+import torch.nn.functional as F  # Softmax用に追加（ここを修正）
 
 # 🔽 📡 atproto関連
 from atproto import Client, models
@@ -280,6 +281,7 @@ def clean_output(text):
     text = re.sub(r'[。、！？]{2,}', lambda m: m.group(0)[0], text)
     return text.strip()
 
+# 変更箇所1: open_calm_reply
 def open_calm_reply(image_url, text="", context="ふわもこ共感", lang="ja"):
     NG_WORDS = globals()["EMOTION_TAGS"].get("nsfw_ng", [])
     NG_PHRASES = [
@@ -291,7 +293,10 @@ def open_calm_reply(image_url, text="", context="ふわもこ共感", lang="ja")
         r"[♪~]{2,}",
         r"(#\w+){3,}",
         r"^[^\w\s]+$", r"(\w+\s*,){3,}", r"[\*:\.]{2,}",
-        r"\b無理\b", r"\b無理です\b", r"\bダメ\b", r"\b嫌い\b"
+        r"\b無理\b", r"\b無理です\b", r"\bダメ\b", r"\b嫌い\b",
+        r"\b距離\b", r"\b付き合え\b", r"\b関係ない\b", r"\b興味ない\b",
+        r"\b仲良くできない\b", r"\b苦手\b", r"\bキモい\b", r"\b縁がない\b",
+        r"\bバカ\b"
     ]
     SEASONAL_WORDS_BLACKLIST = ["寒い", "あったまろ", "凍える", "冷たい"]
 
@@ -417,7 +422,7 @@ def open_calm_reply(image_url, text="", context="ふわもこ共感", lang="ja")
     except Exception as e:
         logging.error(f"❌ AI生成エラー: {type(e).__name__}: {e}")
         return random.choice(NORMAL_TEMPLATES_JP) if lang == "ja" else random.choice(NORMAL_TEMPLATES_EN)
-
+        
 def extract_valid_cid(ref):
     try:
         cid_candidate = str(ref.link) if hasattr(ref, 'link') else str(ref)
@@ -503,11 +508,17 @@ def download_image_from_blob(cid, client, did=None):
 # 🔽 グローバル変数
 MODEL_PATH = "model/fuwamoko_model.pt"
 
+# 既存コードの冒頭部分は省略...
+
 def process_image(image_data, text="", client=None, post=None):
+    # デバイス定義
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    logging.debug(f"🧪 使用デバイス: {device}")
+
     # モデルロード
     try:
-        fuwamoko_model = torch.jit.load(MODEL_PATH).to("cuda" if torch.cuda.is_available() else "cpu")
-        logging.info(f"🟢 モデルロード成功: {MODEL_PATH}")
+        fuwamoko_model = torch.jit.load(MODEL_PATH).to(device)
+        logging.info(f"🟢 モデルロード成功: {MODEL_PATH}, デバイス: {device}")
     except Exception as e:
         logging.error(f"❌ モデルロードエラー: {type(e).__name__}: {e}")
         return False
@@ -537,27 +548,30 @@ def process_image(image_data, text="", client=None, post=None):
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     ])
-    img_tensor = transform(img).unsqueeze(0).to(fuwamoko_model.device)
+    img_tensor = transform(img).unsqueeze(0).to(device)
 
-    # モデル推論以降の修正
+    # モデル推論
     with torch.no_grad():
         output = fuwamoko_model(img_tensor)
+        probs = F.softmax(output, dim=1)  # Softmaxで確率計算
         _, predicted = torch.max(output, 1)
-        category = ["other", "food", "fuwamoko", "nsfw", "gore"][predicted.item()]
-        logging.debug(f"🧪 PyTorch推論結果: {category}")
+        class_names = ["other", "food", "fuwamoko", "nsfw", "gore"]
+        category = class_names[predicted.item()]
+        prob_dist = {name: prob.item() for name, prob in zip(class_names, probs[0])}
+        logging.debug(f"🧪 PyTorch推論結果: {category}, 確率分布: {prob_dist}")
 
     # NSFW/goreが検出された場合、即スキップ
     if category in ["nsfw", "gore"]:
-        logging.warning(f"⏭️ スキップ: {category}検出")
+        logging.warning(f"⏭️ スキップ: {category}検出, 確率: {prob_dist[category]:.4f}")
         return False
 
     # ふわもこが検出された場合、肌色チェックを追加
-    skin_ratio = check_skin_ratio(img)  # ここで定義
+    skin_ratio = check_skin_ratio(img)
     if category == "fuwamoko":
         if skin_ratio >= 0.5:
             logging.warning("⏭️ スキップ: 肌色比率過多")
             return False
-        logging.info("🟢 ふわもこ検出（モデル＋肌色チェック）")
+        logging.info(f"🟢 ふわもこ検出（モデル＋肌色チェック）, 確率: {prob_dist['fuwamoko']:.4f}")
         return True
 
     # モデルがother/foodの場合、色判定を補助的に
@@ -578,10 +592,10 @@ def process_image(image_data, text="", client=None, post=None):
 
     logging.debug(f"ふわもこ色: {fluffy_count}, 食品色: {food_color_count}, 肌色比率: {skin_ratio:.2%}")
     if category in ["other", "food"] and fluffy_count >= 2 and food_color_count <= 1 and skin_ratio < 0.5:
-        logging.info("🟢 色判定: ふわもことして承認（モデル補助）")
+        logging.info(f"🟢 色判定: ふわもことして承認（モデル補助）, 確率: {prob_dist[category]:.4f}")
         return True
     else:
-        logging.warning("⏭️ スキップ: モデルまたは色判定不足")
+        logging.warning(f"⏭️ スキップ: モデルまたは色判定不足, 確率: {prob_dist[category]:.4f}")
         return False
 
     try:
@@ -602,7 +616,7 @@ def process_image(image_data, text="", client=None, post=None):
     except Exception as e:
         logging.error(f"❌ 画像処理エラー: {type(e).__name__}: {e} (cid={cid}, uri={getattr(post, 'uri', 'unknown')})")
         return False
-
+        
 def is_quoted_repost(post):
     try:
         actual_post = post.post if hasattr(post, 'post') else post
