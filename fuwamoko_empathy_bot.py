@@ -20,6 +20,7 @@ from dotenv import load_dotenv
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from collections import Counter
 import torch
+from torchvision import transforms
 
 # 🔽 📡 atproto関連
 from atproto import Client, models
@@ -289,7 +290,8 @@ def open_calm_reply(image_url, text="", context="ふわもこ共感", lang="ja")
         r"(?:(ふわ|もこ|もち|ぽこ)\1{3,})",
         r"[♪~]{2,}",
         r"(#\w+){3,}",
-        r"^[^\w\s]+$", r"(\w+\s*,){3,}", r"[\*:\.]{2,}"
+        r"^[^\w\s]+$", r"(\w+\s*,){3,}", r"[\*:\.]{2,}",
+        r"\b無理\b", r"\b無理です\b", r"\bダメ\b", r"\b嫌い\b"
     ]
     SEASONAL_WORDS_BLACKLIST = ["寒い", "あったまろ", "凍える", "冷たい"]
 
@@ -368,7 +370,7 @@ def open_calm_reply(image_url, text="", context="ふわもこ共感", lang="ja")
     try:
         outputs = model.generate(
             **inputs,
-            max_new_tokens=25,  # トークン制限を減らす
+            max_new_tokens=25,
             pad_token_id=tokenizer.pad_token_id,
             do_sample=True,
             temperature=0.6,
@@ -475,17 +477,6 @@ def download_image_from_blob(cid, client, did=None):
         logging.error(f"❌ 無効なCID: {cid}")
         return None
 
-    if client and did:
-        try:
-            blob = client.get_blob(cid=cid, did=did)
-            img_data = BytesIO(blob.data)
-            img = Image.open(img_data)
-            img.load()
-            logging.info(f"🟢 Blob画像形式={img.format}, サイズ={img.size}")
-            return img
-        except Exception as e:
-            logging.error(f"❌ Blob APIエラー: {type(e).__name__}: {e}")
-
     did_safe = unquote(did) if did else None
     cdn_urls = [
         f"https://cdn.bsky.app/img/feed_thumbnail/plain/{quote(did_safe)}/{quote(cid)}@jpeg" if did_safe else None,
@@ -510,7 +501,7 @@ def download_image_from_blob(cid, client, did=None):
     return None
 
 # 🔽 グローバル変数
-MODEL_PATH = "fuwamoko_model.pt"
+MODEL_PATH = "model/fuwamoko_model.pt"
 
 def process_image(image_data, text="", client=None, post=None):
     # モデルロード
@@ -561,6 +552,7 @@ def process_image(image_data, text="", client=None, post=None):
         return False
 
     # ふわもこが検出された場合、肌色チェックを追加
+    skin_ratio = check_skin_ratio(img)  # ここで定義
     if category == "fuwamoko":
         if skin_ratio >= 0.5:
             logging.warning("⏭️ スキップ: 肌色比率過多")
@@ -583,7 +575,6 @@ def process_image(image_data, text="", client=None, post=None):
         (230 <= color[0] <= 255 and 200 <= color[1] <= 230 and 130 <= color[2] <= 160) or  # 豆腐
         (color[0] == 255 and color[1] == 255 and color[2] == 255)  # 純白
     ))
-    skin_ratio = check_skin_ratio(img)
 
     logging.debug(f"ふわもこ色: {fluffy_count}, 食品色: {food_color_count}, 肌色比率: {skin_ratio:.2%}")
     if category in ["other", "food"] and fluffy_count >= 2 and food_color_count <= 1 and skin_ratio < 0.5:
@@ -611,7 +602,7 @@ def process_image(image_data, text="", client=None, post=None):
     except Exception as e:
         logging.error(f"❌ 画像処理エラー: {type(e).__name__}: {e} (cid={cid}, uri={getattr(post, 'uri', 'unknown')})")
         return False
-        
+
 def is_quoted_repost(post):
     try:
         actual_post = post.post if hasattr(post, 'post') else post
@@ -817,7 +808,8 @@ def has_image(post):
         logging.error(f"❌ 画像チェックエラー: {type(e).__name__}: {e}")
         return False
 
-def process_post(post_data, client, fuwamoko_uris, reposted_uris):
+def process_post(post_data, client, reposted_uris):
+    global fuwamoko_uris
     try:
         actual_post = post_data.post if hasattr(post_data, 'post') else post_data
         uri = str(actual_post.uri)
@@ -950,7 +942,7 @@ def run_once():
         for post in sorted(feed, key=lambda x: x.post.indexed_at, reverse=True):
             try:
                 thread_response = client.get_post_thread(uri=str(post.post.uri), depth=2)
-                process_post(thread_response.thread, client, fuwamoko_uris, reposted_uris)
+                process_post(thread_response.thread, client, reposted_uris)
             except Exception as e:
                 print(f"❌ スレッド取得エラー: {type(e).__name__}: {e} (URI: {post.post.uri})")
                 logging.error(f"❌ スレッド取得エラー: {type(e).__name__}: {e} (URI: {post.post.uri})")
