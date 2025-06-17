@@ -423,6 +423,15 @@ def clean_sentence_ending(reply):
             f"ん〜〜変な話に！{BOT_NAME}、君のこと大好きだから、構ってくれる？♡"
         ])
 
+    # 💔 拒絶・距離置きっぽい発言へのテンプレ返し（NEW！）
+    if re.search(r"(無理|距離|付き合え|関係ない|興味ない|仲良くできない|苦手|縁がない)", reply, re.IGNORECASE):
+        print(f"⚠️ 拒絶っぽい返事を検知: {reply}")
+        return random.choice([
+            f"えへへっ♡ {BOT_NAME}、ほんとはキミにラブ注入したいのにな〜っ♡",
+            f"ごめんねっ💦ちょっとおかしなこと言っちゃったかも…{BOT_NAME}、キミのことちゃんと見てるよ♡",
+            f"あぅ〜〜〜っ💦 {BOT_NAME}、なんか照れちゃって変なこと言ったかもっ！…ほんとはもっと仲良くしたいのにぃ♡"
+        ])
+
     if not is_output_safe(reply):
         print(f"⚠️ 危険ワード検知: {reply}")
         return random.choice([
