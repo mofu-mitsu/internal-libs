@@ -4,7 +4,7 @@ import os
 
 # BlueSkyログイン
 client = Client()
-client.login(os.getenv("HANDLE"), os.getenv("BSKY_PASSWORD"))
+client.login(os.getenv("HANDLE"), os.getenv("APP_PASSWORD"))
 
 # 前回のチェック時刻を保存するファイル
 LAST_CHECK_FILE = "last_check.json"
