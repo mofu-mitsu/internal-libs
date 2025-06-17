@@ -21,4 +21,4 @@ jobs:
           BSKY_PASSWORD: ${{ secrets.BSKY_PASSWORD }}
           EMAIL_SENDER: ${{ secrets.EMAIL_SENDER }}
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
-        run: python bsky_dm_checker.py
+        run: python dm_checker.py
