@@ -311,6 +311,7 @@ def clean_output(text):
         face_placeholders.append((placeholder, face))
         text = text.replace(face, placeholder)
         
+    text = text.replace("😊", "🧸").replace("✨", "💕")
     text = re.sub(r'[\r\n]+', ' ', text)
     text = re.sub(r'\s{2,}', ' ', text)
     text = re.sub(r'!{2,}', '！', text)
