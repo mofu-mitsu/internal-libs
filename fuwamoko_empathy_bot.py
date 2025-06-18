@@ -318,6 +318,7 @@ def clean_output(text):
     text = re.sub(r'^もふもふであったまろ〜♡\s*', '', text)  # テンプレ削除
     text = re.sub(r'^[^。！？\n]{1,10}って癒されるよね〜\s*', '', text)  # テンプレ削除
     text = re.sub(r'[^\w\sぁ-んァ-ン一-龯。、！？!?♡\w\(\)「」♪〜ー…笑]+', '', text)
+    text = re.sub(r"。([🐾🌸🧸✨💕♡♪～💫！]+)", r"\1", text)
     text = re.sub(r'([。、！？])\s*💖', r'\1💖', text)
     text = re.sub(r'[。、！？]{2,}', lambda m: m.group(0)[0], text)
     # 顔文字を復元
@@ -339,6 +340,9 @@ def open_calm_reply(image_url, text="", context="ふわもこ共感", lang="ja")
         r"^[^\w\s]+$", r"(\w+\s*,){3,}", r"[\*:\.]{2,}",
         r"\b無理\b", r"\b無理です\b", r"\bダメ\b", r"\b嫌い\b", r"\bきらい\b",
         r"\b距離\b", r"\b付き合え\b", r"\b関係ない\b", r"\b興味ない\b", r"\bやめ\b",
+        r"(ぽっぽ|ももぽっぽ|ふわももぽっぽ)",
+        r"[ぁ-ん]{5,}",  # ひらがな5文字以上
+        r"(ぽっこり|お腹ぽっこり|体型|太った|体重|ダイエット)",
         r"\b仲良くできない\b", r"\b苦手\b", r"\bキモ\b", r"\b縁がない\b",
         r"\bバカ\b", r"\b馬鹿\b", r"\bアホ\b", r"\bきも\b", r"\b駄目\b",
         r"\b犬\b", r"\bわんちゃん\b", r"\b猫\b", r"\b猫ちゃん\b",  # 動物名NG
