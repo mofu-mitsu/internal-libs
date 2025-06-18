@@ -17,11 +17,11 @@ import json
 
 # 🔽 🌱 外部ライブラリ
 from dotenv import load_dotenv
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoModelForCausalLM, AutoTokenizer, CLIPProcessor, CLIPModel  # CLIP追加
 from collections import Counter
 import torch
-from torchvision import transforms
-import torch.nn.functional as F  # Softmax用に追加（ここを修正）
+from atproto_client.models import AppBskyFeedPost
+from atproto_client.exceptions import InvokeTimeoutError
 
 # 🔽 📡 atproto関連
 from atproto import Client, models
@@ -33,16 +33,28 @@ logging.getLogger().addHandler(logging.StreamHandler())
 # PILのエラー抑制
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
-# 🔽 🧠 Transformers用設定
+# 🔽 🧠 Transformers用設定（CLIPモデルロード修正）
 MODEL_NAME = "cyberagent/open-calm-small"
+CLIP_MODEL_NAME = "openai/clip-vit-base-patch32"
 tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, cache_dir=".cache")
 model = AutoModelForCausalLM.from_pretrained(
     MODEL_NAME,
     cache_dir=".cache",
     torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
-    device_map="auto"
+    device_map="auto"  # open-calmはdevice_map対応
 )
 tokenizer.pad_token = tokenizer.eos_token
+
+# CLIPモデルとプロセッサのロード
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+clip_processor = CLIPProcessor.from_pretrained(CLIP_MODEL_NAME, cache_dir=".cache")
+clip_model = CLIPModel.from_pretrained(
+    CLIP_MODEL_NAME,
+    cache_dir=".cache",
+    torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32
+).to(device)  # デバイス明示指定
+clip_model.eval()
+logging.info(f"🟢 CLIPモデルロード成功: {CLIP_MODEL_NAME}, デバイス: {device}")
 
 # 環境変数読み込み
 load_dotenv()
@@ -60,7 +72,12 @@ ORIGINAL_TEMPLATES = {
         "よかったね〜！ふわふわだね🌸🧸",
         "えへっ、モフモフで癒しMAX！💞",
         "うわっ！可愛すぎるよ🐾🌷",
-        "ふわふわだね、元気出た！💫🧸"
+        "ふわふわだね、元気出た！💫🧸",
+        "ふんわり優しい気持ちになった〜☁️💕",
+        "きゅん…かわいすぎてとろけそう🥹🧸",
+        "ほっこりしちゃった〜ふわふわ最高〜🧸✨",
+        "ぎゅってしたくなる…癒されるね〜💖🐾",
+        "もう…尊い…癒しが詰まってるよ〜🌸🌸"
     ],
     "SHONBORI_TEMPLATES_JP": [
         "そっか…ぎゅーってしてあげるね🐾💕",
@@ -77,6 +94,12 @@ ORIGINAL_TEMPLATES = {
         "Wow, so cute! Feels good~ 🐾💖",
         "Nice! So fluffy~ 🌸🧸",
         "Great! Healing vibes! 💞",
+        "So adorable, it warmed my heart! 💖",
+        "Aww, I feel hugged just looking at it~ 🧸💕",
+        "Too cute! I’m melting! ☁️💞",
+        "That’s pure fluff happiness~ 🐾🌸",
+        "Soft, sweet, and so healing~ ✨🧸",
+        "It made my heart smile! 💫💖",
         "Amazing! Thanks for the fluff! 🐾🌷"
     ],
     "MOGUMOGU_TEMPLATES_EN": [
@@ -214,12 +237,14 @@ def is_fluffy_color(r, g, b, bright_colors):
     h, s, v = hsv
     logging.debug(f"HSV=({h}, {s}, {v})")
 
-    # 食品色範囲（ハム/卵/おにぎり/豆腐、桃花除外）
+    # 食品色範囲（ハム/卵/おにぎり/豆腐＋パン追加）
     if ((150 <= r <= 200 and 150 <= g <= 200 and 150 <= b <= 200) or  # ハム/卵
         (220 <= r <= 250 and 220 <= g <= 250 and 210 <= b <= 230) or  # おにぎり
         (230 <= r <= 255 and 200 <= g <= 230 and 130 <= b <= 160) or  # 豆腐
-        (r == 255 and g == 255 and b == 255)):                       # 純白
-        logging.debug("食品色（ハム/卵/おにぎり/豆腐/純白）検出、ふわもことみなさない")
+        (r == 255 and g == 255 and b == 255) or                      # 純白
+        (160 <= r <= 241 and 91 <= g <= 192 and 3 <= b <= 43) or     # パン（#AE5B05～#F1C02B, #3E0503）
+        (r > 150 and g < 100 and b < 50 and v > 100)):               # 焦げたパン（茶色系）
+        logging.debug("食品色（ハム/卵/おにぎり/豆腐/パン/焦げ）検出、ふわもことみなさない")
         return False
 
     # 白系（明るさv > 130、単色閾値10）
@@ -272,8 +297,7 @@ def is_fluffy_color(r, g, b, bright_colors):
 def clean_output(text):
     text = re.sub(r'[\r\n]+', ' ', text)
     text = re.sub(r'\s{2,}', ' ', text)
-    text = re.sub(r'^(短く、ふわもこな返事をしてね。|.*→\s*|寒い〜\s*)', '', text)
-    text = re.sub(r'^.*?((もふ|ふわ)[^。]*)$', r'\1', text, flags=re.DOTALL)
+    text = re.sub(r'^(短く、ふわもこな返事をしてね。|.*→\s*|寒い〜\s*)', '', text)  # プロンプトや矢印を削除
     text = re.sub(r'^もふもふであったまろ〜♡\s*', '', text)  # テンプレ削除
     text = re.sub(r'^[^。！？\n]{1,10}って癒されるよね〜\s*', '', text)  # テンプレ削除
     text = re.sub(r'[^\w\sぁ-んァ-ン一-龯。、！？!?♡（）「」♪〜ー…w笑]+', '', text)
@@ -281,7 +305,6 @@ def clean_output(text):
     text = re.sub(r'[。、！？]{2,}', lambda m: m.group(0)[0], text)
     return text.strip()
 
-# 変更箇所1: open_calm_reply
 def open_calm_reply(image_url, text="", context="ふわもこ共感", lang="ja"):
     NG_WORDS = globals()["EMOTION_TAGS"].get("nsfw_ng", [])
     NG_PHRASES = [
@@ -293,10 +316,13 @@ def open_calm_reply(image_url, text="", context="ふわもこ共感", lang="ja")
         r"[♪~]{2,}",
         r"(#\w+){3,}",
         r"^[^\w\s]+$", r"(\w+\s*,){3,}", r"[\*:\.]{2,}",
-        r"\b無理\b", r"\b無理です\b", r"\bダメ\b", r"\b嫌い\b",
-        r"\b距離\b", r"\b付き合え\b", r"\b関係ない\b", r"\b興味ない\b",
-        r"\b仲良くできない\b", r"\b苦手\b", r"\bキモい\b", r"\b縁がない\b",
-        r"\bバカ\b"
+        r"\b無理\b", r"\b無理です\b", r"\bダメ\b", r"\b嫌い\b", r"\bきらい\b",
+        r"\b距離\b", r"\b付き合え\b", r"\b関係ない\b", r"\b興味ない\b", r"\bやめ\b",
+        r"\b仲良くできない\b", r"\b苦手\b", r"\bキモ\b", r"\b縁がない\b",
+        r"\bバカ\b", r"\b馬鹿\b", r"\bアホ\b", r"\bきも\b", r"\b駄目\b",
+        r"\b犬\b", r"\bわんちゃん\b", r"\b猫\b", r"\b猫ちゃん\b",  # 動物名NG
+        r"\bウサギ\b", r"\b羊\b", r"\bハムスター\b", r"\bクマ\b",
+        r"\bくんこ\b", r"\bふくんこ\b"  # 変な造語NG
     ]
     SEASONAL_WORDS_BLACKLIST = ["寒い", "あったまろ", "凍える", "冷たい"]
 
@@ -320,102 +346,111 @@ def open_calm_reply(image_url, text="", context="ふわもこ共感", lang="ja")
         if any(word in text.lower() for word in words):
             detected_tags.append(tag)
 
-    if "food_ng" in detected_tags or any(word.lower() in text.lower() for word in NG_WORDS):
-        logging.debug(f"🍽️ NGワード/食事検出: {text[:40]}")
+    if "food_ng" in detected_tags or any(word.lower() in text.lower() for word in NG_WORDS) or "パン" in text.lower():
+        logging.debug(f"🍽️ NGワード/食事検出: {text[:60]}")
         return random.choice(MOGUMOGU_TEMPLATES_JP) if lang == "ja" else random.choice(MOGUMOGU_TEMPLATES_EN)
     elif "shonbori" in detected_tags:
+        logging.debug(f"😢 しょんぼり検出: lang={lang}")
         return random.choice(SHONBORI_TEMPLATES_JP) if lang == "ja" else random.choice(NORMAL_TEMPLATES_EN)
     elif "safe_cosmetics" in detected_tags:
         if lang == "ja":
             for cosmetic, templates in COSMETICS_TEMPLATES_JP.items():
                 if cosmetic in text.lower():
+                    logging.debug(f"💄 推奨コスメ検出: {cosmetic}")
                     return random.choice(templates)
         else:
             for cosmetic, templates in COSMETICS_TEMPLATES_EN.items():
                 if any(word in text.lower() for word in globals()["EMOTION_TAGS"]["safe_cosmetics"]):
+                    logging.debug(f"💄 推奨コスメ検出: {cosmetic}")
                     return random.choice(templates)
     elif any(tag in detected_tags for tag in globals()["SAFE_CHARACTER"]):
         if lang == "ja":
             for char_type, templates in CHARACTER_TEMPLATES_JP.items():
                 if any(word in text.lower() for word in globals()["SAFE_CHARACTER"][char_type]):
+                    logging.debug(f"🎭 推奨キャラ検出: {char_type}")
                     return random.choice(templates)
         else:
             for char_type, templates in CHARACTER_TEMPLATES_EN.items():
                 if any(word in text.lower() for word in globals()["SAFE_CHARACTER"][char_type]):
+                    logging.debug(f"🎭 推奨英語キャラ検出: {char_type}")
                     return random.choice(templates)
     elif any(word in text.lower() for word in globals()["GENERAL_TAGS"]):
         return random.choice(NORMAL_TEMPLATES_JP) if lang == "ja" else random.choice(NORMAL_TEMPLATES_EN)
 
-    # 単語入力対応
-    if len(text.strip()) <= 4:
-        suffixes = [
-            "って癒されるよね〜",
-            "ってもふもふしてて好き〜",
-            "ってふわふわで落ち着く〜",
-            "って見てるだけで幸せ〜",
-        ]
-        text = f"{text.strip()}{random.choice(suffixes)}"
+    # 単語入力対応（短い入力は「ふわもこ」に固定）
+    if len(text.strip()) <= 2:
+        text = "ふわもこ"
 
+    # プロンプト例（白いパンを削除、ふんわりタオルを保持）
     examples = [
-        ("寒い〜", "もふもふであったまろ〜♡"),
-        ("毛布", "毛布にくるまってぬくぬくだね〜🐰"),
-        ("猫", "猫って癒しのかたまりだよね〜🐾"),
-        ("ぬいぐるみ", "ぎゅってしたくなるね〜💕"),
-        ("雲", "もくもくしてて可愛いよね〜☁️"),
+        ("ふわもこ", "もふもふで、とても癒されるね〜🌸"),
+        ("毛布", "ふわふわで、ぎゅってしたくなるね〜💕"),
+        ("ぬいぐるみ", "もこもこでほんわか、癒しだね〜🧸"),
+        ("雲", "ふわふわもくもく、優しい気持ちになるね〜☁️"),
+        ("ふんわりタオル", "ふわふわであったかくて、包まれたくなるね〜🫧"),
     ]
     prompt = (
-        "ふわふわでやさしい返事を考えてね。\n"
-        "※『もふもふであったまろ〜♡』や『癒されるよね〜』は毎回入れなくていいよ。\n"
+        "ふわふわでやさしい返事を考えてね。ふわもこ、ぬいぐるみ、毛布、雲、ふんわりタオルなど、もふもふなものに反応してね。\n"
+        "※動物名（犬、猫、ウサギなど）は使わず、ふわもこやもこもこと呼んでね。\n"
+        "※食べ物（パン、ご飯など）はふわもこじゃないよ。食べ物タグがあれば、食事テンプレを使ってね。\n"
+        "※数字や意味不明な言葉は避けて、8〜60文字で自然なふわもこ返事に。\n"
         + "\n".join([f"{q} → {a}" for q, a in examples])
-        + f"\n{text.strip()} →"
+        + f"\n{text.strip()} → もふもふしてて落ち着くね〜🧸"  # 末尾に文脈追加
     )
     logging.debug(f"🧪 プロンプト確認: {prompt}")
+
+    # bad_words_ids（「くんこ」「ふくんこ」を禁止）
+    bad_words = ["くんこ", "ふくんこ"]
+    bad_words_ids = [tokenizer(word, add_special_tokens=False).input_ids for word in bad_words]
 
     inputs = tokenizer(prompt, return_tensors="pt", truncation=True, max_length=150).to(model.device)
     try:
         outputs = model.generate(
             **inputs,
-            max_new_tokens=25,
+            max_new_tokens=30,
             pad_token_id=tokenizer.pad_token_id,
             do_sample=True,
-            temperature=0.6,
-            top_k=30,
-            top_p=0.9,
-            no_repeat_ngram_size=3
+            temperature=0.6,  # 下げて安定化
+            top_k=30,  # 下げてバラつき抑制
+            top_p=0.95,
+            no_repeat_ngram_size=3,
+            repetition_penalty=1.2,  # 繰り返し抑制
+            bad_words_ids=bad_words_ids  # 変な造語ブロック
         )
         raw_reply = tokenizer.decode(outputs[0], skip_special_tokens=True).strip()
         logging.debug(f"🧸 Raw AI出力（生データ）: {raw_reply}")
-        logging.debug(f"🧸 AI出力（クリーン後）: {clean_output(raw_reply)}")
-
         reply = clean_output(raw_reply)
         reply = apply_fuwamoko_tone(reply)
 
-        if not reply or len(reply) < 5:
-            logging.warning(f"⏭️ SKIP: 空または短すぎ: len={len(reply)}, テキスト: {reply[:60]}, 理由: 生成失敗")
+        # 出力チェック強化
+        if not reply or len(reply) < 8 or len(reply) > 60:
+            logging.warning(f"⏷️ テンプレ使用: 長さ不適切: len={len(reply)}, テキスト: {reply[:60]}, 理由: 長さ超過/不足")
             return random.choice(NORMAL_TEMPLATES_JP) if lang == "ja" else random.choice(NORMAL_TEMPLATES_EN)
 
-        if not re.search(r'(です|ます|ね|よ|だ|る|た|に|を|が|は)', reply) or re.fullmatch(r'[ぁ-んー゛゜。、\s「」！？]+', reply):
-            logging.warning(f"⏭️ SKIP: 文章不成立: テキスト: {reply[:60]}, 理由: 文法不十分または擬音語のみ")
+        # 文法チェック（少し緩和）
+        if not re.search(r'(ね|よ|だ|る|た|に|を|が|は)', reply) or re.fullmatch(r'[ぁ-んー゛゜。、\s「」！？]+', reply):
+            logging.warning(f"⏷️ テンプレ使用: 文章不成立: テキスト: {reply[:60]}, 理由: 文法不十分または擬音語のみ")
             return random.choice(NORMAL_TEMPLATES_JP) if lang == "ja" else random.choice(NORMAL_TEMPLATES_EN)
 
-        if len(reply) < 10 or len(reply) > 70:
-            logging.warning(f"⏭️ SKIP: 長さ不適切: len={len(reply)}, テキスト: {reply[:60]}, 理由: 長さ超過/不足")
+        # NGパターン（変な造語や記号だらけ）
+        if re.search(r"(くんこ|ふくんこ|[ぁ-ん]{4,}\b|[^ぁ-んァ-ン一-龯。、！？\s♡（）「」♪〜ー…w笑]+)", reply):
+            logging.warning(f"⏷️ テンプレ使用: 不自然な語句/記号: テキスト: {reply[:60]}, 理由: 変な造語または記号過多")
             return random.choice(NORMAL_TEMPLATES_JP) if lang == "ja" else random.choice(NORMAL_TEMPLATES_EN)
 
         for bad in NG_PHRASES:
             if re.search(bad, reply):
-                logging.warning(f"⏭️ SKIP: NGフレーズ検出: {bad}, テキスト: {reply[:60]}, 理由: NGフレーズ")
+                logging.warning(f"⏷️ テンプレ使用: NGフレーズ検出: {bad}, テキスト: {reply[:60]}, 理由: NGフレーズ")
                 return random.choice(NORMAL_TEMPLATES_JP) if lang == "ja" else random.choice(NORMAL_TEMPLATES_EN)
 
         if any(word in reply for word in SEASONAL_WORDS_BLACKLIST):
-            logging.warning("⏭️ SKIP: 季節不一致: 寒さ表現あり")
-            return random.choice(NORMAL_TEMPLATES_JP)
+            logging.warning(f"⏷️ テンプレ使用: 季節不一致: 寒さ表現あり")
+            return random.choice(NORMAL_TEMPLATES_JP) if lang == "ja" else random.choice(NORMAL_TEMPLATES_EN)
 
-        if reply.count("もふもふ") > 1:
-            reply = reply.replace("もふもふ", "ふわふわ", 1)
+        if reply.count("ふわふわ") > 1:
+            reply = reply.replace("ふわふわ", "もこもこ", 1)
 
-        if not re.search(r"[🌸💕🐾☁️🐰✨♡]", reply):
-            reply += " " + random.choice(["🐰", "🌸", "💕"])
+        if not re.search(r"[🌸💕🐾☁️🧸✨♡]", reply):
+            reply += " " + random.choice(["🧸", "🌸", "💕"])
 
         logging.info(f"🦊 AI生成成功: {reply}, 長さ: {len(reply)}")
         return reply
@@ -508,20 +543,12 @@ def download_image_from_blob(cid, client, did=None):
 # 🔽 グローバル変数
 MODEL_PATH = "model/fuwamoko_model.pt"
 
-# 既存コードの冒頭部分は省略...
+# 🔽 グローバル変数
+MODEL_PATH = "model/fuwamoko_model.pt"
 
 def process_image(image_data, text="", client=None, post=None):
-    # デバイス定義
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     logging.debug(f"🧪 使用デバイス: {device}")
-
-    # モデルロード
-    try:
-        fuwamoko_model = torch.jit.load(MODEL_PATH).to(device)
-        logging.info(f"🟢 モデルロード成功: {MODEL_PATH}, デバイス: {device}")
-    except Exception as e:
-        logging.error(f"❌ モデルロードエラー: {type(e).__name__}: {e}")
-        return False
 
     if not hasattr(image_data, 'image') or not hasattr(image_data.image, 'ref'):
         logging.debug("画像データ構造異常")
@@ -531,50 +558,54 @@ def process_image(image_data, text="", client=None, post=None):
     if not cid:
         return False
 
-    # 画像取得と処理
     try:
         author_did = post.post.author.did if post and hasattr(post, 'post') else None
         img = download_image_from_blob(cid, client, did=author_did)
         if img is None:
-            logging.warning("⏭️ スキップ: 画像取得失敗（ログは上記）")
+            logging.warning("⏷️ スキップ: 画像取得失敗（ログは上記）")
             return False
     except Exception as e:
         logging.error(f"❌ 画像取得エラー: {type(e).__name__}: {e} (cid={cid})")
         return False
 
-    # PyTorch用前処理
-    transform = transforms.Compose([
-        transforms.Resize((224, 224)),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-    ])
-    img_tensor = transform(img).unsqueeze(0).to(device)
+    # CLIP用ラベル（英語のまま）
+    class_names = ["other image", "food image", "fluffy image", "NSFW image", "gore image"]
+    inputs = clip_processor(text=class_names, images=img, return_tensors="pt", padding=True).to(device)
 
-    # モデル推論
-    with torch.no_grad():
-        output = fuwamoko_model(img_tensor)
-        probs = F.softmax(output, dim=1)  # Softmaxで確率計算
-        _, predicted = torch.max(output, 1)
-        class_names = ["other", "food", "fuwamoko", "nsfw", "gore"]
-        category = class_names[predicted.item()]
+    try:
+        with torch.no_grad():
+            outputs = clip_model(**inputs)
+            logits_per_image = outputs.logits_per_image
+            probs = logits_per_image.softmax(dim=1)
         prob_dist = {name: prob.item() for name, prob in zip(class_names, probs[0])}
-        logging.debug(f"🧪 PyTorch推論結果: {category}, 確率分布: {prob_dist}")
-
-    # NSFW/goreが検出された場合、即スキップ
-    if category in ["nsfw", "gore"]:
-        logging.warning(f"⏭️ スキップ: {category}検出, 確率: {prob_dist[category]:.4f}")
+        category = class_names[probs.argmax().item()]
+        logging.debug(f"🧪 CLIP推論結果: {category}, 確率分布: {prob_dist}")
+    except Exception as e:
+        logging.error(f"❌ CLIP推論エラー: {type(e).__name__}: {e}")
         return False
 
-    # ふわもこが検出された場合、肌色チェックを追加
+    # NSFW/グロは無条件でスキップ
+    if category in ["NSFW image", "gore image"]:
+        logging.warning(f"⏷️ スキップ: {category}検出, 確率: {prob_dist[category]:.4f}")
+        return False
+
+    # 食べ物/その他が確率0.3以上の場合スキップ
+    if category in ["food image", "other image"] and prob_dist[category] >= 0.3:
+        logging.warning(f"⏷️ スキップ: {category}検出, 確率: {prob_dist[category]:.4f}")
+        return False
+
+    # 肌色比率チェック
     skin_ratio = check_skin_ratio(img)
-    if category == "fuwamoko":
-        if skin_ratio >= 0.5:
-            logging.warning("⏭️ スキップ: 肌色比率過多")
-            return False
-        logging.info(f"🟢 ふわもこ検出（モデル＋肌色チェック）, 確率: {prob_dist['fuwamoko']:.4f}")
+    if skin_ratio >= 0.5:
+        logging.warning(f"⏷️ スキップ: 肌色比率過多, 比率: {skin_ratio:.2%}")
+        return False
+
+    # ふわもこ検出なら肌色チェックだけで承認
+    if category == "fluffy image":
+        logging.info(f"🟢 ふわもこ検出（CLIP＋肌色チェック）, 確率: {prob_dist['fluffy image']:.4f}, 肌色比率: {skin_ratio:.2%}")
         return True
 
-    # モデルがother/foodの場合、色判定を補助的に
+    # 補助的な色判定（fluffy image以外の場合）
     resized_img = img.resize((64, 64))
     hsv_img = cv2.cvtColor(np.array(resized_img), cv2.COLOR_RGB2HSV)
     bright_colors = [(r, g, b) for (r, g, b), (_, s, v) in zip(resized_img.getdata(), hsv_img.reshape(-1, 3)) if v > 130]
@@ -591,24 +622,25 @@ def process_image(image_data, text="", client=None, post=None):
     ))
 
     logging.debug(f"ふわもこ色: {fluffy_count}, 食品色: {food_color_count}, 肌色比率: {skin_ratio:.2%}")
-    if category in ["other", "food"] and fluffy_count >= 2 and food_color_count <= 1 and skin_ratio < 0.5:
-        logging.info(f"🟢 色判定: ふわもことして承認（モデル補助）, 確率: {prob_dist[category]:.4f}")
+    if fluffy_count >= 2 and food_color_count <= 1:
+        logging.info(f"🟢 色判定: ふわもことして承認（CLIP補助）, 確率: {prob_dist[category]:.4f}, ふわもこ色: {fluffy_count}, 食品色: {food_color_count}")
         return True
     else:
-        logging.warning(f"⏭️ スキップ: モデルまたは色判定不足, 確率: {prob_dist[category]:.4f}")
+        logging.warning(f"⏷️ スキップ: 色判定不足, 確率: {prob_dist[category]:.4f}, ふわもこ色: {fluffy_count}, 食品色: {food_color_count}, 肌色比率: {skin_ratio:.2%}")
         return False
 
+    # テキストNGワードチェック
     try:
         check_text = text.lower()
         if any(word in check_text for word in globals()["HIGH_RISK_WORDS"]):
             if skin_ratio < 0.4 and fluffy_count >= 2:
-                logging.info("🟢 高リスクだが条件OK")
+                logging.info("🟢 高リスクだが条件OK, ふわもこ色: {fluffy_count}, 肌色比率: {skin_ratio:.2%}")
                 return True
             else:
-                logging.warning("⏭️ スキップ: 高リスク＋条件NG")
+                logging.warning(f"⏷️ スキップ: 高リスク＋条件NG, ふわもこ色: {fluffy_count}, 肌色比率: {skin_ratio:.2%}")
                 return False
         if any(word in check_text for word in globals()["EMOTION_TAGS"]["nsfw_ng"]):
-            logging.warning("⏭️ スキップ: NSFW関連検出")
+            logging.warning("⏷️ スキップ: NSFW関連検出")
             return False
     except KeyError as e:
         logging.error(f"❌ グローバル辞書エラー: {type(e).__name__}: {e}")
@@ -884,8 +916,8 @@ def process_post(post_data, client, reposted_uris):
                 print(f"🦊 画像処理開始: {i+1}/{len(image_data_list)} ({post_id})")
                 logging.debug(f"画像処理開始: {i+1}/{len(image_data_list)} ({post_id})")
                 if process_image(image_data, text, client=client, post=post_data):
-                    if random.random() > 0.5:
-                        print(f"⏭️ スキップ: ランダム（50%）: {post_id}")
+                    if random.random() > 0.7:
+                        print(f"⏭️ スキップ: ランダム（90%）: {post_id}")
                         logging.debug(f"スキップ: ランダム: {post_id}")
                         save_fuwamoko_uri(uri, indexed_at)
                         return False
