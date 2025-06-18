@@ -63,6 +63,11 @@ APP_PASSWORD = os.environ.get("APP_PASSWORD")
 SESSION_FILE = "session_string.txt"
 FUWAMOKO_FILE = "fuwamoko_empathy_uris.txt"
 FUWAMOKO_LOCK = "fuwamoko_empathy_uris.lock"
+REPLIED_FILE = "replied_uris.txt"
+REPLIED_LOCK = "replied_uris.lock"
+# Gist設定（Feed Botからコピー）
+GIST_RAW_URL_URIS = "https://gist.githubusercontent.com/mofu-mitsu/c16e8c8c997186319763f0e03f3cff8b/raw/replied_uris.json"
+GIST_TOKEN = os.environ.get("GIST_TOKEN")  # .envに追加が必要
 
 # 🔽 テンプレ保護（チャッピー憲章）
 LOCK_TEMPLATES = True
@@ -151,7 +156,9 @@ except KeyError:
                     "カフェ", "ジュース", "ミルク", "ドリンク", "おやつ", "食事", "朝食", "夕食", "昼食"],
         "nsfw_ng": ["酒", "アルコール", "ビール", "ワイン", "酎ハイ", "カクテル", "ハイボール", "梅酒",
                     "soft core", "NSFW", "肌色", "下着", "肌見せ", "露出",
-                    "肌フェチ", "soft skin", "fetish", "nude", "naked", "lewd", "18+", "sex", "uncensored"]
+                    "肌フェチ", "soft skin", "fetish", "nude", "naked", "lewd", "18+", "sex", "uncensored"],
+        "safe_cosmetics": ["リップ", "香水", "ネイル", "lip", "perfume", "nail"]
+                    
     }
 
 try:
@@ -228,7 +235,8 @@ fuwamoko_tone_map = [
 def apply_fuwamoko_tone(reply):
     for formal, soft in fuwamoko_tone_map:
         reply = reply.replace(formal, soft)
-    reply = re.sub(r'(🐰💓)\.', r'\1', reply)  # 句点と絵文字の異常修正
+    reply = reply.replace(r'(🐰💓)\.', r'\1')  # 句点と絵文字の異常修正
+    reply = re.sub(r'([♪♡])\s*\.', r'\1', reply)  # ♪。を修正
     return reply
 
 def is_fluffy_color(r, g, b, bright_colors):
@@ -295,14 +303,25 @@ def is_fluffy_color(r, g, b, bright_colors):
     return False
 
 def clean_output(text):
+    # 顔文字を保護（例: (*.*), (*^ω^*) ）
+    face_pattern = r'\(\*[^\)]+\*\)'
+    face_placeholders = []
+    for i, face in enumerate(re.findall(face_pattern, text)):
+        placeholder = f"__FACE_{i}__"
+        face_placeholders.append((placeholder, face))
+        text = text.replace(face, placeholder)
+        
     text = re.sub(r'[\r\n]+', ' ', text)
     text = re.sub(r'\s{2,}', ' ', text)
     text = re.sub(r'^(短く、ふわもこな返事をしてね。|.*→\s*|寒い〜\s*)', '', text)  # プロンプトや矢印を削除
     text = re.sub(r'^もふもふであったまろ〜♡\s*', '', text)  # テンプレ削除
     text = re.sub(r'^[^。！？\n]{1,10}って癒されるよね〜\s*', '', text)  # テンプレ削除
-    text = re.sub(r'[^\w\sぁ-んァ-ン一-龯。、！？!?♡（）「」♪〜ー…w笑]+', '', text)
+    text = re.sub(r'[^\w\sぁ-んァ-ン一-龯。、！？!?♡\w\(\)「」♪〜ー…笑]+', '', text)
     text = re.sub(r'([。、！？])\s*💖', r'\1💖', text)
     text = re.sub(r'[。、！？]{2,}', lambda m: m.group(0)[0], text)
+    # 顔文字を復元
+    for placeholder, face in face_placeholders:
+        text = text.replace(placeholder, face)
     return text.strip()
 
 def open_calm_reply(image_url, text="", context="ふわもこ共感", lang="ja"):
@@ -322,11 +341,11 @@ def open_calm_reply(image_url, text="", context="ふわもこ共感", lang="ja")
         r"\bバカ\b", r"\b馬鹿\b", r"\bアホ\b", r"\bきも\b", r"\b駄目\b",
         r"\b犬\b", r"\bわんちゃん\b", r"\b猫\b", r"\b猫ちゃん\b",  # 動物名NG
         r"\bウサギ\b", r"\b羊\b", r"\bハムスター\b", r"\bクマ\b",
-        r"\bくんこ\b", r"\bふくんこ\b"  # 変な造語NG
+        r"\bくんこ\b", r"\bふくんこ\b", r"\bていき\b", r"\bいきする\b"  # 変な造語NG
     ]
     SEASONAL_WORDS_BLACKLIST = ["寒い", "あったまろ", "凍える", "冷たい"]
 
-    templates = deepcopy(ORIGINAL_TEMPLATES)
+    templates = deepcopy(ORIGIけAL_TEMPLATES)
     if not check_template_integrity(templates):
         templates = auto_revert_templates(templates)
     audit_templates_changes(ORIGINAL_TEMPLATES, templates)
@@ -386,11 +405,11 @@ def open_calm_reply(image_url, text="", context="ふわもこ共感", lang="ja")
         ("ふわもこ", "もふもふで、とても癒されるね〜🌸"),
         ("毛布", "ふわふわで、ぎゅってしたくなるね〜💕"),
         ("ぬいぐるみ", "もこもこでほんわか、癒しだね〜🧸"),
-        ("雲", "ふわふわもくもく、優しい気持ちになるね〜☁️"),
-        ("ふんわりタオル", "ふわふわであったかくて、包まれたくなるね〜🫧"),
+        ("もくもく", "ふわふわもくもく、優しい気持ちになるね〜☁️"),
+        ("ふんわり", "ふわふわであったかくて、包まれたくなるね〜🫧"),
     ]
     prompt = (
-        "ふわふわでやさしい返事を考えてね。ふわもこ、ぬいぐるみ、毛布、雲、ふんわりタオルなど、もふもふなものに反応してね。\n"
+        "ふわふわでやさしい返事を考えてね。ふわもこ、もこもこ、ふんわりしたものなど、もふもふなものに反応してね。\n"
         "※動物名（犬、猫、ウサギなど）は使わず、ふわもこやもこもこと呼んでね。\n"
         "※食べ物（パン、ご飯など）はふわもこじゃないよ。食べ物タグがあれば、食事テンプレを使ってね。\n"
         "※数字や意味不明な言葉は避けて、8〜60文字で自然なふわもこ返事に。\n"
@@ -400,21 +419,21 @@ def open_calm_reply(image_url, text="", context="ふわもこ共感", lang="ja")
     logging.debug(f"🧪 プロンプト確認: {prompt}")
 
     # bad_words_ids（「くんこ」「ふくんこ」を禁止）
-    bad_words = ["くんこ", "ふくんこ"]
+    bad_words = ["くんこ", "ふくんこ", "ていき", "いきする"]
     bad_words_ids = [tokenizer(word, add_special_tokens=False).input_ids for word in bad_words]
 
     inputs = tokenizer(prompt, return_tensors="pt", truncation=True, max_length=150).to(model.device)
     try:
         outputs = model.generate(
             **inputs,
-            max_new_tokens=30,
+            max_new_tokens=50,
             pad_token_id=tokenizer.pad_token_id,
             do_sample=True,
-            temperature=0.6,  # 下げて安定化
-            top_k=30,  # 下げてバラつき抑制
+            temperature=0.5,  # 下げて安定化
+            top_k=20,  # 下げてバラつき抑制
             top_p=0.95,
             no_repeat_ngram_size=3,
-            repetition_penalty=1.2,  # 繰り返し抑制
+            repetition_penalty=1.5,  # 繰り返し抑制
             bad_words_ids=bad_words_ids  # 変な造語ブロック
         )
         raw_reply = tokenizer.decode(outputs[0], skip_special_tokens=True).strip()
@@ -433,7 +452,7 @@ def open_calm_reply(image_url, text="", context="ふわもこ共感", lang="ja")
             return random.choice(NORMAL_TEMPLATES_JP) if lang == "ja" else random.choice(NORMAL_TEMPLATES_EN)
 
         # NGパターン（変な造語や記号だらけ）
-        if re.search(r"(くんこ|ふくんこ|[ぁ-ん]{4,}\b|[^ぁ-んァ-ン一-龯。、！？\s♡（）「」♪〜ー…w笑]+)", reply):
+        if re.search(r"(くんこ|ふくんこ|[^ぁ-んァ-ン一-龯。、！？\s♡（）「」♪〜ー…w笑a-zA-Z0-9]+)", reply):
             logging.warning(f"⏷️ テンプレ使用: 不自然な語句/記号: テキスト: {reply[:60]}, 理由: 変な造語または記号過多")
             return random.choice(NORMAL_TEMPLATES_JP) if lang == "ja" else random.choice(NORMAL_TEMPLATES_EN)
 
@@ -540,9 +559,6 @@ def download_image_from_blob(cid, client, did=None):
     logging.error("❌ 画像取得失敗")
     return None
 
-# 🔽 グローバル変数
-MODEL_PATH = "model/fuwamoko_model.pt"
-
 def process_image(image_data, text="", client=None, post=None):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     logging.debug(f"🧪 使用デバイス: {device}")
@@ -559,7 +575,7 @@ def process_image(image_data, text="", client=None, post=None):
         author_did = post.post.author.did if post and hasattr(post, 'post') else None
         img = download_image_from_blob(cid, client, did=author_did)
         if img is None:
-            logging.warning("⏷️ スキップ: 画像取得失敗（ログは上記）")
+            logging.warning("⏭️ スキップ: 画像取得失敗（ログは上記）")
             return False
     except Exception as e:
         logging.error(f"❌ 画像取得エラー: {type(e).__name__}: {e} (cid={cid})")
@@ -583,18 +599,18 @@ def process_image(image_data, text="", client=None, post=None):
 
     # NSFW/グロは無条件でスキップ
     if category in ["NSFW image", "gore image"]:
-        logging.warning(f"⏷️ スキップ: {category}検出, 確率: {prob_dist[category]:.4f}")
+        logging.warning(f"⏭️ スキップ: {category}検出, 確率: {prob_dist[category]:.4f}")
         return False
 
     # 食べ物/その他が確率0.3以上の場合スキップ
     if category in ["food image", "other image"] and prob_dist[category] >= 0.3:
-        logging.warning(f"⏷️ スキップ: {category}検出, 確率: {prob_dist[category]:.4f}")
+        logging.warning(f"⏭️ スキップ: {category}検出, 確率: {prob_dist[category]:.4f}")
         return False
 
     # 肌色比率チェック
     skin_ratio = check_skin_ratio(img)
     if skin_ratio >= 0.5:
-        logging.warning(f"⏷️ スキップ: 肌色比率過多, 比率: {skin_ratio:.2%}")
+        logging.warning(f"⏭️ スキップ: 肌色比率過多, 比率: {skin_ratio:.2%}")
         return False
 
     # ふわもこ検出なら肌色チェックだけで承認
@@ -623,7 +639,7 @@ def process_image(image_data, text="", client=None, post=None):
         logging.info(f"🟢 色判定: ふわもことして承認（CLIP補助）, 確率: {prob_dist[category]:.4f}, ふわもこ色: {fluffy_count}, 食品色: {food_color_count}")
         return True
     else:
-        logging.warning(f"⏷️ スキップ: 色判定不足, 確率: {prob_dist[category]:.4f}, ふわもこ色: {fluffy_count}, 食品色: {food_color_count}, 肌色比率: {skin_ratio:.2%}")
+        logging.warning(f"⏭️ スキップ: 色判定不足, 確率: {prob_dist[category]:.4f}, ふわもこ色: {fluffy_count}, 食品色: {food_color_count}, 肌色比率: {skin_ratio:.2%}")
         return False
 
     # テキストNGワードチェック
@@ -634,10 +650,10 @@ def process_image(image_data, text="", client=None, post=None):
                 logging.info("🟢 高リスクだが条件OK, ふわもこ色: {fluffy_count}, 肌色比率: {skin_ratio:.2%}")
                 return True
             else:
-                logging.warning(f"⏷️ スキップ: 高リスク＋条件NG, ふわもこ色: {fluffy_count}, 肌色比率: {skin_ratio:.2%}")
+                logging.warning(f"⏭️ スキップ: 高リスク＋条件NG, ふわもこ色: {fluffy_count}, 肌色比率: {skin_ratio:.2%}")
                 return False
         if any(word in check_text for word in globals()["EMOTION_TAGS"]["nsfw_ng"]):
-            logging.warning("⏷️ スキップ: NSFW関連検出")
+            logging.warning("⏭️ スキップ: NSFW関連検出")
             return False
     except KeyError as e:
         logging.error(f"❌ グローバル辞書エラー: {type(e).__name__}: {e}")
@@ -663,7 +679,57 @@ def is_quoted_repost(post):
     except Exception as e:
         logging.error(f"❌ 引用リポストチェックエラー: {type(e).__name__}: {e}")
         return False
+        
+def load_replied_uris():
+    uris = set()
+    # ローカルファイルの読み込み
+    if os.path.exists(REPLIED_FILE):
+        try:
+            with open(REPLIED_FILE, 'r', encoding='utf-8') as f:
+                local_uris = set(line.strip() for line in f if line.strip())
+                uris.update(local_uris)
+                logging.info(f"🟢 ローカル返信URI読み込み: {len(local_uris)}件")
+        except Exception as e:
+            logging.error(f"❌ ローカル返信URI読み込みエラー: {type(e).__name__}: {e}")
+    
+    # Gistの読み込み
+    if GIST_TOKEN:
+        try:
+            logging.info(f"🌐 Gistから読み込み中: {GIST_RAW_URL_URIS}")
+            response = requests.get(GIST_RAW_URL_URIS, timeout=10)
+            if response.status_code == 200:
+                gist_uris = set(json.loads(response.text))
+                uris.update(gist_uris)
+                logging.info(f"🟢 Gist返信URI読み込み: {len(gist_uris)}件")
+            else:
+                logging.error(f"⚠️ Gist読み込み失敗: ステータスコード={response.status_code}")
+        except Exception as e:
+            logging.error(f"❌ Gist返信URI読み込みエラー: {type(e).__name__}: {e}")
+    else:
+        logging.warning("⚠️ GIST_TOKEN未設定、Gist読み込みスキップ")
+    
+    # ファイルが存在しない場合の新規作成
+    if not os.path.exists(REPLIED_FILE):
+        logging.info("🟢 返信URIファイル不存在、新規作成")
+        with open(REPLIED_FILE, 'w', encoding='utf-8') as f:
+            f.write("")
+    
+    logging.info(f"🟢 合計返信URI: {len(uris)}件 (ローカル+Gist)")
+    return uris
 
+def save_replied_uri(uri):
+    normalized_uri = normalize_uri(uri)
+    lock = filelock.FileLock(REPLIED_LOCK, timeout=5.0)
+    try:
+        with lock:
+            with open(REPLIED_FILE, 'a', encoding='utf-8') as f:
+                f.write(f"{normalized_uri}\n")
+            logging.info(f"🟢 返信URI保存: {normalized_uri}")
+    except filelock.Timeout:
+        logging.error(f"❌ ファイルロックタイムアウト: {REPLIED_LOCK}")
+    except Exception as e:
+        logging.error(f"❌ 返信URI保存エラー: {type(e).__name__}: {e}")
+        
 def load_reposted_uris():
     REPOSTED_FILE = "reposted_uris.txt"
     if os.path.exists(REPOSTED_FILE):
@@ -677,7 +743,7 @@ def load_reposted_uris():
             return set()
     return set()
 
-def detect_language(client, handle):
+def detect_language(client, handle, text=""):
     try:
         profile = client.get_profile(actor=handle)
         bio = profile.display_name.lower() + " " + getattr(profile, "description", "").lower()
@@ -685,9 +751,17 @@ def detect_language(client, handle):
             return "ja"
         elif any(kw in bio for kw in ["english", "us", "uk", "en"]):
             return "en"
+        # テキストから言語推定
+        if text:
+            hiragana_katakana = re.findall(r'[ぁ-んァ-ン]', text)
+            latin = re.findall(r'[a-zA-Z]', text)
+            if len(hiragana_katakana) > len(latin) and len(hiragana_katakana) > 5:
+                return "ja"
+            elif len(latin) > len(hiragana_katakana) and len(latin) > 5:
+                return "en"
         return "ja"
     except Exception as e:
-        logging.error(f"❌ 言語判定エラー: {type(e).__name__}: {e}")
+        logging.error(f"❌ 言語判定エラー: {e}")
         return "ja"
 
 def is_priority_post(text):
@@ -851,24 +925,22 @@ def has_image(post):
         logging.error(f"❌ 画像チェックエラー: {type(e).__name__}: {e}")
         return False
 
-def process_post(post_data, client, reposted_uris):
+def process_post(post_data, client, reposted_uris, replied_uris):
     global fuwamoko_uris
     try:
         actual_post = post_data.post if hasattr(post_data, 'post') else post_data
         uri = str(actual_post.uri)
         post_id = uri.split('/')[-1]
         text = getattr(actual_post.record, 'text', '') if hasattr(actual_post.record, 'text') else ''
-
         is_reply = hasattr(actual_post.record, 'reply') and actual_post.record.reply is not None
         if is_reply and not (is_priority_post(text) or is_reply_to_self(post_data)):
             print(f"⏭️ スキップ: リプライ（非@mirinchuuu/非自己）: {text[:20]} ({post_id})")
             logging.debug(f"スキップ: リプライ: {post_id}")
             return False
-
         print(f"🦊 POST処理開始: @{actual_post.author.handle} ({post_id})")
         logging.info(f"🟢 POST処理開始: @{actual_post.author.handle} ({post_id})")
         normalized_uri = normalize_uri(uri)
-        if normalized_uri in fuwamoko_uris:
+        if normalized_uri in fuwamoko_uris or normalized_uri in replied_uris:
             print(f"⏭️ スキップ: 既存投稿: {post_id}")
             logging.debug(f"スキップ: 既存投稿: {post_id}")
             return False
@@ -913,8 +985,8 @@ def process_post(post_data, client, reposted_uris):
                 print(f"🦊 画像処理開始: {i+1}/{len(image_data_list)} ({post_id})")
                 logging.debug(f"画像処理開始: {i+1}/{len(image_data_list)} ({post_id})")
                 if process_image(image_data, text, client=client, post=post_data):
-                    if random.random() > 0.7:
-                        print(f"⏭️ スキップ: ランダム（90%）: {post_id}")
+                    if random.random() > 0.1:
+                        print(f"🎲 スキップ: ランダム（90%）: {post_id}")
                         logging.debug(f"スキップ: ランダム: {post_id}")
                         save_fuwamoko_uri(uri, indexed_at)
                         return False
@@ -979,13 +1051,13 @@ def run_once():
         logging.info(f"🟢 Bot稼働中: {HANDLE}")
         load_fuwamoko_uris()
         reposted_uris = load_reposted_uris()
-
+        replied_uris = load_replied_uris()
         timeline = client.get_timeline(limit=50)
         feed = timeline.feed
         for post in sorted(feed, key=lambda x: x.post.indexed_at, reverse=True):
             try:
                 thread_response = client.get_post_thread(uri=str(post.post.uri), depth=2)
-                process_post(thread_response.thread, client, reposted_uris)
+                process_post(thread_response.thread, client, reposted_uris, replied_uris)
             except Exception as e:
                 print(f"❌ スレッド取得エラー: {type(e).__name__}: {e} (URI: {post.post.uri})")
                 logging.error(f"❌ スレッド取得エラー: {type(e).__name__}: {e} (URI: {post.post.uri})")
