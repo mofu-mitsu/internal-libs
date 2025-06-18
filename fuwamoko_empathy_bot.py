@@ -458,7 +458,7 @@ def open_calm_reply(image_url, text="", context="ふわもこ共感", lang="ja")
             return random.choice(NORMAL_TEMPLATES_JP) if lang == "ja" else random.choice(NORMAL_TEMPLATES_EN)
 
         # NGパターン（変な造語や記号だらけ）
-        if re.search(r"(くんこ|ふくんこ|[^ぁ-んァ-ン一-龯。、！？\s♡（）「」♪〜ー…w笑a-zA-Z0-9]+)", reply):
+        if re.search(r"(くんこ|ふくんこ|[^ぁ-んァ-ン一-龯。、！？!?!\s♡（）「」♪〜ー…w笑a-zA-Z0-9]+)", reply):
             logging.warning(f"⏷️ テンプレ使用: 不自然な語句/記号: テキスト: {reply[:60]}, 理由: 変な造語または記号過多")
             return random.choice(NORMAL_TEMPLATES_JP) if lang == "ja" else random.choice(NORMAL_TEMPLATES_EN)
 
