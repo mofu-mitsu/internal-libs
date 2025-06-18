@@ -543,9 +543,6 @@ def download_image_from_blob(cid, client, did=None):
 # 🔽 グローバル変数
 MODEL_PATH = "model/fuwamoko_model.pt"
 
-# 🔽 グローバル変数
-MODEL_PATH = "model/fuwamoko_model.pt"
-
 def process_image(image_data, text="", client=None, post=None):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     logging.debug(f"🧪 使用デバイス: {device}")
