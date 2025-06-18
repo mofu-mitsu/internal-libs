@@ -948,26 +948,30 @@ def has_image(post):
         logging.error(f"❌ 画像チェックエラー: {type(e).__name__}: {e}")
         return False
 
+# グローバル変数にrecent_replies追加
+recent_replies = {}  # {user_id: datetime}
+
 def process_post(post_data, client, reposted_uris, replied_uris):
-    global fuwamoko_uris
+    global fuwamoko_uris, recent_replies
     try:
         actual_post = post_data.post if hasattr(post_data, 'post') else post_data
         uri = str(actual_post.uri)
         post_id = uri.split('/')[-1]
         text = getattr(actual_post.record, 'text', '') if hasattr(actual_post.record, 'text') else ''
+        author = actual_post.author.handle  # user_idとしてhandle使用
         is_reply = hasattr(actual_post.record, 'reply') and actual_post.record.reply is not None
         if is_reply and not (is_priority_post(text) or is_reply_to_self(post_data)):
             print(f"⏭️ スキップ: リプライ（非@mirinchuuu/非自己）: {text[:20]} ({post_id})")
             logging.debug(f"スキップ: リプライ: {post_id}")
             return False
-        print(f"🦊 POST処理開始: @{actual_post.author.handle} ({post_id})")
-        logging.info(f"🟢 POST処理開始: @{actual_post.author.handle} ({post_id})")
+        print(f"🦊 POST処理開始: @{author} ({post_id})")
+        logging.info(f"🟢 POST処理開始: @{author} ({post_id})")
         normalized_uri = normalize_uri(uri)
         if normalized_uri in fuwamoko_uris or normalized_uri in replied_uris:
             print(f"⏭️ スキップ: 既存投稿: {post_id}")
             logging.debug(f"スキップ: 既存投稿: {post_id}")
             return False
-        if actual_post.author.handle == HANDLE:
+        if author == HANDLE:
             print(f"⏭️ スキップ: 自分の投稿: {post_id}")
             logging.debug(f"スキップ: 自分の投稿: {post_id}")
             return False
@@ -980,8 +984,12 @@ def process_post(post_data, client, reposted_uris, replied_uris):
             logging.debug(f"スキップ: 再投稿済み: {post_id}")
             return False
 
-        author = actual_post.author.handle
-        indexed_at = actual_post.indexed_at
+        # ユーザー単位の重複チェック
+        if author in recent_replies and (datetime.now(timezone.utc) - recent_replies[author]).total_seconds() < 24 * 3600:
+            print(f"⏭️ スキップ: 同ユーザーに24時間以内リプ済み: @{author} ({post_id})")
+            logging.debug(f"⏭️ スキップ: 同ユーザーに24時間以内リプ済み: @{author} ({post_id})")
+            save_fuwamoko_uri(uri, actual_post.indexed_at)
+            return False
 
         if not has_image(post_data):
             print(f"⏭️ スキップ: 画像なし: {post_id}")
@@ -1011,14 +1019,14 @@ def process_post(post_data, client, reposted_uris, replied_uris):
                     if random.random() > 0.1:
                         print(f"🎲 スキップ: ランダム（90%）: {post_id}")
                         logging.debug(f"スキップ: ランダム: {post_id}")
-                        save_fuwamoko_uri(uri, indexed_at)
+                        save_fuwamoko_uri(uri, actual_post.indexed_at)
                         return False
                     lang = detect_language(client, author)
                     reply_text = open_calm_reply("", text, lang=lang)
                     if not reply_text:
                         print(f"⏭️ スキップ: 返信生成失敗: {post_id}")
                         logging.debug(f"スキップ: 返信生成失敗: {post_id}")
-                        save_fuwamoko_uri(uri, indexed_at)
+                        save_fuwamoko_uri(uri, actual_post.indexed_at)
                         return False
                     root_ref = models.ComAtprotoRepoStrongRef.Main(
                         uri=uri,
@@ -1035,24 +1043,25 @@ def process_post(post_data, client, reposted_uris, replied_uris):
                     print(f"🦊 返信送信: @{author}: {reply_text} ({post_id})")
                     logging.debug(f"返信送信: @{author}: {reply_text} ({post_id})")
                     client.send_post(text=reply_text, reply_to=reply_ref)
-                    save_fuwamoko_uri(uri, indexed_at)
+                    save_fuwamoko_uri(uri, actual_post.indexed_at)
+                    recent_replies[author] = datetime.now(timezone.utc)  # ユーザー履歴更新
                     print(f"✅ SUCCESS: 返信成功: @{author} ({post_id})")
                     logging.info(f"🟢 返信成功: @{author} ({post_id})")
                     return True
                 else:
                     print(f"⏭️ スキップ: ふわもこ画像でない: {post_id} (画像 {i+1})")
-                    logging.warning(f"⏭️ スキップ: ふわもこ画像でない: {post_id} (画像 {i+1})")
-                    save_fuwamoko_uri(uri, indexed_at)
+                    logging.warning(f"⏷️ スキップ: ふわもこ画像でない: {post_id} (画像 {i+1})")
+                    save_fuwamoko_uri(uri, actual_post.indexed_at)
                     return False
             except Exception as e:
                 print(f"❌ 画像処理エラー: {type(e).__name__}: {e} ({post_id}, uri={uri}, cid={actual_post.cid})")
                 logging.error(f"❌ 画像処理エラー: {type(e).__name__}: {e} ({post_id}, uri={uri}, cid={actual_post.cid})")
-                save_fuwamoko_uri(uri, indexed_at)
+                save_fuwamoko_uri(uri, actual_post.indexed_at)
                 return False
     except Exception as e:
         print(f"❌ 投稿処理エラー: {type(e).__name__}: {e} ({post_id}, uri={uri})")
         logging.error(f"❌ 投稿処理エラー: {type(e).__name__}: {e} ({post_id}, uri={uri})")
-        save_fuwamoko_uri(uri, indexed_at)
+        save_fuwamoko_uri(uri, actual_post.indexed_at)
         return False
 
 def run_once():
