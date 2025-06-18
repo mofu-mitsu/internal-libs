@@ -958,7 +958,7 @@ def process_post(post_data, client, reposted_uris, replied_uris):
         uri = str(actual_post.uri)
         post_id = uri.split('/')[-1]
         text = getattr(actual_post.record, 'text', '') if hasattr(actual_post.record, 'text') else ''
-        author = actual_post.author.handle  # user_idとしてhandle使用
+        author = actual_post.author.handle
         is_reply = hasattr(actual_post.record, 'reply') and actual_post.record.reply is not None
         if is_reply and not (is_priority_post(text) or is_reply_to_self(post_data)):
             print(f"⏭️ スキップ: リプライ（非@mirinchuuu/非自己）: {text[:20]} ({post_id})")
@@ -984,10 +984,9 @@ def process_post(post_data, client, reposted_uris, replied_uris):
             logging.debug(f"スキップ: 再投稿済み: {post_id}")
             return False
 
-        # ユーザー単位の重複チェック
         if author in recent_replies and (datetime.now(timezone.utc) - recent_replies[author]).total_seconds() < 24 * 3600:
             print(f"⏭️ スキップ: 同ユーザーに24時間以内リプ済み: @{author} ({post_id})")
-            logging.debug(f"⏭️ スキップ: 同ユーザーに24時間以内リプ済み: @{author} ({post_id})")
+            logging.debug(f"⏷️ スキップ: 同ユーザーに24時間以内リプ済み: @{author} ({post_id})")
             save_fuwamoko_uri(uri, actual_post.indexed_at)
             return False
 
@@ -1021,13 +1020,18 @@ def process_post(post_data, client, reposted_uris, replied_uris):
                         logging.debug(f"スキップ: ランダム: {post_id}")
                         save_fuwamoko_uri(uri, actual_post.indexed_at)
                         return False
-                    lang = detect_language(client, author)
-                    reply_text = open_calm_reply("", text, lang=lang)
-                    if not reply_text:
-                        print(f"⏭️ スキップ: 返信生成失敗: {post_id}")
-                        logging.debug(f"スキップ: 返信生成失敗: {post_id}")
-                        save_fuwamoko_uri(uri, actual_post.indexed_at)
-                        return False
+                    lang = detect_language(client, author, text)
+                    if lang == "en":
+                        reply_text = random.choice(NORMAL_TEMPLATES_EN)
+                        logging.debug(f"🦊 英語プロフ即テンプレ: {reply_text}")
+                    else:
+                        reply_text = open_calm_reply("", text, lang=lang)
+                        if not reply_text:
+                            print(f"⏷️ スキップ: 返信生成失敗: {post_id}")
+                            logging.debug(f"スキップ: 返信生成失敗: {post_id}")
+                            save_fuwamoko_uri(uri, actual_post.indexed_at)
+                            return False
+                            
                     root_ref = models.ComAtprotoRepoStrongRef.Main(
                         uri=uri,
                         cid=actual_post.cid
