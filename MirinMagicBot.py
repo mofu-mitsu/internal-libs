@@ -78,7 +78,13 @@ DAY_POST_MESSAGES = [
 楽天でみりんてゃがふわもこ可愛いアイテムを探してくる魔法🧸
 📌キーワード：「おすすめグッズ」「ぬい撮り」「推し活」「可愛いもの」など！
 リプやメンションで話しかけてねっ♡
-    #みりんてゃの魔法""",
+#みりんてゃの魔法""",
+    """🎀みりんてゃの魔法紹介⑬✨
+「🧸ふわもこ共感Bot」
+ふわもこな画像を見かけたら…
+みりんてゃがこっそり共感リプをしちゃうかもっ☁️💬
+ふわもこを感じる魔法のセンサーがゆる〜く作動中♪
+#みりんてゃの魔法""",
     """🎀 Mirinteya's Magic Intro ① ✨
 「💬 Auto-Reply Bot」
 Reply to a post or mention @mirinchuuu.bsky.social and get a soft lil’ reply ♡
@@ -141,6 +147,12 @@ Just say hi or tag Mirinteya to activate it! 💖
 Mirinteya brings cute things via Rakuten, just for you! 🧸  
 📌 Keywords: "おすすめグッズ", "ぬい撮り", "推し活", "可愛いもの"
 Mention or reply to get your item magic! 💌
+#MirinteyasMagic""",
+    """🎀 Mirinteya's Magic Intro ⑬ ✨
+「🧸 Fuwamoko Empathy Bot」
+When Mirinteya senses a super fluffy image…
+She just *might* reply with a soft little message ☁️💖
+Her cozy magic is quietly watching the fluff pass by… 🎀
 #MirinteyasMagic"""
 ]
 
@@ -206,6 +218,13 @@ NIGHT_POST_MESSAGES = [
 おすすめグッズ、って言われたら探しちゃうし…
 可愛いものって呼ばれたら駆けつけちゃうんだよ🧸
 📌リプやメンションで、そっと声かけてね
+#病み期 #みりんてゃの魔法"""
+    """⸝⸝ みりんてゃの魔法紹介⑬ ⸝⸝
+『🧸ふわもこ共感Bot』
+あのね…ふわもこな世界を見つけると、
+心がぎゅってなって、返事したくなっちゃうの ☁️💭
+
+ほんのり、そっと…ふわもこ共感中
 #病み期 #みりんてゃの魔法"""
 ]
 
