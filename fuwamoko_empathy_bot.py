@@ -752,19 +752,35 @@ def load_reposted_uris():
 def detect_language(client, handle, text=""):
     try:
         profile = client.get_profile(actor=handle)
-        bio = profile.display_name.lower() + " " + getattr(profile, "description", "").lower()
+        bio_parts = [
+            profile.display_name.lower(),
+            getattr(profile, "description", "").lower(),
+            getattr(profile, "text", "").lower()  # ← 追加できるならここ！
+        ]
+        bio = " ".join(bio_parts)
+
         if any(kw in bio for kw in ["日本語", "日本", "にほん", "japanese", "jp"]):
             return "ja"
         elif any(kw in bio for kw in ["english", "us", "uk", "en"]):
             return "en"
-        # テキストから言語推定
+
+        # bio全体を言語で判定してもいい
+        kana = re.findall(r'[ぁ-んァ-ン]', bio)
+        latin = re.findall(r'[a-zA-Z]', bio)
+        if len(kana) > len(latin) and len(kana) > 5:
+            return "ja"
+        elif len(latin) > len(kana) and len(latin) > 5:
+            return "en"
+
+        # 投稿テキストにも fallback
         if text:
-            hiragana_katakana = re.findall(r'[ぁ-んァ-ン]', text)
+            kana = re.findall(r'[ぁ-んァ-ン]', text)
             latin = re.findall(r'[a-zA-Z]', text)
-            if len(hiragana_katakana) > len(latin) and len(hiragana_katakana) > 5:
+            if len(kana) > len(latin) and len(kana) > 5:
                 return "ja"
-            elif len(latin) > len(hiragana_katakana) and len(latin) > 5:
+            elif len(latin) > len(kana) and len(latin) > 5:
                 return "en"
+
         return "ja"
     except Exception as e:
         logging.error(f"❌ 言語判定エラー: {e}")
