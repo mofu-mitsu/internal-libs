@@ -1095,7 +1095,7 @@ def process_post(post_data, client, reposted_uris, replied_uris):
 
         if author in recent_replies and (datetime.now(timezone.utc) - recent_replies[author]).total_seconds() < 24 * 3600:
             print(f"⏭️ スキップ: 同ユーザーに24時間以内リプ済み: @{author} ({post_id})")
-            logging.debug(f"⏷️ スキップ: 同ユーザーに24時間以内リプ済み: @{author} ({post_id})")
+            logging.debug(f"⏭️ スキップ: 同ユーザーに24時間以内リプ済み: @{author} ({post_id})")
             save_fuwamoko_uri(uri, actual_post.indexed_at)
             return False
 
@@ -1131,41 +1131,22 @@ def process_post(post_data, client, reposted_uris, replied_uris):
                         return False
                     lang = detect_language(client, author, text)
                     if lang == "en":
-                        reply_text = random.choice(NORMAL_TEMPLATES_EN)
+                        reply_text = random.choice(ORIGINAL_TEMPLATES["NORMAL_TEMPLATES_EN"])
                         logging.debug(f"🦊 英語プロフ即テンプレ: {reply_text}")
                     else:
                         reply_text = open_calm_reply("", text, lang=lang)
                         if not reply_text:
-                            print(f"⏷️ スキップ: 返信生成失敗: {post_id}")
-                            logging.debug(f"スキップ: 返信生成失敗: {post_id}")
+                            print(f"⏭️ スキップ: 返信生成失敗: {post_id}")
+                            logging.debug(f"⏭️ スキップ: 返信生成失敗: {post_id}")
                             save_fuwamoko_uri(uri, actual_post.indexed_at)
                             return False
-                            
-                    root_ref = models.ComAtprotoRepoStrongRef.Main(
-                        uri=uri,
-                        cid=actual_post.cid
-                    )
-                    parent_ref = models.ComAtprotoRepoStrongRef.Main(
-                        uri=uri,
-                        cid=actual_post.cid
-                    )
-                    reply_ref = models.AppBskyFeedPost.ReplyRef(
-                        root=root_ref,
-                        parent=parent_ref
-                    )
-                    print(f"🦊 返信送信: @{author}: {reply_text} ({post_id})")
-                    logging.debug(f"返信送信: @{author}: {reply_text} ({post_id})")
-                    client.send_post(text=reply_text, reply_to=reply_ref)
-                    save_fuwamoko_uri(uri, actual_post.indexed_at)
-                    recent_replies[author] = datetime.now(timezone.utc)  # ユーザー履歴更新
-                    print(f"✅ SUCCESS: 返信成功: @{author} ({post_id})")
-                    logging.info(f"🟢 返信成功: @{author} ({post_id})")
-                    return True
-                else:
-                    print(f"⏭️ スキップ: ふわもこ画像でない: {post_id} (画像 {i+1})")
-                    logging.warning(f"⏷️ スキップ: ふわもこ画像でない: {post_id} (画像 {i+1})")
-                    save_fuwamoko_uri(uri, actual_post.indexed_at)
-                    return False
+                    lang = detect_language(client, author)
+                    reply_text = open_calm_reply("", text, lang=lang)
+                    if not reply_text:
+                        print(f"⏭️ スキップ: 返信生成失敗: {post_id}")
+                        logging.debug(f"スキップ: 返信生成失敗: {post_id}")
+                        save_fuwamoko_uri(uri, actual_post.indexed_at)
+                        return False
             except Exception as e:
                 print(f"❌ 画像処理エラー: {type(e).__name__}: {e} ({post_id}, uri={uri}, cid={actual_post.cid})")
                 logging.error(f"❌ 画像処理エラー: {type(e).__name__}: {e} ({post_id}, uri={uri}, cid={actual_post.cid})")
