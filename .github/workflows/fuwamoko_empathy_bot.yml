@@ -1,6 +1,8 @@
 name: Fuwamoko Empathy Bot
 
 on:
+  schedule:
+    - cron: '30 10 * * *'  # 毎日10:30(JST)
   workflow_dispatch:
 
 concurrency:
