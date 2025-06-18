@@ -844,39 +844,58 @@ def detect_language(client, handle, text=""):
     try:
         profile = client.get_profile(actor=handle)
         bio_parts = [
-            profile.display_name.lower(),
-            getattr(profile, "description", "").lower(),
-            getattr(profile, "text", "").lower()  # ← 追加できるならここ！
+            profile.display_name.lower() or "",
+            getattr(profile, "description", "").lower() or "",
+            getattr(profile, "text", "").lower() or ""
         ]
         bio = " ".join(bio_parts)
 
+        # URLとハンドルを除外
+        bio = re.sub(r'https?://\S+', '', bio)  # URL除外
+        bio = re.sub(r'@\S+', '', bio)          # ハンドル除外
+        bio = re.sub(r'\s+', ' ', bio).strip()  # 余分な空白除去
+
+        # 特定ハンドルは日本語強制
+        if handle in ["mirinchuuu.bsky.social", "mofumitsukoubou.bsky.social"]:
+            logging.debug(f"🦊 日本語強制: handle={handle}")
+            return "ja"
+
+        # 日本語キーワード優先
         if any(kw in bio for kw in ["日本語", "日本", "にほん", "japanese", "jp"]):
+            logging.debug(f"🦊 日本語キーワード検出: {bio[:50]}")
             return "ja"
         elif any(kw in bio for kw in ["english", "us", "uk", "en"]):
+            logging.debug(f"🦊 英語キーワード検出: {bio[:50]}")
             return "en"
 
-        # bio全体を言語で判定してもいい
-        kana = re.findall(r'[ぁ-んァ-ン]', bio)
-        latin = re.findall(r'[a-zA-Z]', bio)
-        if len(kana) > len(latin) and len(kana) > 5:
-            return "ja"
-        elif len(latin) > len(kana) and len(latin) > 5:
-            return "en"
-
-        # 投稿テキストにも fallback
+        # 投稿テキスト優先
         if text:
             kana = re.findall(r'[ぁ-んァ-ン]', text)
             latin = re.findall(r'[a-zA-Z]', text)
             if len(kana) > len(latin) and len(kana) > 5:
+                logging.debug(f"🦊 投稿テキスト日本語判定: kana={len(kana)}, latin={len(latin)}")
                 return "ja"
             elif len(latin) > len(kana) and len(latin) > 5:
+                logging.debug(f"🦊 投稿テキスト英語判定: kana={len(kana)}, latin={len(latin)}")
                 return "en"
 
+        # bioで判定
+        kana = re.findall(r'[ぁ-んァ-ン]', bio)
+        latin = re.findall(r'[a-zA-Z]', bio)
+        if len(kana) > len(latin) and len(kana) > 5:
+            logging.debug(f"🦊 bio日本語判定: kana={len(kana)}, latin={len(latin)}")
+            return "ja"
+        elif len(latin) > len(kana) and len(latin) > 5:
+            logging.debug(f"🦊 bio英語判定: kana={len(kana)}, latin={len(latin)}")
+            return "en"
+
+        # デフォルトは日本語
+        logging.debug(f"🦊 デフォルト日本語: handle={handle}")
         return "ja"
     except Exception as e:
-        logging.error(f"❌ 言語判定エラー: {e}")
+        logging.error(f"❌ 言語判定エラー: {type(e).__name__}: {e}")
         return "ja"
-
+        
 def is_priority_post(text):
     return "@mirinchuuu" in text.lower()
 
