@@ -31,7 +31,7 @@ jobs:
           pip install --upgrade pip setuptools wheel
           pip install numpy==1.24.4  # opencv-pythonの前にインストール
           pip install -r requirements.txt
-          pip install torch==2.0.1 transformers==4.36.2 psutil==5.9.8 sentencepiece==0.2.0
+          pip install torch==2.0.1 torchvision transformers==4.36.2 psutil==5.9.8 sentencepiece==0.2.0
           pip install -U accelerate
 
       - name: Preload open-calm-small model
