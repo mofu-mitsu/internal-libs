@@ -327,6 +327,108 @@ def clean_output(text):
         text = text.replace(placeholder, face)
     return text.strip()
 
+ORIGINAL_TEMPLATES = {
+    "NORMAL_TEMPLATES_JP": [
+        "うんうん、かわいいね！癒されたよ🐾💖",
+        "よかったね〜！ふわふわだね🌸🧸",
+        "えへっ、モフモフで癒しMAX！💞",
+        "うわっ！可愛すぎるよ🐾🌷",
+        "ふわふわだね、元気出た！💫🧸",
+        "ふんわり優しい気持ちになった〜☁️💕",
+        "きゅん…かわいすぎてとろけそう🥹🧸",
+        "ほっこりしちゃった〜ふわふわ最高〜🧸✨",
+        "ぎゅってしたくなる…癒されるね〜💖🐾",
+        "もう…尊い…癒しが詰まってるよ〜🌸🌸"
+    ],
+    "SHONBORI_TEMPLATES_JP": [
+        "そっか…ぎゅーってしてあげるね🐾💕",
+        "元気出してね、ふわもこパワー送るよ！🧸✨",
+        "つらいときこそ、ふわふわに包まれて…🐰☁️",
+        "無理しないでね、そっと寄り添うよ🧸🌸"
+    ],
+    "MOGUMOGU_TEMPLATES_JP": [
+        "うーん…これは癒しより美味しそう？🐾💭",
+        "もぐもぐしてるけど…ふわもこじゃないかな？🤔",
+        "みりんてゃ、お腹空いてきちゃった…食レポ？🍽️💬"
+    ],
+    "NORMAL_TEMPLATES_EN": [
+        "Wow, so cute! Feels good~ 🐾💖",
+        "Nice! So fluffy~ 🌸🧸",
+        "Great! Healing vibes! 💞",
+        "So adorable, it warmed my heart! 💖",
+        "Aww, I feel hugged just looking at it~ 🧸💕",
+        "Too cute! I’m melting! ☁️💞",
+        "That’s pure fluff happiness~ 🐾🌸",
+        "Soft, sweet, and so healing~ ✨🧸",
+        "It made my heart smile! 💫💖",
+        "Amazing! Thanks for the fluff! 🐾🌷"
+    ],
+    "MOGUMOGU_TEMPLATES_EN": [
+        "Hmmm... looks tasty, but maybe not so fluffy? 🐾💭",
+        "So yummy-looking... but is this a snack or a friend? 🤔🍽️",
+        "This might be food, not a fluffy cutie... 🍽️💭",
+        "Adorable! But maybe not a fluffy buddy? 🐑💬"
+    ],
+    "COSMETICS_TEMPLATES_JP": {
+        "リップ": ["このリップ可愛い〜💄💖", "色味が素敵すぎてうっとりしちゃう💋"],
+        "香水": ["この香り、絶対ふわもこだよね🌸", "いい匂い〜！💕"],
+        "ネイル": ["そのネイル、キラキラしてて最高💅✨", "ふわもこカラーで素敵〜💖"]
+    },
+    "COSMETICS_TEMPLATES_EN": {
+        "lip": ["That lipstick is so cute~ 💄💖", "The color is dreamy, I’m in love 💋"],
+        "perfume": ["I bet that perfume smells fluffy and sweet 🌸", "I can almost smell it~ so lovely! 🌼"],
+        "nail": ["That nail art is sparkly and perfect 💅✨", "Fluffy colors make it so pretty 💖"]
+    },
+    "CHARACTER_TEMPLATES_JP": {
+        "アニメ": ["アニメキャラがモフモフ！💕", "まるで夢の世界の住人🌟"],
+        "漫画": ["コマから飛び出してきたみたい！📖✨", "このタッチ、めちゃ好み…！💘"],
+        "イラスト": ["線の優しさに癒される…🖋️🌼", "色づかいがほんと素敵💖"],
+        "一次創作": ["オリキャラ尊い…🥺✨", "この子だけの世界観があるね💖"],
+        "二次創作": ["この解釈、天才すぎる…！🙌", "原作愛が伝わってくるよ✨"]
+    },
+    "CHARACTER_TEMPLATES_EN": {
+        "anime": ["That anime character looks so fluffy! 💕", "Like someone straight out of a dream world~ 🌟"],
+        "manga": ["They look like they just stepped out of a manga panel! 📖✨", "I love the vibe of this linework! 💘"],
+        "illustration": ["The softness in these lines is so comforting~ 🖋️🌼", "The colors are simply beautiful! 💖"],
+        "oc": ["Your OC is precious… 🥺✨", "They have such a unique and magical world of their own 💖"],
+        "fanart": ["Your interpretation is genius! 🙌", "I can feel your love for the original work ✨"]
+    }
+}
+
+# テンプレート監査ログ
+TEMPLATE_AUDIT_LOG = "template_audit_log.txt"
+LOCK_TEMPLATES = True
+
+def audit_templates_changes(old, new):
+    try:
+        if old != new:
+            with open(TEMPLATE_AUDIT_LOG, "a", encoding="utf-8") as f:
+                f.write(json.dumps({
+                    "timestamp": datetime.now().isoformat(),
+                    "before": old,
+                    "after": new
+                }, ensure_ascii=False, indent=2) + "\n")
+            logging.warning("⚠️ テンプレ変更検出")
+    except Exception as e:
+        logging.error(f"❌ テンプレ監査エラー: {type(e).__name__}: {e}")
+
+def check_template_integrity(templates):
+    if not LOCK_TEMPLATES:
+        logging.warning("⚠️ LOCK_TEMPLATES無効、改変リスク")
+        return False
+    for key in ORIGINAL_TEMPLATES:
+        if templates.get(key) != ORIGINAL_TEMPLATES[key]:
+            logging.error(f"⚠️ {key} 改変検出、復元推奨")
+            return False
+    return True
+
+def auto_revert_templates(templates):
+    if LOCK_TEMPLATES:
+        templates = deepcopy(ORIGINAL_TEMPLATES)
+        logging.info("✅ テンプレ復元完了")
+        return templates
+    return templates
+
 def open_calm_reply(image_url, text="", context="ふわもこ共感", lang="ja"):
     NG_WORDS = globals()["EMOTION_TAGS"].get("nsfw_ng", [])
     NG_PHRASES = [
@@ -342,30 +444,23 @@ def open_calm_reply(image_url, text="", context="ふわもこ共感", lang="ja")
         r"\b無理\b", r"\b無理です\b", r"\bダメ\b", r"\b嫌い\b", r"\bきらい\b",
         r"\b距離\b", r"\b付き合え\b", r"\b関係ない\b", r"\b興味ない\b", r"\bやめ\b",
         r"(ぽっぽ|ももぽっぽ|ふわももぽっぽ)",
-        r"[ぁ-ん]{5,}",  # ひらがな5文字以上
+        r"[ぁ-ん]{5,}",
         r"(ぽっこり|お腹ぽっこり|体型|太った|体重|ダイエット)",
         r"\b仲良くできない\b", r"\b苦手\b", r"\bキモ\b", r"\b縁がない\b",
         r"\bバカ\b", r"\b馬鹿\b", r"\bアホ\b", r"\bきも\b", r"\b駄目\b",
-        r"\b犬\b", r"\bわんちゃん\b", r"\b猫\b", r"\b猫ちゃん\b",  # 動物名NG
+        r"\b犬\b", r"\bわんちゃん\b", r"\b猫\b", r"\b猫ちゃん\b",
         r"\bウサギ\b", r"\b羊\b", r"\bハムスター\b", r"\bクマ\b",
-        r"\bくんこ\b", r"\bふくんこ\b", r"\bていき\b", r"\bいきする\b"  # 変な造語NG
+        r"\bくんこ\b", r"\bふくんこ\b", r"\bていき\b", r"\bいきする\b",
+        r"\bいする\b", r"\bていする\b"
     ]
     SEASONAL_WORDS_BLACKLIST = ["寒い", "あったまろ", "凍える", "冷たい"]
 
+    # テンプレートをコピー
     templates = deepcopy(ORIGINAL_TEMPLATES)
     if not check_template_integrity(templates):
         templates = auto_revert_templates(templates)
     audit_templates_changes(ORIGINAL_TEMPLATES, templates)
-
-    NORMAL_TEMPLATES_JP = templates["NORMAL_TEMPLATES_JP"]
-    SHONBORI_TEMPLATES_JP = templates["SHONBORI_TEMPLATES_JP"]
-    MOGUMOGU_TEMPLATES_JP = templates["MOGUMOGU_TEMPLATES_JP"]
-    NORMAL_TEMPLATES_EN = templates["NORMAL_TEMPLATES_EN"]
-    MOGUMOGU_TEMPLATES_EN = templates["MOGUMOGU_TEMPLATES_EN"]
-    COSMETICS_TEMPLATES_JP = templates["COSMETICS_TEMPLATES_JP"]
-    COSMETICS_TEMPLATES_EN = templates["COSMETICS_TEMPLATES_EN"]
-    CHARACTER_TEMPLATES_JP = templates["CHARACTER_TEMPLATES_JP"]
-    CHARACTER_TEMPLATES_EN = templates["CHARACTER_TEMPLATES_EN"]
+    logging.debug(f"🦊 テンプレート初期化: keys={list(templates.keys())}")
 
     detected_tags = []
     for tag, words in globals()["EMOTION_TAGS"].items():
@@ -374,36 +469,35 @@ def open_calm_reply(image_url, text="", context="ふわもこ共感", lang="ja")
 
     if "food_ng" in detected_tags or any(word.lower() in text.lower() for word in NG_WORDS) or "パン" in text.lower():
         logging.debug(f"🍽️ NGワード/食事検出: {text[:60]}")
-        return random.choice(MOGUMOGU_TEMPLATES_JP) if lang == "ja" else random.choice(MOGUMOGU_TEMPLATES_EN)
+        return random.choice(templates["MOGUMOGU_TEMPLATES_JP"]) if lang == "ja" else random.choice(templates["MOGUMOGU_TEMPLATES_EN"])
     elif "shonbori" in detected_tags:
         logging.debug(f"😢 しょんぼり検出: lang={lang}")
-        return random.choice(SHONBORI_TEMPLATES_JP) if lang == "ja" else random.choice(NORMAL_TEMPLATES_EN)
+        return random.choice(templates["SHONBORI_TEMPLATES_JP"]) if lang == "ja" else random.choice(templates["NORMAL_TEMPLATES_EN"])
     elif "safe_cosmetics" in detected_tags:
         if lang == "ja":
-            for cosmetic, templates in COSMETICS_TEMPLATES_JP.items():
+            for cosmetic, cosmetic_templates in templates["COSMETICS_TEMPLATES_JP"].items():
                 if cosmetic in text.lower():
                     logging.debug(f"💄 推奨コスメ検出: {cosmetic}")
-                    return random.choice(templates)
+                    return random.choice(cosmetic_templates)
         else:
-            for cosmetic, templates in COSMETICS_TEMPLATES_EN.items():
+            for cosmetic, cosmetic_templates in templates["COSMETICS_TEMPLATES_EN"].items():
                 if any(word in text.lower() for word in globals()["EMOTION_TAGS"]["safe_cosmetics"]):
                     logging.debug(f"💄 推奨コスメ検出: {cosmetic}")
-                    return random.choice(templates)
+                    return random.choice(cosmetic_templates)
     elif any(tag in detected_tags for tag in globals()["SAFE_CHARACTER"]):
         if lang == "ja":
-            for char_type, templates in CHARACTER_TEMPLATES_JP.items():
+            for char_type, char_templates in templates["CHARACTER_TEMPLATES_JP"].items():
                 if any(word in text.lower() for word in globals()["SAFE_CHARACTER"][char_type]):
                     logging.debug(f"🎭 推奨キャラ検出: {char_type}")
-                    return random.choice(templates)
+                    return random.choice(char_templates)
         else:
-            for char_type, templates in CHARACTER_TEMPLATES_EN.items():
+            for char_type, char_templates in templates["CHARACTER_TEMPLATES_EN"].items():
                 if any(word in text.lower() for word in globals()["SAFE_CHARACTER"][char_type]):
                     logging.debug(f"🎭 推奨英語キャラ検出: {char_type}")
-                    return random.choice(templates)
+                    return random.choice(char_templates)
     elif any(word in text.lower() for word in globals()["GENERAL_TAGS"]):
-        return random.choice(NORMAL_TEMPLATES_JP) if lang == "ja" else random.choice(NORMAL_TEMPLATES_EN)
+        return random.choice(templates["NORMAL_TEMPLATES_JP"]) if lang == "ja" else random.choice(templates["NORMAL_TEMPLATES_EN"])
 
-    # 単語入力対応（短い入力は「ふわもこ」に固定）
     if len(text.strip()) <= 2:
         text = "ふわもこ"
 
@@ -411,7 +505,7 @@ def open_calm_reply(image_url, text="", context="ふわもこ共感", lang="ja")
         ("ふわもこ", "もふもふで、とても癒されるね〜🌸"),
         ("毛布", "ふわふわで、ぎゅってしたくなるね〜💕"),
         ("ぬいぐるみ", "もこもこでほんわか、癒しだね〜🧸"),
-        ("ふわもこ", "ふわふわで優しい気持ちになるね〜🐾"),  # もくもくをふわもこに
+        ("ふわもこ", "ふわふわで優しい気持ちになるね〜🐾"),
         ("ふわふわ", "ふわふわであったかくて、包まれたくなるね〜🫧"),
     ]
     prompt = (
@@ -421,12 +515,11 @@ def open_calm_reply(image_url, text="", context="ふわもこ共感", lang="ja")
         "※タオル画像でないなら「ふんわりタオル」はNG。\n"
         "※数字や意味不明な言葉は避けて、8〜60文字で自然なふわもこ返事に。\n"
         + "\n".join([f"{q} → {a}" for q, a in examples])
-        + f"\n{text.strip()} → もふもふしてて落ち着くね〜🧸"
+        + f"\n{text.strip()} → "
     )
-    logging.debug(f"🧪 プロンプト確認: {prompt}")
+    logging.debug(f"🧪 プロンプト確認: {prompt[:100]}")
 
-    # bad_words_ids（「くんこ」「ふくんこ」を禁止）
-    bad_words = ["くんこ", "ふくんこ", "ていき","ていする","いする", "いきする"]
+    bad_words = ["くんこ", "ふくんこ", "ていき", "いきする", "いする", "ていする"]
     bad_words_ids = [tokenizer(word, add_special_tokens=False).input_ids for word in bad_words]
 
     inputs = tokenizer(prompt, return_tensors="pt", truncation=True, max_length=150).to(model.device)
@@ -436,53 +529,50 @@ def open_calm_reply(image_url, text="", context="ふわもこ共感", lang="ja")
             max_new_tokens=50,
             pad_token_id=tokenizer.pad_token_id,
             do_sample=True,
-            temperature=0.5,  # 下げて安定化
-            top_k=20,  # 下げてバラつき抑制
+            temperature=0.5,
+            top_k=20,
             top_p=0.95,
             no_repeat_ngram_size=3,
-            repetition_penalty=1.5,  # 繰り返し抑制
-            bad_words_ids=bad_words_ids  # 変な造語ブロック
+            repetition_penalty=1.5,
+            bad_words_ids=bad_words_ids
         )
         raw_reply = tokenizer.decode(outputs[0], skip_special_tokens=True).strip()
-        logging.debug(f"🧸 Raw AI出力（生データ）: {raw_reply}")
+        logging.debug(f"🧸 Raw AI出力（生データ）: {raw_reply[:100]}")
         reply = clean_output(raw_reply)
         reply = apply_fuwamoko_tone(reply)
 
-        # 出力チェック強化
         if not reply or len(reply) < 8 or len(reply) > 60:
-            logging.warning(f"⏷️ テンプレ使用: 長さ不適切: len={len(reply)}, テキスト: {reply[:60]}, 理由: 長さ超過/不足")
-            return random.choice(NORMAL_TEMPLATES_JP) if lang == "ja" else random.choice(NORMAL_TEMPLATES_EN)
+            logging.warning(f"⏷️ テンプレ使用: 長さ不適切: len={len(reply)}, テキスト: {reply[:60]}, 理由: {'空' if not reply else '8文字未満' if len(reply) < 8 else '60文字超'}")
+            return random.choice(templates["NORMAL_TEMPLATES_JP"]) if lang == "ja" else random.choice(templates["NORMAL_TEMPLATES_EN"])
 
-        # 文法チェック（少し緩和）
         if not re.search(r'(ね|よ|だ|る|た|に|を|が|は)', reply) or re.fullmatch(r'[ぁ-んー゛゜。、\s「」！？]+', reply):
-            logging.warning(f"⏷️ テンプレ使用: 文章不成立: テキスト: {reply[:60]}, 理由: 文法不十分または擬音語のみ")
-            return random.choice(NORMAL_TEMPLATES_JP) if lang == "ja" else random.choice(NORMAL_TEMPLATES_EN)
+            logging.warning(f"⏷️ テンプレ使用: 文章不成立: テキスト: {reply[:60]}, 理由: {'文法不十分' if not re.search(r'(ね|よ|だ|る|た|に|を|が|は)', reply) else '擬音語のみ'}")
+            return random.choice(templates["NORMAL_TEMPLATES_JP"]) if lang == "ja" else random.choice(templates["NORMAL_TEMPLATES_EN"])
 
-        # NGパターン（変な造語や記号だらけ）
         if re.search(r"(くんこ|ふくんこ|[^ぁ-んァ-ン一-龯。、！？!?!\s♡（）「」♪〜ー…w笑a-zA-Z0-9]+)", reply):
             logging.warning(f"⏷️ テンプレ使用: 不自然な語句/記号: テキスト: {reply[:60]}, 理由: 変な造語または記号過多")
-            return random.choice(NORMAL_TEMPLATES_JP) if lang == "ja" else random.choice(NORMAL_TEMPLATES_EN)
+            return random.choice(templates["NORMAL_TEMPLATES_JP"]) if lang == "ja" else random.choice(templates["NORMAL_TEMPLATES_EN"])
 
         for bad in NG_PHRASES:
             if re.search(bad, reply):
-                logging.warning(f"⏷️ テンプレ使用: NGフレーズ検出: {bad}, テキスト: {reply[:60]}, 理由: NGフレーズ")
-                return random.choice(NORMAL_TEMPLATES_JP) if lang == "ja" else random.choice(NORMAL_TEMPLATES_EN)
+                logging.warning(f"⏷️ テンプレ使用: NGフレーズ検出: {bad}, テキスト: {reply[:60]}, 理由: NGフレーズマッチ")
+                return random.choice(templates["NORMAL_TEMPLATES_JP"]) if lang == "ja" else random.choice(templates["NORMAL_TEMPLATES_EN"])
 
         if any(word in reply for word in SEASONAL_WORDS_BLACKLIST):
             logging.warning(f"⏷️ テンプレ使用: 季節不一致: 寒さ表現あり")
-            return random.choice(NORMAL_TEMPLATES_JP) if lang == "ja" else random.choice(NORMAL_TEMPLATES_EN)
+            return random.choice(templates["NORMAL_TEMPLATES_JP"]) if lang == "ja" else random.choice(templates["NORMAL_TEMPLATES_EN"])
 
         if reply.count("ふわふわ") > 1:
             reply = reply.replace("ふわふわ", "もこもこ", 1)
 
         if not re.search(r"[🌸💕🐾☁️🧸✨♡]", reply):
-            reply += " " + random.choice(["🧸", "🌸", "💕"])
+            reply += " " + random.choice(["🧸", "🌸", "💕", "☁️", "♡", "♪", "～"])
 
         logging.info(f"🦊 AI生成成功: {reply}, 長さ: {len(reply)}")
         return reply
     except Exception as e:
         logging.error(f"❌ AI生成エラー: {type(e).__name__}: {e}")
-        return random.choice(NORMAL_TEMPLATES_JP) if lang == "ja" else random.choice(NORMAL_TEMPLATES_EN)
+        return random.choice(templates["NORMAL_TEMPLATES_JP"]) if lang == "ja" else random.choice(templates["NORMAL_TEMPLATES_EN"])
         
 def extract_valid_cid(ref):
     try:
