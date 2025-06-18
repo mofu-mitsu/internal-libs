@@ -426,7 +426,7 @@ def open_calm_reply(image_url, text="", context="ふわもこ共感", lang="ja")
     logging.debug(f"🧪 プロンプト確認: {prompt}")
 
     # bad_words_ids（「くんこ」「ふくんこ」を禁止）
-    bad_words = ["くんこ", "ふくんこ", "ていき", "いきする"]
+    bad_words = ["くんこ", "ふくんこ", "ていき","ていする","いする", "いきする"]
     bad_words_ids = [tokenizer(word, add_special_tokens=False).input_ids for word in bad_words]
 
     inputs = tokenizer(prompt, return_tensors="pt", truncation=True, max_length=150).to(model.device)
