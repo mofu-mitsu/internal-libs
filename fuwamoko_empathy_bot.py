@@ -313,6 +313,7 @@ def clean_output(text):
         
     text = re.sub(r'[\r\n]+', ' ', text)
     text = re.sub(r'\s{2,}', ' ', text)
+    text = re.sub(r'!{2,}', '！', text)
     text = re.sub(r'^(短く、ふわもこな返事をしてね。|.*→\s*|寒い〜\s*)', '', text)  # プロンプトや矢印を削除
     text = re.sub(r'^もふもふであったまろ〜♡\s*', '', text)  # テンプレ削除
     text = re.sub(r'^[^。！？\n]{1,10}って癒されるよね〜\s*', '', text)  # テンプレ削除
@@ -345,7 +346,7 @@ def open_calm_reply(image_url, text="", context="ふわもこ共感", lang="ja")
     ]
     SEASONAL_WORDS_BLACKLIST = ["寒い", "あったまろ", "凍える", "冷たい"]
 
-    templates = deepcopy(ORIGIけAL_TEMPLATES)
+    templates = deepcopy(ORIGINAL_TEMPLATES)
     if not check_template_integrity(templates):
         templates = auto_revert_templates(templates)
     audit_templates_changes(ORIGINAL_TEMPLATES, templates)
