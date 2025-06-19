@@ -1,16 +1,31 @@
+# dm_checker.py
 from atproto import Client
 import json
 import os
+import smtplib
+from email.mime.text import MIMEText
 
-# BlueSkyログイン
-client = Client()
-client.login(os.getenv("HANDLE"), os.getenv("APP_PASSWORD"))
+# ------------------------------
+# ★ カスタマイズポイント
+# ------------------------------
+# メールの文面をキャラに合わせて変更可能！
+DM_NOTIFICATION_SUBJECT = "みりんてゃにDM来たんだけど…めっちゃウザいんですけど♡"
+DM_NOTIFICATION_BODY = """
+ねえ、@{sender}からDM来てるよ。マジ何？
+内容: {content}
+
+…てか、みりん、こんなん返事する気分じゃないかも？
+ブルスカで確認してよね～、ほんとめんどいんだけど♡
+"""
+# ------------------------------
 
 # 前回のチェック時刻を保存するファイル
 LAST_CHECK_FILE = "last_check.json"
 
 def get_new_dms():
-    notifications = client.app.bsky.notification.list_notifications()
+    client = Client()
+    client.login(os.getenv("HANDLE"), os.getenv("APP_PASSWORD"))
+    notifications = client.app.bsky.notification.list_notifications().notifications
     new_dms = []
     last_check = load_last_check()
 
@@ -22,7 +37,6 @@ def get_new_dms():
                 "time": notif.created_at
             })
 
-    # 最新のチェック時刻を保存
     if notifications:
         save_last_check(notifications[0].created_at)
     
@@ -39,11 +53,26 @@ def save_last_check(timestamp):
     with open(LAST_CHECK_FILE, "w") as f:
         json.dump({"last_check": timestamp}, f)
 
+def send_dm_notification(dm_sender, dm_content):
+    sender = os.getenv("EMAIL_SENDER")
+    receiver = "mitsuki.momoka@i.softbank.jp"
+    password = os.getenv("EMAIL_PASSWORD")
+
+    msg = MIMEText(DM_NOTIFICATION_BODY.format(sender=dm_sender, content=dm_content))
+    msg["Subject"] = DM_NOTIFICATION_SUBJECT
+    msg["From"] = sender
+    msg["To"] = receiver
+
+    with smtplib.SMTP_SSL("smtp.mail.yahoo.co.jp", 465) as server:
+        server.login(sender, password)
+        server.send_message(msg)
+
 def main():
     new_dms = get_new_dms()
     if new_dms:
         for dm in new_dms:
             send_dm_notification(dm["sender"], dm["content"])
+        print(f"{len(new_dms)}件のDMを通知したぜ！")
     else:
         print("新着DMなし！メール送信スキップ！")
 
