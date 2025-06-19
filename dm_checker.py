@@ -74,12 +74,14 @@ def get_new_dms(handle, app_password):
         last_check = load_last_check(f"@{login_handle}")
 
         for notif in notifications:
-            record_type = notif.record.get("$type", "")
-            print(f"🔍 record type: {record_type}, content: {notif.record.get('text', '')}")  # デバッグ用
+            # Recordオブジェクトの属性アクセス
+            record_type = getattr(notif.record, "$type", "")
+            record_text = getattr(notif.record, "text", "")
+            print(f"🔍 record type: {record_type}, content: {record_text}")  # デバッグ用
             if record_type == "app.bsky.chat.message" and notif.created_at > last_check:
                 new_dms.append({
                     "sender": notif.author.handle,
-                    "content": notif.record.get("text", ""),
+                    "content": record_text,
                     "time": notif.created_at,
                     "account": f"@{login_handle}"
                 })
