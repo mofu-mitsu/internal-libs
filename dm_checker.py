@@ -3,6 +3,7 @@ from atproto import Client
 import json
 import os
 import smtplib
+import requests
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
@@ -69,20 +70,20 @@ def get_new_dms(handle, app_password):
     try:
         client = Client()
         client.login(login_handle, app_password)
-        # 通知APIに戻す＋利用可能メソッド確認
+        # 通知APIで全応答確認
         notifications = client.app.bsky.notification.list_notifications().notifications
         print(f"🔍 Available bsky methods: {dir(client.app.bsky)}")  # デバッグ: 利用可能メソッド
+        print(f"🔍 Full notification response: {json.dumps(notifications, indent=2, default=str)}")  # 全応答ログ
         new_dms = []
         last_check = load_last_check(f"@{login_handle}")
 
         for notif in notifications:
-            # デバッグ: NotificationとRecordの全構造
             print(f"🔍 Notification dict: {json.dumps(notif.__dict__, indent=2, default=str)}")
             print(f"🔍 Record dict: {json.dumps(notif.record.__dict__ if hasattr(notif, 'record') else {}, indent=2, default=str)}")
             record_type = getattr(notif.record, "$type", "") if hasattr(notif, "record") else ""
             record_text = getattr(notif.record, "text", "") if hasattr(notif, "record") else ""
             indexed_at = notif.__dict__.get("indexedAt", "")
-            print(f"🔍 record type: {record_type}, content: {record_text}, indexed_at: {indexed_at}")  # デバッグ用
+            print(f"🔍 record type: {record_type}, content: {record_text}, indexed_at: {indexed_at}")
             if record_type == "app.bsky.chat.message" and indexed_at and indexed_at > last_check:
                 new_dms.append({
                     "sender": notif.author.handle,
@@ -91,14 +92,35 @@ def get_new_dms(handle, app_password):
                     "account": f"@{login_handle}"
                 })
 
-        if notifications:
-            first_indexed = notifications[0].__dict__.get("indexedAt", "")
-            if first_indexed:
-                save_last_check(f"@{login_handle}", first_indexed)
+        # チャットAPIをHTTPで直接試行
+        headers = {"Authorization": f"Bearer {client.session.get('accessJwt')}"}
+        chat_response = requests.get("https://bsky.social/xrpc/app.bsky.chat.listMessages", headers=headers)
+        print(f"🔍 Chat API response: {json.dumps(chat_response.json(), indent=2)}")
+        if chat_response.status_code == 200:
+            messages = chat_response.json().get("messages", [])
+            for message in messages:
+                message_type = message.get("$type", "")
+                message_text = message.get("content", {}).get("text", "")
+                message_time = message.get("createdAt", "")
+                sender_handle = message.get("sender", {}).get("handle", "")
+                print(f"🔍 message type: {message_type}, content: {message_text}, time: {message_time}, sender: {sender_handle}")
+                if message_type == "app.bsky.chat.message" and message_time and message_time > last_check:
+                    new_dms.append({
+                        "sender": sender_handle,
+                        "content": message_text,
+                        "time": message_time,
+                        "account": f"@{login_handle}"
+                    })
+
+        if notifications or messages:
+            first_time = (notifications[0].__dict__.get("indexedAt", "") if notifications else
+                         messages[0].get("createdAt", "")) if notifications or messages else ""
+            if first_time:
+                save_last_check(f"@{login_handle}", first_time)
         
         return new_dms
     except Exception as e:
-        print(f"Error for {login_handle}: {str(e)}")  # エラーハンドリング
+        print(f"Error for {login_handle}: {str(e)}")
         return []
 
 def load_last_check(handle):
@@ -155,7 +177,7 @@ def main():
     total_dms = 0
 
     for acc in accounts:
-        print(f"Checking DMs for: @{acc['handle']}, app_password: {'*' * len(acc['app_password'])}")  # デバッグ用ログ
+        print(f"Checking DMs for: @{acc['handle']}, app_password: {'*' * len(acc['app_password'])}")
         new_dms = get_new_dms(acc["handle"], acc["app_password"])
         if new_dms:
             for dm in new_dms:
