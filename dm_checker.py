@@ -115,11 +115,8 @@ def send_dm_notification(account, dm_sender, dm_content):
     msg["From"] = sender
     msg["To"] = receiver
 
-    # テキストパート（古いメールアプリ用）
     text_part = MIMEText(text_body, "plain")
-    # HTMLパート（対応アプリ用）
     html_part = MIMEText(html_body, "html")
-
     msg.attach(text_part)
     msg.attach(html_part)
 
@@ -130,8 +127,14 @@ def send_dm_notification(account, dm_sender, dm_content):
 
 def main():
     accounts = [
-        {"handle": os.getenv("HANDLE"), "app_password": os.getenv("APP_PASSWORD")},
-        {"handle": os.getenv("HANDLE_MITSUKI"), "app_password": os.getenv("APP_PASSWORD_MITSUKI")}
+        {
+            "handle": "@" + os.getenv("HANDLE").lstrip("@"),
+            "app_password": os.getenv("APP_PASSWORD")
+        },
+        {
+            "handle": "@" + os.getenv("HANDLE_MITSUKI").lstrip("@"),
+            "app_password": os.getenv("APP_PASSWORD_MITSUKI")
+        }
     ]
     total_dms = 0
 
