@@ -50,7 +50,7 @@ DM_NOTIFICATION_HTML_BODIES = {
     <blockquote style="border-left: 3px solid #00b7eb; padding-left: 10px;">
       {content}
     </blockquote>
-    <p>ほら、<a href="https://bsky.app/" style="color: #00b7eb;">ブルスカ</a>でチェックしろよ～。まぁ、みつきならマイペースでいいけどな！😏</p>
+    <p>ほら, <a href="https://bsky.app/" style="color: #00b7eb;">ブルスカ</a>でチェックしろよ～。まぁ、みつきならマイペースでいいけどな！😏</p>
   </body>
 </html>
 """
@@ -74,10 +74,11 @@ def get_new_dms(handle, app_password):
         last_check = load_last_check(f"@{login_handle}")
 
         for notif in notifications:
-            # デバッグ: Notificationの構造確認
+            # デバッグ: Notificationの全構造とrecordの中身
             print(f"🔍 Notification dict: {json.dumps(notif.__dict__, indent=2, default=str)}")
-            record_type = getattr(notif.record, "$type", "")
-            record_text = getattr(notif.record, "text", "")
+            print(f"🔍 Record dict: {json.dumps(notif.record.__dict__ if hasattr(notif, 'record') else {}, indent=2, default=str)}")
+            record_type = getattr(notif.record, "$type", "") if hasattr(notif, "record") else ""
+            record_text = getattr(notif.record, "text", "") if hasattr(notif, "record") else ""
             indexed_at = notif.__dict__.get("indexedAt", "")
             print(f"🔍 record type: {record_type}, content: {record_text}, indexed_at: {indexed_at}")  # デバッグ用
             if record_type == "app.bsky.chat.message" and indexed_at and indexed_at > last_check:
