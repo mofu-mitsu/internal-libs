@@ -16,7 +16,7 @@ jobs:
           python-version: "3.10"
       - name: Install dependencies
         run: |
-          pip install atproto
+          pip install atproto requests
       - name: Run DM checker
         env:
           HANDLE: ${{ secrets.HANDLE }}
