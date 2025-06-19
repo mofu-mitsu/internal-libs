@@ -70,8 +70,17 @@ def get_new_dms(handle, app_password):
     try:
         client = Client()
         client.login(login_handle, app_password)
-        # 認証トークンを取得（sessionがない場合の代替）
-        access_token = getattr(client, 'access_token', None) or getattr(client, 'get_access_token', lambda: None)()
+        # 認証状態のデバッグ
+        print(f"🔍 Client state: {json.dumps(vars(client), indent=2, default=str)}")  # 内部状態ログ
+        # トークン取得試行
+        access_token = None
+        try:
+            # 内部属性を探索
+            access_token = next((v for k, v in vars(client).items() if 'token' in k.lower()), None)
+            if not access_token:
+                raise AttributeError("No token attribute found in Client")
+        except Exception as e:
+            print(f"🔍 Token extraction error: {str(e)}")
         if not access_token:
             raise AttributeError("No access token available in Client object")
         # 通知APIで全応答確認
