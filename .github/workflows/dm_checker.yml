@@ -19,10 +19,10 @@ jobs:
           pip install atproto
       - name: Run DM checker
         env:
-          HANDLE: ${{ secrets.HANDLE }}  # @mirinchuuu.bsky.social
+          HANDLE: ${{ secrets.HANDLE }}
           APP_PASSWORD: ${{ secrets.APP_PASSWORD }}  # みりんてゃのアプリパスワード
-          HANDLE_MITSUKI: ${{ secrets.HANDLE_MITSUKI }}  # @mofumitsukoubou.bsky.social
-          APP_PASSWORD_MITSUKI: ${{ secrets.APP_PASSWORD_MITSUKI }}  # みつきのアプリパスワード
-          EMAIL_SENDER: ${{ secrets.EMAIL_SENDER }}  # mirinchuuu@gmail.com
-          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}  # qjin shxj ntdp ftea
+          HANDLE_MITSUKI: ${{ secrets.HANDLE_MITSUKI }}
+          APP_PASSWORD_MITSUKI: ${{ secrets.APP_PASSWORD_MITSUKI }}
+          EMAIL_SENDER: ${{ secrets.EMAIL_SENDER }}
+          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
         run: python dm_checker.py
