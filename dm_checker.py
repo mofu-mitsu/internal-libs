@@ -109,10 +109,31 @@ def get_new_dms(handle, app_password):
                     "account": f"@{login_handle}"
                 })
 
-        # チャットAPIをHTTPで直接試行
+        # チャットAPIをライブラリ経由で試行
+        try:
+            chat_messages = client.app.bsky.chat.listMessages()
+            print(f"🔍 Chat API (library) response: {json.dumps(chat_messages, indent=2, default=str)}")
+            messages = chat_messages.get('messages', [])
+            for message in messages:
+                message_type = message.get("$type", "")
+                message_text = message.get("content", {}).get("text", "")
+                message_time = message.get("createdAt", "")
+                sender_handle = message.get("sender", {}).get("handle", "")
+                print(f"🔍 message type: {message_type}, content: {message_text}, time: {message_time}, sender: {sender_handle}")
+                if message_type == "app.bsky.chat.message" and message_time and message_time > last_check:
+                    new_dms.append({
+                        "sender": sender_handle,
+                        "content": message_text,
+                        "time": message_time,
+                        "account": f"@{login_handle}"
+                    })
+        except Exception as e:
+            print(f"🔍 Chat API (library) error: {str(e)}")
+
+        # フォールバック: HTTPでチャットAPIを直接試行
         headers = {"Authorization": f"Bearer {access_token}"}
         chat_response = requests.get("https://bsky.social/xrpc/app.bsky.chat.listMessages", headers=headers)
-        print(f"🔍 Chat API response - Status: {chat_response.status_code}, Body: {json.dumps(chat_response.json(), indent=2)}")
+        print(f"🔍 Chat API (HTTP) response - Status: {chat_response.status_code}, Body: {json.dumps(chat_response.json(), indent=2)}")
         if chat_response.status_code == 200:
             messages = chat_response.json().get("messages", [])
             for message in messages:
@@ -205,6 +226,8 @@ def main():
         print(f"{total_dms}件のDMを通知したぜ！")
     else:
         print("新着DMなし！メール送信スキップ！")
+        # デバッグ用にメール送信を追加
+        send_dm_notification("test@test.com", "TestSender", "デバッグ: DM検出なし（エラー再確認用）")
 
 if __name__ == "__main__":
     main()
