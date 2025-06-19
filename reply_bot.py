@@ -393,7 +393,7 @@ FIRST_PERSON = "みりんてゃ"
 def clean_output(text):
     text = re.sub(r'\n{2,}', '\n', text)
     face_char_whitelist = 'ฅ๑•ω•ฅﾐ・o｡≧≦｡っ☆彡≡≒'
-    allowed = rf'[^\w\sぁ-んァ-ン一-龯。、！？!?♡（）「」♪〜ー…w笑{face_char_whitelist}]+'
+    allowed = rf'[^\w\sぁ-んァ-ン一-龯。、！？!?♡（）・「」♪〜ー…w笑{face_char_whitelist}]+'
     text = re.sub(allowed, '', text)
     text = re.sub(r'[。、！？]{2,}', lambda m: m.group(0)[0], text)
     return text.strip()
