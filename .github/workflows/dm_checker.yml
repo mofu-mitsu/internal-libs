@@ -1,6 +1,8 @@
 name: Mirinteya DM Checker
 
 on:
+  schedule:
+    - cron: "0 * * * *"  # 1時間ごとに実行（みつきの希望反映）
   workflow_dispatch:  # 手動実行も可能
 
 jobs:
@@ -17,8 +19,10 @@ jobs:
           pip install atproto
       - name: Run DM checker
         env:
-          HANDLE: ${{ secrets.HANDLE }}
-          APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
-          EMAIL_SENDER: ${{ secrets.EMAIL_SENDER }}
-          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+          HANDLE: ${{ secrets.HANDLE }}  # @mirinchuuu.bsky.social
+          APP_PASSWORD: ${{ secrets.APP_PASSWORD }}  # みりんてゃのアプリパスワード
+          HANDLE_MITSUKI: ${{ secrets.HANDLE_MITSUKI }}  # @mofumitsukoubou.bsky.social
+          APP_PASSWORD_MITSUKI: ${{ secrets.APP_PASSWORD_MITSUKI }}  # みつきのアプリパスワード
+          EMAIL_SENDER: ${{ secrets.EMAIL_SENDER }}  # mirinchuuu@gmail.com
+          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}  # qjin shxj ntdp ftea
         run: python dm_checker.py
