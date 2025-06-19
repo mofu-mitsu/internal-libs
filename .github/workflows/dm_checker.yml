@@ -20,7 +20,7 @@ jobs:
       - name: Run DM checker
         env:
           HANDLE: ${{ secrets.HANDLE }}
-          APP_PASSWORD: ${{ secrets.APP_PASSWORD }}  # みりんてゃのアプリパスワード
+          APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
           HANDLE_MITSUKI: ${{ secrets.HANDLE_MITSUKI }}
           APP_PASSWORD_MITSUKI: ${{ secrets.APP_PASSWORD_MITSUKI }}
           EMAIL_SENDER: ${{ secrets.EMAIL_SENDER }}
