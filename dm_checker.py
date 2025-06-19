@@ -9,7 +9,6 @@ from email.mime.text import MIMEText
 # ------------------------------
 # ★ カスタマイズポイント
 # ------------------------------
-# アカウントごとのキャラ設定
 CHAR_NAMES = {
     "@mirinchuuu.bsky.social": "みりんてゃ",
     "@mofumitsukoubou.bsky.social": "みつき"
@@ -65,13 +64,15 @@ LAST_CHECK_FILES = {
 }
 
 def get_new_dms(handle, app_password):
-    print(f"Logging in with handle: {handle}")  # デバッグ用ログ
+    # ログインは@なしで
+    login_handle = handle.lstrip("@")
+    print(f"Logging in with handle: {login_handle}, app_password: {'*' * len(app_password)}")  # デバッグ用ログ
     try:
         client = Client()
-        client.login(handle, app_password)
+        client.login(login_handle, app_password)
         notifications = client.app.bsky.notification.list_notifications().notifications
         new_dms = []
-        last_check = load_last_check(handle)
+        last_check = load_last_check(f"@{login_handle}")  # LAST_CHECK_FILES用に@付き
 
         for notif in notifications:
             if notif.record_type == "chat.message" and notif.created_at > last_check:
@@ -79,15 +80,15 @@ def get_new_dms(handle, app_password):
                     "sender": notif.author.handle,
                     "content": notif.record.text,
                     "time": notif.created_at,
-                    "account": handle
+                    "account": f"@{login_handle}"
                 })
 
         if notifications:
-            save_last_check(handle, notifications[0].created_at)
+            save_last_check(f"@{login_handle}", notifications[0].created_at)
         
         return new_dms
     except Exception as e:
-        print(f"Error for {handle}: {str(e)}")  # エラーハンドリング
+        print(f"Error for {login_handle}: {str(e)}")  # エラーハンドリング
         return []
 
 def load_last_check(handle):
@@ -133,18 +134,18 @@ def send_dm_notification(account, dm_sender, dm_content):
 def main():
     accounts = [
         {
-            "handle": "@" + os.getenv("HANDLE").lstrip("@"),
+            "handle": os.getenv("HANDLE").lstrip("@"),
             "app_password": os.getenv("APP_PASSWORD")
         },
         {
-            "handle": "@" + os.getenv("HANDLE_MITSUKI").lstrip("@"),
+            "handle": os.getenv("HANDLE_MITSUKI").lstrip("@"),
             "app_password": os.getenv("APP_PASSWORD_MITSUKI")
         }
     ]
     total_dms = 0
 
     for acc in accounts:
-        print(f"Checking DMs for: {acc['handle']}")  # デバッグ用ログ
+        print(f"Checking DMs for: @{acc['handle']}, app_password: {'*' * len(acc['app_password'])}")  # デバッグ用ログ
         new_dms = get_new_dms(acc["handle"], acc["app_password"])
         if new_dms:
             for dm in new_dms:
