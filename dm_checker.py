@@ -65,25 +65,30 @@ LAST_CHECK_FILES = {
 }
 
 def get_new_dms(handle, app_password):
-    client = Client()
-    client.login(handle, app_password)
-    notifications = client.app.bsky.notification.list_notifications().notifications
-    new_dms = []
-    last_check = load_last_check(handle)
+    print(f"Logging in with handle: {handle}")  # デバッグ用ログ
+    try:
+        client = Client()
+        client.login(handle, app_password)
+        notifications = client.app.bsky.notification.list_notifications().notifications
+        new_dms = []
+        last_check = load_last_check(handle)
 
-    for notif in notifications:
-        if notif.record_type == "chat.message" and notif.created_at > last_check:
-            new_dms.append({
-                "sender": notif.author.handle,
-                "content": notif.record.text,
-                "time": notif.created_at,
-                "account": handle
-            })
+        for notif in notifications:
+            if notif.record_type == "chat.message" and notif.created_at > last_check:
+                new_dms.append({
+                    "sender": notif.author.handle,
+                    "content": notif.record.text,
+                    "time": notif.created_at,
+                    "account": handle
+                })
 
-    if notifications:
-        save_last_check(handle, notifications[0].created_at)
-    
-    return new_dms
+        if notifications:
+            save_last_check(handle, notifications[0].created_at)
+        
+        return new_dms
+    except Exception as e:
+        print(f"Error for {handle}: {str(e)}")  # エラーハンドリング
+        return []
 
 def load_last_check(handle):
     try:
@@ -139,6 +144,7 @@ def main():
     total_dms = 0
 
     for acc in accounts:
+        print(f"Checking DMs for: {acc['handle']}")  # デバッグ用ログ
         new_dms = get_new_dms(acc["handle"], acc["app_password"])
         if new_dms:
             for dm in new_dms:
