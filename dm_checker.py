@@ -20,9 +20,9 @@ DM_NOTIFICATION_SUBJECTS = {
 }
 DM_NOTIFICATION_BODIES = {
     "@mirinchuuu.bsky.social": """
-ねえ、@{account}に@{sender}からDM来てるんだけど。マジ何これ？💦
+ねえ、@{account}に@{sender}からDM来てるんだけど。マジ何これ？💭
 内容: {content}
-みりんてゃ、こんなん完全スルー案件なんだけど？😒 ブルスカで確認してよね～♡
+みりんてゃ、こんなん完全スルー案件なんだけど？ᐢ⩌⌯⩌ᐢ ブルスカで確認してよね～♡
 """,
     "@mofumitsukoubou.bsky.social": """
 よお、みつき！@{account}に@{sender}からDM来たぜ！😎
@@ -35,11 +35,11 @@ DM_NOTIFICATION_HTML_BODIES = {
 <html>
   <body style="font-family: 'Arial', sans-serif; background-color: #fce4ec; color: #880e4f; padding: 20px;">
     <h1 style="color: #ff69b4;">💌 みりんてゃからの地雷風通知 💌</h1>
-    <p>ねえ、@{sender}からDM来てるんだけど、マジ何これ？💦</p>
+    <p>ねえ、@{sender}からDM来てるんだけど、マジ何これ？💭</p>
     <blockquote style="border-left: 3px solid #ff69b4; padding-left: 10px;">
       {content}
     </blockquote>
-    <p>…てか、みりんてゃ、こんなんスルーしたい気分なんだけど？😒 <a href="https://bsky.app/" style="color: #ff69b4;">ブルスカ</a>で確認してよね～♡</p>
+    <p>…てか、みりんてゃ、こんなんスルーしたい気分なんだけど？ᐢ⩌⌯⩌ᐢ <a href="https://bsky.app/" style="color: #ff69b4;">ブルスカ</a>で確認してよね～♡</p>
   </body>
 </html>
 """,
