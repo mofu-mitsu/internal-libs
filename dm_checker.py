@@ -70,6 +70,10 @@ def get_new_dms(handle, app_password):
     try:
         client = Client()
         client.login(login_handle, app_password)
+        # 認証トークンを取得（sessionがない場合の代替）
+        access_token = getattr(client, 'access_token', None) or getattr(client, 'get_access_token', lambda: None)()
+        if not access_token:
+            raise AttributeError("No access token available in Client object")
         # 通知APIで全応答確認
         notifications = client.app.bsky.notification.list_notifications().notifications
         print(f"🔍 Available bsky methods: {dir(client.app.bsky)}")  # デバッグ: 利用可能メソッド
@@ -93,9 +97,9 @@ def get_new_dms(handle, app_password):
                 })
 
         # チャットAPIをHTTPで直接試行
-        headers = {"Authorization": f"Bearer {client.session.get('accessJwt')}"}
+        headers = {"Authorization": f"Bearer {access_token}"}
         chat_response = requests.get("https://bsky.social/xrpc/app.bsky.chat.listMessages", headers=headers)
-        print(f"🔍 Chat API response: {json.dumps(chat_response.json(), indent=2)}")
+        print(f"🔍 Chat API response - Status: {chat_response.status_code}, Body: {json.dumps(chat_response.json(), indent=2)}")
         if chat_response.status_code == 200:
             messages = chat_response.json().get("messages", [])
             for message in messages:
