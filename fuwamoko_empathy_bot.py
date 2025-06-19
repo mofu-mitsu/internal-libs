@@ -1124,7 +1124,7 @@ def process_post(post_data, client, reposted_uris, replied_uris):
                 print(f"🦊 画像処理開始: {i+1}/{len(image_data_list)} ({post_id})")
                 logging.debug(f"画像処理開始: {i+1}/{len(image_data_list)} ({post_id})")
                 if process_image(image_data, text, client=client, post=post_data):
-                    if random.random() > 0.1:
+                    if random.random() > 0.9:
                         print(f"🎲 スキップ: ランダム（90%）: {post_id}")
                         logging.debug(f"スキップ: ランダム: {post_id}")
                         save_fuwamoko_uri(uri, actual_post.indexed_at)
