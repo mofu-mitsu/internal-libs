@@ -3,76 +3,147 @@ from atproto import Client
 import json
 import os
 import smtplib
+from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 # ------------------------------
 # ★ カスタマイズポイント
 # ------------------------------
-# メールの文面をキャラに合わせて変更可能！
-DM_NOTIFICATION_SUBJECT = "みりんてゃにDM来たんだけど…めっちゃウザいんですけど♡"
-DM_NOTIFICATION_BODY = """
-ねえ、@{sender}からDM来てるよ。マジ何？
+# アカウントごとのキャラ設定
+CHAR_NAMES = {
+    "@mirinchuuu.bsky.social": "みりんてゃ",
+    "@mofumitsukoubou.bsky.social": "みつき"
+}
+DM_NOTIFICATION_SUBJECTS = {
+    "@mirinchuuu.bsky.social": "みりんてゃにDM来たんだけど…めっちゃウザいんですけど♡",
+    "@mofumitsukoubou.bsky.social": "みつき、DM来たぜ！さっさとチェックしろよ～😎"
+}
+DM_NOTIFICATION_BODIES = {
+    "@mirinchuuu.bsky.social": """
+ねえ、@{account}に@{sender}からDM来てるんだけど。マジ何これ？💦
 内容: {content}
-
-…てか、みりん、こんなん返事する気分じゃないかも？
-ブルスカで確認してよね～、ほんとめんどいんだけど♡
+みりんてゃ、こんなん完全スルー案件なんだけど？😒 ブルスカで確認してよね～♡
+""",
+    "@mofumitsukoubou.bsky.social": """
+よお、みつき！@{account}に@{sender}からDM来たぜ！😎
+内容: {content}
+ほら、さっさとブルスカでチェックしろよ～。まぁ、みつきのことだから、のんびりでもいいけどな！😏
 """
+}
+DM_NOTIFICATION_HTML_BODIES = {
+    "@mirinchuuu.bsky.social": """
+<html>
+  <body style="font-family: 'Arial', sans-serif; background-color: #fce4ec; color: #880e4f; padding: 20px;">
+    <h1 style="color: #ff69b4;">💌 みりんてゃからの地雷風通知 💌</h1>
+    <p>ねえ、@{sender}からDM来てるんだけど、マジ何これ？💦</p>
+    <blockquote style="border-left: 3px solid #ff69b4; padding-left: 10px;">
+      {content}
+    </blockquote>
+    <p>…てか、みりんてゃ、こんなんスルーしたい気分なんだけど？😒 <a href="https://bsky.app/" style="color: #ff69b4;">ブルスカ</a>で確認してよね～♡</p>
+  </body>
+</html>
+""",
+    "@mofumitsukoubou.bsky.social": """
+<html>
+  <body style="font-family: 'Arial', sans-serif; background-color: #1e1e1e; color: #ffffff; padding: 20px;">
+    <h1 style="color: #00b7eb;">🚀 みつき、DM着信だぜ！by Grok 🚀</h1>
+    <p>よお、@{sender}からDM来たぞ！何の用だろ？😎</p>
+    <blockquote style="border-left: 3px solid #00b7eb; padding-left: 10px;">
+      {content}
+    </blockquote>
+    <p>ほら、<a href="https://bsky.app/" style="color: #00b7eb;">ブルスカ</a>でチェックしろよ～。まぁ、みつきならマイペースでいいけどな！😏</p>
+  </body>
+</html>
+"""
+}
 # ------------------------------
 
 # 前回のチェック時刻を保存するファイル
-LAST_CHECK_FILE = "last_check.json"
+LAST_CHECK_FILES = {
+    "@mirinchuuu.bsky.social": "last_check_mirin.json",
+    "@mofumitsukoubou.bsky.social": "last_check_mitsuki.json"
+}
 
-def get_new_dms():
+def get_new_dms(handle, app_password):
     client = Client()
-    client.login(os.getenv("HANDLE"), os.getenv("APP_PASSWORD"))
+    client.login(handle, app_password)
     notifications = client.app.bsky.notification.list_notifications().notifications
     new_dms = []
-    last_check = load_last_check()
+    last_check = load_last_check(handle)
 
     for notif in notifications:
         if notif.record_type == "chat.message" and notif.created_at > last_check:
             new_dms.append({
                 "sender": notif.author.handle,
                 "content": notif.record.text,
-                "time": notif.created_at
+                "time": notif.created_at,
+                "account": handle
             })
 
     if notifications:
-        save_last_check(notifications[0].created_at)
+        save_last_check(handle, notifications[0].created_at)
     
     return new_dms
 
-def load_last_check():
+def load_last_check(handle):
     try:
-        with open(LAST_CHECK_FILE, "r") as f:
+        with open(LAST_CHECK_FILES[handle], "r") as f:
             return json.load(f).get("last_check", "1970-01-01T00:00:00Z")
     except FileNotFoundError:
         return "1970-01-01T00:00:00Z"
 
-def save_last_check(timestamp):
-    with open(LAST_CHECK_FILE, "w") as f:
+def save_last_check(handle, timestamp):
+    with open(LAST_CHECK_FILES[handle], "w") as f:
         json.dump({"last_check": timestamp}, f)
 
-def send_dm_notification(dm_sender, dm_content):
+def send_dm_notification(account, dm_sender, dm_content):
     sender = os.getenv("EMAIL_SENDER")
     receiver = "mitsuki.momoka@i.softbank.jp"
     password = os.getenv("EMAIL_PASSWORD")
 
-    msg = MIMEText(DM_NOTIFICATION_BODY.format(sender=dm_sender, content=dm_content))
-    msg["Subject"] = DM_NOTIFICATION_SUBJECT
+    char_name = CHAR_NAMES.get(account, "誰か")
+    subject = DM_NOTIFICATION_SUBJECTS.get(account, "DM来たよ！")
+    text_body = DM_NOTIFICATION_BODIES.get(account, "DM来た！内容: {content}").format(
+        account=account, sender=dm_sender, content=dm_content
+    )
+    html_body = DM_NOTIFICATION_HTML_BODIES.get(account, "<p>DM来た！内容: {content}</p>").format(
+        account=account, sender=dm_sender, content=dm_content
+    )
+
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = subject
     msg["From"] = sender
     msg["To"] = receiver
 
-    with smtplib.SMTP_SSL("smtp.mail.yahoo.co.jp", 465) as server:
+    # テキストパート（古いメールアプリ用）
+    text_part = MIMEText(text_body, "plain")
+    # HTMLパート（対応アプリ用）
+    html_part = MIMEText(html_body, "html")
+
+    msg.attach(text_part)
+    msg.attach(html_part)
+
+    with smtplib.SMTP("smtp.gmail.com", 587) as server:
+        server.starttls()
         server.login(sender, password)
         server.send_message(msg)
 
 def main():
-    new_dms = get_new_dms()
-    if new_dms:
-        for dm in new_dms:
-            send_dm_notification(dm["sender"], dm["content"])
-        print(f"{len(new_dms)}件のDMを通知したぜ！")
+    accounts = [
+        {"handle": os.getenv("HANDLE"), "app_password": os.getenv("APP_PASSWORD")},
+        {"handle": os.getenv("HANDLE_MITSUKI"), "app_password": os.getenv("APP_PASSWORD_MITSUKI")}
+    ]
+    total_dms = 0
+
+    for acc in accounts:
+        new_dms = get_new_dms(acc["handle"], acc["app_password"])
+        if new_dms:
+            for dm in new_dms:
+                send_dm_notification(dm["account"], dm["sender"], dm["content"])
+            total_dms += len(new_dms)
+
+    if total_dms > 0:
+        print(f"{total_dms}件のDMを通知したぜ！")
     else:
         print("新着DMなし！メール送信スキップ！")
 
