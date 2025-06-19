@@ -69,30 +69,31 @@ def get_new_dms(handle, app_password):
     try:
         client = Client()
         client.login(login_handle, app_password)
-        notifications = client.app.bsky.notification.list_notifications().notifications
+        # 通知APIからチャットAPIに変更
+        messages = client.app.bsky.chat.listMessages()
         new_dms = []
         last_check = load_last_check(f"@{login_handle}")
 
-        for notif in notifications:
-            # デバッグ: Notificationの全構造とrecordの中身
-            print(f"🔍 Notification dict: {json.dumps(notif.__dict__, indent=2, default=str)}")
-            print(f"🔍 Record dict: {json.dumps(notif.record.__dict__ if hasattr(notif, 'record') else {}, indent=2, default=str)}")
-            record_type = getattr(notif.record, "$type", "") if hasattr(notif, "record") else ""
-            record_text = getattr(notif.record, "text", "") if hasattr(notif, "record") else ""
-            indexed_at = notif.__dict__.get("indexedAt", "")
-            print(f"🔍 record type: {record_type}, content: {record_text}, indexed_at: {indexed_at}")  # デバッグ用
-            if record_type == "app.bsky.chat.message" and indexed_at and indexed_at > last_check:
+        for message in messages.messages:
+            # デバッグ: Messageの全構造
+            print(f"🔍 Message dict: {json.dumps(message.__dict__, indent=2, default=str)}")
+            message_type = getattr(message, "$type", "") if hasattr(message, "$type") else ""
+            message_text = getattr(message, "content", {}).get("text", "") if hasattr(message, "content") else ""
+            message_time = getattr(message, "createdAt", "") if hasattr(message, "createdAt") else ""
+            sender_handle = getattr(message, "sender", {}).get("handle", "") if hasattr(message, "sender") else ""
+            print(f"🔍 message type: {message_type}, content: {message_text}, time: {message_time}, sender: {sender_handle}")  # デバッグ用
+            if message_type == "app.bsky.chat.message" and message_time and message_time > last_check:
                 new_dms.append({
-                    "sender": notif.author.handle,
-                    "content": record_text,
-                    "time": indexed_at,
+                    "sender": sender_handle,
+                    "content": message_text,
+                    "time": message_time,
                     "account": f"@{login_handle}"
                 })
 
-        if notifications:
-            first_indexed = notifications[0].__dict__.get("indexedAt", "")
-            if first_indexed:
-                save_last_check(f"@{login_handle}", first_indexed)
+        if messages.messages:
+            first_time = messages.messages[0].__dict__.get("createdAt", "")
+            if first_time:
+                save_last_check(f"@{login_handle}", first_time)
         
         return new_dms
     except Exception as e:
