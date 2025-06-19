@@ -74,19 +74,24 @@ def get_new_dms(handle, app_password):
         last_check = load_last_check(f"@{login_handle}")
 
         for notif in notifications:
+            # デバッグ: Notificationの構造確認
+            print(f"🔍 Notification dict: {json.dumps(notif.__dict__, indent=2, default=str)}")
             record_type = getattr(notif.record, "$type", "")
             record_text = getattr(notif.record, "text", "")
-            print(f"🔍 record type: {record_type}, content: {record_text}")  # デバッグ用
-            if record_type == "app.bsky.chat.message" and notif.indexedAt > last_check:
+            indexed_at = notif.__dict__.get("indexedAt", "")
+            print(f"🔍 record type: {record_type}, content: {record_text}, indexed_at: {indexed_at}")  # デバッグ用
+            if record_type == "app.bsky.chat.message" and indexed_at and indexed_at > last_check:
                 new_dms.append({
                     "sender": notif.author.handle,
                     "content": record_text,
-                    "time": notif.indexedAt,
+                    "time": indexed_at,
                     "account": f"@{login_handle}"
                 })
 
         if notifications:
-            save_last_check(f"@{login_handle}", notifications[0].indexedAt)
+            first_indexed = notifications[0].__dict__.get("indexedAt", "")
+            if first_indexed:
+                save_last_check(f"@{login_handle}", first_indexed)
         
         return new_dms
     except Exception as e:
