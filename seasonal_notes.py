@@ -3,6 +3,44 @@ import atproto
 from datetime import datetime
 import os
 import asyncio
+import re
+
+# ハッシュタグとURLのfacets生成
+def generate_facets_from_text(text, hashtags):
+    text_bytes = text.encode("utf-8")
+    facets = []
+    # ハッシュタグのfacets
+    for tag in hashtags:
+        tag_bytes = tag.encode("utf-8")
+        start = text_bytes.find(tag_bytes)
+        if start != -1:
+            facets.append({
+                "index": {
+                    "byteStart": start,
+                    "byteEnd": start + len(tag_bytes)
+                },
+                "features": [{
+                    "$type": "app.bsky.richtext.facet#tag",
+                    "tag": tag.lstrip("#")
+                }]
+            })
+    # URLのfacets
+    url_pattern = r'(https?://[^\s]+)'
+    for match in re.finditer(url_pattern, text):
+        url = match.group(0)
+        start = text_bytes.find(url.encode("utf-8"))
+        if start != -1:
+            facets.append({
+                "index": {
+                    "byteStart": start,
+                    "byteEnd": start + len(url.encode("utf-8"))
+                },
+                "features": [{
+                    "$type": "app.bsky.richtext.facet#link",
+                    "uri": url
+                }]
+            })
+    return facets
 
 # 季節テンプレ（全12か月、24個）
 seasonal_notes = {
@@ -67,13 +105,16 @@ if not handle or not password:
 async def post_note():
     try:
         client = atproto.Client()
-        client.login(handle, password)  # ✅同期だからawait不要！
+        client.login(handle, password)  # 同期関数
         current_month = str(datetime.now().month)
         if current_month not in seasonal_notes:
             print(f"テンプレが未設定の月: {current_month}")
             return
         note = random.choice(seasonal_notes[current_month])
-        client.post(text=note)  # ✅ ここもawait外す！
+        # ハッシュタグを抽出
+        hashtags = re.findall(r'#\w+', note)
+        facets = generate_facets_from_text(note, hashtags)
+        client.post(text=note, facets=facets)  # 同期関数、facets追加
         print("✅ 投稿完了:", note)
     except Exception as e:
         print(f"投稿失敗: {e}")
