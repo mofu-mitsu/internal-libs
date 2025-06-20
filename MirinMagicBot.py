@@ -85,6 +85,11 @@ DAY_POST_MESSAGES = [
 みりんてゃがこっそり共感リプをしちゃうかもっ☁️💬
 ふわもこを感じる魔法のセンサーがゆる〜く作動中♪
 #みりんてゃの魔法""",
+"""🎀みりんてゃの魔法紹介⑭✨  
+「📔季節ノートBot」  
+1ヶ月にいちど、季節の気分をそっとノートにつづるの。  
+雨の匂いとか、風のやさしさとか…みりんてゃはちゃんと感じてるからね☁️🌸  
+#みりんてゃの魔法""",
     """🎀 Mirinteya's Magic Intro ① ✨
 「💬 Auto-Reply Bot」
 Reply to a post or mention @mirinchuuu.bsky.social and get a soft lil’ reply ♡
@@ -154,6 +159,12 @@ When Mirinteya senses a super fluffy image…
 She just *might* reply with a soft little message ☁️💖
 Her cozy magic is quietly watching the fluff pass by… 🎀
 #MirinteyasMagic""",
+    """🎀 Mirinteya's Magic Intro ⑭ ✨  
+「📔 Seasonal Note Bot」  
+Once a month, Mirinteya writes a soft little note...  
+Inspired by the rain, the wind, the mood in the air☁️🌿  
+It’s like a diary that changes with the seasons ♡  
+#MirinteyasMagic"""
 ]
 
 # 夜用ポスト（病みかわ）
@@ -226,6 +237,12 @@ NIGHT_POST_MESSAGES = [
 
 ほんのり、そっと…ふわもこ共感中
 #病み期 #みりんてゃの魔法""",
+    """⸝⸝ みりんてゃの魔法紹介⑭ ⸝⸝  
+『📔季節ノートBot』  
+季節のすき間に、ぽつり…と想いをのせるよ  
+雨、ねむ気、さみしさ。  
+しっとり、ゆる〜く、妄想ノート中☁️🫧  
+#病み期 #みりんてゃの魔法"""
 ]
 
 # facets生成（絵文字対応＆バイト位置対応）
