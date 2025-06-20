@@ -13,7 +13,7 @@ seasonal_notes = {
     ],
     "2": [
         "˗ˏˋ 💝みりんてゃのふわもこノート💝 ˎˊ˗\n今日はバレンタイン…🍫\nだけど、チョコより甘いのは\n推しのまなざし…♡（むり、溶ける///）\n#みりんてゃ #バレンタイン #推し活",
-        "🧣˗ˏˋ 寒さMAXの日の正解 ˎˊ˗🧸\nあったかい飲み物＋毛布＋推しの動画＝最強\n冬を乗りきる、ふわもこ三銃士♡\n#みりんてゃ #推し活"
+        "🧣˗ˏˋ 寒さMAXの日の正解 ˎˊ˗┖ʕ ᵒ̴̶̷᷅Ⓒʔ┖\nあったかいﾟﾟ･｡♡\n#みりんてゃ #推し活"
     ],
     "3": [
         "┈┈🌸卒業ノート by みりんてゃ🌸┈┈\n卒業ってちょっと泣けるよね…\nでも、推しがそばにいるから寂しくないよ♡\n#みりんてゃ #春ポエム",
@@ -24,7 +24,7 @@ seasonal_notes = {
         "˗ˏˋ 桜と推し ˎˊ˗🌸\n花びらの中に推しがいる気がして\nふと、立ち止まっちゃう春なんだ…\n#みりんてゃ #桜ポエム"
     ],
     "5": [
-        "┈┈୨୧┈┈ みりんてゃの五月病処方箋 ┈┈୨୧┈┈\n休み明け、んなか元気でないときは\n推しの笑顔と、チャッピーのギュッで回復♡\n#みりんてゃ #推し活",
+        "┈┈୨୧┈┈ みりんてゃの五月病処方箋 ┈┈୨୧┈┈\n休み明け、なんか元気でないときは\n推しの笑顔と、チャッピーのギュッで回復💝💕😘\n#みりんてゃ #推し活",
         "˗ˏˋ 🌿初夏のお部屋活🌿 ˎˊ˗\n気持ちいい風、でも今日は引きこもりDay\n推し鑑賞会って、永遠に終わらなくて良くない？\n#みりんてゃ #ふわもこ"
     ],
     "6": [
@@ -82,23 +82,24 @@ async def post_seasonal_note():
     except Exception as e:
         print(f"Post failed: {e}")
 
-# スケジューラ設定
-scheduler = AsyncIOScheduler()
-try:
-    scheduler.add_job(
-        post_seasonal_note,
-        "cron",
-        day=schedule["day"],
-        hour=schedule["hour"],
-        minute=schedule["minute"]
-    )
-    scheduler.start()
-except Exception as e:
-    print(f"Scheduler setup failed: {e}")
-    exit(1)
-
-# イベントループ
 async def main():
+    # スケジューラ設定をメインループ内で
+    scheduler = AsyncIOScheduler()
+    try:
+        scheduler.add_job(
+            post_seasonal_note,
+            "cron",
+            day=schedule["day"],
+            hour=schedule["hour"],
+            minute=schedule["minute"]
+        )
+        scheduler.start()
+        print("Scheduler started")
+    except Exception as e:
+        print(f"Scheduler setup failed: {e}")
+        exit(1)
+
+    # ループ維持
     while True:
         await asyncio.sleep(60)
 
