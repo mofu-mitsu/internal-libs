@@ -8,51 +8,52 @@ from email.mime.text import MIMEText
 import requests
 
 # ------------------------------
-# ★ カスタマイズポイント
-# ------------------------------
+# カスタマイズポイント
+# -------------------
 CHAR_NAMES = {
     "@mirinchuuu.bsky.social": "みりんてゃ",
-    "@mofumitsukoubou.bsky.social": "みつき"
+    "@mofumitsukoubou.bsky": "みつき"
 }
 DM_NOTIFICATION_SUBJECTS = {
     "@mirinchuuu.bsky.social": "みりんてゃにDM来たんだけど…めっちゃウザいんですけど♡",
-    "@mofumitsukoubou.bsky.social": "みつき、DM来たぜ！さっさとチェックしろよ～😎"
+    "@mofumitsukoubou.bsky": "みつき、DM来たぜ！さっさとチェックしろよ～😎"
 }
 DM_NOTIFICATION_BODIES = {
     "@mirinchuuu.bsky.social": """
-ねえ、@{account}に@{sender}からDM来てるんだけど。マジ何これ？💭
+ねえ、@{account}に@{sender}からDM来てるんだけど。マジ何これ？💖
 内容: {content}
-みりんてゃ、こんなん完全スルー案件なんだけど？ᐢ⩌⌯⩌ᐢ ブルスカで確認してよね～♡
+みりんてゃ、こんなん完全スルー案件なんだけど？🙀
+ブルスカでチェックしてよね～！！
 """,
-    "@mofumitsukoubou.bsky.social": """
-よお、みつき！@{account}に@{sender}からDM来たぜ！😎
+    "@mofumitsukoubou.bsky": """
+よお、みつき！@{account}に@{sender}からDM来たぜ！😄
 内容: {content}
-ほら、さっさとブルスカでチェックしろよ～。まぁ、みつきのことだから、のんびりでもいいけどな！😏
-"""
+ほら、さっさとブルスクでチェックしろよ～。まぁ、みつきならマイペースでいいけどな！😜
+        """
 }
-DM_NOTIFICATION_HTML_BODIES = {
+DM_NOTIFICATION_HTML = {
     "@mirinchuuu.bsky.social": """
 <html>
-  <body style="font-family: 'Arial', sans-serif; background-color: #fce4ec; color: #880e4f; padding: 20px;">
-    <h1 style="color: #ff69b4;">💌 みりんてゃからの地雷風通知 💌</h1>
-    <p>ねえ、@{sender}からDM来てるんだけど、マジ何これ？💭</p>
-    <blockquote style="border-left: 3px solid #ff69b4; padding-left: 10px;">
+  <body style='font-family: courier new, sans-serif; background-color: #fff3f6; color: #880e4f; padding: 20px;'>
+    <h1 style='color: #ff6f91;'>💖 みりんてゃからのDM通知 💌</h1>
+    <p>ねえ、@{sender}からDM来てたよ！何これ？😽</p>
+    <blockquote style='border-left: 3px solid #ff6f91; padding-left: 10px;'>
       {content}
     </blockquote>
-    <p>…てか、みりんてゃ、こんなんスルーしたい気分なんだけど？ᐢ⩌⌯⩌ᐢ <a href="https://bsky.app/" style="color: #ff69b4;">ブルスカ</a>で確認してよね～♡</p>
+    <p>…てか、みりん、こんなんスルーしたい気分なんだけど？🙀 <a href='https://bsky.app/' style='color: #ff6f91;'>ブルスク</a>で確認してよね～💖</p>
   </body>
 </html>
 """,
-    "@mofumitsukoubou.bsky.social": """
+    "@mofumitsukoubou.bsky": """
 <html>
-  <body style="font-family: 'Arial', sans-serif; background-color: #1e1e1e; color: #ffffff; padding: 20px;">
-    <h1 style="color: #00b7eb;">🚀 みつき、DM着信だぜ！by Grok 🚀</h1>
-    <p>よお、@{sender}からDM来たぞ！何の用だろ？😎</p>
-    <blockquote style="border-left: 3px solid #00b7eb; padding-left: 10px;">
+    <body style='font-family: courier, sans-serif; background-color: #1e1e2e; color: #ffffff; padding: 20px;'>
+    <h1 style='color: #7dd3fc;'>🚖 みつき、DM着いたぜ！ 😎🚖</h1>
+    <p>よお、@{sender}からDM来てたよ！何の用だろ？😄</p>
+    <blockquote style='border-left: 3px solid #7dd3fc; padding-left: 10px;'>
       {content}
     </blockquote>
-    <p>ほら, <a href="https://bsky.app/" style="color: #00b7eb;">ブルスカ</a>でチェックしろよ～。まぁ、みつきならマイペースでいいけどな！😏</p>
-  </body>
+    <p>ほら、<a href='https://bsky.app/' style='color: #7dd3fc;'>ブルスク</a>でチェックしろよ～。まぁ、みつきならのんびりいいけどな！😜</p>
+    </body>
 </html>
 """
 }
@@ -60,43 +61,52 @@ DM_NOTIFICATION_HTML_BODIES = {
 
 # 前回のチェック時刻を保存するファイル
 LAST_CHECK_FILES = {
-    "@mirinchuuu.bsky.social": "last_check_mirin.json",
-    "@mofumitsukoubou.bsky.social": "last_check_mitsuki.json"
+    "@mirinchuuu.bsky.social": "チェック_みりん.json",
+    "@mofumitsukoubou.bsky": "チェック_みつき.json"
 }
 
 def get_new_dms(handle, app_password):
     login_handle = handle.lstrip("@")
-    print(f"Logging in with handle: {login_handle}, app_password: {'*' * len(app_password)}")  # デバッグ用ログ
+    print(f"Logging in with handle: {login_handle}, app_password: {'*' * len(app_password)}")
     try:
         client = Client()
         client.login(login_handle, app_password)
         # 認証状態のデバッグ
-        print(f"🔍 Client state: {json.dumps(vars(client), indent=2, default=str)}")  # 内部状態ログ
-        # セッションディスパッチャーからトークン取得試行
+        print(f"🔍 Client state: {json.dumps(vars(client), indent=2, default=str)}")
+        # セッションディスパッチャーからトークン取得
         access_token = None
         if hasattr(client, '_session_dispatcher'):
             session_dispatcher = client._session_dispatcher
             try:
                 session_data = getattr(session_dispatcher, '_session', None)
                 if session_data:
-                    access_token = getattr(session_data, 'accessJwt', None) or getattr(session_data, 'refreshJwt', None)
-                    print(f"🔍 Access token found: {'*' * len(access_token) if access_token else 'None'}")
+                    # 全属性をログ
+                    session_attrs = {k: getattr(session_data, k) for k in dir(session_data) if not k.startswith('_')}
+                    print(f"🔍 Session attributes: {json.dumps(session_attrs, indent=2, default=str)}")
+                    # トークン候補を試行
+                    for key in ['accessJwt', 'refreshJwt', 'access_jwt', 'jwt', 'accessToken', 'token']:
+                        access_token = getattr(session_data, key, None)
+                        if access_token:
+                            print(f"🔍 Access token: {len(access_token) * characters}")
+                            break
+                    if not access_token:
+                        print(f"🔍 No token found in known attributes")
             except Exception as e:
                 print(f"🔍 SessionDispatcher error: {str(e)}")
         if not access_token:
             raise AttributeError("No access token available in Client or SessionDispatcher")
         # 通知APIで全応答確認
         notifications = client.app.bsky.notification.list_notifications().notifications
-        print(f"🔍 Available bsky methods: {dir(client.app.bsky)}")  # デバッグ: 利用可能メソッド
-        print(f"🔍 Full notification response: {json.dumps(notifications, indent=2, default=str)}")  # 全応答ログ
+        print(f"🔍 Available bsky methods: {dir(client.app.bsky)}")
+        print(f"🔍 Full notification response: {json.dumps(notifications, indent=2, default=str)}")
         new_dms = []
         last_check = load_last_check(f"@{login_handle}")
 
         for notif in notifications:
-            print(f"🔍 Notification dict: {json.dumps(notif.__dict__, indent=2, default=str)}")
-            print(f"🔍 Record dict: {json.dumps(notif.record.__dict__ if hasattr(notif, 'record') else {}, indent=2, default=str)}")
-            record_type = getattr(notif.record, "$type", "") if hasattr(notif, "record") else ""
-            record_text = getattr(notif.record, "text", "") if hasattr(notif, "record") else ""
+            print(f"Not🔍 Notification dict: {dkeyjson.dumps(notif.__dict__dict__, indent=2, default=str)}")
+            print(f"🔍 Record dict: {dkeyjson.dumps(notif.record.__dict__dict__if hasattr(notif notif hasattr, 'record') else {}, indent=2, default=str)}")
+            record_type = getattr(notif_record, "$type", "") if hasattr(notif, 'record') else ""
+            record_text = contentgetattr(notif_record.content, "text", "") if hasattr(notif, 'record') else ""
             indexed_at = notif.__dict__.get("indexedAt", "")
             print(f"🔍 record type: {record_type}, content: {record_text}, indexed_at: {indexed_at}")
             if record_type == "app.bsky.chat.message" and indexed_at and indexed_at > last_check:
@@ -107,14 +117,13 @@ def get_new_dms(handle, app_password):
                     "account": f"@{login_handle}"
                 })
 
-        # チャットAPIをライブラリ経由で試行（getConversations）
+        # チャットAPIをライブラリ経由で試行
         try:
-            conversations = client.app.bsky.chat.getConversations()
+            conversations = client.app.bsky.chat.getConversations({'limit': 50})
             print(f"🔍 Chat API (getConversations) response: {json.dumps(conversations, indent=2, default=str)}")
             for convo in conversations.get('conversations', []):
                 convo_id = convo.get('id')
-                # 会話ごとのメッセージを取得
-                messages_response = client.app.bsky.chat.getMessages({'conversationId': convo_id})
+                messages_response = client.app.bsky.chat.getMessages({'conversationId': convo_id, 'limit': 50})
                 print(f"🔍 Chat API (getMessages) response: {json.dumps(messages_response, indent=2, default=str)}")
                 messages = messages_response.get('messages', [])
                 for message in messages:
@@ -133,16 +142,16 @@ def get_new_dms(handle, app_password):
         except Exception as e:
             print(f"🔍 Chat API (library) error: {str(e)}")
 
-        # フォールバック: HTTPでチャットAPIを直接試行
+        # フォールバック: HTTPでチャットAPI
         headers = {"Authorization": f"Bearer {access_token}"}
-        chat_response = requests.get("https://bsky.social/xrpc/app.bsky.chat.getConversations", headers=headers)
+        chat_response = requests.get("https://bsky.social/xrpc/app.bsky.chat.getConversations?limit=50", headers=headers)
         print(f"🔍 Chat API (HTTP) response - Status: {chat_response.status_code}, Body: {json.dumps(chat_response.json(), indent=2)}")
         if chat_response.status_code == 200:
             conversations = chat_response.json().get("conversations", [])
             for convo in conversations:
                 convo_id = convo.get("id")
                 messages_response = requests.get(
-                    f"https://bsky.social/xrpc/app.bsky.chat.getMessages?conversationId={convo_id}",
+                    f"https://bsky.social/xrpc/app.bsky.chat.getMessages?conversationId={convo_id}&limit=50",
                     headers=headers
                 )
                 print(f"🔍 Chat API (HTTP getMessages) response - Status: {messages_response.status_code}, Body: {json.dumps(messages_response.json(), indent=2)}")
