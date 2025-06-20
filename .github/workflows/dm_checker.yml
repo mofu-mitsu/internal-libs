@@ -10,13 +10,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.10"
       - name: Install dependencies
         run: |
-          pip install atproto requests
+          pip install --upgrade atproto requests python-dotenv
+      - name: Show commit SHA
+        run: |
+          echo "Running on commit: $GITHUB_SHA"
       - name: Run DM checker
         env:
           HANDLE: ${{ secrets.HANDLE }}
@@ -25,4 +30,6 @@ jobs:
           APP_PASSWORD_MITSUKI: ${{ secrets.APP_PASSWORD_MITSUKI }}
           EMAIL_SENDER: ${{ secrets.EMAIL_SENDER }}
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+          EMAIL_RECEIVER: ${{ secrets.EMAIL_RECEIVER }}
+          DEBUG: "1"
         run: python dm_checker.py
