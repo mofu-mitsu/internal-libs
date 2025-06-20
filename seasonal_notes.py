@@ -67,13 +67,13 @@ if not handle or not password:
 async def post_note():
     try:
         client = atproto.Client()
-        client.login(handle, password)  # awaitを外す！
+        client.login(handle, password)  # ✅同期だからawait不要！
         current_month = str(datetime.now().month)
         if current_month not in seasonal_notes:
             print(f"テンプレが未設定の月: {current_month}")
             return
         note = random.choice(seasonal_notes[current_month])
-        await client.post(text=note)  # awaitは必要
+        client.post(text=note)  # ✅ ここもawait外す！
         print("✅ 投稿完了:", note)
     except Exception as e:
         print(f"投稿失敗: {e}")
