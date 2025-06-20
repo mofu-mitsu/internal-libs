@@ -153,7 +153,7 @@ Mention or reply to get your item magic! 💌
 When Mirinteya senses a super fluffy image…
 She just *might* reply with a soft little message ☁️💖
 Her cozy magic is quietly watching the fluff pass by… 🎀
-#MirinteyasMagic"""
+#MirinteyasMagic""",
 ]
 
 # 夜用ポスト（病みかわ）
@@ -225,7 +225,7 @@ NIGHT_POST_MESSAGES = [
 心がぎゅってなって、返事したくなっちゃうの ☁️💭
 
 ほんのり、そっと…ふわもこ共感中
-#病み期 #みりんてゃの魔法"""
+#病み期 #みりんてゃの魔法""",
 ]
 
 # facets生成（絵文字対応＆バイト位置対応）
