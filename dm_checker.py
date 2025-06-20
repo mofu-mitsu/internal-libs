@@ -3,9 +3,9 @@ from atproto import Client
 import json
 import os
 import smtplib
-import requests
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+import requests
 
 # ------------------------------
 # ★ カスタマイズポイント
@@ -77,12 +77,10 @@ def get_new_dms(handle, app_password):
         if hasattr(client, '_session_dispatcher'):
             session_dispatcher = client._session_dispatcher
             try:
-                # 仮定: SessionDispatcherにget_access_tokenメソッドがある
-                access_token = getattr(session_dispatcher, 'get_access_token', lambda: None)()
-                if not access_token:
-                    # 内部属性からトークンを探す
-                    session_data = getattr(session_dispatcher, '_session', {})
-                    access_token = session_data.get('accessJwt') or session_data.get('refreshJwt')
+                session_data = getattr(session_dispatcher, '_session', None)
+                if session_data:
+                    access_token = getattr(session_data, 'accessJwt', None) or getattr(session_data, 'refreshJwt', None)
+                    print(f"🔍 Access token found: {'*' * len(access_token) if access_token else 'None'}")
             except Exception as e:
                 print(f"🔍 SessionDispatcher error: {str(e)}")
         if not access_token:
@@ -109,50 +107,64 @@ def get_new_dms(handle, app_password):
                     "account": f"@{login_handle}"
                 })
 
-        # チャットAPIをライブラリ経由で試行
+        # チャットAPIをライブラリ経由で試行（getConversations）
         try:
-            chat_messages = client.app.bsky.chat.listMessages()
-            print(f"🔍 Chat API (library) response: {json.dumps(chat_messages, indent=2, default=str)}")
-            messages = chat_messages.get('messages', [])
-            for message in messages:
-                message_type = message.get("$type", "")
-                message_text = message.get("content", {}).get("text", "")
-                message_time = message.get("createdAt", "")
-                sender_handle = message.get("sender", {}).get("handle", "")
-                print(f"🔍 message type: {message_type}, content: {message_text}, time: {message_time}, sender: {sender_handle}")
-                if message_type == "app.bsky.chat.message" and message_time and message_time > last_check:
-                    new_dms.append({
-                        "sender": sender_handle,
-                        "content": message_text,
-                        "time": message_time,
-                        "account": f"@{login_handle}"
-                    })
+            conversations = client.app.bsky.chat.getConversations()
+            print(f"🔍 Chat API (getConversations) response: {json.dumps(conversations, indent=2, default=str)}")
+            for convo in conversations.get('conversations', []):
+                convo_id = convo.get('id')
+                # 会話ごとのメッセージを取得
+                messages_response = client.app.bsky.chat.getMessages({'conversationId': convo_id})
+                print(f"🔍 Chat API (getMessages) response: {json.dumps(messages_response, indent=2, default=str)}")
+                messages = messages_response.get('messages', [])
+                for message in messages:
+                    message_type = message.get("$type", "")
+                    message_text = message.get("content", {}).get("text", "")
+                    message_time = message.get("createdAt", "")
+                    sender_handle = message.get("sender", {}).get("handle", "")
+                    print(f"🔍 message type: {message_type}, content: {message_text}, time: {message_time}, sender: {sender_handle}")
+                    if message_type == "app.bsky.chat.message" and message_time and message_time > last_check:
+                        new_dms.append({
+                            "sender": sender_handle,
+                            "content": message_text,
+                            "time": message_time,
+                            "account": f"@{login_handle}"
+                        })
         except Exception as e:
             print(f"🔍 Chat API (library) error: {str(e)}")
 
         # フォールバック: HTTPでチャットAPIを直接試行
         headers = {"Authorization": f"Bearer {access_token}"}
-        chat_response = requests.get("https://bsky.social/xrpc/app.bsky.chat.listMessages", headers=headers)
+        chat_response = requests.get("https://bsky.social/xrpc/app.bsky.chat.getConversations", headers=headers)
         print(f"🔍 Chat API (HTTP) response - Status: {chat_response.status_code}, Body: {json.dumps(chat_response.json(), indent=2)}")
         if chat_response.status_code == 200:
-            messages = chat_response.json().get("messages", [])
-            for message in messages:
-                message_type = message.get("$type", "")
-                message_text = message.get("content", {}).get("text", "")
-                message_time = message.get("createdAt", "")
-                sender_handle = message.get("sender", {}).get("handle", "")
-                print(f"🔍 message type: {message_type}, content: {message_text}, time: {message_time}, sender: {sender_handle}")
-                if message_type == "app.bsky.chat.message" and message_time and message_time > last_check:
-                    new_dms.append({
-                        "sender": sender_handle,
-                        "content": message_text,
-                        "time": message_time,
-                        "account": f"@{login_handle}"
-                    })
+            conversations = chat_response.json().get("conversations", [])
+            for convo in conversations:
+                convo_id = convo.get("id")
+                messages_response = requests.get(
+                    f"https://bsky.social/xrpc/app.bsky.chat.getMessages?conversationId={convo_id}",
+                    headers=headers
+                )
+                print(f"🔍 Chat API (HTTP getMessages) response - Status: {messages_response.status_code}, Body: {json.dumps(messages_response.json(), indent=2)}")
+                if messages_response.status_code == 200:
+                    messages = messages_response.json().get("messages", [])
+                    for message in messages:
+                        message_type = message.get("$type", "")
+                        message_text = message.get("content", {}).get("text", "")
+                        message_time = message.get("createdAt", "")
+                        sender_handle = message.get("sender", {}).get("handle", "")
+                        print(f"🔍 message type: {message_type}, content: {message_text}, time: {message_time}, sender: {sender_handle}")
+                        if message_type == "app.bsky.chat.message" and message_time and message_time > last_check:
+                            new_dms.append({
+                                "sender": sender_handle,
+                                "content": message_text,
+                                "time": message_time,
+                                "account": f"@{login_handle}"
+                            })
 
-        if notifications or messages:
+        if notifications or new_dms:
             first_time = (notifications[0].__dict__.get("indexedAt", "") if notifications else
-                         messages[0].get("createdAt", "")) if notifications or messages else ""
+                         new_dms[0]["time"]) if notifications or new_dms else ""
             if first_time:
                 save_last_check(f"@{login_handle}", first_time)
         
@@ -226,7 +238,6 @@ def main():
         print(f"{total_dms}件のDMを通知したぜ！")
     else:
         print("新着DMなし！メール送信スキップ！")
-        # デバッグ用にメール送信を追加
         send_dm_notification("test@test.com", "TestSender", "デバッグ: DM検出なし（エラー再確認用）")
 
 if __name__ == "__main__":
