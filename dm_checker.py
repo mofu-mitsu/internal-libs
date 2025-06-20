@@ -6,17 +6,20 @@ import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import requests
+from datetime import datetime
 
 # ------------------------------
 # ★ カスタマイズポイント
 # ------------------------------
 CHAR_NAMES = {
     "@mirinchuuu.bsky.social": "みりんてゃ",
-    "@mofumitsukoubou.bsky.social": "みつき"
+    "@mofumitsukoubou.bsky.social": "みつき",
+    "@debug.test": "デバッグ君"
 }
 DM_NOTIFICATION_SUBJECTS = {
     "@mirinchuuu.bsky.social": "みりんてゃにDM来たんだけど…めっちゃウザいんですけど♡",
-    "@mofumitsukoubou.bsky.social": "みつき、DM来たぜ！さっさとチェックしろよ～😎"
+    "@mofumitsukoubou.bsky.social": "みつき、DM来たぜ！さっさとチェックしろよ～😎",
+    "@debug.test": "デバッグ通知だよ！チェックしてね！"
 }
 DM_NOTIFICATION_BODIES = {
     "@mirinchuuu.bsky.social": """
@@ -28,6 +31,11 @@ DM_NOTIFICATION_BODIES = {
 よお、みつき！@{account}に@{sender}からDM来たぜ！😎
 内容: {content}
 ほら、さっさとブルスカでチェックしろよ～。まぁ、みつきならのんびりでもいいけどな！😜
+""",
+    "@debug.test": """
+デバッグ通知だよ！@{account}でエラー確認！
+内容: {content}
+みつき、ログ見て直してね～！
 """
 }
 DM_NOTIFICATION_HTML_BODIES = {
@@ -54,6 +62,18 @@ DM_NOTIFICATION_HTML_BODIES = {
     <p>ほら, <a href="https://bsky.app/" style="color: #00b7eb;">ブルスカ</a>でチェックしろよ～。まぁ、みつきならマイペースでいいけどな！😜</p>
   </body>
 </html>
+""",
+    "@debug.test": """
+<html>
+  <body style="font-family: 'Arial', sans-serif; background-color: #f0f0f0; color: #333; padding: 20px;">
+    <h1 style="color: #666;">🛠 デバッグ通知 🛠</h1>
+    <p>@{sender}からのデバッグ情報だよ！</p>
+    <blockquote style="border-left: 3px solid #666; padding-left: 10px;">
+      {content}
+    </blockquote>
+    <p>みつき、ログ確認してね～！</p>
+  </body>
+</html>
 """
 }
 # ------------------------------
@@ -61,53 +81,58 @@ DM_NOTIFICATION_HTML_BODIES = {
 # 前回のチェック時刻を保存するファイル
 LAST_CHECK_FILES = {
     "@mirinchuuu.bsky.social": "last_check_mirin.json",
-    "@mofumitsukoubou.bsky.social": "last_check_mitsuki.json"
+    "@mofumitsukoubou.bsky.social": "last_check_mitsuki.json",
+    "@debug.test": "last_check_debug.json"
 }
+
+# デバッグモード
+DEBUG = os.getenv("DEBUG", "0") == "1"
+
+def debug_log(message):
+    if DEBUG:
+        print(f"🔍 [DEBUG] {datetime.now().isoformat()}: {message}")
 
 def get_new_dms(handle, app_password):
     login_handle = handle.lstrip("@")
-    print(f"Logging in with handle: {login_handle}, app_password: {'*' * len(app_password)}")
+    debug_log(f"Logging in with handle: {login_handle}, app_password: {'*' * len(app_password)}")
     try:
         client = Client()
         client.login(login_handle, app_password)
-        # 認証状態のデバッグ
-        print(f"🔍 Client state: {json.dumps(vars(client), indent=2, default=str)}")
-        # セッションディスパッチャーからトークン取得
+        debug_log(f"Client state: {json.dumps(vars(client), indent=2, default=str)}")
+        # トークン取得
         access_token = None
         if hasattr(client, '_session_dispatcher'):
             session_dispatcher = client._session_dispatcher
             try:
                 session_data = getattr(session_dispatcher, '_session', None)
                 if session_data:
-                    # 全属性をログ
                     session_attrs = {k: str(getattr(session_data, k)) for k in dir(session_data) if not k.startswith('__')}
-                    print(f"🔍 Session attributes: {json.dumps(session_attrs, indent=2, default=str)}")
-                    # トークン候補を試行
+                    debug_log(f"Session attributes: {json.dumps(session_attrs, indent=2, default=str)}")
                     for key in ['accessJwt', 'refreshJwt', 'access_jwt', 'jwt', 'accessToken', 'token', 'access', 'refresh']:
                         access_token = getattr(session_data, key, None)
                         if access_token:
-                            print(f"🔍 Access token found: {'*' * len(access_token)}")
+                            debug_log(f"Access token found: {'*' * len(access_token)}")
                             break
                     if not access_token:
-                        print(f"🔍 No token found in known attributes")
+                        debug_log("No token found in known attributes")
             except Exception as e:
-                print(f"🔍 SessionDispatcher error: {str(e)}")
+                debug_log(f"SessionDispatcher error: {str(e)}")
         if not access_token:
             raise AttributeError("No access token available in Client or SessionDispatcher")
-        # 通知APIで全応答確認
+        # 通知API
         notifications = client.app.bsky.notification.list_notifications().notifications
-        print(f"🔍 Available bsky methods: {dir(client.app.bsky)}")
-        print(f"🔍 Full notification response: {json.dumps([n.__dict__ for n in notifications], indent=2, default=str)}")
+        debug_log(f"Available bsky methods: {dir(client.app.bsky)}")
+        debug_log(f"Full notification response: {json.dumps([n.__dict__ for n in notifications], indent=2, default=str)}")
         new_dms = []
         last_check = load_last_check(f"@{login_handle}")
 
         for notif in notifications:
-            print(f"🔍 Notification dict: {json.dumps(notif.__dict__, indent=2, default=str)}")
-            print(f"🔍 Record dict: {json.dumps(notif.record.__dict__ if hasattr(notif, 'record') else {}, indent=2, default=str)}")
+            debug_log(f"Notification dict: {json.dumps(notif.__dict__, indent=2, default=str)}")
+            debug_log(f"Record dict: {json.dumps(notif.record.__dict__ if hasattr(notif, 'record') else {}, indent=2, default=str)}")
             record_type = getattr(notif.record, "$type", "") if hasattr(notif, 'record') else ""
             record_text = getattr(notif.record, "text", "") if hasattr(notif, 'record') else ""
             indexed_at = notif.__dict__.get("indexedAt", "")
-            print(f"🔍 record type: {record_type}, content: {record_text}, indexed_at: {indexed_at}")
+            debug_log(f"record type: {record_type}, content: {record_text}, indexed_at: {indexed_at}")
             if record_type == "app.bsky.chat.message" and indexed_at and indexed_at > last_check:
                 new_dms.append({
                     "sender": notif.author.handle,
@@ -116,21 +141,21 @@ def get_new_dms(handle, app_password):
                     "account": f"@{login_handle}"
                 })
 
-        # チャットAPIをライブラリ経由で試行
+        # チャットAPI
         try:
             conversations = client.app.bsky.chat.get_conversations({'limit': 50})
-            print(f"🔍 Chat API (get_conversations) response: {json.dumps(conversations.__dict__, indent=2, default=str)}")
+            debug_log(f"Chat API (get_conversations) response: {json.dumps(conversations.__dict__, indent=2, default=str)}")
             for convo in conversations.conversations:
                 convo_id = convo.id
                 messages_response = client.app.bsky.chat.get_messages({'conversation_id': convo_id, 'limit': 50})
-                print(f"🔍 Chat API (get_messages) response: {json.dumps(messages_response.__dict__, indent=2, default=str)}")
+                debug_log(f"Chat API (get_messages) response: {json.dumps(messages_response.__dict__, indent=2, default=str)}")
                 messages = messages_response.messages
                 for message in messages:
                     message_type = message.__dict__.get("$type", "")
                     message_text = message.content.get("text", "") if hasattr(message, 'content') else ""
                     message_time = message.__dict__.get("created_at", "")
                     sender_handle = message.sender.handle if hasattr(message, 'sender') else ""
-                    print(f"🔍 message type: {message_type}, content: {message_text}, time: {message_time}, sender: {sender_handle}")
+                    debug_log(f"message type: {message_type}, content: {message_text}, time: {message_time}, sender: {sender_handle}")
                     if message_type == "app.bsky.chat.message" and message_time and message_time > last_check:
                         new_dms.append({
                             "sender": sender_handle,
@@ -139,12 +164,12 @@ def get_new_dms(handle, app_password):
                             "account": f"@{login_handle}"
                         })
         except Exception as e:
-            print(f"🔍 Chat API (library) error: {str(e)}")
+            debug_log(f"Chat API (library) error: {str(e)}")
 
-        # フォールバック: HTTPでチャットAPI
+        # HTTPフォールバック
         headers = {"Authorization": f"Bearer {access_token}"}
         chat_response = requests.get("https://bsky.social/xrpc/com.atproto.chat.getConversations?limit=50", headers=headers)
-        print(f"🔍 Chat API (HTTP) response - Status: {chat_response.status_code}, Body: {json.dumps(chat_response.json() if chat_response.status_code == 200 else chat_response.text, indent=2)}")
+        debug_log(f"Chat API (HTTP) response - Status: {chat_response.status_code}, Body: {json.dumps(chat_response.json() if chat_response.status_code == 200 else chat_response.text, indent=2)}")
         if chat_response.status_code == 200:
             conversations = chat_response.json().get("conversations", [])
             for convo in conversations:
@@ -153,7 +178,7 @@ def get_new_dms(handle, app_password):
                     f"https://bsky.social/xrpc/com.atproto.chat.getMessages?conversation_id={convo_id}&limit=50",
                     headers=headers
                 )
-                print(f"🔍 Chat API (HTTP getMessages) response - Status: {messages_response.status_code}, Body: {json.dumps(messages_response.json() if messages_response.status_code == 200 else messages_response.text, indent=2)}")
+                debug_log(f"Chat API (HTTP getMessages) response - Status: {messages_response.status_code}, Body: {json.dumps(messages_response.json() if messages_response.status_code == 200 else messages_response.text, indent=2)}")
                 if messages_response.status_code == 200:
                     messages = messages_response.json().get("messages", [])
                     for message in messages:
@@ -161,7 +186,7 @@ def get_new_dms(handle, app_password):
                         message_text = message.get("content", {}).get("text", "")
                         message_time = message.get("createdAt", "")
                         sender_handle = message.get("sender", {}).get("handle", "")
-                        print(f"🔍 message type: {message_type}, content: {message_text}, time: {message_time}, sender: {sender_handle}")
+                        debug_log(f"message type: {message_type}, content: {message_text}, time: {message_time}, sender: {sender_handle}")
                         if message_type == "app.bsky.chat.message" and message_time and message_time > last_check:
                             new_dms.append({
                                 "sender": sender_handle,
@@ -170,15 +195,19 @@ def get_new_dms(handle, app_password):
                                 "account": f"@{login_handle}"
                             })
 
-        if notifications or new_dms:
-            first_time = (notifications[0].__dict__.get("indexedAt", "") if notifications else
-                         new_dms[0]["time"]) if notifications or new_dms else ""
- ако first_time:
-                save_last_check(f"@{login_handle}", first_time)
+        # first_time処理
+        first_time = None
+        if notifications:
+            first_time = notifications[0].__dict__.get("indexedAt", "")
+        elif new_dms:
+            first_time = new_dms[0]["time"]
+
+        if first_time:
+            save_last_check(f"@{login_handle}", first_time)
         
         return new_dms
     except Exception as e:
-        print(f"Error for {login_handle}: {str(e)}")
+        debug_log(f"Error for {login_handle}: {str(e)}")
         return []
 
 def load_last_check(handle):
@@ -194,7 +223,7 @@ def save_last_check(handle, timestamp):
 
 def send_dm_notification(account, dm_sender, dm_content):
     sender = os.getenv("EMAIL_SENDER")
-    receiver = "mitsuki.momoka@i.softbank.jp"
+    receiver = os.getenv("EMAIL_RECEIVER", "mitsuki.momoka@i.softbank.jp")
     password = os.getenv("EMAIL_PASSWORD")
 
     char_name = CHAR_NAMES.get(account, "誰か")
@@ -220,6 +249,7 @@ def send_dm_notification(account, dm_sender, dm_content):
         server.starttls()
         server.login(sender, password)
         server.send_message(msg)
+        debug_log(f"Sent notification to {receiver} for {account}")
 
 def main():
     accounts = [
@@ -235,7 +265,7 @@ def main():
     total_dms = 0
 
     for acc in accounts:
-        print(f"Checking DMs for: @{acc['handle']}, app_password: {'*' * len(acc['app_password'])}")
+        debug_log(f"Checking DMs for: @{acc['handle']}, app_password: {'*' * len(acc['app_password'])}")
         new_dms = get_new_dms(acc["handle"], acc["app_password"])
         if new_dms:
             for dm in new_dms:
@@ -246,7 +276,7 @@ def main():
         print(f"{total_dms}件のDMを通知したぜ！")
     else:
         print("新着DMなし！メール送信スキップ！")
-        send_dm_notification("test@test.com", "TestSender", "デバッグ: DM検出なし（エラー再確認用）")
+        send_dm_notification("@debug.test", "TestSender", f"デバッグ: DM検出なし（エラー再確認用） {datetime.now().isoformat()}")
 
 if __name__ == "__main__":
     main()
