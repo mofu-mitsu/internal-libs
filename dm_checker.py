@@ -9,14 +9,16 @@ import requests
 from datetime import datetime
 import dotenv
 
-# .env読み込み
+# ------------------------------
+# 環境変数の読み込み
+# ------------------------------
 dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
 dotenv.load_dotenv(dotenv_path=dotenv_path)
 print(f"🔍 Loaded .env: {dict(os.environ).keys()}")
 print(f"🔍 ENV values: EMAIL_SENDER={os.getenv('EMAIL_SENDER')}, EMAIL_RECEIVER={os.getenv('EMAIL_RECEIVER')}, DEBUG={os.getenv('DEBUG')}")
 
 # ------------------------------
-# ★ カスタマイズポイント
+# カスタマイズポイント
 # ------------------------------
 CHAR_NAMES = {
     "@mirinchuuu.bsky.social": "みりんてゃ",
@@ -83,7 +85,6 @@ DM_NOTIFICATION_HTML_BODIES = {
 </html>
 """
 }
-# ------------------------------
 
 # 前回のチェック時刻を保存するファイル
 LAST_CHECK_FILES = {
@@ -96,10 +97,27 @@ LAST_CHECK_FILES = {
 DEBUG = True
 print(f"🔍 DEBUG mode: {DEBUG}")
 
+# ------------------------------
+# ユーティリティ関数
+# ------------------------------
 def debug_log(message):
     if DEBUG:
         print(f"🔍 [DEBUG] {datetime.now().isoformat()}: {message}")
 
+def load_last_check(handle):
+    try:
+        with open(LAST_CHECK_FILES[handle], "r") as f:
+            return json.load(f).get("last_check", "1970-01-01T00:00:00Z")
+    except FileNotFoundError:
+        return "1970-01-01T00:00:00Z"
+
+def save_last_check(handle, timestamp):
+    with open(LAST_CHECK_FILES[handle], "w") as f:
+        json.dump({"last_check": timestamp}, f)
+
+# ------------------------------
+# DMチェック関数
+# ------------------------------
 def get_new_dms(handle, app_password):
     login_handle = handle.lstrip("@")
     debug_log(f"Logging in with handle: {login_handle}, app_password: {'*' * len(app_password)}")
@@ -107,6 +125,7 @@ def get_new_dms(handle, app_password):
         client = Client()
         client.login(login_handle, app_password)
         debug_log(f"Client state: {json.dumps(vars(client), indent=2, default=str)}")
+
         # トークン取得
         access_token = None
         if hasattr(client, '_session_dispatcher'):
@@ -132,7 +151,8 @@ def get_new_dms(handle, app_password):
                 debug_log(f"SessionDispatcher error: {str(e)}")
         if not access_token:
             raise AttributeError("No access token available in Client or SessionDispatcher")
-        # 通知API
+
+        # 通知APIでDMをチェック
         notifications = client.app.bsky.notification.list_notifications().notifications
         debug_log(f"Available bsky methods: {dir(client.app.bsky)}")
         debug_log(f"Full notification response: {json.dumps([n.__dict__ for n in notifications], indent=2, default=str)}")
@@ -141,12 +161,12 @@ def get_new_dms(handle, app_password):
 
         for notif in notifications:
             debug_log(f"Notification dict: {json.dumps(notif.__dict__, indent=2, default=str)}")
-            debug_log(f"Record dict: {json.dumps(notif.record.__dict__ if hasattr(notif, 'record') else {}, indent=2, default=str)}")
             record_type = getattr(notif.record, "$type", "") if hasattr(notif, 'record') else ""
             record_text = getattr(notif.record, "text", "") if hasattr(notif, 'record') else ""
             indexed_at = notif.__dict__.get("indexedAt", "")
-            debug_log(f"record type: {record_type}, content: {record_text}, indexed_at: {indexed_at}")
-            if record_type == "app.bsky.chat.message" and indexed_at and indexed_at > last_check:
+            debug_log(f"Reason: {notif.reason}, Record Type: {record_type}, Content: {record_text}, Indexed At: {indexed_at}")
+            # DMっぽい通知を柔軟にチェック
+            if ("chat" in notif.reason.lower() or "dm" in notif.reason.lower() or "chat" in record_type.lower()) and indexed_at > last_check:
                 new_dms.append({
                     "sender": notif.author.handle,
                     "content": record_text,
@@ -154,7 +174,7 @@ def get_new_dms(handle, app_password):
                     "account": f"@{login_handle}"
                 })
 
-        # チャットAPI
+        # チャットAPI（ライブラリ経由）
         try:
             conversations = client.app.bsky.chat.get_conversations({'limit': 50})
             debug_log(f"Chat API (get_conversations) response: {json.dumps(conversations.__dict__, indent=2, default=str)}")
@@ -168,8 +188,8 @@ def get_new_dms(handle, app_password):
                     message_text = message.content.get("text", "") if hasattr(message, 'content') else ""
                     message_time = message.__dict__.get("created_at", "")
                     sender_handle = message.sender.handle if hasattr(message, 'sender') else ""
-                    debug_log(f"message type: {message_type}, content: {message_text}, time: {message_time}, sender: {sender_handle}")
-                    if message_type == "app.bsky.chat.message" and message_time and message_time > last_check:
+                    debug_log(f"Message type: {message_type}, Content: {message_text}, Time: {message_time}, Sender: {sender_handle}")
+                    if message_type == "app.bsky.chat.message" and message_time > last_check:
                         new_dms.append({
                             "sender": sender_handle,
                             "content": message_text,
@@ -177,22 +197,21 @@ def get_new_dms(handle, app_password):
                             "account": f"@{login_handle}"
                         })
         except Exception as e:
-            debug_log(f"Chat API (library) error: {str(e)}")
+            debug_log(f"Chat API unavailable (likely unimplemented): {str(e)}. Skipping chat API check.")
 
-        # HTTPフォールバック
+        # チャットAPI（HTTPフォールバック）
         headers = {"Authorization": f"Bearer {access_token}"}
-        for endpoint in [
-            "com.atproto.chat.getConversations",
-            "chat.bsky.app.getConversations",
-            "app.bsky.convo.getConvos"
-        ]:
+        for endpoint in ["com.atproto.chat.getConversations", "chat.bsky.app.getConversations"]:
             chat_response = requests.get(f"https://bsky.social/xrpc/{endpoint}?limit=50", headers=headers)
+            if chat_response.status_code == 501:
+                debug_log(f"Chat API ({endpoint}) unimplemented (Status: 501). Skipping.")
+                continue
             debug_log(f"Chat API (HTTP {endpoint}) response - Status: {chat_response.status_code}, Body: {json.dumps(chat_response.json() if chat_response.status_code == 200 else chat_response.text, indent=2)}")
             if chat_response.status_code == 200:
                 conversations = chat_response.json().get("conversations", [])
                 for convo in conversations:
                     convo_id = convo.get("id")
-                    messages_endpoint = endpoint.replace("getConversations", "getMessages").replace("getConvos", "getMessages")
+                    messages_endpoint = endpoint.replace("getConversations", "getMessages")
                     messages_response = requests.get(
                         f"https://bsky.social/xrpc/{messages_endpoint}?conversation_id={convo_id}&limit=50",
                         headers=headers
@@ -205,8 +224,8 @@ def get_new_dms(handle, app_password):
                             message_text = message.get("content", {}).get("text", "")
                             message_time = message.get("createdAt", "")
                             sender_handle = message.get("sender", {}).get("handle", "")
-                            debug_log(f"message type: {message_type}, content: {message_text}, time: {message_time}, sender: {sender_handle}")
-                            if message_type == "app.bsky.chat.message" and message_time and message_time > last_check:
+                            debug_log(f"Message type: {message_type}, Content: {message_text}, Time: {message_time}, Sender: {sender_handle}")
+                            if message_type == "app.bsky.chat.message" and message_time > last_check:
                                 new_dms.append({
                                     "sender": sender_handle,
                                     "content": message_text,
@@ -214,13 +233,12 @@ def get_new_dms(handle, app_password):
                                     "account": f"@{login_handle}"
                                 })
 
-        # first_time処理
+        # 最終チェック時刻の更新
         first_time = None
         if notifications:
             first_time = notifications[0].__dict__.get("indexedAt", "")
         elif new_dms:
             first_time = new_dms[0]["time"]
-
         if first_time:
             save_last_check(f"@{login_handle}", first_time)
         
@@ -229,26 +247,20 @@ def get_new_dms(handle, app_password):
         debug_log(f"Error for {login_handle}: {str(e)}")
         return []
 
-def load_last_check(handle):
-    try:
-        with open(LAST_CHECK_FILES[handle], "r") as f:
-            return json.load(f).get("last_check", "1970-01-01T00:00:00Z")
-    except FileNotFoundError:
-        return "1970-01-01T00:00:00Z"
-
-def save_last_check(handle, timestamp):
-    with open(LAST_CHECK_FILES[handle], "w") as f:
-        json.dump({"last_check": timestamp}, f)
-
+# ------------------------------
+# メール送信関数
+# ------------------------------
 def send_dm_notification(account, dm_sender, dm_content):
     sender = os.getenv("EMAIL_SENDER")
     receiver = os.getenv("EMAIL_RECEIVER", "mitsuki.momoka@i.softbank.jp")
     password = os.getenv("EMAIL_PASSWORD")
 
     debug_log(f"Preparing notification: sender={sender}, receiver={receiver}, account={account}")
-    if not sender or not receiver:
-        debug_log(f"✋ メール送信スキップ: sender or receiver が未設定！ sender={sender}, receiver={receiver}")
-        return
+    # 空文字や空白のチェック
+    if not sender or sender.strip() == "":
+        raise ValueError("EMAIL_SENDERが未設定か空白です！.envやGitHub Secretsを確認してください！")
+    if not receiver or receiver.strip() == "":
+        raise ValueError("EMAIL_RECEIVERが未設定か空白です！.envやGitHub Secretsを確認してください！")
 
     char_name = CHAR_NAMES.get(account, "誰か")
     subject = DM_NOTIFICATION_SUBJECTS.get(account, "DM来たよ！")
@@ -278,6 +290,9 @@ def send_dm_notification(account, dm_sender, dm_content):
     except Exception as e:
         debug_log(f"SMTP error: {str(e)}")
 
+# ------------------------------
+# メイン処理
+# ------------------------------
 def main():
     accounts = [
         {
