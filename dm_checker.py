@@ -7,6 +7,11 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import requests
 from datetime import datetime
+import dotenv
+
+# .env読み込み
+dotenv.load_dotenv()
+print(f"🔍 Loaded .env: {dict(os.environ).keys()}")
 
 # ------------------------------
 # ★ カスタマイズポイント
@@ -85,8 +90,9 @@ LAST_CHECK_FILES = {
     "@debug.test": "last_check_debug.json"
 }
 
-# デバッグモード
-DEBUG = os.getenv("DEBUG", "0") == "1"
+# デバッグモード（強制True）
+DEBUG = True  # os.getenv("DEBUG", "0") == "1"
+print(f"🔍 DEBUG mode: {DEBUG}")
 
 def debug_log(message):
     if DEBUG:
@@ -108,13 +114,19 @@ def get_new_dms(handle, app_password):
                 if session_data:
                     session_attrs = {k: str(getattr(session_data, k)) for k in dir(session_data) if not k.startswith('__')}
                     debug_log(f"Session attributes: {json.dumps(session_attrs, indent=2, default=str)}")
-                    for key in ['accessJwt', 'refreshJwt', 'access_jwt', 'jwt', 'accessToken', 'token', 'access', 'refresh']:
+                    for key in ['accessJwt', 'refreshJwt', 'access_jwt', 'jwt', 'accessToken', 'token', 'access', 'refresh', 'accessJwtToken', 'refreshJwtToken']:
                         access_token = getattr(session_data, key, None)
                         if access_token:
                             debug_log(f"Access token found: {'*' * len(access_token)}")
                             break
                     if not access_token:
                         debug_log("No token found in known attributes")
+                        # セッション辞書を直接調査
+                        if isinstance(session_data, dict):
+                            debug_log(f"Session as dict: {json.dumps(session_data, indent=2, default=str)}")
+                            access_token = session_data.get('accessJwt') or session_data.get('refreshJwt')
+                            if access_token:
+                                debug_log(f"Access token found in dict: {'*' * len(access_token)}")
             except Exception as e:
                 debug_log(f"SessionDispatcher error: {str(e)}")
         if not access_token:
@@ -168,32 +180,36 @@ def get_new_dms(handle, app_password):
 
         # HTTPフォールバック
         headers = {"Authorization": f"Bearer {access_token}"}
-        chat_response = requests.get("https://bsky.social/xrpc/com.atproto.chat.getConversations?limit=50", headers=headers)
-        debug_log(f"Chat API (HTTP) response - Status: {chat_response.status_code}, Body: {json.dumps(chat_response.json() if chat_response.status_code == 200 else chat_response.text, indent=2)}")
-        if chat_response.status_code == 200:
-            conversations = chat_response.json().get("conversations", [])
-            for convo in conversations:
-                convo_id = convo.get("id")
-                messages_response = requests.get(
-                    f"https://bsky.social/xrpc/com.atproto.chat.getMessages?conversation_id={convo_id}&limit=50",
-                    headers=headers
-                )
-                debug_log(f"Chat API (HTTP getMessages) response - Status: {messages_response.status_code}, Body: {json.dumps(messages_response.json() if messages_response.status_code == 200 else messages_response.text, indent=2)}")
-                if messages_response.status_code == 200:
-                    messages = messages_response.json().get("messages", [])
-                    for message in messages:
-                        message_type = message.get("$type", "")
-                        message_text = message.get("content", {}).get("text", "")
-                        message_time = message.get("createdAt", "")
-                        sender_handle = message.get("sender", {}).get("handle", "")
-                        debug_log(f"message type: {message_type}, content: {message_text}, time: {message_time}, sender: {sender_handle}")
-                        if message_type == "app.bsky.chat.message" and message_time and message_time > last_check:
-                            new_dms.append({
-                                "sender": sender_handle,
-                                "content": message_text,
-                                "time": message_time,
-                                "account": f"@{login_handle}"
-                            })
+        for endpoint in [
+            "com.atproto.chat.getConversations",
+            "chat.bsky.app.getConversations"
+        ]:
+            chat_response = requests.get(f"https://bsky.social/xrpc/{endpoint}?limit=50", headers=headers)
+            debug_log(f"Chat API (HTTP {endpoint}) response - Status: {chat_response.status_code}, Body: {json.dumps(chat_response.json() if chat_response.status_code == 200 else chat_response.text, indent=2)}")
+            if chat_response.status_code == 200:
+                conversations = chat_response.json().get("conversations", [])
+                for convo in conversations:
+                    convo_id = convo.get("id")
+                    messages_response = requests.get(
+                        f"https://bsky.social/xrpc/{endpoint.replace('getConversations', 'getMessages')}?conversation_id={convo_id}&limit=50",
+                        headers=headers
+                    )
+                    debug_log(f"Chat API (HTTP getMessages {endpoint}) response - Status: {messages_response.status_code}, Body: {json.dumps(messages_response.json() if messages_response.status_code == 200 else messages_response.text, indent=2)}")
+                    if messages_response.status_code == 200:
+                        messages = messages_response.json().get("messages", [])
+                        for message in messages:
+                            message_type = message.get("$type", "")
+                            message_text = message.get("content", {}).get("text", "")
+                            message_time = message.get("createdAt", "")
+                            sender_handle = message.get("sender", {}).get("handle", "")
+                            debug_log(f"message type: {message_type}, content: {message_text}, time: {message_time}, sender: {sender_handle}")
+                            if message_type == "app.bsky.chat.message" and message_time and message_time > last_check:
+                                new_dms.append({
+                                    "sender": sender_handle,
+                                    "content": message_text,
+                                    "time": message_time,
+                                    "account": f"@{login_handle}"
+                                })
 
         # first_time処理
         first_time = None
