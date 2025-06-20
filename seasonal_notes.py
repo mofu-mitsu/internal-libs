@@ -28,7 +28,7 @@ seasonal_notes = {
     ],
     "6": [
         "♡☔梅雨だるノート☔♡\n雨の日は…気分も重たくなりがち…\nでもね、しっとり妄想モードは捗るのだ♡\n#みりんてゃ #梅雨",
-        "˗ˏˋ 湿気と情緒のバトル ˎˊ˗💭\nじめっちゃう日、推しの声で元気出して、深呼吸だよ┘└┤\n#みりんてゃ #推し活"
+        "˗ˏˋ 湿気と情緒のバトル ˎˊ˗💭\nじめじめした日は、推しの声と深呼吸\nそれだけでちょっとラクになれるから♡\n#みりんてゃ #推し活"
     ],
     "7": [
         "┈┈୨୧┈┈ 熱中症注意報 ┈┈୨୧┈┈\n推しに会うためにも、水分補給わすれずに♡\n倒れたら推しに心配されちゃうぞ〜？\n#みりんてゃ #夏バテ",
@@ -67,13 +67,13 @@ if not handle or not password:
 async def post_note():
     try:
         client = atproto.Client()
-        await client.login(handle, password)
+        client.login(handle, password)  # awaitを外す！
         current_month = str(datetime.now().month)
         if current_month not in seasonal_notes:
             print(f"テンプレが未設定の月: {current_month}")
             return
         note = random.choice(seasonal_notes[current_month])
-        await client.post(text=note)
+        await client.post(text=note)  # awaitは必要
         print("✅ 投稿完了:", note)
     except Exception as e:
         print(f"投稿失敗: {e}")
