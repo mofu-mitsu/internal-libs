@@ -10,8 +10,10 @@ from datetime import datetime
 import dotenv
 
 # .env読み込み
-dotenv.load_dotenv()
+dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
+dotenv.load_dotenv(dotenv_path=dotenv_path)
 print(f"🔍 Loaded .env: {dict(os.environ).keys()}")
+print(f"🔍 ENV values: EMAIL_SENDER={os.getenv('EMAIL_SENDER')}, EMAIL_RECEIVER={os.getenv('EMAIL_RECEIVER')}, DEBUG={os.getenv('DEBUG')}")
 
 # ------------------------------
 # ★ カスタマイズポイント
@@ -90,8 +92,8 @@ LAST_CHECK_FILES = {
     "@debug.test": "last_check_debug.json"
 }
 
-# デバッグモード（強制True）
-DEBUG = True  # os.getenv("DEBUG", "0") == "1"
+# デバッグモード
+DEBUG = True
 print(f"🔍 DEBUG mode: {DEBUG}")
 
 def debug_log(message):
@@ -119,14 +121,13 @@ def get_new_dms(handle, app_password):
                         if access_token:
                             debug_log(f"Access token found: {'*' * len(access_token)}")
                             break
+                    if not access_token and isinstance(session_data, dict):
+                        debug_log(f"Session as dict: {json.dumps(session_data, indent=2, default=str)}")
+                        access_token = session_data.get('accessJwt') or session_data.get('refreshJwt')
+                        if access_token:
+                            debug_log(f"Access token found in dict: {'*' * len(access_token)}")
                     if not access_token:
-                        debug_log("No token found in known attributes")
-                        # セッション辞書を直接調査
-                        if isinstance(session_data, dict):
-                            debug_log(f"Session as dict: {json.dumps(session_data, indent=2, default=str)}")
-                            access_token = session_data.get('accessJwt') or session_data.get('refreshJwt')
-                            if access_token:
-                                debug_log(f"Access token found in dict: {'*' * len(access_token)}")
+                        debug_log("No token found in known attributes or dict")
             except Exception as e:
                 debug_log(f"SessionDispatcher error: {str(e)}")
         if not access_token:
@@ -182,7 +183,8 @@ def get_new_dms(handle, app_password):
         headers = {"Authorization": f"Bearer {access_token}"}
         for endpoint in [
             "com.atproto.chat.getConversations",
-            "chat.bsky.app.getConversations"
+            "chat.bsky.app.getConversations",
+            "app.bsky.convo.getConvos"
         ]:
             chat_response = requests.get(f"https://bsky.social/xrpc/{endpoint}?limit=50", headers=headers)
             debug_log(f"Chat API (HTTP {endpoint}) response - Status: {chat_response.status_code}, Body: {json.dumps(chat_response.json() if chat_response.status_code == 200 else chat_response.text, indent=2)}")
@@ -190,11 +192,12 @@ def get_new_dms(handle, app_password):
                 conversations = chat_response.json().get("conversations", [])
                 for convo in conversations:
                     convo_id = convo.get("id")
+                    messages_endpoint = endpoint.replace("getConversations", "getMessages").replace("getConvos", "getMessages")
                     messages_response = requests.get(
-                        f"https://bsky.social/xrpc/{endpoint.replace('getConversations', 'getMessages')}?conversation_id={convo_id}&limit=50",
+                        f"https://bsky.social/xrpc/{messages_endpoint}?conversation_id={convo_id}&limit=50",
                         headers=headers
                     )
-                    debug_log(f"Chat API (HTTP getMessages {endpoint}) response - Status: {messages_response.status_code}, Body: {json.dumps(messages_response.json() if messages_response.status_code == 200 else messages_response.text, indent=2)}")
+                    debug_log(f"Chat API (HTTP getMessages {messages_endpoint}) response - Status: {messages_response.status_code}, Body: {json.dumps(messages_response.json() if messages_response.status_code == 200 else messages_response.text, indent=2)}")
                     if messages_response.status_code == 200:
                         messages = messages_response.json().get("messages", [])
                         for message in messages:
@@ -242,6 +245,11 @@ def send_dm_notification(account, dm_sender, dm_content):
     receiver = os.getenv("EMAIL_RECEIVER", "mitsuki.momoka@i.softbank.jp")
     password = os.getenv("EMAIL_PASSWORD")
 
+    debug_log(f"Preparing notification: sender={sender}, receiver={receiver}, account={account}")
+    if not sender or not receiver:
+        debug_log(f"✋ メール送信スキップ: sender or receiver が未設定！ sender={sender}, receiver={receiver}")
+        return
+
     char_name = CHAR_NAMES.get(account, "誰か")
     subject = DM_NOTIFICATION_SUBJECTS.get(account, "DM来たよ！")
     text_body = DM_NOTIFICATION_BODIES.get(account, "DM来た！内容: {content}").format(
@@ -261,11 +269,14 @@ def send_dm_notification(account, dm_sender, dm_content):
     msg.attach(text_part)
     msg.attach(html_part)
 
-    with smtplib.SMTP("smtp.gmail.com", 587) as server:
-        server.starttls()
-        server.login(sender, password)
-        server.send_message(msg)
-        debug_log(f"Sent notification to {receiver} for {account}")
+    try:
+        with smtplib.SMTP("smtp.gmail.com", 587) as server:
+            server.starttls()
+            server.login(sender, password)
+            server.send_message(msg)
+            debug_log(f"Sent notification to {receiver} for {account}")
+    except Exception as e:
+        debug_log(f"SMTP error: {str(e)}")
 
 def main():
     accounts = [
