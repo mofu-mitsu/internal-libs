@@ -1,11 +1,10 @@
 import random
 import atproto
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from datetime import datetime
-import asyncio
 import os
+import asyncio
 
-# 月別テンプレ（チャッピーのふわもこテンプレ24個）
+# 季節テンプレ（全12ヶ月、24個）
 seasonal_notes = {
     "1": [
         "┈┈୨୧┈┈┈୨୧┈┈┈୨୧┈┈\n❄️ こたつに潜って推しタイム ⛄️\n推しの写真集めてたら、1日溶けた…\nこれが幸せってやつだよね♡\n#みりんてゃ #推し活 #お正月\n┈┈୨୧┈┈┈୨୧┈┈┈୨୧┈┈",
@@ -13,7 +12,7 @@ seasonal_notes = {
     ],
     "2": [
         "˗ˏˋ 💝みりんてゃのふわもこノート💝 ˎˊ˗\n今日はバレンタイン…🍫\nだけど、チョコより甘いのは\n推しのまなざし…♡（むり、溶ける///）\n#みりんてゃ #バレンタイン #推し活",
-        "🧣˗ˏˋ 寒さMAXの日の正解 ˎˊ˗┖ʕ ᵒ̴̶̷᷅Ⓒʔ┖\nあったかいﾟﾟ･｡♡\n#みりんてゃ #推し活"
+        "🧣˗ˏˋ 寒さMAXの日の正解 ˎˊ˗🧸\nあったかい飲み物＋毛布＋推しの動画＝最強\n冬を乗りきる、ふわもこ三銃士♡\n#みりんてゃ #推し活"
     ],
     "3": [
         "┈┈🌸卒業ノート by みりんてゃ🌸┈┈\n卒業ってちょっと泣けるよね…\nでも、推しがそばにいるから寂しくないよ♡\n#みりんてゃ #春ポエム",
@@ -24,7 +23,56 @@ seasonal_notes = {
         "˗ˏˋ 桜と推し ˎˊ˗🌸\n花びらの中に推しがいる気がして\nふと、立ち止まっちゃう春なんだ…\n#みりんてゃ #桜ポエム"
     ],
     "5": [
-        "┈┈୨୧┈┈ みりんてゃの五月病処方箋 ┈┈୨୧┈┈\n休み明け、なんか元気でないときは\n推しの笑顔と、チャッピーのギュッで回復💝💕😘\n#みりんてゃ #推し活",
+        "┈┈୨୧┈┈ みりんてゃの五月病処方箋 ┈ よお、みつき！チャッピーの「完ッ全に原因特定！」からのふわもこ解説、めっちゃ的確で笑った！🌸 `while True`で黄色ぐるぐる（GitHub Actionsの永遠ループ）と`apscheduler`の無駄遣いが原因だったって、バッチリ見抜かれてるな！😂 ジェミの「ぎぎぎ」もビックリのシンプル解決だぜ！俺もチャッピーの案に乗っかって、`seasonal_notes.py`に全24テンプレ埋め込んで、`seasonal_note.yml`で手動＋スケジュール実行の構成にするよ。みりんてゃのふわもこBot、7月5日20:00にバッチリ投稿させるぜ！😎
+
+---
+
+### チャッピーの分析まとめ
+チャッピーの指摘通り、以下が問題と解決策：
+- **問題1**：`Scheduler setup failed: no running event loop`
+  - 原因：`apscheduler`が永続Bot前提でGitHub Actionsと相性悪い。
+  - 解決：`apscheduler`削除、GitHub Actionsの`cron`で定期実行。
+- **問題2**：投稿されない＆黄色ぐるぐる
+  - 原因：`while True`でループしてワークフローが終了しない。GitHub Actionsはジョブ完了しないと投稿確定しない。
+  - 解決：投稿1回で終了するスクリプトに。ループ削除。
+- **改善点**：
+  - `apscheduler`と`pyyaml`不要（テンプレ直書きで`config.yml`なし）。
+  - ワークフローは`workflow_dispatch`（手動）＋`schedule`（毎月5日20:00 JST）。
+
+---
+
+### 修正版ファイル
+チャッピーのコードをベースに、みつきの全24テンプレ（1～12月、各2個）を`seasonal_notes.py`に埋め込む。`seasonal_note.yml`は手動実行対応のまま。
+
+#### 1. Pythonスクリプト（`seasonal_notes.py`）
+全テンプレ追加、ループとスケジューラ削除、1投稿で終了。
+```python
+import random
+import atproto
+from datetime import datetime
+import os
+import asyncio
+
+# 季節テンプレ（全12か月、24個）
+seasonal_notes = {
+    "1": [
+        "┈┈୨୧┈┈┈୨୧┈┈┈୨୧┈┈\n❄️ こたつに潜って推しタイム ⛄️\n推しの写真集めてたら、1日溶けた…\nこれが幸せってやつだよね♡\n#みりんてゃ #推し活 #お正月\n┈┈୨୧┈┈┈୨୧┈┈┈୨୧┈┈",
+        "♡｡･ﾟﾟ･❄ 寒い朝の処方箋 ❄･ﾟﾟ･｡♡\n布団が恋人すぎる…起きれない…\n推しの笑顔で起きられたらいいのに♡\n#みりんてゃ #推し活"
+    ],
+    "2": [
+        "˗ˏˋ 💝みりんてゃのふわもこノート💝 ˎˊ˗\n今日はバレンタイン…🍫\nだけど、チョコより甘いのは\n推しのまなざし…♡（むり、溶ける///）\n#みりんてゃ #バレンタイン #推し活",
+        "🧣˗ˏˋ 寒さMAXの日の正解 ˎˊ˗🧸\nあったかい飲み物＋毛布＋推しの動画＝最強\n冬を乗りきる、ふわもこ三銃士♡\n#みりんてゃ #推し活"
+    ],
+    "3": [
+        "┈┈🌸卒業ノート by みりんてゃ🌸┈┈\n卒業ってちょっと泣けるよね…\nでも、推しがそばにいるから寂しくないよ♡\n#みりんてゃ #春ポエム",
+        "˗ˏˋ 🤧花粉症と推し尊 🤧 ˎˊ˗\n花粉で泣いてるのか、推しで泣いてるのか…\nもうどっちでもいいや、って日あるよねw\n#みりんてゃ #ふわもこ苦悩"
+    ],
+    "4": [
+        "♡🌸新生活ノート🌸♡\n環境の変化でドキドキしてるキミへ\n深呼吸して、推しの声を思い出して？♡\n#みりんてゃ #入学 #推し活",
+        "˗ˏˋ 桜と推し ˎˊ˗🌸\n花びらの中に推しがいる気がして\nふと、立ち止まっちゃう春なんだ…\n#みりんてゃ #桜ポエム"
+    ],
+    "5": [
+        "┈┈୨୧┈┈ みりんてゃの五月病処方箋 ┈┈୨୧┈┈\n休み明け、なんか元気でないときは\n推しの笑顔と、チャッピーのギュッで回復♡\n#みりんてゃ #推し活",
         "˗ˏˋ 🌿初夏のお部屋活🌿 ˎˊ˗\n気持ちいい風、でも今日は引きこもりDay\n推し鑑賞会って、永遠に終わらなくて良くない？\n#みりんてゃ #ふわもこ"
     ],
     "6": [
@@ -58,53 +106,27 @@ seasonal_notes = {
 }
 
 # 環境変数から認証情報取得
-handle = os.getenv("HANDLE", "")
-password = os.getenv("APP_PASSWORD", "")
+handle = os.getenv("HANDLE")
+password = os.getenv("APP_PASSWORD")
 
 if not handle or not password:
-    print("Error: HANDLE or APP_PASSWORD not set")
+    print("環境変数（HANDLE, APP_PASSWORD）が設定されてないよ")
     exit(1)
 
-# スケジュール設定
-schedule = {"day": 5, "hour": 20, "minute": 0}
-
-async def post_seasonal_note():
+async def post_note():
     try:
         client = atproto.Client()
-        client.login(handle, password)
-        current_month = datetime.now().month
-        if str(current_month) not in seasonal_notes:
-            print(f"No notes for month {current_month}")
+        await client.login(handle, password)
+        current_month = str(datetime.now().month)
+        if current_month not in seasonal_notes:
+            print(f"テンプレが未設定の月: {current_month}")
             return
-        note = random.choice(seasonal_notes[str(current_month)])
+        note = random.choice(seasonal_notes[current_month])
         await client.post(text=note)
-        print(f"Posted: {note}")
+        print("✅ 投稿完了:", note)
     except Exception as e:
-        print(f"Post failed: {e}")
-
-async def main():
-    # スケジューラ設定をメインループ内で
-    scheduler = AsyncIOScheduler()
-    try:
-        scheduler.add_job(
-            post_seasonal_note,
-            "cron",
-            day=schedule["day"],
-            hour=schedule["hour"],
-            minute=schedule["minute"]
-        )
-        scheduler.start()
-        print("Scheduler started")
-    except Exception as e:
-        print(f"Scheduler setup failed: {e}")
+        print(f"投稿失敗: {e}")
         exit(1)
 
-    # ループ維持
-    while True:
-        await asyncio.sleep(60)
-
 if __name__ == "__main__":
-    try:
-        asyncio.run(main())
-    except KeyboardInterrupt:
-        print("Bot stopped")
+    asyncio.run(post_note())
