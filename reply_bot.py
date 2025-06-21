@@ -425,7 +425,7 @@ def clean_sentence_ending(reply):
         ])
 
     # 💔 拒絶・距離置きっぽい発言へのテンプレ返し（NEW！）
-    if re.search(r"(無理|距離|付き合え|関係ない|興味ない|仲良くできない|苦手|縁がない|嫌い|キモい|きらい)", reply, re.IGNORECASE):
+    if re.search(r"(無理|距離|付き合え|関係ない|興味ない|仲良くできない|苦手|縁がない|嫌い|気持ち悪い|キモい|きらい)", reply, re.IGNORECASE):
         print(f"⚠️ 拒絶っぽい返事を検知: {reply}")
         return random.choice([
             f"えへへっ♡ {BOT_NAME}、ほんとはキミにラブ注入したいのにな〜っ♡",
