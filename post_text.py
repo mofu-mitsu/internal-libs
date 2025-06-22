@@ -6,6 +6,8 @@ import os
 from dotenv import load_dotenv
 from pathlib import Path
 import requests
+from PIL import Image
+import io
 
 # ------------------------------
 # ★ 認証情報（.envに書くよ！）
@@ -73,6 +75,7 @@ WEATHER_TEMPLATES = {
 # ------------------------------
 # ★ 投稿処理（画像付き！）
 # ------------------------------
+
 def post_weather_with_image(image_path: str):
     client = Client()
     client.login(HANDLE, APP_PASSWORD)
