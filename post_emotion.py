@@ -37,6 +37,8 @@ def clean_poem(poem):
         return "みりんてゃ、ちょっと考えすぎちゃったみたい…お茶でも飲んで仕切り直すね☕️"
     if any(poem.strip().startswith(word) for word in ["投稿", "作品", "規定", "応募"]):
         return "みりんてゃ、ちょっと真面目すぎたかも…もう一回書き直してみるね🍵"
+    if not poem.strip() or "お散歩" in poem:
+        return "みりんてゃ、優しい風に誘われて詩を届けるよ…。そっと待っていてね♡"
 
     # 「文っぽい区切り」を正規表現でカウント
     sentences = re.split(r'[。！？!?〜]+', poem)
@@ -57,7 +59,7 @@ def generate_poem(weather, day_of_week):
     generator = pipeline("text-generation", model=model, tokenizer=tokenizer)
 
     print(f"DEBUG: Starting generation - Weather: {weather}, Day: {day_of_week}")
-    prompt = f"{weather}の{day_of_week}曜日。みりんてゃが空を見上げて、ふわっと優しく短い詩をつぶやく。自己紹介や指示文、数字、引用、媒体情報、特定の作品名・人物名、カタカナ名詞が連続する語句、実在しない人名・固有名詞は使わず、抽象概念や難解な思想も避ける。ポエムだけに集中し、3〜5文以内で、1つの自然の情景を描き、読後に優しい余韻が残るようにする。"
+    prompt = f"{weather}の{day_of_week}曜日。みりんてゃが空を見上げて、ふわっと優しく短い詩をつぶやく。自己紹介や指示文、数字、引用、媒体情報、特定の作品名・人物名、カタカナ名詞が連続する語句、実在しない人名・固有名詞、抽象概念や難解な思想は使わず、タイトルに依存せず本文で情景を充実させる。ポエムだけに集中し、3〜5文以内で、1つの自然の情景を描き、読後に優しい余韻が残るようにする。空白や「お散歩」メッセージを避ける。"
     print(f"DEBUG: Prompt: {prompt}")
 
     output = generator(prompt, max_length=150, do_sample=True, temperature=0.9, repetition_penalty=1.2)[0]['generated_text']
@@ -74,18 +76,18 @@ def generate_poem(weather, day_of_week):
 
     if "詩は" in generated_poem and "作者の心" in generated_poem and "サイバー" in generated_poem:
         print(f"DEBUG: Philosophy mode detected - Poem: {generated_poem}")
-        return "みりんてゃ、サイバー空間でポエム迷子になっちゃったみたい♡ ちょっと探してくるね…！"
+        return "みりんてゃ、優しい風に誘われて詩を届けるよ…。そっと待っていてね♡"
 
     generated_poem = clean_poem(generated_poem)
     print(f"DEBUG: After clean_poem: {generated_poem}")
 
     if count_ng_words(generated_poem) > 2:
         print(f"DEBUG: NG words count > 2 - Poem: {generated_poem}, Count: {count_ng_words(generated_poem)}")
-        return "みりんてゃ、おやつ食べながら考えてたら、ポエムがどっかいっちゃったみたい…またすぐ届けるね♡"
+        return "みりんてゃ、優しい風に誘われて詩を届けるよ…。そっと待っていてね♡"
 
     if not generated_poem.strip():
         print(f"DEBUG: Poem is empty or whitespace only - Poem: {generated_poem}, Output: {output}")
-        return "みりんてゃ、言葉を探しにお散歩に出かけちゃったみたい...またすぐ帰ってくるね♡"
+        return "みりんてゃ、優しい風に誘われて詩を届けるよ…。そっと待っていてね♡"
 
     print(f"DEBUG: Final Poem: {generated_poem}")
     return generated_poem
