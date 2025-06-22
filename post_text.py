@@ -22,8 +22,9 @@ APP_PASSWORD = os.getenv('APP_PASSWORD') or exit("❌ APP_PASSWORDが設定さ�
 # ------------------------------
 def get_weather():
     url = "https://www.jma.go.jp/bosai/forecast/data/forecast/130000.json"
-    response = requests.get(url)
-    if response.status_code == 200:
+    try:
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
         data = response.json()
         weather = data[0]["timeSeries"][0]["areas"][0]["weathers"][0].lower()
 
@@ -40,7 +41,9 @@ def get_weather():
         elif "曇" in weather or "くもり" in weather:
             return "くもり"
 
-    return "くもり"
+    except Exception as e:
+        print(f"⚠️ 気象庁APIエラー: {e}")
+        return "くもり"
 
 # ------------------------------
 # ★ テンプレ辞書
@@ -73,30 +76,100 @@ WEATHER_TEMPLATES = {
 }
 
 # ------------------------------
+# ★ 画像アップロード関数（MIMEタイプを明示）
+# ------------------------------
+def upload_image(client, image_path, max_size_kb=976):
+    try:
+        img = Image.open(image_path)
+        print(f"📸 画像読み込み: {image_path}, 形式={img.format}, サイズ={img.size}, モード={img.mode}")
+
+        # 強制リサイズ（デカすぎる画像は縮小）
+        max_dimension = 1024
+        if max(img.size) > max_dimension:
+            ratio = max_dimension / max(img.size)
+            new_size = (int(img.width * ratio), int(img.height * ratio))
+            img = img.resize(new_size, Image.LANCZOS)
+            print(f"🔄 リサイズ: 新サイズ={new_size}")
+
+        # 透過画像だったらJPEGにする
+        force_jpeg = img.mode in ["RGBA", "LA"]
+        format = "JPEG" if force_jpeg or img.format != "PNG" else "PNG"
+        print(f"🖼️ 出力形式: {format}")
+
+        buffer = io.BytesIO()
+        quality = 95
+        max_attempts = 10  # ループ上限
+        attempt = 0
+
+        while attempt < max_attempts:
+            buffer.seek(0)
+            buffer.truncate(0)
+
+            if format == "JPEG":
+                img.convert("RGB").save(buffer, format="JPEG", quality=quality, optimize=True, progressive=True)
+            else:
+                img.convert("P", palette=Image.ADAPTIVE, colors=256).save(buffer, format="PNG", optimize=True)
+
+            size_kb = buffer.tell() / 1024
+            print(f"📏 試行{attempt + 1}: サイズ={size_kb:.2f}KB, 品質={quality}")
+
+            if size_kb <= max_size_kb or quality <= 20:
+                break
+
+            quality -= 5
+            attempt += 1
+
+        if size_kb > max_size_kb:
+            print(f"⚠️ 警告: サイズが{size_kb:.2f}KBで{max_size_kb}KBを超えてます")
+
+        buffer.seek(0)
+        img_data = buffer.read()
+        response = client.com.atproto.repo.upload_blob(img_data)
+        print(f"✅ 画像アップロード成功: MIMEタイプ={response.blob.mime_type}, サイズ={size_kb:.2f}KB")
+        return response.blob
+
+    except Exception as e:
+        print(f"❌ 画像アップロードエラー: {e}")
+        raise
+
+# ------------------------------
 # ★ 投稿処理（画像付き！）
 # ------------------------------
-
 def post_weather_with_image(image_path: str):
     client = Client()
-    client.login(HANDLE, APP_PASSWORD)
+    try:
+        client.login(HANDLE, APP_PASSWORD)
+        print("✅ Blueskyログイン成功！")
+    except Exception as e:
+        print(f"❌ Blueskyログイン失敗: {e}")
+        return
 
     weather = get_weather()
+    print(f"🌦️ 取得した天気: {weather}")
     message = WEATHER_TEMPLATES.get(weather, WEATHER_TEMPLATES["くもり"])
+    print(f"📝 投稿メッセージ: {message}")
 
-    # ✅ 画像をアップロードしてEmbedを作成
-    uploaded_image = client.upload_blob(image_path)
-    embed = models.AppBskyEmbedImages.Main(images=[
-        models.AppBskyEmbedImages.Image(
-            alt=f"{weather}のイラスト",
-            image=uploaded_image.blob
-        )
-    ])
+    try:
+        # 画像をアップロード
+        image_blob = upload_image(client, image_path)
+        embed = models.AppBskyEmbedImages.Main(images=[
+            models.AppBskyEmbedImages.Image(
+                alt=f"{weather}のイラスト",
+                image=image_blob
+            )
+        ])
 
-    # ✅ 投稿
-    client.send_post(text=message, embed=embed)
-    print("✅ 投稿しました！")
+        # 投稿
+        client.send_post(text=message, embed=embed)
+        print("✅ 投稿しました！")
+
+    except Exception as e:
+        print(f"⚠️ 投稿失敗: {e}")
+        traceback.print_exc()
 
 # ------------------------------
 # ★ 実行（ここに画像ファイル名を書く）
 # ------------------------------
-post_weather_with_image("images/IMG_5849.png")  # ←ファイル名を差し替えてね！
+if __name__ == "__main__":
+    print("🤖 天気占いBot 起動中…")
+    post_weather_with_image("images/IMG_5849.png")  # ←ファイル名を差し替えてね！
