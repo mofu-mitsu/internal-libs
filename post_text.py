@@ -85,7 +85,7 @@ def post_weather_with_image(image_path: str):
     embed = models.AppBskyEmbedImages.Main(images=[
         models.AppBskyEmbedImages.Image(
             alt=f"{weather}のイラスト",
-            image=uploaded_image
+            image=uploaded_image.blob
         )
     ])
 
