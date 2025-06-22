@@ -1,9 +1,7 @@
-# post_text.py
-
 # ------------------------------
 # ★ 必要なライブラリ
 # ------------------------------
-from atproto import Client
+from atproto import Client, models
 import os
 from dotenv import load_dotenv
 from pathlib import Path
@@ -26,7 +24,7 @@ def get_weather():
     if response.status_code == 200:
         data = response.json()
         weather = data[0]["timeSeries"][0]["areas"][0]["weathers"][0].lower()
-        
+
         if "雷" in weather:
             return "雷"
         elif "風" in weather:
@@ -39,8 +37,8 @@ def get_weather():
             return "晴れ"
         elif "曇" in weather or "くもり" in weather:
             return "くもり"
-        
-    return "くもり"  # デフォルト
+
+    return "くもり"
 
 # ------------------------------
 # ★ テンプレ辞書
@@ -50,27 +48,22 @@ WEATHER_TEMPLATES = {
 おひさまの下でおひるねすると、いい夢が見られるかも…？  
 
 🌟今日のラッキーアイテム：ひんやりジェル""",
-
     "くもり": """🌥 くもりの日は、うさぎがぼんやりする日…🐰  
 ぬいぐるみをぎゅっと抱いて、優しい時間をすごしてね♡  
 
 ☕ラッキー行動：あったかい紅茶を飲むこと""",
-
     "雨": """☔ 雨の日は、カエルがすこしさみしい日…🐸  
 窓の外の雨音に耳をすませて、ゆっくり深呼吸してみよう  
 
 🧺ラッキーアイテム：ふわふわのタオル""",
-
     "雪": """❄ 雪の日は、シロクマがまったりする日！🐻‍❄️  
 毛布にくるまって、ホットココアでぬくぬくしよう♡  
 
 🧸ラッキー行動：好きなぬいと一緒にお昼寝""",
-
     "風": """💨 風の強い日は、いぬがそわそわしちゃう日！🐶  
 安心できる場所で、好きな音楽を聞いてみてね♪  
 
 🎧ラッキーアイテム：お気に入りのタオルケット""",
-
     "雷": """⚡ 雷の日は、ハムスターがちょっとびくびくする日…🐹  
 でも、毛布の中に隠れてると安心できるよ♡  
 
@@ -78,14 +71,29 @@ WEATHER_TEMPLATES = {
 }
 
 # ------------------------------
-# ★ 投稿処理
+# ★ 投稿処理（画像付き！）
 # ------------------------------
-client = Client()
-client.login(HANDLE, APP_PASSWORD)
+def post_weather_with_image(image_path: str):
+    client = Client()
+    client.login(HANDLE, APP_PASSWORD)
 
-weather = get_weather()
-message = WEATHER_TEMPLATES.get(weather, WEATHER_TEMPLATES["くもり"])  # デフォルトはくもり
+    weather = get_weather()
+    message = WEATHER_TEMPLATES.get(weather, WEATHER_TEMPLATES["くもり"])
 
-client.send_post(text=message)
+    # ✅ 画像をアップロードしてEmbedを作成
+    uploaded_image = client.upload_blob(image_path)
+    embed = models.AppBskyEmbedImages.Main(images=[
+        models.AppBskyEmbedImages.Image(
+            alt=f"{weather}のイラスト",
+            image=uploaded_image
+        )
+    ])
 
-print(f"投稿しました: {message}")
+    # ✅ 投稿
+    client.send_post(text=message, embed=embed)
+    print("✅ 投稿しました！")
+
+# ------------------------------
+# ★ 実行（ここに画像ファイル名を書く）
+# ------------------------------
+post_weather_with_image("tenki_illust.png")  # ←ファイル名を差し替えてね！
