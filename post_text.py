@@ -96,4 +96,4 @@ def post_weather_with_image(image_path: str):
 # ------------------------------
 # ★ 実行（ここに画像ファイル名を書く）
 # ------------------------------
-post_weather_with_image("tenki_illust.png")  # ←ファイル名を差し替えてね！
+post_weather_with_image("image/tenki_illust.png")  # ←ファイル名を差し替えてね！
