@@ -62,7 +62,7 @@ def generate_poem(weather, day_of_week):
     prompt = f"{weather}の{day_of_week}曜日。みりんてゃが空を見上げて、ふわっと浮かんだやさしい詩を一言でつぶやき、その続きをそっとつぶやく。"
     print(f"DEBUG: Prompt: {prompt}")
 
-    output = generator(prompt, max_length=150, do_sample=True, temperature=0.9, repetition_penalty=1.2)[0]['generated_text']
+    output = generator(prompt, max_length=150, do_sample=True, temperature=0.6, repetition_penalty=1.2)[0]['generated_text']
     print(f"DEBUG: Raw Output: {output}")
     generated_poem = output[len(prompt):].strip()
     print(f"DEBUG: Generated Poem (raw strip): {generated_poem}")
