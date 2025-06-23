@@ -59,7 +59,7 @@ def generate_poem(weather, day_of_week):
     generator = pipeline("text-generation", model=model, tokenizer=tokenizer)
 
     print(f"DEBUG: Starting generation - Weather: {weather}, Day: {day_of_week}")
-    prompt = f"{weather}の{day_of_week}曜日。みりんてゃが空を見上げて、ふわっと優しく短い詩をつぶやく。自己紹介や指示文、数字、引用、媒体情報、特定の作品名・人物名、カタカナ名詞が連続する語句、実在しない人名・固有名詞、抽象概念や難解な思想は使わず、タイトルに依存せず本文で情景を充実させる。ポエムだけに集中し、3〜5文以内で、1つの自然の情景を描き、読後に優しい余韻が残るようにする。空白や「お散歩」メッセージを避ける。"
+    prompt = f"{weather}の{day_of_week}曜日。みりんてゃが空を見上げて、ふわっと浮かんだやさしい詩を一言でつぶやき、その続きをそっとつぶやく。"
     print(f"DEBUG: Prompt: {prompt}")
 
     output = generator(prompt, max_length=150, do_sample=True, temperature=0.9, repetition_penalty=1.2)[0]['generated_text']
