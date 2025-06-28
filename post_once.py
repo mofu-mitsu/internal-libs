@@ -20,6 +20,34 @@ POST_MESSAGES = [
 フィードで会いに来てくれたら、幸せだよ🥺  
     ➡︎ https://bsky.app/profile/did:plc:pvy7w75qks44sybd5wwpthb6/feed/aaae5hbblng6a  
 #みりんてゃ #地雷感情 #ふわもこ通信""",
+    """ねむれない夜に、みりんは夢を編んだの…☁️  
+    君の夢も、カードにしてみない…？  
+    ➡︎ https://mofu-mitsu.github.io/yumekawa-dream-card/  
+    #夢日記メーカー #みりんてゃ #ふわもこ創作""",
+
+    """あのねっ…  
+    みりんの夢、ちょっとだけみせてあげる♡  
+    だから、君のも…教えてくれる？💭  
+    ➡︎ https://mofu-mitsu.github.io/yumekawa-dream-card/  
+    #病みかわ夢日記 #創作支援 #みりんてゃ""",
+
+    """今日の夢、ねこが喋ってたの…🐾  
+    もしかして、あれって…予知夢…？（違う）  
+    君の夢も、カードにして記録しよ♡  
+    ➡︎ https://mofu-mitsu.github.io/yumekawa-dream-card/  
+    #夢日記メーカー #BlueskyBot #ふわもこ記録""",
+
+    """ねえっ、これ見て！  
+    夢で見た景色を、カードにできるんだよぉ…✨  
+    みりんと一緒に、夢の国つくろ？💗  
+    ➡︎ https://mofu-mitsu.github.io/yumekawa-dream-card/  
+    #みりんてゃの魔法 #ふわもこ世界 #夢記録""",
+
+    """ふわふわの夢のかけら、拾ってきたよ…🧸  
+    それ、ここでカードにできるの♡  
+    ねえ、君の夢も聞かせて？  
+    ➡︎ https://mofu-mitsu.github.io/yumekawa-dream-card/  
+    #夢かわ創作 #みりんてゃ #ねむねむ魔法""",
     """ねえ…みりんのフィード、みんなの心に届いてほしいな💗  
 覗いてくれたら、ぎゅってするから見てね？💕  
     ➡︎ https://bsky.app/profile/did:plc:pvy7w75qks44sybd5wwpthb6/feed/aaae5hbblng6a  
