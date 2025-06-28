@@ -20,6 +20,30 @@ POST_MESSAGES = [
 フィードで会いに来てくれたら、幸せだよ🥺  
     ➡︎ https://bsky.app/profile/did:plc:pvy7w75qks44sybd5wwpthb6/feed/aaae5hbblng6a  
 #みりんてゃ #地雷感情 #ふわもこ通信""",
+    """ねえ…夢日記、つけないと…  
+    夢の中でまたパンダに説教されるの…🐼💭
+    ➡︎ https://mofu-mitsu.github.io/yumekawa-dream-card/  
+    #夢日記メーカー #夢のパンダ先生 #みりんてゃの供述""",
+
+    """「夢ってメモらないと逃げるんだよ」って  
+    昨日の夢でカエルに言われた🐸（誰）  
+    ➡︎ https://mofu-mitsu.github.io/yumekawa-dream-card/  
+    #謎夢報告 #夢の住人うるさい #みりんてゃ""",
+
+    """起きた瞬間「夢オチかよッ」って  
+    自分で自分にツッコんだ日、あるよね？（ある）  
+    ➡︎ https://mofu-mitsu.github.io/yumekawa-dream-card/  
+    #夢日記メーカー #エモボケ #みりんてゃ劇場""",
+
+    """夢で5億円当たったのに、  
+    起きたら所持金8円だった…🫠  
+    ➡︎ https://mofu-mitsu.github.io/yumekawa-dream-card/  
+    #夢の裏切り #現実辛すぎワロタ #みりんてゃ""",
+
+    """みりんの夢、毎回バトル漫画みたいなんだけど  
+    これって…前世の記憶…？？（違う）  
+    ➡︎ https://mofu-mitsu.github.io/yumekawa-dream-card/  
+    #夢はフィクションです #夢界転生 #みりんてゃ""",
     """ねむれない夜に、みりんは夢を編んだの…☁️  
     君の夢も、カードにしてみない…？  
     ➡︎ https://mofu-mitsu.github.io/yumekawa-dream-card/  
