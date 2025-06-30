@@ -408,14 +408,15 @@ def clean_sentence_ending(reply):
     reply = re.sub(r"^ユーザー\s*[:：]\s*", "", reply)
     reply = re.sub(r"([！？笑])。$", r"\1", reply)
 
+    # 一人称置換
     if FIRST_PERSON != "俺" and "俺" in reply:
         print(f"⚠️ 意図しない一人称『俺』検知: {reply}")
-        return random.choice([
-            f"えへへ〜♡ {BOT_NAME}、君のこと考えるとドキドキなのっ♪",
-            f"うぅ、{BOT_NAME}、君にぎゅーってしたいなのっ♡",
-            f"ね、ね、{BOT_NAME}、君ともっとお話ししたいのっ♡"
-        ])
+        reply = re.sub(r"\b俺\b", FIRST_PERSON, reply)  # 「俺」を置換
+    if FIRST_PERSON != "僕" and "僕" in reply:
+        print(f"⚠️ 意図しない一人称『僕』検知: {reply}")
+        reply = re.sub(r"\b僕\b", FIRST_PERSON, reply)  # 「僕」を置換
 
+    # NGワード検知
     if re.search(r"(ご利用|誠に|お詫び|貴重なご意見|申し上げます|ございます|お客様|発表|パートナーシップ|ポケモン|アソビズム|企業|世界中|映画|興行|収入|ドル|億|国|イギリス|フランス|スペイン|イタリア|ドイツ|ロシア|中国|インド|Governor|Cross|営業|臨時|オペラ|初演|作曲家|ヴェネツィア|コルテス|政府|協定|軍事|情報|外交|外相|自動更新|\d+(時|分))", reply, re.IGNORECASE):
         print(f"⚠️ NGワード検知: {reply}")
         return random.choice([
@@ -424,7 +425,7 @@ def clean_sentence_ending(reply):
             f"ん〜〜変な話に！{BOT_NAME}、君のこと大好きだから、構ってくれる？♡"
         ])
 
-    # 💔 拒絶・距離置きっぽい発言へのテンプレ返し（NEW！）
+    # 拒絶系ワード
     if re.search(r"(無理|距離|付き合え|関係ない|興味ない|仲良くできない|苦手|縁がない|嫌い|気持ち悪い|キモい|きらい)", reply, re.IGNORECASE):
         print(f"⚠️ 拒絶っぽい返事を検知: {reply}")
         return random.choice([
@@ -452,7 +453,7 @@ def clean_sentence_ending(reply):
         reply += random.choice(["♡", "♪"])
 
     return reply
-
+    
 #------------------------------
 #🤖 モデル初期化
 #------------------------------
