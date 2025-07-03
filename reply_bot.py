@@ -390,17 +390,6 @@ FIRST_PERSON = "みりんてゃ"
 #------------------------------
 #🧹 テキスト処理
 #------------------------------
-def clean_output(text):
-    text = re.sub(r'\n{2,}', '\n', text)
-    face_char_whitelist = 'ฅ๑•ω•ฅﾐ・o｡≧≦｡っ☆彡≡≒'
-    allowed = rf'[^\w\sぁ-んァ-ン一-龯。、！？!?♡（）・「」♪〜ー…w笑{face_char_whitelist}]+'
-    text = re.sub(allowed, '', text)
-    text = re.sub(r'[。、！？]{2,}', lambda m: m.group(0)[0], text)
-    return text.strip()
-
-def is_output_safe(text):
-    return not any(word in text.lower() for word in DANGER_ZONE)
-
 def clean_sentence_ending(reply):
     reply = clean_output(reply)
     reply = reply.split("\n")[0].strip()
@@ -408,13 +397,17 @@ def clean_sentence_ending(reply):
     reply = re.sub(r"^ユーザー\s*[:：]\s*", "", reply)
     reply = re.sub(r"([！？笑])。$", r"\1", reply)
 
-    # 一人称置換
-    if FIRST_PERSON != "俺" and "俺" in reply:
-        print(f"⚠️ 意図しない一人称『俺』検知: {reply}")
-        reply = re.sub(r"\b俺\b", FIRST_PERSON, reply)  # 「俺」を置換
-    if FIRST_PERSON != "僕" and "僕" in reply:
-        print(f"⚠️ 意図しない一人称『僕』検知: {reply}")
-        reply = re.sub(r"\b僕\b", FIRST_PERSON, reply)  # 「僕」を置換
+    # 一人称置換（ふwaもこ風）
+    tone_map = [
+        ("俺","みりん"),
+        ("僕", "みりんてゃ"),
+        ("オレ", "みりんてゃ"),  # 全角やバリエーションも
+        ("ぼく", "みりんてゃ"),
+    ]
+    for old, new in tone_map:
+        reply = reply.replace(old, new)  # シンプル置換
+        if old in reply:
+            print(f"⚠️ 意図しない一人称『{old}』検知: {reply}")
 
     # NGワード検知
     if re.search(r"(ご利用|誠に|お詫び|貴重なご意見|申し上げます|ございます|お客様|発表|パートナーシップ|ポケモン|アソビズム|企業|世界中|映画|興行|収入|ドル|億|国|イギリス|フランス|スペイン|イタリア|ドイツ|ロシア|中国|インド|Governor|Cross|営業|臨時|オペラ|初演|作曲家|ヴェネツィア|コルテス|政府|協定|軍事|情報|外交|外相|自動更新|\d+(時|分))", reply, re.IGNORECASE):
@@ -434,6 +427,7 @@ def clean_sentence_ending(reply):
             f"あぅ〜〜〜っ…💭 {BOT_NAME}、なんか照れちゃって変なこと言ったかもっ！…ほんとはもっと仲良くしたいのにぃ♡"
         ])
 
+    # 危険ワード
     if not is_output_safe(reply):
         print(f"⚠️ 危険ワード検知: {reply}")
         return random.choice([
@@ -442,6 +436,7 @@ def clean_sentence_ending(reply):
             f"うぅ、なんか変なこと言っちゃった！{BOT_NAME}、君なしじゃダメなのっ♡"
         ])
 
+    # 短すぎるor日本語なし
     if not re.search(r"[ぁ-んァ-ン一-龥ー]", reply) or len(reply) < 8:
         return random.choice([
             f"えへへ〜♡ {BOT_NAME}、ふwaふwaしちゃった！君のことずーっと好きだよぉ？♪",
@@ -449,6 +444,7 @@ def clean_sentence_ending(reply):
             f"うぅ、なんか分かんないけど…{BOT_NAME}、君なしじゃダメなのっ♡"
         ])
 
+    # 語尾補完
     if not re.search(r"[。！？♡♪笑]$", reply):
         reply += random.choice(["♡", "♪"])
 
