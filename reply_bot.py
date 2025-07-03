@@ -399,6 +399,9 @@ def clean_output(text):
     text = re.sub(r'[。、！？]{2,}', lambda m: m.group(0)[0], text)
     return text.strip()
 
+def is_output_safe(text):
+    return not any(word in text.lower() for word in DANGER_ZONE)
+
 def clean_sentence_ending(reply):
     reply = clean_output(reply)
     reply = reply.split("\n")[0].strip()
@@ -408,7 +411,7 @@ def clean_sentence_ending(reply):
 
     # 一人称置換（ふwaもこ風）
     tone_map = [
-        ("俺", FIRST_PERSON),  # 修正: "みりん" → FIRST_PERSON
+        ("俺", FIRST_PERSON),
         ("僕", FIRST_PERSON),
         ("オレ", FIRST_PERSON),
         ("ぼく", FIRST_PERSON),
