@@ -408,15 +408,15 @@ def clean_sentence_ending(reply):
 
     # 一人称置換（ふwaもこ風）
     tone_map = [
-        ("俺","みりん"),
-        ("僕", "みりんてゃ"),
-        ("オレ", "みりんてゃ"),  # 全角やバリエーションも
-        ("ぼく", "みりんてゃ"),
+        ("俺", FIRST_PERSON),  # 修正: "みりん" → FIRST_PERSON
+        ("僕", FIRST_PERSON),
+        ("オレ", FIRST_PERSON),
+        ("ぼく", FIRST_PERSON),
     ]
     for old, new in tone_map:
-        reply = reply.replace(old, new)  # シンプル置換
-        if old in reply:
+        if old in reply:  # 置換前に検知
             print(f"⚠️ 意図しない一人称『{old}』検知: {reply}")
+        reply = reply.replace(old, new)  # シンプル置換
 
     # NGワード検知
     if re.search(r"(ご利用|誠に|お詫び|貴重なご意見|申し上げます|ございます|お客様|発表|パートナーシップ|ポケモン|アソビズム|企業|世界中|映画|興行|収入|ドル|億|国|イギリス|フランス|スペイン|イタリア|ドイツ|ロシア|中国|インド|Governor|Cross|営業|臨時|オペラ|初演|作曲家|ヴェネツィア|コルテス|政府|協定|軍事|情報|外交|外相|自動更新|\d+(時|分))", reply, re.IGNORECASE):
