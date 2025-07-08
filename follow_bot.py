@@ -12,6 +12,7 @@ load_dotenv()
 HANDLE = os.getenv("HANDLE")
 APP_PASSWORD = os.getenv("APP_PASSWORD")
 
+
 # 怪しいユーザー判定関数
 def is_suspicious_user(profile):
     suspicious_keywords = ["援交", "nsfw", "副業", "稼げる", "大人", "出会い", "無料", "click", "副収入"]
@@ -22,20 +23,73 @@ def is_suspicious_user(profile):
     handle = profile.handle or ""
     avatar = profile.avatar
 
-    # 表示名・説明に危険ワードが含まれてるか？
     for keyword in suspicious_keywords:
         if keyword.lower() in display_name.lower() or keyword.lower() in description.lower():
             return True
 
-    # ドメインが怪しい（例：username@xyz）
     if any(handle.endswith(f".{domain}") for domain in suspicious_domains):
         return True
 
-    # アイコンなし
     if avatar is None:
         return True
 
     return False
+
+
+def get_all_follows(client, self_did):
+    follows = set()
+    cursor = None
+    while True:
+        res = client.app.bsky.graph.get_follows(params={
+            "actor": self_did,
+            "limit": 100,
+            **({"cursor": cursor} if cursor else {})
+        })
+        follows.update(user.did for user in res.follows)
+        if not res.cursor:
+            break
+        cursor = res.cursor
+        logger.info(f"📋 フォロー一覧取得中... {len(follows)}件")
+    return follows
+
+
+def get_all_followers(client, self_did):
+    followers = set()
+    cursor = None
+    while True:
+        res = client.app.bsky.graph.get_followers(params={
+            "actor": self_did,
+            "limit": 100,
+            **({"cursor": cursor} if cursor else {})
+        })
+        followers.update(user.did for user in res.followers)
+        if not res.cursor:
+            break
+        cursor = res.cursor
+        logger.info(f"📋 フォロワー一覧取得中... {len(followers)}件")
+    return followers
+
+
+def get_all_follow_records(client, self_did):
+    did_to_rkey = {}
+    cursor = None
+    while True:
+        res = client.com.atproto.repo.list_records(params={
+            "repo": self_did,
+            "collection": "app.bsky.graph.follow",
+            "limit": 100,
+            **({"cursor": cursor} if cursor else {})
+        })
+        did_to_rkey.update({
+            record.value["subject"]: record.uri.split("/")[-1]
+            for record in res.records
+        })
+        if not res.cursor:
+            break
+        cursor = res.cursor
+        logger.info(f"📋 フォロー解除レコード取得中... {len(did_to_rkey)}件")
+    return did_to_rkey
+
 
 def start():
     try:
@@ -45,35 +99,8 @@ def start():
 
         self_did = client.me.did
 
-        # フォロー一覧を全件取得
-        following_handles = set()
-        cursor = None
-        while True:
-            res = client.app.bsky.graph.get_follows(params={
-                "actor": self_did,
-                "limit": 100,
-                **({"cursor": cursor} if cursor else {})
-            })
-            following_handles.update(user.did for user in res.follows)
-            if not res.cursor:
-                break
-            cursor = res.cursor
-            logger.info(f"📋 フォロー一覧取得中... {len(following_handles)}件")
-
-        # フォロワー一覧を全件取得
-        follower_handles = set()
-        cursor = None
-        while True:
-            res = client.app.bsky.graph.get_followers(params={
-                "actor": self_did,
-                "limit": 100,
-                **({"cursor": cursor} if cursor else {})
-            })
-            follower_handles.update(user.did for user in res.followers)
-            if not res.cursor:
-                break
-            cursor = res.cursor
-            logger.info(f"📋 フォロワー一覧取得中... {len(follower_handles)}件")
+        following_handles = get_all_follows(client, self_did)
+        follower_handles = get_all_followers(client, self_did)
 
         # フォロバ対象（フォロワーだけどフォローしてない）
         to_follow = follower_handles - following_handles
@@ -97,22 +124,9 @@ def start():
             except Exception as e:
                 logger.error(f"❌ フォロバ失敗: {did} - {e}")
 
-        # フォロー解除処理（全件取得）
+        # フォロー解除処理
         try:
-            did_to_rkey = {}
-            cursor = None
-            while True:
-                repo_follows = client.com.atproto.repo.list_records(params={
-                    "repo": self_did,
-                    "collection": "app.bsky.graph.follow",
-                    "limit": 100,
-                    **({"cursor": cursor} if cursor else {})
-                })
-                did_to_rkey.update({record.value["subject"]: record.uri.split('/')[-1] for record in repo_follows.records})
-                if not repo_follows.cursor:
-                    break
-                cursor = repo_follows.cursor
-                logger.info(f"📋 フォロー解除レコード取得中... {len(did_to_rkey)}件")
+            did_to_rkey = get_all_follow_records(client, self_did)
 
             for did in to_unfollow:
                 rkey = did_to_rkey.get(did)
@@ -130,12 +144,12 @@ def start():
                         logger.error(f"❌ フォロー解除失敗: {did} - {e}")
                 else:
                     logger.warning(f"⚠️ rkey取得失敗: {did}（uriが見つからない）")
-
         except Exception as e:
             logger.error(f"❌ フォロー解除全体で失敗: {e}")
 
     except Exception as e:
-        logger.error(of"❌ フォロー管理全体でエラー: {e}")
+        logger.error(f"❌ フォロー管理全体でエラー: {e}")
+
 
 if __name__ == "__main__":
     start()
