@@ -1,8 +1,6 @@
 name: Note Bot Workflow
 
 on:
-  schedule:
-    - cron: '0 0 * * *' # 毎日9:00 JST (UTC 0:00)
   workflow_dispatch: # 手動実行も可能
 
 jobs:
