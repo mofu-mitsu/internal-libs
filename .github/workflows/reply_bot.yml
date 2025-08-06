@@ -11,7 +11,7 @@ concurrency:
 
 jobs:
   run-reply-bot:
-    # Ubuntuを22.04に固定（latestは24.04で不安定な可能性あり）
+    # Ubuntuは22.04に固定（latestは24.04で不安定な可能性あり）
     runs-on: ubuntu-22.04
     timeout-minutes: 15
 
@@ -54,4 +54,6 @@ jobs:
           GIST_TOKEN_REPLY: ${{ secrets.GIST_TOKEN_REPLY }}
           GIST_ID: 40391085a2e0b8a48935ad0b460cf422
         run: |
+          # HF_TOKENを環境変数に渡す（ELYZAは認証不要だけど保険）
+          export HUGGINGFACE_TOKEN="${HF_API_TOKEN}"
           python reply_bot.py
