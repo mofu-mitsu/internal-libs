@@ -468,7 +468,7 @@ def clean_sentence_ending(reply):
 model = None
 tokenizer = None
 
-def initialize_model_and_tokenizer(model_name="ELYZA-japanese-Llama-2-7b-instruct"):
+def initialize_model_and_tokenizer(model_name="cerebras/Cerebras-GPT-1.3B"):
     global model, tokenizer
     if model is None or tokenizer is None:
         print(f"📤 {datetime.now(timezone.utc).isoformat()} ｜ トークナイザ読み込み中…")
@@ -530,7 +530,7 @@ def generate_product_reply(keyword, app_id="1055088369869282145", affiliate_id="
 # ★ カスタマイズポイント4: 返信生成
 #------------------------------
 def generate_reply_via_local_model(user_input):
-    model_name = "ELYZA-japanese-Llama-2-7b-instruct"
+    model_name = "cerebras/Cerebras-GPT-1.3B"
     failure_messages = [
         "えへへ、ごめんね〜……今ちょっと調子悪いみたい…またお話しよ？♡",
         "うぅ、ごめん〜〜…上手くお返事できなかったの。ちょっと待ってて？♡",
