@@ -532,7 +532,7 @@ def generate_product_reply(keyword, app_id="1055088369869282145", affiliate_id="
 def generate_reply_via_local_model(user_input):
     model_name = "abeja/gpt‑neox‑japanese‑2.7b"
     failure_messages = [
-        "えへへ、ごめんね〜〜今ちょっと調子悪いみたい……またお話しよ？♡",
+        "えへへ、ごめんね〜…今ちょっと調子悪いみたい…またお話しよ？♡",
         "うぅ、ごめん〜…上手くお返事できなかったの。ちょっと待ってて？♡",
         "あれれ？みりんてゃ、おねむかも…またあとで頑張るねっ！♡"
     ]
@@ -794,7 +794,7 @@ def run_reply_bot():
         # デバッグ: reply_text の内容と型を確認
         print(f"🤖 生成された返信: {repr(reply_text)} (型: {type(reply_text)})")
         if not isinstance(reply_text, str) or not reply_text.strip():
-            reply_text = "えへへ〜♡ みりんてゃ、ちょっとおねむかも…またお話しよ？♡"
+            reply_text = "えへへ〜♡ みりんてゃ、ちょっとおねむかも……またお話しよ？♡"
             hashtags = []
 
         print("🤖 最終返信内容:", repr(reply_text))
