@@ -35,7 +35,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          # CPU版PyTorchを公式wheelからインストール（欠損回避）
+          # CPU版PyTorchを公式wheelからインストール（NeoXエラー回避）
           pip install torch==2.2.0+cpu torchvision==0.17.0+cpu --index-url https://download.pytorch.org/whl/cpu
           # TransformersとAccelerateは安定版に固定
           pip install transformers==4.36.2 accelerate==0.29.2 psutil==5.9.8 sentencepiece==0.2.0
@@ -54,6 +54,5 @@ jobs:
           GIST_TOKEN_REPLY: ${{ secrets.GIST_TOKEN_REPLY }}
           GIST_ID: 40391085a2e0b8a48935ad0b460cf422
         run: |
-          # HF_TOKENを環境変数に渡す（ELYZAは認証不要だけど保険）
           export HUGGINGFACE_TOKEN="${HF_API_TOKEN}"
           python reply_bot.py
