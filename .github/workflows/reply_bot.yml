@@ -13,7 +13,6 @@ jobs:
   run-reply-bot:
     # Ubuntuを20.04に固定（古いPyTorch対応）
     runs-on: ubuntu-20.04
-    timeout-minutes: 15
 
     steps:
       - name: Checkout repository
