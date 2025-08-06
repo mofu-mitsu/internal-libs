@@ -181,7 +181,7 @@ def auto_repost_timeline():
     global skip_count, error_count
     print("📡 タイムライン巡回中...")
     try:
-        feed_res = client.app.bsky.feed.get_timeline(params={"limit": 50})
+        feed_res = client.app.bsky.feed.get_timeline(params={"limit": 100})  # 50→100に増やす
         feed_items = feed_res.feed
         for item in feed_items:
             post = item.post
@@ -199,14 +199,18 @@ def auto_repost_timeline():
                         continue
                 except ValueError:
                     print(f"⚠️ 日時パースエラー: {created_at}")
-            print(f"📅 投稿日時: {created_at}")
-            if author_did == self_did or (hasattr(post.record, 'reply') and post.record.reply) or f"@{HANDLE.lower()}" in text:
-                print(f"⏩ スキップ (自己/リプ/メンション): {text[:40]}")
+            # 自己投稿とリプライのみスキップ
+            if author_did == self_did or (hasattr(post.record, 'reply') and post.record.reply):
+                print(f"⏩ スキップ (自己/リプ): {text[:40]}")
                 skip_count += 1
                 continue
+            # ハッシュタグ・キーワードチェック
             if any(tag.lower() in text for tag in TARGET_HASHTAGS) or any(kw.lower() in text for kw in TARGET_KEYWORDS):
                 is_quote = random.random() < 0.5
+                print(f"🎯 検知: {text[:40]} (タグ/キーワード一致)")
                 repost_if_needed(uri, cid, text, post, is_quote=is_quote)
+            else:
+                print(f"⏩ スキップ (タグ/キーワードなし): {text[:40]}")
     except Exception as e:
         print(f"❌ タイムラインエラー: {e}")
         error_count += 1
