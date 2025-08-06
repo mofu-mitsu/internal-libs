@@ -463,16 +463,16 @@ def clean_sentence_ending(reply):
     return reply
     
 #------------------------------
-#🤖 モデル初期化
+# 🤖 モデル初期化
 #------------------------------
 model = None
 tokenizer = None
 
-def initialize_model_and_tokenizer(model_name="abeja/gpt‑neox‑japanese‑2.7b"):
+def initialize_model_and_tokenizer(model_name="abeja/gpt-neox-japanese-2.7b"):
     global model, tokenizer
     if model is None or tokenizer is None:
         print(f"📤 {datetime.now(timezone.utc).isoformat()} ｜ トークナイザ読み込み中…")
-        tokenizer = GPTNeoXTokenizerFast.from_pretrained(model_name, use_fast=True)
+        tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=True)
         print(f"📤 {datetime.now(timezone.utc).isoformat()} ｜ トークナイザ読み込み完了")
         print(f"📤 {datetime.now(timezone.utc).isoformat()} ｜ モデル読み込み中…")
         model = AutoModelForCausalLM.from_pretrained(
@@ -530,7 +530,7 @@ def generate_product_reply(keyword, app_id="1055088369869282145", affiliate_id="
 # ★ カスタマイズポイント4: 返信生成
 #------------------------------
 def generate_reply_via_local_model(user_input):
-    model_name = "abeja/gpt‑neox‑japanese‑2.7b"
+    model_name = "abeja/gpt-neox-japanese-2.7b"
     failure_messages = [
         "えへへ、ごめんね〜…今ちょっと調子悪いみたい…またお話しよ？♡",
         "うぅ、ごめん〜…上手くお返事できなかったの。ちょっと待ってて？♡",
