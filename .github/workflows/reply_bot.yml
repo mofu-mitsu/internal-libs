@@ -11,7 +11,7 @@ concurrency:
 
 jobs:
   run-reply-bot:
-    # Ubuntuを22.04に固定（latestは不安定）
+    # Ubuntuを22.04に固定（latestは24.04で不安定な可能性あり）
     runs-on: ubuntu-22.04
     timeout-minutes: 15
 
@@ -35,13 +35,16 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          # バージョン固定で安定化
+          # CPU版PyTorchを公式wheelからインストール（欠損回避）
           pip install torch==2.2.0+cpu torchvision==0.17.0+cpu --index-url https://download.pytorch.org/whl/cpu
+          # TransformersとAccelerateは安定版に固定
           pip install transformers==4.36.2 accelerate==0.29.2 psutil==5.9.8 sentencepiece==0.2.0
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
       - name: Check installed packages
-        run: pip list
+        run: |
+          python -c "import sys, torch; print('Python', sys.version); print('Torch', torch.__version__, 'uint64 exists?', hasattr(torch,'uint64'))"
+          pip list
 
       - name: Run Reply Bot
         env:
