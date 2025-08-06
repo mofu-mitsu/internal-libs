@@ -1,4 +1,4 @@
-# 🔽 📦 Pythonの標準ライブラリ
+# 🔽 📦 Pythonの標準ライブラリ　
 import time
 import os
 import random
