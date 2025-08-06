@@ -532,9 +532,9 @@ def generate_product_reply(keyword, app_id="1055088369869282145", affiliate_id="
 def generate_reply_via_local_model(user_input):
     model_name = "ELYZA-japanese-Llama-2-7b-instruct"
     failure_messages = [
-        "えへへ、ごめんね〜…今ちょっと調子悪いみたい…またお話しよ？♡",
-        "うぅ、ごめん〜…上手くお返事できなかったの。ちょっと待ってて？♡",
-        "あれれ？みりんてゃ、おねむかも…またあとで頑張るねっ！♡"
+        "えへへ、ごめんね〜……今ちょっと調子悪いみたい…またお話しよ？♡",
+        "うぅ、ごめん〜〜…上手くお返事できなかったの。ちょっと待ってて？♡",
+        "あれれ？みりんてゃ、おねむかも……またあとで頑張るねっ！♡"
     ]
     fallback_cute_lines = [
         "えへへ〜♡ みりんてゃ、君のこと考えるとドキドキなのっ♪",
