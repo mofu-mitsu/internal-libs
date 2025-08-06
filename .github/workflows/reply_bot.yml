@@ -1,4 +1,4 @@
-name: Bluesky Reply 
+name: Bluesky Reply
 
 on:
   schedule:
@@ -11,7 +11,8 @@ concurrency:
 
 jobs:
   run-reply-bot:
-    runs-on: ubuntu-latest
+    # Ubuntuを22.04に固定（latestは不安定）
+    runs-on: ubuntu-22.04
     timeout-minutes: 15
 
     steps:
@@ -33,9 +34,10 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install --upgrade pip
-          pip install torch==2.2.0 transformers==4.36.2 psutil==5.9.8 sentencepiece==0.2.0
-          pip install -U accelerate
+          python -m pip install --upgrade pip
+          # バージョン固定で安定化
+          pip install torch==2.2.0+cpu torchvision==0.17.0+cpu --index-url https://download.pytorch.org/whl/cpu
+          pip install transformers==4.36.2 accelerate==0.29.2 psutil==5.9.8 sentencepiece==0.2.0
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
       - name: Check installed packages
