@@ -806,10 +806,23 @@ def run_reply_bot():
         reply_ref, post_uri = handle_post(record, notification)
         print(f"🔍 run_reply_bot - post_uri: {post_uri}, reply_ref: {reply_ref}")
 
-        reply_text, hashtags = generate_diagnosis(text, author_did)  # 診断ロジック維持
+        # ★ここに追加：キーワード返信を優先的に判定
+        reply_text = None
+        for keyword, fixed_reply in REPLY_TABLE.items():
+            if keyword in text:
+                reply_text = fixed_reply
+                print(f"🎯 キーワード '{keyword}' に反応 → 固定返信採用: {reply_text}")
+                break
+
+        # ★キーワード返信がなければ診断・AIにフォールバック
         if not reply_text:
-            reply_text = generate_reply_via_local_model(text)  # フォールバック
-            print(f"🔄 フォールバック返信: {repr(reply_text)}")
+            reply_text, hashtags = generate_diagnosis(text, author_did)
+            if not reply_text:
+                reply_text = generate_reply_via_local_model(text)
+                print(f"🔄 フォールバック返信: {repr(reply_text)}")
+            else:
+                print(f"🔬 診断ロジックで生成: {repr(reply_text)}")
+        else:
             hashtags = []
 
         # デバッグ: reply_text の内容と型を確認
