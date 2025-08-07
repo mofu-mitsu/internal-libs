@@ -401,6 +401,7 @@ def clean_sentence_ending(reply):
         ("僕", FIRST_PERSON),
         ("オレ", FIRST_PERSON),
         ("ぼく", FIRST_PERSON),
+        ("お前", "きみ"),
     ]
     for old, new in tone_map:
         if old in reply:
