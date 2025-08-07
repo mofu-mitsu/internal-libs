@@ -2,8 +2,6 @@ name: Bluesky Reply via Docker
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '*/30 * * * *'
 
 jobs:
   run-reply-bot:
