@@ -1,0 +1,31 @@
+name: Bluesky Reply via Docker
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '*/30 * * * *'
+
+jobs:
+  run-reply-bot:
+    runs-on: ubuntu-20.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Build Docker image
+        run: docker build -t reply-bot -f Dockerfile .
+
+      - name: Run Docker container
+        env:
+          HANDLE: ${{ secrets.HANDLE }}
+          APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
+          HF_API_TOKEN: ${{ secrets.HF_API_TOKEN }}
+          GIST_TOKEN_REPLY: ${{ secrets.GIST_TOKEN_REPLY }}
+        run: |
+          docker run --rm \
+            -e HANDLE \
+            -e APP_PASSWORD \
+            -e HF_API_TOKEN \
+            -e GIST_TOKEN_REPLY \
+            reply-bot
