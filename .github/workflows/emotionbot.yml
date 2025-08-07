@@ -12,32 +12,28 @@ jobs:
 
     steps:
       - name: 📥 リポジトリをチェックアウト
-        uses: actions/checkout@v3
-
-      - name: 🔄 Hugging Faceのキャッシュを削除
-        run: |
-          rm -rf ~/.cache/huggingface
+        uses: actions/checkout@v4
 
       - name: 🧹 pipキャッシュをクリア
         run: |
           pip cache purge
 
       - name: 🐍 Pythonセットアップ
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.10'
 
       - name: 📦 ライブラリをインストール
         run: |
           pip install --upgrade pip
-          pip install torch==2.0.1 transformers==4.36.2 sentencepiece==0.2.0
-          pip install -U accelerate
+          pip install --no-cache-dir atproto python-dotenv groq==0.9.0
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
       - name: 🔐 シークレットを書き出し
         run: |
           echo "HANDLE=${{ secrets.HANDLE }}" >> .env
           echo "APP_PASSWORD=${{ secrets.APP_PASSWORD }}" >> .env
+          echo "GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}" >> .env
 
       - name: 📋 確認のためパッケージ一覧を表示
         run: pip list
