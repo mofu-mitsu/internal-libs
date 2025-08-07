@@ -1,19 +1,21 @@
 FROM python:3.10-slim
 
-# 依存パッケージのインストール
+# 必要なライブラリ追加（torchが要求するやつ）
 RUN apt-get update && apt-get install -y \
     git \
+    build-essential \
+    libglib2.0-0 \
+    libsm6 \
+    libxrender1 \
+    libxext6 \
+    wget \
     && rm -rf /var/lib/apt/lists/*
 
-# 作業ディレクトリ作成
 WORKDIR /app
 
-# ファイルコピー
 COPY . .
 
-# Python依存関係のインストール
 RUN pip install --upgrade pip \
  && pip install --no-cache-dir -r requirements.txt
 
-# 実行コマンド（reply_bot.py がメインファイル想定）
 CMD ["python", "reply_bot.py"]
