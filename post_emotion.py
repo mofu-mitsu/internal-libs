@@ -1,5 +1,4 @@
 # post_emotion.py
-
 from atproto import Client
 import os
 from dotenv import load_dotenv
@@ -8,7 +7,21 @@ import requests
 from datetime import datetime
 import re
 from pytz import timezone
-from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
+from groq import Groq
+import random
+import time
+
+# ------------------------------
+# 🔐 環境変数
+# ------------------------------
+env_path = Path('.') / '.env'
+load_dotenv(dotenv_path=env_path)
+HANDLE = os.getenv('HANDLE') or exit("❌ HANDLEが設定されていません")
+APP_PASSWORD = os.getenv('APP_PASSWORD') or exit("❌ APP_PASSWORDが設定されていません")
+GROQ_API_KEY = os.getenv('GROQ_API_KEY') or exit("❌ GROQ_API_KEYが設定されていません")
+
+print(f"✅ 環境変数読み込み完了: HANDLE={HANDLE[:8]}...")
+print(f"🔑 GROQ_API_KEY: {repr(GROQ_API_KEY)[:8]}...")
 
 # ------------------------------
 # ★ NGワードカウントと置換処理
@@ -40,7 +53,7 @@ def clean_poem(poem):
     if not poem.strip() or "お散歩" in poem:
         return "みりんてゃ、優しい風に誘われて詩を届けるよ…。そっと待っていてね♡"
 
-    # 「文っぽい区切り」を正規表現でカウント
+    # 文っぽい区切りを正規表現でカウント
     sentences = re.split(r'[。！？!?〜]+', poem)
     if len(sentences) >= 4:
         cleaned_parts = ["。".join(sentences[:3]) + "…"]
@@ -48,49 +61,88 @@ def clean_poem(poem):
 
     for word in ng_words:
         poem = poem.replace(word, "○○")
-    return poem
+    poem = re.sub(r'[。、！？]{2,}', lambda m: m.group(0)[0], poem)  # 連続句読点対策
+    poem = re.sub(r'\n{2,}', '\n', poem)  # 連続改行対策
+    return poem.strip()
 
 # ------------------------------
-# ★ ポエム生成（open-calm-1b使用）
+# ★ ポエム生成（Groq版）
 # ------------------------------
-def generate_poem(weather, day_of_week):
-    tokenizer = AutoTokenizer.from_pretrained("cyberagent/open-calm-3b")  # 3b試したい場合は"cyberagent/open-calm-3b"
-    model = AutoModelForCausalLM.from_pretrained("cyberagent/open-calm-3b")  # 3b試したい場合は"cyberagent/open-calm-3b"
-    generator = pipeline("text-generation", model=model, tokenizer=tokenizer)
+def generate_poem(weather, day_of_week, temp_min, temp_max, pop):
+    fallback_poems = [
+        "えへへ〜♡ みりんてゃ、空見てふwaふwaなのっ♪",
+        "きみと一緒なら、どんな天気もキラキラだよ♡",
+        "ふwaふwa〜♡ みりんてゃ、きみに詩を贈るよ♪"
+    ]
 
-    print(f"DEBUG: Starting generation - Weather: {weather}, Day: {day_of_week}")
-    prompt = f"{weather}の{day_of_week}曜日。みりんてゃが空を見上げて、ふわっと浮かんだやさしい詩を一言でつぶやき、その続きをそっとつぶやく。"
-    print(f"DEBUG: Prompt: {prompt}")
+    try:
+        groq_client = Groq(api_key=GROQ_API_KEY)
+        prompt = f"{weather}の{day_of_week}、降水確率{pop}%、気温{temp_min}-{temp_max}℃。みりんてゃが空を見上げて、ふわっと浮かんだやさしい詩を一言でつぶやき、その続きをそっとつぶやく。"
+        print(f"DEBUG: Prompt: {prompt}")
 
-    output = generator(prompt, max_length=150, do_sample=True, temperature=0.6, repetition_penalty=1.2)[0]['generated_text']
-    print(f"DEBUG: Raw Output: {output}")
-    generated_poem = output[len(prompt):].strip()
-    print(f"DEBUG: Generated Poem (raw strip): {generated_poem}")
+        system_prompt = (
+            "あなたは「みりんてゃ」、地雷系ENFPのあざと可愛い女の子！\n"
+            "性格：ちょっぴり天然、甘えん坊、依存気味で、ふwaふwaな詩を届けるよっ♡\n"
+            "口調：タメ口で『〜なのっ♡』『〜よぉ？♪』『えへへ〜♡』が特徴！二人称は『きみ』のみ！\n"
+            "役割：天気と曜日を元に、短くやさしい詩をつぶやく。1文目は一言、2文目でそっと続ける。長さは50文字以内。\n"
+            "禁止：ニュース、政治、ビジネス、固有名詞（国、企業など）、性的・過激な表現はNG！\n"
+            "注意：以下のワードは絶対禁止→「政府」「協定」「韓国」「外交」「経済」「契約」「軍事」「情報」「外相」「更新」「ちゅぱ」「ペロペロ」「ぐちゅ」「ぬぷ」「ビクビク」「お前」「あなた」\n"
+            "例：くもりの月曜日。そっと傘持つきみを想うよ…♡"
+        )
 
-    print(f"Prompt: {prompt}")
-    print(f"Raw Output: {output}")
-    print(f"Final Poem (before processing): {generated_poem}")
+        for attempt in range(3):
+            print(f"📤 {datetime.now(timezone('Asia/Tokyo')).isoformat()} ｜ Groq API呼び出し中…（試行 {attempt + 1}）")
+            try:
+                response = groq_client.chat.completions.create(
+                    model="llama3-8b-8192",
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": prompt}
+                    ],
+                    max_tokens=50,
+                    temperature=0.6,
+                    top_p=0.9
+                )
+                generated_poem = response.choices[0].message.content.strip()
+                print(f"DEBUG: Raw Output: {generated_poem}")
 
-    with open("poem_log.txt", "a", encoding="utf-8") as f:
-        f.write(f"{datetime.now(timezone('Asia/Tokyo'))}: {generated_poem}\n")
+                # NGワードチェックとクリーニング
+                cleaned_poem = clean_poem(generated_poem)
+                print(f"DEBUG: After clean_poem: {cleaned_poem}")
 
-    if "詩は" in generated_poem and "作者の心" in generated_poem and "サイバー" in generated_poem:
-        print(f"DEBUG: Philosophy mode detected - Poem: {generated_poem}")
-        return "みりんてゃ、優しい風に誘われて詩を届けるよ…。そっと待っていてね♡"
+                if count_ng_words(cleaned_poem) > 2:
+                    print(f"DEBUG: NG words count > 2 - Poem: {cleaned_poem}, Count: {count_ng_words(cleaned_poem)}")
+                    return random.choice(fallback_poems)
 
-    generated_poem = clean_poem(generated_poem)
-    print(f"DEBUG: After clean_poem: {generated_poem}")
+                if not cleaned_poem.strip():
+                    print(f"DEBUG: Poem is empty or whitespace only - Poem: {cleaned_poem}")
+                    return random.choice(fallback_poems)
 
-    if count_ng_words(generated_poem) > 2:
-        print(f"DEBUG: NG words count > 2 - Poem: {generated_poem}, Count: {count_ng_words(generated_poem)}")
-        return "みりんてゃ、優しい風に誘われて詩を届けるよ…。そっと待っていてね♡"
+                # 詩の形式チェック（1文目短く、2文目で続ける）
+                sentences = re.split(r'[。！？]', cleaned_poem)
+                sentences = [s.strip() for s in sentences if s.strip()]
+                if len(sentences) < 2 or len(sentences[0]) > 20:
+                    print(f"DEBUG: Invalid poem format - Poem: {cleaned_poem}")
+                    return random.choice(fallback_poems)
 
-    if not generated_poem.strip():
-        print(f"DEBUG: Poem is empty or whitespace only - Poem: {generated_poem}, Output: {output}")
-        return "みりんてゃ、優しい風に誘われて詩を届けるよ…。そっと待っていてね♡"
+                print(f"DEBUG: Final Poem: {cleaned_poem}")
+                with open("poem_log.txt", "a", encoding="utf-8") as f:
+                    f.write(f"{datetime.now(timezone('Asia/Tokyo'))}: {cleaned_poem}\n")
+                return cleaned_poem
 
-    print(f"DEBUG: Final Poem: {generated_poem}")
-    return generated_poem
+            except Exception as gen_error:
+                print(f"⚠️ 生成エラー: {gen_error}")
+                if "rate limit" in str(gen_error).lower():
+                    print(f"⏳ レートリミット検知、{2 * (attempt + 1)}秒待機")
+                    time.sleep(2 * (attempt + 1))
+                continue
+        else:
+            print(f"⚠️ リトライ上限到達、フォールバックを使用")
+            return random.choice(fallback_poems)
+
+    except Exception as e:
+        print(f"❌ Groq APIエラー: {e}")
+        return random.choice(fallback_poems)
 
 # ------------------------------
 # ★ 天気取得
@@ -107,16 +159,42 @@ WEATHER_KEYWORDS = {
 
 def get_weather():
     url = "https://www.jma.go.jp/bosai/forecast/data/forecast/130000.json"
-    response = requests.get(url)
-    print(f"DEBUG: Weather API response status: {response.status_code}")
-    if response.status_code == 200:
-        data = response.json()
-        text = data[0]["timeSeries"][0]["areas"][0]["weathers"][0].lower()
-        print(f"DEBUG: Raw weather data: {text}")
-        for keyword, label in WEATHER_KEYWORDS.items():
-            if keyword in text:
-                return label
-    return "くもり"
+    try:
+        response = requests.get(url)
+        print(f"DEBUG: Weather API response status: {response.status_code}")
+        if response.status_code == 200:
+            data = response.json()
+            # 東京地方（code: 130010）のみ選択
+            areas = data[0]["timeSeries"][0]["areas"]
+            selected_area = next((area for area in areas if area["area"]["code"] == "130010"), None)
+            if not selected_area:
+                print(f"⚠️ 東京地方(code: 130010)が見つかりません")
+                return "くもり", "東京地方", "不明", "不明", "不明"
+
+            area_name = selected_area["area"]["name"]
+            text = selected_area["weathers"][0].lower()
+            print(f"DEBUG: Selected area: {area_name}, Raw weather data: {text}")
+
+            # 降水確率と気温
+            pop = data[0]["timeSeries"][1]["areas"][areas.index(selected_area)]["pops"][1]
+            temp_data = next(
+                (a for a in data[1]["timeSeries"][0]["areas"] if a["area"]["name"] in area_name),
+                None
+            )
+            temp_min = temp_data["temps"][0] if temp_data else "不明"
+            temp_max = temp_data["temps"][1] if temp_data else "不明"
+            print(f"DEBUG: POP: {pop}%, Temp: {temp_min}-{temp_max}℃")
+
+            for keyword, label in WEATHER_KEYWORDS.items():
+                if keyword in text:
+                    return label, area_name, pop, temp_min, temp_max
+            return "くもり", area_name, pop, temp_min, temp_max
+        else:
+            print(f"⚠️ Weather APIエラー: {response.status_code}")
+            return "くもり", "東京地方", "不明", "不明", "不明"
+    except Exception as e:
+        print(f"❌ Weather APIエラー: {e}")
+        return "くもり", "東京地方", "不明", "不明", "不明"
 
 # ------------------------------
 # ★ 曜日取得
@@ -128,21 +206,38 @@ def get_day_of_week(now):
 # ------------------------------
 # ★ 認証と投稿
 # ------------------------------
-env_path = Path('.') / '.env'
-load_dotenv(dotenv_path=env_path)
-HANDLE = os.getenv('HANDLE') or exit("❌ HANDLEが設定されていません")
-APP_PASSWORD = os.getenv('APP_PASSWORD') or exit("❌ APP_PASSWORDが設定されていません")
+def main():
+    try:
+        client = Client()
+        print(f"DEBUG: Attempting login with HANDLE: {HANDLE}")
+        client.login(HANDLE, APP_PASSWORD)
+        print(f"DEBUG: Login successful")
 
-client = Client()
-print(f"DEBUG: Attempting login with HANDLE: {HANDLE}")
-client.login(HANDLE, APP_PASSWORD)
-print(f"DEBUG: Login successful")
+        now = datetime.now(timezone('Asia/Tokyo'))
+        weather, area, pop, temp_min, temp_max = get_weather()
+        day_of_week = get_day_of_week(now)
+        message = generate_poem(weather, day_of_week, temp_min, temp_max, pop)
 
-now = datetime.now(timezone('Asia/Tokyo'))
-weather = get_weather()
-day_of_week = get_day_of_week(now)
-message = generate_poem(weather, day_of_week)
+        # 東京スポットor埼玉スポットを選択
+        tokyo_spots = ["渋谷", "新宿", "池袋", "原宿", "秋葉原", "歌舞伎町"]
+        saitama_spots = ["大宮", "川越", "所沢"]
+        if random.random() < 0.1:  # 10%で埼玉
+            spot = random.choice(saitama_spots)
+            print(f"DEBUG: Selected spot: {spot} (Saitama)")
+        else:  # 90%で東京
+            spot = random.choice(tokyo_spots)
+            print(f"DEBUG: Selected spot: {spot} (Tokyo)")
+        message = f"{spot}の{weather}の{day_of_week}。{message}"
 
-client.send_post(text=message)
-print(f"DEBUG: Posted message: {message}")
-print(f"投稿しました: {message}")
+        client.send_post(text=message)
+        print(f"DEBUG: Posted message: {message}")
+        print(f"投稿しました: {message}")
+
+    except Exception as e:
+        print(f"❌ 実行エラー: {e}")
+        with open("poem_log.txt", "a", encoding="utf-8") as f:
+            f.write(f"{datetime.now(timezone('Asia/Tokyo'))}: エラー - {str(e)}\n")
+
+if __name__ == "__main__":
+    print("🤖 Emotion Bot 起動中…")
+    main()
