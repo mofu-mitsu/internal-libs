@@ -28,6 +28,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install --upgrade pip
+          pip install -r requirements.txt
           pip install torch==2.0.1
           pip install pytz
           pip install transformers==4.39.3 accelerate sentencepiece psutil
