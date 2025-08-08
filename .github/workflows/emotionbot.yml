@@ -26,7 +26,7 @@ jobs:
       - name: 📦 ライブラリをインストール
         run: |
           pip install --upgrade pip
-          pip install --no-cache-dir atproto python-dotenv groq==0.9.0
+          pip install --no-cache-dir atproto python-dotenv groq==0.9.0 httpx==0.27.2
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
       - name: 🔐 シークレットを書き出し
