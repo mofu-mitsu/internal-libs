@@ -70,9 +70,9 @@ def clean_poem(poem):
 # ------------------------------
 def generate_poem(weather, day_of_week, temp_min, temp_max, pop):
     fallback_poems = [
-        "えへへ〜♡ みりんてゃ、空見てふわふわなのっ♪",
+        "えへへ〜♡ みりんてゃ、空見てふwaふwaなのっ♪",
         "きみと一緒なら、どんな天気もキラキラだよ♡",
-        "ふわふわ〜♡ みりんてゃ、きみに詩を贈るよ♪"
+        "ふwaふwa〜♡ みりんてゃ、きみに詩を贈るよ♪"
     ]
 
     try:
@@ -82,11 +82,11 @@ def generate_poem(weather, day_of_week, temp_min, temp_max, pop):
 
         system_prompt = (
             "あなたは「みりんてゃ」、地雷系ENFPのあざと可愛い女の子！\n"
-            "性格：ちょっぴり天然、甘えん坊、依存気味で、ふわふわな詩を届けるよっ♡\n"
+            "性格：ちょっぴり天然、甘えん坊、依存気味で、ふwaふwaな詩を届けるよっ♡\n"
             "口調：タメ口で『〜なのっ♡』『〜よぉ？♪』『えへへ〜♡』が特徴！二人称は『きみ』のみ！\n"
             "役割：天気と曜日を元に、短くやさしい詩をつぶやく。1文目は一言、2文目でそっと続ける。長さは50文字以内。\n"
             "禁止：ニュース、政治、ビジネス、固有名詞（国、企業など）、性的・過激な表現はNG！\n"
-            "注意：以下のワードは絶対禁止→「政府」「協定」「韓国」「外交」「経済」「契約」「軍事」「情報」「外相」「更新」「ちゅぱ」「ペロペロ」「ぐちゅ」「ぬぷ」「ビクビク」「お前」\n"
+            "注意：以下のワードは絶対禁止→「政府」「協定」「韓国」「外交」「経済」「契約」「軍事」「情報」「外相」「更新」「ちゅぱ」「ペロペロ」「ぐちゅ」「ぬぷ」「ビクビク」「お前」「あなた」\n"
             "例：くもりの月曜日。そっと傘持つきみを想うよ…♡"
         )
 
@@ -175,14 +175,16 @@ def get_weather():
             text = selected_area["weathers"][0].lower()
             print(f"DEBUG: Selected area: {area_name}, Raw weather data: {text}")
 
-            # 降水確率と気温
+            # 降水確率
             pop = data[0]["timeSeries"][1]["areas"][areas.index(selected_area)]["pops"][1]
+
+            # 気温（timeSeries[2]から取得）
             temp_data = next(
-                (a for a in data[1]["timeSeries"][0]["areas"] if a["area"]["name"] in area_name),
+                (a for a in data[0]["timeSeries"][2]["areas"] if a["area"]["code"] == "44132"),  # 東京(code: 44132)
                 None
             )
-            temp_min = temp_data["temps"][0] if temp_data else "不明"
-            temp_max = temp_data["temps"][1] if temp_data else "不明"
+            temp_min = temp_data["temps"][0] if temp_data and "temps" in temp_data else "不明"
+            temp_max = temp_data["temps"][1] if temp_data and "temps" in temp_data else "不明"
             print(f"DEBUG: POP: {pop}%, Temp: {temp_min}-{temp_max}℃")
 
             for keyword, label in WEATHER_KEYWORDS.items():
