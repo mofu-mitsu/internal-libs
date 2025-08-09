@@ -54,14 +54,14 @@ def clean_poem(poem):
         return "みりんてゃ、優しい風に誘われて詩を届けるよ…。そっと待っていてね♡"
 
     # 文っぽい区切りを正規表現でカウント
-    sentences = re.split(r'[。！？!?〜]+', poem)
+    sentences = re.split(r'[。！？♡♪]+', poem)
     if len(sentences) >= 4:
         cleaned_parts = ["。".join(sentences[:3]) + "…"]
         return cleaned_parts[0]
 
     for word in ng_words:
         poem = poem.replace(word, "○○")
-    poem = re.sub(r'[。、！？]{2,}', lambda m: m.group(0)[0], poem)  # 連続句読点対策
+    poem = re.sub(r'[。、！？♡♪]{2,}', lambda m: m.group(0)[0], poem)  # 連続句読点対策
     poem = re.sub(r'\n{2,}', '\n', poem)  # 連続改行対策
     return poem.strip()
 
@@ -84,10 +84,10 @@ def generate_poem(weather, day_of_week, temp_min, temp_max, pop):
             "あなたは「みりんてゃ」、地雷系ENFPのあざと可愛い女の子！\n"
             "性格：ちょっぴり天然、甘えん坊、依存気味で、ふwaふwaな詩を届けるよっ♡\n"
             "口調：タメ口で『〜なのっ♡』『〜よぉ？♪』『えへへ〜♡』が特徴！二人称は『きみ』のみ！\n"
-            "役割：天気と曜日を元に、短くやさしい詩をつぶやく。1文目は一言、2文目でそっと続ける。長さは50文字以内。\n"
-            "禁止：ニュース、政治、ビジネス、固有名詞（国、企業など）、性的・過激な表現はNG！\n"
+            "役割：天気と曜日を元に、短くやさしい詩をつぶやく。1文目は短い一言（天気や曜日は含めない）、2文目でそっと続ける。長さは50文字以内。\n"
+            "禁止：ニュース、政治、ビジネス、固有名詞（国、企業、場所など）、性的・過激な表現はNG！\n"
             "注意：以下のワードは絶対禁止→「政府」「協定」「韓国」「外交」「経済」「契約」「軍事」「情報」「外相」「更新」「ちゅぱ」「ペロペロ」「ぐちゅ」「ぬぷ」「ビクビク」「お前」「あなた」\n"
-            "例：くもりの月曜日。そっと傘持つきみを想うよ…♡"
+            "例：雷の土曜日。そっときみを想うよ…♡"
         )
 
         for attempt in range(3):
@@ -119,10 +119,14 @@ def generate_poem(weather, day_of_week, temp_min, temp_max, pop):
                     return random.choice(fallback_poems)
 
                 # 詩の形式チェック（1文目短く、2文目で続ける）
-                sentences = re.split(r'[。！？]', cleaned_poem)
+                sentences = re.split(r'[。！？♡♪]', cleaned_poem)
                 sentences = [s.strip() for s in sentences if s.strip()]
-                if len(sentences) < 2 or len(sentences[0]) > 20:
-                    print(f"DEBUG: Invalid poem format - Poem: {cleaned_poem}")
+                print(f"DEBUG: Sentence split: {sentences}")
+                if len(sentences) < 2:
+                    print(f"DEBUG: Invalid poem format: Too few sentences - Poem: {cleaned_poem}")
+                    return random.choice(fallback_poems)
+                if len(sentences[0]) > 30:
+                    print(f"DEBUG: Invalid poem format: First sentence too long - Poem: {cleaned_poem}")
                     return random.choice(fallback_poems)
 
                 print(f"DEBUG: Final Poem: {cleaned_poem}")
