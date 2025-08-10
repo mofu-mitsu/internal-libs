@@ -70,9 +70,9 @@ def clean_poem(poem):
 # ------------------------------
 def generate_poem(weather, day_of_week, temp_min, temp_max, pop):
     fallback_poems = [
-        "えへへ〜♡ みりんてゃ、空見てふwaふwaなのっ♪",
+        "えへへ〜♡ みりんてゃ、空見てふわふわなのっ♪",
         "きみと一緒なら、どんな天気もキラキラだよ♡",
-        "ふwaふwa〜♡ みりんてゃ、きみに詩を贈るよ♪"
+        "ふわふわ〜♡ みりんてゃ、きみに詩を贈るよ♪"
     ]
 
     try:
