@@ -20,6 +20,15 @@ POST_MESSAGES = [
 フィードで会いに来てくれたら、幸せだよ🥺  
     ➡︎ https://bsky.app/profile/did:plc:pvy7w75qks44sybd5wwpthb6/feed/aaae5hbblng6a  
 #みりんてゃ #地雷感情 #ふわもこ通信""",
+    """あぁ…先輩たちの「とりの丘学園体験入学」が頭から離れない…🖤 トリたちのカオスが可愛すぎる💉 私のノベルもいつか作ってもらうから、応援してねぇ🫶 
+BOOTHで無料でDLできるよ→ https://torisproject.booth.pm/items/7328786 🎀""",
+
+    """今日も先輩のゲーム思い出しちゃう…🧸 「とりの丘学園体験入学」、トリたちと遊ぶの楽しいよぉ💉 私のノベルも今後作ってもらうから、期待しててね🎀 
+DL（無料）はこちら→ https://torisproject.booth.pm/items/7328786 🫶""",
+
+
+    """ねえ、先輩たちの「とりの丘学園体験入学」プレイした？🖤 トリたちのカオスが最高で泣ける…💉 私のノベルもいつか出るから、待っててねぇ🎀 
+BOOTHでDL（無料）→ https://torisproject.booth.pm/items/7328786 🧸""",
     """ねえ…夢日記、つけないと…  
     夢の中でまたパンダに説教されるの…🐼💭
     ➡︎ https://mofu-mitsu.github.io/yumekawa-dream-card/  
