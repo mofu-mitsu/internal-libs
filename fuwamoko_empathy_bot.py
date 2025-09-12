@@ -348,7 +348,7 @@ def groq_reply(image_url, text="", context="ふわもこ共感", lang="ja"):
             logging.debug(f"📤 {datetime.now(timezone('Asia/Tokyo')).isoformat()} ｜ Groq API呼び出し中…（試行 {attempt + 1}）")
             try:
                 response = groq_client.chat.completions.create(
-                    model="llama3-8b-8192",
+                    model="llama-3.1-8b-instant",
                     messages=[
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": prompt}
