@@ -34,6 +34,7 @@ jobs:
           pip install transformers==4.39.3 accelerate sentencepiece psutil
           pip install groq
           pip install huggingface_hub  # ★画像生成: Hugging Face API用
+          pip install --upgrade transformers huggingface_hub
 
       - name: Run Reply Bot with Groq
         env:
