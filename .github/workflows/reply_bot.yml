@@ -11,8 +11,7 @@ concurrency:
 
 jobs:
   run-reply-bot:
-    runs-on: ubuntu-latest  # 高スペックが必要なら「ubuntu-latest-8-cores」に変更（有料プラン）
-    timeout-minutes: 10  # 全体のタイムアウトを10分に設定
+    runs-on: ubuntu-latest-8-cores  # ★変更: 高スペックランナー（有料プランが必要ならubuntu-latestに戻して）
 
     steps:
       - name: Checkout repository
@@ -20,7 +19,7 @@ jobs:
 
       - name: Clear HuggingFace cache
         run: rm -rf ~/.cache/huggingface
-        continue-on-error: true  # キャッシュ削除失敗でも続行
+        continue-on-error: true
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -47,5 +46,3 @@ jobs:
           HF_TOKEN: ${{ secrets.HF_API_TOKEN }}
         run: |
           python reply_bot.py
-        timeout-minutes: 5  # 実行に5分制限
-        continue-on-error: true  # 画像生成失敗でもワークフロー続行
