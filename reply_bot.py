@@ -276,7 +276,7 @@ def check_diagnosis_limit(user_did, is_daytime):
     return True, None
 
 #------------------------------
-#🆕 画像生成機能（diffusers版）
+#🆕 画像生成機能（軽量版）
 #------------------------------
 def generate_image(prompt):
     print(f"🖼️ 画像生成開始: プロンプト={prompt}")
@@ -288,49 +288,50 @@ def generate_image(prompt):
 
         # モデルキャッシュの確認
         from huggingface_hub import snapshot_download
-        model_id = "runwayml/stable-diffusion-v1-5"  # ★軽いモデルに変更
+        model_id = "CompVis/stable-diffusion-v1-4"  # ★超軽量モデル
         try:
             print(f"📥 モデル {model_id} のキャッシュ確認中...")
-            snapshot_download(repo_id=model_id, token=HF_TOKEN, allow_patterns=["*.json", "*.bin", "*.safetensors"], resume_download=True)
+            snapshot_download(
+                repo_id=model_id,
+                token=HF_TOKEN,
+                allow_patterns=["*.json", "*.bin", "*.safetensors"],
+                resume_download=True,
+                cache_dir="/tmp/hf_cache"
+            )
             print(f"✅ モデル {model_id} のキャッシュ確認完了")
         except Exception as e:
             print(f"⚠️ モデルキャッシュダウンロードエラー: {type(e).__name__}: {str(e)}")
-            print("💡 提案: ネットワーク接続を確認し、HF_TOKENが正しいかチェックしてください")
-            print(f"💡 モデルページ: https://huggingface.co/{model_id}")
             return None
 
         # Diffusersパイプライン
         pipe = StableDiffusionPipeline.from_pretrained(
             model_id,
-            torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
+            torch_dtype=torch.float16,  # ★CPUでも軽量化
             use_safetensors=True,
-            token=HF_TOKEN
+            token=HF_TOKEN,
+            cache_dir="/tmp/hf_cache"
         )
-        pipe = pipe.to("cuda" if torch.cuda.is_available() else "cpu")
-        print(f"✅ モデル {model_id} ロード完了 (デバイス: {'GPU' if torch.cuda.is_available() else 'CPU'})")
+        pipe = pipe.to("cpu")  # ★GPUなし環境を想定
+        print(f"✅ モデル {model_id} ロード完了 (デバイス: CPU)")
 
         cleaned_prompt = re.sub(r'[。！？、!?\s]+', ' ', prompt).strip() if prompt else ""
         enhanced_prompt = f"{cleaned_prompt}, anime style, soft colors, detailed, kawaii" if cleaned_prompt else "fuwamoko mirinteya character, anime style, soft colors, detailed, kawaii"
         print(f"🖼️ 画像生成プロンプト: {enhanced_prompt}")
-        
-        if any(danger_word in enhanced_prompt.lower() for danger_word in DANGER_ZONE):
-            print(f"⚠️ 危険ワード検知: {enhanced_prompt}")
-            return None
-            
+
         # タイムアウトハンドリング
         def timeout_handler(signum, frame):
             raise TimeoutError("Image generation timeout")
 
         signal.signal(signal.SIGALRM, timeout_handler)
-        signal.alarm(300)  # 5分タイムアウト
+        signal.alarm(180)  # 3分タイムアウト
 
-        for attempt in range(3):
+        for attempt in range(2):
             try:
                 image = pipe(
                     prompt=enhanced_prompt,
-                    negative_prompt="low quality, blurry, realistic, photorealistic, cartoonish, 3d",
+                    negative_prompt="low quality, blurry, realistic",
                     guidance_scale=7.5,
-                    num_inference_steps=30,
+                    num_inference_steps=20,  # ★ステップ削減で高速化
                     width=512,
                     height=512
                 ).images[0]
@@ -343,18 +344,14 @@ def generate_image(prompt):
                 return None
             except Exception as e:
                 print(f"⚠️ 画像生成エラー (試行 {attempt + 1}): {type(e).__name__}: {str(e)}")
-                traceback.print_exc()
-                if attempt < 2:
-                    print(f"⏳ リトライします（{attempt + 2}/3）、待機時間: {5 * (attempt + 1)}秒")
-                    time.sleep(5 * (attempt + 1))
+                if attempt < 1:
+                    time.sleep(5)
                 continue
         print("❌ 画像生成リトライ上限到達")
         return None
     except Exception as e:
         print(f"❌ 画像生成初期化エラー: {type(e).__name__}: {str(e)}")
-        traceback.print_exc()
         return None
-
 #------------------------------
 #🆕 Facets生成（URLリンク化を強化）
 #------------------------------
