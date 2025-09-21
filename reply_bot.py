@@ -282,8 +282,12 @@ def check_diagnosis_limit(user_did, is_daytime):
 #🆕 画像生成機能（transformers版）
 #------------------------------
 def generate_image(prompt):
+    print(f"🖼️ 画像生成開始: プロンプト={prompt}")
     try:
-        pipe = pipeline("text-to-image", model="runwayml/stable-diffusion-v1-5", token=HF_TOKEN, device=0 if torch.cuda.is_available() else -1)
+        # ★修正: PyTorchがなくてもCPUで動くように
+        device = 0 if torch and torch.cuda.is_available() else -1
+        print(f"🖥️ 使用デバイス: {'GPU' if device == 0 else 'CPU'}")
+        pipe = pipeline("text-to-image", model="runwayml/stable-diffusion-v1-5", token=HF_TOKEN, device=device)
         cleaned_prompt = re.sub(r'[。！？、!?\s]+', ' ', prompt).strip() if prompt else ""
         enhanced_prompt = f"{cleaned_prompt}, anime style, soft colors, detailed, kawaii" if cleaned_prompt else "fuwamoko mirinteya character, anime style, soft colors, detailed, kawaii"
         print(f"🖼️ 画像生成プロンプト: {enhanced_prompt}")
