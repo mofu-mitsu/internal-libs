@@ -519,7 +519,6 @@ def generate_product_reply(keyword, app_id="1055088369869282145", affiliate_id="
     #------------------------------
 def generate_reply_via_groq(user_input):
     print("✅ generate_reply_via_groq defined!")
-    # 既存のコード
         failure_messages = [
             "えへへ、ごめんね〜……今ちょっと調子悪いみたい…またお話しよ？♡",
             "うぅ、ごめん〜〜…上手くお返事できなかったの。ちょっと待ってて？♡",
