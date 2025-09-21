@@ -20,6 +20,7 @@ from dotenv import load_dotenv
 import urllib.parse
 from groq import Groq  # ★追加: Groq SDK
 import fcntl  # ★追加: ファイルロック用
+from huggingface_hub import InferenceClient # ★画像生成: Hugging Face API用
 
 #------------------------------
 #🔐 環境変数
@@ -30,10 +31,12 @@ APP_PASSWORD = os.getenv("APP_PASSWORD") or exit("❌ APP_PASSWORDが設定さ�
 GIST_TOKEN_REPLY = os.getenv("GIST_TOKEN_REPLY") or exit("❌ GIST_TOKEN_REPLYが設定されていません")
 GIST_ID = os.getenv("GIST_ID") or exit("❌ GIST_IDが設定されていません")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY") or exit("❌ GROQ_API_KEYが設定されていません")  # ★追加
+HF_TOKEN = os.getenv("HF_TOKEN") or exit("❌ HF_TOKENが設定されていません") # ★画像生成: Hugging Face APIキー
 
 print(f"✅ 環境変数読み込み完了: HANDLE={HANDLE[:8]}..., GIST_ID={GIST_ID[:8]}...")
 print(f"🧪 GIST_TOKEN_REPLY: {repr(GIST_TOKEN_REPLY)[:8]}...")
 print(f"🔑 トークンの長さ: {len(GIST_TOKEN_REPLY)}")
+print(f"🖼️ HF_TOKEN: {repr(HF_TOKEN)[:8]}...") # ★画像生成
 
 #--- 固定値 ---
 REPLIED_GIST_FILENAME = "replied.json"
@@ -45,6 +48,7 @@ HEADERS = {
     "Content-Type": "application/json"
 }
 LOCK_FILE = "bot.lock"
+IMAGE_KEYWORDS = re.compile(r"画像生成して|画像作って|描いて|絵描いて", re.IGNORECASE) # ★画像生成: トリガーキーワード
 
 #------------------------------
 #🔗 URI正規化
@@ -468,7 +472,7 @@ def generate_product_reply(keyword, app_id="1055088369869282145", affiliate_id="
         return "うぅ、ごめんね〜今ちょっとバタバタなの…またね？♡", []
 
 #------------------------------
-#★ カスタマイズポイント4: 返信生成（Groq版）
+#★ カスタマイズポイント4: 返信生成（Groq版＋画像生成）
 #------------------------------
 def generate_reply_via_groq(user_input):
     failure_messages = [
@@ -479,11 +483,23 @@ def generate_reply_via_groq(user_input):
         "あわわっ…💭 みりんてゃの中の妖精さん、いま整備中みたい…またすぐ戻るねっ♡",
         "今日はちょっと電波がふわもこ迷子みたい……もう一回呼んでくれる？♡",
     ]
+    image_failure_message = "ごめん、画像生成失敗しちゃった♡ また試してみてね！"  # ★画像生成: 専用フォールバック
     fallback_cute_lines = [
         "えへへ〜♡ みりんてゃ、君のこと考えるとドキドキなのっ♪",
         "今日も君に甘えたい気分なのっ♡ ぎゅーってして？",
         "だ〜いすきっ♡ ね、ね、もっと構ってくれる？"
     ]
+
+    # 画像生成キーワードチェック
+    image_match = IMAGE_KEYWORDS.search(user_input)
+    if image_match:
+        prompt = user_input[image_match.end():].strip() if image_match.end() < len(user_input) else ""
+        print(f"🖼️ 画像生成トリガー検知: プロンプト='{prompt}'")
+        image = generate_image(prompt)
+        if image:
+            return {"type": "image", "image": image, "prompt": prompt}
+        else:
+            return image_failure_message
 
     # グッズ系キーワード
     for keyword in PRODUCT_KEYWORDS.keys():
@@ -672,7 +688,7 @@ def run_reply_bot():
                     continue
                 text = getattr(record, "text", "")
                 author_handle = getattr(author, "handle", "")
-                notification_uri = f"{author_handle}:{text}:{datetime.now(timezone.utc).isoformat()}"  # ★タイムスタンプ追加
+                notification_uri = f"{author_handle}:{text}:{datetime.now(timezone.utc).isoformat()}"
                 print(f"⚠️ notification_uri が取得できなかったので、仮キーで対応 → {notification_uri}")
 
             if reply_count >= MAX_REPLIES:
@@ -715,11 +731,46 @@ def run_reply_bot():
                     break
 
             if not reply_text:
-                reply_text, hashtags = generate_diagnosis(text, author_did)
-                if not reply_text:
-                    reply_text = generate_reply_via_groq(text)  # ★Groqに変更
-                    print(f"🔄 フォールバック返信: {repr(reply_text)}")
+                reply_text = generate_reply_via_groq(text)  # ★画像生成: ここで画像も返ってくる可能性
+                hashtags = []
+                if isinstance(reply_text, dict) and reply_text.get("type") == "image":
+                    # 画像生成の場合
+                    image = reply_text["image"]
+                    prompt = reply_text["prompt"]
+                    reply_text = f"みりんてゃが描いたよ♡ どうかな？{'「' + prompt + '」' if prompt else ''}"
+                    try:
+                        # 画像をBlueSkyにアップロード
+                        from io import BytesIO
+                        img_bytes = BytesIO()
+                        image.save(img_bytes, format="PNG")
+                        blob_resp = client.com.atproto.repo.upload_blob(data=img_bytes.getvalue(), mime_type='image/png')
+                        blob_ref = blob_resp.blob
+                        post_data = {
+                            "text": reply_text,
+                            "createdAt": datetime.now(timezone.utc).isoformat(),
+                            "embed": {
+                                "$type": "app.bsky.embed.images",
+                                "images": [{"image": blob_ref, "alt": f"Generated image: {prompt or 'fuwamoko mirinteya'}"}]
+                            }
+                        }
+                        if reply_ref:
+                            post_data["reply"] = reply_ref
+                        facets = generate_facets_from_text(reply_text, hashtags)
+                        if facets:
+                            post_data["facets"] = facets
+                        client.app.bsky.feed.post.create(record=post_data, repo=client.me.did)
+                        replied.add(notification_uri)
+                        save_replied(replied)
+                        print(f"✅ @{author_handle} に画像付き返信完了！ → {notification_uri}")
+                        reply_count += 1
+                        time.sleep(REPLY_INTERVAL)
+                        continue
+                    except Exception as e:
+                        print(f"⚠️ 画像投稿エラー: {e}")
+                        reply_text = "ごめん、画像生成失敗しちゃった♡ また試してみてね！"
                 else:
+                    # 診断ロジック
+                    reply_text, hashtags = generate_diagnosis(text, author_did) or (reply_text, [])
                     print(f"🔬 診断ロジックで生成: {repr(reply_text)}")
             else:
                 hashtags = []
