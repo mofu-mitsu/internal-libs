@@ -1,4 +1,3 @@
-# reply_bot.py
 #------------------------------
 #🌐 基本ライブラリ・API
 #------------------------------
@@ -19,11 +18,8 @@ from atproto_client.models.com.atproto.repo.strong_ref import Main as StrongRef
 from atproto_client.models.app.bsky.feed.post import ReplyRef
 from dotenv import load_dotenv
 import urllib.parse
-from groq import Groq
-import fcntl
-from diffusers import StableDiffusionPipeline
-import torch
-import signal  # タイムアウトハンドリング
+from groq import Groq  # ★追加: Groq SDK
+import fcntl  # ★追加: ファイルロック用
 
 #------------------------------
 #🔐 環境変数
@@ -33,14 +29,11 @@ HANDLE = os.getenv("HANDLE") or exit("❌ HANDLEが設定されていません")
 APP_PASSWORD = os.getenv("APP_PASSWORD") or exit("❌ APP_PASSWORDが設定されていません")
 GIST_TOKEN_REPLY = os.getenv("GIST_TOKEN_REPLY") or exit("❌ GIST_TOKEN_REPLYが設定されていません")
 GIST_ID = os.getenv("GIST_ID") or exit("❌ GIST_IDが設定されていません")
-GROQ_API_KEY = os.getenv("GROQ_API_KEY") or exit("❌ GROQ_API_KEYが設定されていません")
-HF_TOKEN = os.getenv("HF_TOKEN") or exit("❌ HF_TOKENが設定されていません")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY") or exit("❌ GROQ_API_KEYが設定されていません")  # ★追加
 
 print(f"✅ 環境変数読み込み完了: HANDLE={HANDLE[:8]}..., GIST_ID={GIST_ID[:8]}...")
 print(f"🧪 GIST_TOKEN_REPLY: {repr(GIST_TOKEN_REPLY)[:8]}...")
 print(f"🔑 トークンの長さ: {len(GIST_TOKEN_REPLY)}")
-print(f"🖼️ HF_TOKEN: {repr(HF_TOKEN)[:8]}...")
-print("✅ Module imports completed:", dir())
 
 #--- 固定値 ---
 REPLIED_GIST_FILENAME = "replied.json"
@@ -52,30 +45,6 @@ HEADERS = {
     "Content-Type": "application/json"
 }
 LOCK_FILE = "bot.lock"
-IMAGE_KEYWORDS = re.compile(r"(.*?)(\s*(画像生成して|画像作って|描いて|絵描いて)\s*(.*))", re.IGNORECASE)
-FALLBACK_CUTE_LINES = [
-    "えへへ〜♡ みりんてゃ、君のこと考えるとドキドキなのっ♪",
-    "今日も君に甘えたい気分なのっ♡ ぎゅーってして？",
-    "だ〜いすきっ♡ ね、ね、もっと構ってくれる？"
-]
-failure_messages = [
-    "えへへ、ごめんね〜……今ちょっと調子悪いみたい…またお話しよ？♡",
-    "うぅ、ごめん〜〜…上手くお返事できなかったの。ちょっと待ってて？♡",
-    "あれれ？みりんてゃ、おねむかも……またあとで頑張るねっ！♡",
-    "ふわぁ……ねむねむでお返事遅れちゃった…ごめんねぇ💭",
-    "あわわっ…💭 みりんてゃの中の妖精さん、いま整備中みたい…またすぐ戻るねっ♡",
-    "今日はちょっと電波がふわもこ迷子みたい……もう一回呼んでくれる？♡",
-]
-image_failure_message = "ごめん、画像生成失敗しちゃった♡ また試してみてね！"
-
-PRODUCT_KEYWORDS = {
-    "おすすめグッズ": "推し活おすすめグッズだよ〜♡",
-    "ぬい撮り": "ぬい撮りにピッタリなアイテムだよ〜♡",
-    "寝れない": "ぐっすり安眠グッズだよ〜♡",
-    "推し活": "推し活がもっと楽しくなるグッズだよ〜♡",
-    "可愛いアイテム": "みりんてゃイチオシの可愛いアイテムだよ〜♡",
-    "可愛いもの": "ふわふわ可愛い雑貨だよ〜♡"
-}
 
 #------------------------------
 #🔗 URI正規化
@@ -275,99 +244,6 @@ def check_diagnosis_limit(user_did, is_daytime):
     return True, None
 
 #------------------------------
-#🆕 画像生成機能（軽量版）
-#------------------------------
-def generate_image(prompt):
-    print(f"🖼️ 画像生成開始: プロンプト={prompt}")
-    try:
-        # HF_TOKEN検証
-        if not HF_TOKEN or len(HF_TOKEN) < 10:
-            print(f"❌ HF_TOKENが無効または短すぎます: {repr(HF_TOKEN)[:8]}...")
-            return None
-
-        # モデルキャッシュの確認
-        from huggingface_hub import snapshot_download
-        model_id = "stabilityai/sd-turbo"  # ★軽量モデルに変更
-        try:
-            print(f"📥 モデル {model_id} のキャッシュ確認中...")
-            snapshot_download(
-                repo_id=model_id,
-                token=HF_TOKEN,
-                allow_patterns=["*.json", "*.bin", "*.safetensors"],
-                resume_download=True,
-                cache_dir="/tmp/hf_cache"
-            )
-            print(f"✅ モデル {model_id} のキャッシュ確認完了")
-        except Exception as e:
-            print(f"⚠️ モデルキャッシュダウンロードエラー: {type(e).__name__}: {str(e)}")
-            print("💡 提案: ネットワーク接続を確認し、HF_TOKENが正しいかチェックしてください")
-            print(f"💡 モデルページ: https://huggingface.co/{model_id}")
-            return None
-
-        # Diffusersパイプライン
-        pipe = StableDiffusionPipeline.from_pretrained(
-            model_id,
-            torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
-            use_safetensors=True,
-            token=HF_TOKEN,
-            cache_dir="/tmp/hf_cache"
-        )
-        pipe = pipe.to("cuda" if torch.cuda.is_available() else "cpu")
-        print(f"✅ モデル {model_id} ロード完了 (デバイス: {'GPU' if torch.cuda.is_available() else 'CPU'})")
-
-        cleaned_prompt = re.sub(r'[。！？、!?\s]+', ' ', prompt).strip() if prompt else ""
-        enhanced_prompt = f"{cleaned_prompt}, anime style, soft colors, detailed, kawaii" if cleaned_prompt else "fuwamoko mirinteya character, anime style, soft colors, detailed, kawaii"
-        print(f"🖼️ 画像生成プロンプト: {enhanced_prompt}")
-        
-        if any(danger_word in enhanced_prompt.lower() for danger_word in DANGER_ZONE):
-            print(f"⚠️ 危険ワード検知: {enhanced_prompt}")
-            return None
-            
-        # タイムアウトハンドリング
-        def timeout_handler(signum, frame):
-            raise TimeoutError("Image generation timeout")
-
-        signal.signal(signal.SIGALRM, timeout_handler)
-        signal.alarm(300)  # 5分タイムアウト
-
-        for attempt in range(3):
-            try:
-                image = pipe(
-                    prompt=enhanced_prompt,
-                    negative_prompt="low quality, blurry, realistic, photorealistic, cartoonish, 3d",
-                    guidance_scale=7.5,
-                    num_inference_steps=20,  # ★ステップ削減で高速化
-                    width=512,
-                    height=512
-                ).images[0]
-                signal.alarm(0)  # タイマー解除
-                print(f"✅ 画像生成成功: 試行 {attempt + 1}")
-                return image
-            except TimeoutError:
-                print("❌ 画像生成がタイムアウト")
-                signal.alarm(0)
-                return None
-            except Exception as e:
-                print(f"⚠️ 画像生成エラー (試行 {attempt + 1}): {type(e).__name__}: {str(e)}")
-                traceback.print_exc()
-                if attempt < 2:
-                    print(f"⏳ リトライします（{attempt + 2}/3）、待機時間: {5 * (attempt + 1)}秒")
-                    time.sleep(5 * (attempt + 1))
-                continue
-        print("❌ 画像生成リトライ上限到達")
-        return None
-    except Exception as e:
-        print(f"❌ 画像生成初期化エラー: {type(e).__name__}: {str(e)}")
-        print(f"💡 提案: 以下の点を確認してください")
-        print(f"  - HF_TOKENが正しいか: https://huggingface.co/settings/tokens")
-        print(f"  - diffusersライブラリのバージョン: `pip install --upgrade diffusers`")
-        print(f"  - モデルキャッシュ: `rm -rf /tmp/hf_cache` で削除して再試行")
-        print(f"  - ネットワーク接続: モデル {model_id} のダウンロードが可能か")
-        print(f"💡 モデルページ: https://huggingface.co/{model_id}")
-        traceback.print_exc()
-        return None
-
-#------------------------------
 #🆕 Facets生成（URLリンク化を強化）
 #------------------------------
 def generate_facets_from_text(text, hashtags=None):
@@ -400,14 +276,12 @@ def generate_facets_from_text(text, hashtags=None):
 def generate_diagnosis(text, user_did):
     if not DIAGNOSIS_KEYWORDS.search(text):
         return None, []
-    print(f"🔬 診断キーワード検知: {text}")
     jst = pytz.timezone('Asia/Tokyo')
     hour = datetime.now(jst).hour
     is_daytime = 6 <= hour < 18
     is_english = re.search(r"Fuwamoko Fortune|Emotion Check|Mirinteya Mood|Tell me my fortune|diagnose|Fortune", text, re.IGNORECASE)
     can_diagnose, limit_msg = check_diagnosis_limit(user_did, is_daytime)
     if not can_diagnose:
-        print(f"⏰ 診断制限: {limit_msg}")
         return limit_msg, []
     if is_daytime:
         templates = FUWAMOKO_TEMPLATES_EN if is_english else FUWAMOKO_TEMPLATES
@@ -419,7 +293,6 @@ def generate_diagnosis(text, user_did):
             f"🎀{'Lucky Item' if is_english else 'ラッキーアイテム'}：{template['item']}\n"
             f"{'🫧' if is_english else '💭'}{template['msg']}"
         )
-        print(f"✅ 診断生成: {reply_text}")
         return reply_text, []
     else:
         templates = EMOTION_TEMPLATES_EN if is_english else EMOTION_TEMPLATES
@@ -432,7 +305,6 @@ def generate_diagnosis(text, user_did):
             f"{'🫧' if is_english else '💭'}{'Coping' if is_english else '対処法'}：{template['coping']}\n"
             f"{'Mirinteya’s here for you…' if is_english else 'みりんてゃもそばにいるよ…'}"
         )
-        print(f"✅ 診断生成: {reply_text}")
         return reply_text, []
 
 INTRO_MESSAGE = (
@@ -555,8 +427,16 @@ def clean_sentence_ending(reply):
 #------------------------------
 #★ カスタマイズポイント5: グッズ提案ロジック
 #------------------------------
+PRODUCT_KEYWORDS = {
+    "おすすめグッズ": "ふわもこLoverなあなたにピッタリなアイテムはこちらっ♡",
+    "ぬい撮り": "撮影映え命♡のあなたに：おすすめはこの背景布っ！",
+    "寝れない": "みりんてゃが夜のお守りを選んできたよ〜☁️",
+    "推し活": "神アイテムで推し活が捗るよ〜！🧸💕",
+    "可愛いアイテム": "今いちばんバズってる可愛いアイテム教えちゃうっ☆",
+    "可愛いもの": "ねぇねぇっ♡とびきり可愛いもの、みりんてゃ見つけちゃったの〜〜っ♪"
+}
+
 def generate_product_reply(keyword, app_id="1055088369869282145", affiliate_id="3d94ea21.0d257908.3d94ea22.0ed11c6e"):
-    print(f"🛍️ グッズ提案ロジック開始: キーワード={keyword}")
     api_url = "https://app.rakuten.co.jp/services/api/IchibaItem/Search/20170706"
     keywords = {
         "おすすめグッズ": "推し活 グッズ",
@@ -566,7 +446,6 @@ def generate_product_reply(keyword, app_id="1055088369869282145", affiliate_id="
         "可愛いアイテム": "可愛い インテリア",
         "可愛いもの": "可愛い 雑貨"
     }
-    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
     params = {
         "applicationId": app_id,
         "keyword": keywords.get(keyword, keyword),
@@ -574,60 +453,37 @@ def generate_product_reply(keyword, app_id="1055088369869282145", affiliate_id="
         "format": "json"
     }
     try:
-        response = requests.get(api_url, params=params, headers=headers)
-        response.raise_for_status()
+        response = requests.get(api_url, params=params)
         data = response.json()
-        if data.get("Items"):
+        if data["Items"]:
             items = data["Items"]
             item = random.choice(items)["Item"]
             product_url = item["itemUrl"].split("?")[0]
-            affiliate_link = f"https://hb.afl.rakuten.co.jp/hgc/{affiliate_id}/?pc={urllib.parse.quote(product_url)}"
+            affiliate_link = f"https://hb.afl.rakuten.co.jp/hgc/{affiliate_id}/?pc={product_url}"
             reply = f"{PRODUCT_KEYWORDS[keyword]} → {affiliate_link}"
-            print(f"✅ グッズ提案生成: {reply}")
             return reply, [f"#{keyword.replace('？', '').replace('…', '')}"]
         else:
-            print(f"⚠️ 楽天APIで商品が見つかりませんでした: {data}")
             return "えへへ、みりんてゃ今探し中なのっ♡ また後で聞いてね！", []
-    except Exception as e:
-        print(f"⚠️ 楽天APIエラー: {type(e).__name__}: {str(e)}")
-        traceback.print_exc()
+    except Exception:
         return "うぅ、ごめんね〜今ちょっとバタバタなの…またね？♡", []
 
 #------------------------------
-#★ カスタマイズポイント4: 返信生成（Groq版＋画像生成）
+#★ カスタマイズポイント4: 返信生成（Groq版）
 #------------------------------
 def generate_reply_via_groq(user_input):
-    print(f"✅ generate_reply_via_groq called with input: {user_input}")
-    
-    # 診断ロジックを最初にチェック
-    diagnosis_result = generate_diagnosis(user_input, "dummy_did")
-    if diagnosis_result[0] is not None:
-        print(f"🔬 診断ロジックで処理完了: {diagnosis_result[0]}")
-        return diagnosis_result[0]
-
-    # 画像生成キーワードチェック
-    image_match = IMAGE_KEYWORDS.match(user_input)
-    if image_match:
-        try:
-            before_keyword = image_match.group(1).strip() if image_match.group(1) else ""
-            after_keyword = image_match.group(4).strip() if image_match.group(4) else ""
-            prompt = f"{before_keyword} {after_keyword}".strip()
-            print(f"🖼️ 画像生成トリガー検知: 前='{before_keyword}', 後='{after_keyword}', 結合プロンプト='{prompt}'")
-            image = generate_image(prompt)
-            if image:
-                return {"type": "image", "image": image, "prompt": prompt}
-            else:
-                print(f"⚠️ 画像生成失敗、フォールバックメッセージを返します")
-                return image_failure_message
-        except IndexError as e:
-            print(f"⚠️ 正規表現グループエラー: {type(e).__name__}: {str(e)}")
-            traceback.print_exc()
-            image = generate_image("")
-            if image:
-                return {"type": "image", "image": image, "prompt": ""}
-            else:
-                print(f"⚠️ フォールバック画像生成も失敗、フォールバックメッセージを返します")
-                return image_failure_message
+    failure_messages = [
+        "えへへ、ごめんね〜……今ちょっと調子悪いみたい…またお話しよ？♡",
+        "うぅ、ごめん〜〜…上手くお返事できなかったの。ちょっと待ってて？♡",
+        "あれれ？みりんてゃ、おねむかも……またあとで頑張るねっ！♡",
+        "ふわぁ……ねむねむでお返事遅れちゃった…ごめんねぇ💭",
+        "あわわっ…💭 みりんてゃの中の妖精さん、いま整備中みたい…またすぐ戻るねっ♡",
+        "今日はちょっと電波がふわもこ迷子みたい……もう一回呼んでくれる？♡",
+    ]
+    fallback_cute_lines = [
+        "えへへ〜♡ みりんてゃ、君のこと考えるとドキドキなのっ♪",
+        "今日も君に甘えたい気分なのっ♡ ぎゅーってして？",
+        "だ〜いすきっ♡ ね、ね、もっと構ってくれる？"
+    ]
 
     # グッズ系キーワード
     for keyword in PRODUCT_KEYWORDS.keys():
@@ -701,7 +557,7 @@ def generate_reply_via_groq(user_input):
                 print(f"📝 生の生成テキスト: {repr(raw_reply)}")
                 reply_text = clean_sentence_ending(raw_reply)
 
-                if any(re.search(rf"\b{re.escape(msg)}\b", reply_text) for msg in failure_messages + FALLBACK_CUTE_LINES):
+                if any(re.search(rf"\b{re.escape(msg)}\b", reply_text) for msg in failure_messages + fallback_cute_lines):
                     print(f"⚠️ フォールバック検知、リトライ中…")
                     continue
 
@@ -709,18 +565,18 @@ def generate_reply_via_groq(user_input):
                 return reply_text
 
             except Exception as gen_error:
-                print(f"⚠️ 生成エラー: {type(gen_error).__name__}: {str(gen_error)}")
+                print(f"⚠️ 生成エラー: {gen_error}")
                 if "rate limit" in str(gen_error).lower():
                     print(f"⏳ レートリミット検知、{2 * (attempt + 1)}秒待機")
                     time.sleep(2 * (attempt + 1))
                 continue
         else:
-            reply_text = random.choice(FALLBACK_CUTE_LINES)
+            reply_text = random.choice(fallback_cute_lines)
             print(f"⚠️ リトライ上限到達、フォールバックを使用: {reply_text}")
             return reply_text
 
     except Exception as e:
-        print(f"❌ Groq APIエラー: {type(e).__name__}: {str(e)}")
+        print(f"❌ Groq APIエラー: {e}")
         return random.choice(failure_messages)
 
 #------------------------------
@@ -767,7 +623,7 @@ def post_replies_to_bluesky():
     unreplied = fetch_bluesky_posts()
     for post in unreplied:
         try:
-            reply = generate_reply_via_groq(post["text"])
+            reply = generate_reply_via_groq(post["text"])  # ★Groqに変更
             client.send_post(text=reply, reply_to={"uri": post["post_id"]})
             print(f"📤 投稿成功: {reply}")
         except Exception as e:
@@ -777,7 +633,6 @@ def post_replies_to_bluesky():
 #📬 メイン処理
 #------------------------------
 def run_reply_bot():
-    print("✅ Checking if generate_reply_via_groq is defined:", globals().get("generate_reply_via_groq"))
     lock_fd = None
     try:
         lock_fd = open(LOCK_FILE, 'w')
@@ -817,7 +672,7 @@ def run_reply_bot():
                     continue
                 text = getattr(record, "text", "")
                 author_handle = getattr(author, "handle", "")
-                notification_uri = f"{author_handle}:{text}:{datetime.now(timezone.utc).isoformat()}"
+                notification_uri = f"{author_handle}:{text}:{datetime.now(timezone.utc).isoformat()}"  # ★タイムスタンプ追加
                 print(f"⚠️ notification_uri が取得できなかったので、仮キーで対応 → {notification_uri}")
 
             if reply_count >= MAX_REPLIES:
@@ -853,75 +708,27 @@ def run_reply_bot():
 
             reply_ref, post_uri = handle_post(record, notification)
             reply_text = None
-            hashtags = []
-
-            # 固定リプライチェック
             for keyword, fixed_reply in REPLY_TABLE.items():
                 if keyword.lower() in text.lower():
                     reply_text = fixed_reply
                     print(f"🎯 キーワード '{keyword}' に反応（入力: {text}）→ 固定返信: {reply_text}")
                     break
 
-            # generate_reply_via_groqで返信生成
             if not reply_text:
-                print(f"🔄 generate_reply_via_groq を呼び出します: 入力={text}")
-                reply_result = generate_reply_via_groq(text)
-                print(f"📝 generate_reply_via_groq 結果: {repr(reply_result)}")
-
-                if isinstance(reply_result, dict) and reply_result.get("type") == "image":
-                    image = reply_result["image"]
-                    prompt = reply_result["prompt"]
-                    reply_text = f"みりんてゃが描いたよ♡ どうかな？{'「' + prompt + '」' if prompt else ''}"
-                    try:
-                        from io import BytesIO
-                        img_bytes = BytesIO()
-                        image.save(img_bytes, format="PNG")
-                        blob_resp = client.com.atproto.repo.upload_blob(data=img_bytes.getvalue(), mime_type='image/png')
-                        blob_ref = blob_resp.blob
-                        post_data = {
-                            "text": reply_text,
-                            "createdAt": datetime.now(timezone.utc).isoformat(),
-                            "embed": {
-                                "$type": "app.bsky.embed.images",
-                                "images": [{"image": blob_ref, "alt": f"Generated image: {prompt or 'fuwamoko mirinteya'}"}]
-                            }
-                        }
-                        if reply_ref:
-                            post_data["reply"] = reply_ref
-                        facets = generate_facets_from_text(reply_text, hashtags)
-                        if facets:
-                            post_data["facets"] = facets
-                        client.app.bsky.feed.post.create(record=post_data, repo=client.me.did)
-                        replied.add(notification_uri)
-                        save_replied(replied)
-                        print(f"✅ @{author_handle} に画像付き返信完了！ → {notification_uri}")
-                        reply_count += 1
-                        time.sleep(REPLY_INTERVAL)
-                        continue
-                    except Exception as e:
-                        print(f"⚠️ 画像投稿エラー: {type(e).__name__}: {str(e)}")
-                        traceback.print_exc()
-                        reply_text = "ごめん、画像生成失敗しちゃった♡ また試してみてね！"
-                        hashtags = []
+                reply_text, hashtags = generate_diagnosis(text, author_did)
+                if not reply_text:
+                    reply_text = generate_reply_via_groq(text)  # ★Groqに変更
+                    print(f"🔄 フォールバック返信: {repr(reply_text)}")
                 else:
-                    reply_text = reply_result
-                    # 診断ロジックを再チェック（generate_reply_via_groq内で既に処理済みのはずだが念のため）
-                    diagnosis_result = generate_diagnosis(text, author_did)
-                    if diagnosis_result[0] is not None:
-                        reply_text, hashtags = diagnosis_result
-                        print(f"🔬 診断ロジックで生成: {reply_text}")
-                    else:
-                        hashtags = []
-                        print(f"🔬 診断ロジック非適用: {text}")
-
-            # reply_textの検証
-            print(f"📝 投稿前reply_text: {repr(reply_text)}")
-            if not isinstance(reply_text, str) or not reply_text.strip():
-                reply_text = random.choice(FALLBACK_CUTE_LINES)
+                    print(f"🔬 診断ロジックで生成: {repr(reply_text)}")
+            else:
                 hashtags = []
-                print(f"⚠️ reply_textが不正（{repr(reply_text)}）、フォールバックを使用: {reply_text}")
 
-            # 投稿処理
+            print(f"🤖 生成された返信: {repr(reply_text)} (型: {type(reply_text)})")
+            if not isinstance(reply_text, str) or not reply_text.strip():
+                reply_text = "えへへ〜♡ みりんてゃ、ちょっとおねむかも……またお話しよ？♡"
+                hashtags = []
+
             try:
                 post_data = {
                     "text": reply_text,
@@ -940,7 +747,7 @@ def run_reply_bot():
                 reply_count += 1
                 time.sleep(REPLY_INTERVAL)
             except Exception as e:
-                print(f"⚠️ 投稿失敗: {type(e).__name__}: {str(e)}")
+                print(f"⚠️ 投稿失敗: {e}")
                 traceback.print_exc()
                 if "JSON serializable" in str(e):
                     print("⚠️ ReplyRefシリアライズエラー検知、リプライなしで再試行")
@@ -953,14 +760,14 @@ def run_reply_bot():
                         reply_count += 1
                         time.sleep(REPLY_INTERVAL)
                     except Exception as retry_e:
-                        print(f"⚠️ リトライも失敗: {type(retry_e).__name__}: {str(retry_e)}")
+                        print(f"⚠️ リトライも失敗: {retry_e}")
                         traceback.print_exc()
 
     except IOError as e:
-        print(f"🔒 ロック取得失敗（Botが既に実行中）: {type(e).__name__}: {str(e)}")
+        print(f"🔒 ロック取得失敗（Botが既に実行中）: {e}")
         return
     except Exception as e:
-        print(f"❌ 実行エラー: {type(e).__name__}: {str(e)}")
+        print(f"❌ 実行エラー: {e}")
         traceback.print_exc()
     finally:
         if lock_fd:
