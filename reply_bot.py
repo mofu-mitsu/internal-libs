@@ -148,7 +148,7 @@ def save_replied(replied_set):
             curl_command = [
                 "curl", "-X", "PATCH", GIST_API_URL,
                 "-H", f"Authorization: token {GIST_TOKEN_REPLY}",
-                "-H", "Accept": "application/vnd.github+json",
+                "-H", "Accept: application/vnd.github+json",
                 "-H", "Content-Type: application/json",
                 "-d", json.dumps(payload, ensure_ascii=False)
             ]
@@ -183,7 +183,7 @@ def save_gist_data(filename, data):
             curl_command = [
                 "curl", "-X", "PATCH", GIST_API_URL,
                 "-H", f"Authorization: token {GIST_TOKEN_REPLY}",
-                "-H", "Accept": "application/vnd.github+json",
+                "-H", "Accept: application/vnd.github+json",
                 "-H", "Content-Type: application/json",
                 "-d", json.dumps(payload, ensure_ascii=False)
             ]
