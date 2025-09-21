@@ -246,6 +246,27 @@ def check_diagnosis_limit(user_did, is_daytime):
         return False, "ごめんね、みりんてゃ今ちょっと忙しいの…また後でね？♡"
     print("✅ diagnosis_limits 保存成功")
     return True, None
+    
+#------------------------------
+#🆕 画像生成機能
+#------------------------------
+def generate_image(prompt):
+    try:
+        client = InferenceClient("stabilityai/stable-diffusion-2-1", token=HF_TOKEN)
+        enhanced_prompt = f"{prompt}, anime style, soft colors, detailed, kawaii" if prompt else "fuwamoko mirinteya character, anime style, soft colors, detailed, kawaii"
+        print(f"🖼️ 画像生成プロンプト: {enhanced_prompt}")
+        image = client.text_to_image(
+            prompt=enhanced_prompt,
+            negative_prompt="low quality, blurry, realistic, photorealistic",
+            guidance_scale=7.5,
+            num_steps=30,
+            width=512,
+            height=512
+        )
+        return image
+    except Exception as e:
+        print(f"❌ 画像生成エラー: {e}")
+        return None
 
 #------------------------------
 #🆕 Facets生成（URLリンク化を強化）
