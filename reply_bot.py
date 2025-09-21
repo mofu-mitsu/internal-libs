@@ -21,7 +21,7 @@ import urllib.parse
 from groq import Groq
 import fcntl
 from huggingface_hub import InferenceClient
-from transformers import pipeline  # ★追加
+from transformers import pipeline
 try:
     import torch
 except ImportError:
@@ -71,7 +71,6 @@ failure_messages = [
 ]
 image_failure_message = "ごめん、画像生成失敗しちゃった♡ また試してみてね！"
 
-# ★追加: グッズ系キーワード定義
 PRODUCT_KEYWORDS = {
     "おすすめグッズ": "推し活おすすめグッズだよ〜♡",
     "ぬい撮り": "ぬい撮りにピッタリなアイテムだよ〜♡",
@@ -153,7 +152,7 @@ def save_replied(replied_set):
                 "curl", "-X", "PATCH", GIST_API_URL,
                 "-H", f"Authorization: token {GIST_TOKEN_REPLY}",
                 "-H", "Accept: application/vnd.github+json",
-                "-H", "Content-Type: application/json",
+                "-H", "Content-Type": "application/json",
                 "-d", json.dumps(payload, ensure_ascii=False)
             ]
             result = subprocess.run(curl_command, capture_output=True, text=True)
@@ -188,7 +187,7 @@ def save_gist_data(filename, data):
                 "curl", "-X", "PATCH", GIST_API_URL,
                 "-H", f"Authorization: token {GIST_TOKEN_REPLY}",
                 "-H", "Accept: application/vnd.github+json",
-                "-H", "Content-Type: application/json",
+                "-H", "Content-Type": "application/json",
                 "-d", json.dumps(payload, ensure_ascii=False)
             ]
             result = subprocess.run(curl_command, capture_output=True, text=True)
@@ -284,10 +283,33 @@ def check_diagnosis_limit(user_did, is_daytime):
 def generate_image(prompt):
     print(f"🖼️ 画像生成開始: プロンプト={prompt}")
     try:
-        # ★修正: PyTorchがなくてもCPUで動くように
+        # ★修正: HF_TOKENの検証
+        if not HF_TOKEN or len(HF_TOKEN) < 10:
+            print(f"❌ HF_TOKENが無効または短すぎます: {repr(HF_TOKEN)[:8]}...")
+            return None
+
+        # ★修正: モデルキャッシュの事前チェック
+        from huggingface_hub import snapshot_download
+        model_id = "runwayml/stable-diffusion-v1-5"
+        try:
+            print(f"📥 モデル {model_id} のキャッシュ確認中...")
+            snapshot_download(repo_id=model_id, token=HF_TOKEN, allow_patterns=["*.json", "*.bin", "*.safetensors"])
+            print(f"✅ モデル {model_id} のキャッシュ確認完了")
+        except Exception as e:
+            print(f"⚠️ モデルキャッシュダウンロードエラー: {type(e).__name__}: {str(e)}")
+            print("💡 提案: ネットワーク接続を確認し、HF_TOKENが正しいかチェックしてください")
+            print(f"💡 モデルページ: https://huggingface.co/{model_id}")
+            return None
+
+        # デバイス選択
         device = 0 if torch and torch.cuda.is_available() else -1
         print(f"🖥️ 使用デバイス: {'GPU' if device == 0 else 'CPU'}")
-        pipe = pipeline("text-to-image", model="runwayml/stable-diffusion-v1-5", token=HF_TOKEN, device=device)
+        
+        # ★修正: モデルロード前にログ
+        print(f"🖼️ モデル {model_id} をロード中...")
+        pipe = pipeline("text-to-image", model=model_id, token=HF_TOKEN, device=device)
+        print(f"✅ モデル {model_id} ロード完了")
+        
         cleaned_prompt = re.sub(r'[。！？、!?\s]+', ' ', prompt).strip() if prompt else ""
         enhanced_prompt = f"{cleaned_prompt}, anime style, soft colors, detailed, kawaii" if cleaned_prompt else "fuwamoko mirinteya character, anime style, soft colors, detailed, kawaii"
         print(f"🖼️ 画像生成プロンプト: {enhanced_prompt}")
@@ -319,6 +341,12 @@ def generate_image(prompt):
         return None
     except Exception as e:
         print(f"❌ 画像生成初期化エラー: {type(e).__name__}: {str(e)}")
+        print(f"💡 提案: 以下の点を確認してください")
+        print(f"  - HF_TOKENが正しいか: https://huggingface.co/settings/tokens")
+        print(f"  - transformersライブラリのバージョン: `pip install --upgrade transformers`")
+        print(f"  - モデルキャッシュ: `~/.cache/huggingface/hub` を削除して再試行")
+        print(f"  - ネットワーク接続: モデル {model_id} のダウンロードが可能か")
+        print(f"💡 モデルページ: https://huggingface.co/{model_id}")
         traceback.print_exc()
         return None
 
@@ -554,8 +582,8 @@ def generate_product_reply(keyword, app_id="1055088369869282145", affiliate_id="
 def generate_reply_via_groq(user_input):
     print(f"✅ generate_reply_via_groq called with input: {user_input}")
     
-    # ★修正: 診断ロジックを最初にチェック
-    diagnosis_result = generate_diagnosis(user_input, "dummy_did")  # 仮のDID、実際は呼び出し元で設定
+    # 診断ロジックを最初にチェック
+    diagnosis_result = generate_diagnosis(user_input, "dummy_did")
     if diagnosis_result[0] is not None:
         print(f"🔬 診断ロジックで処理完了: {diagnosis_result[0]}")
         return diagnosis_result[0]
@@ -664,7 +692,7 @@ def generate_reply_via_groq(user_input):
                 return reply_text
 
             except Exception as gen_error:
-                print(f"⚠️ 生成エラー: {type(gen_error).__name__}: {str(gen_error)}")
+                print(f"⚠️ 生成エラー: {type(gen_error).__name__}: {str(e)}")
                 if "rate limit" in str(gen_error).lower():
                     print(f"⏳ レートリミット検知、{2 * (attempt + 1)}秒待機")
                     time.sleep(2 * (attempt + 1))
@@ -728,6 +756,9 @@ def post_replies_to_bluesky():
         except Exception as e:
             print(f"❌ 投稿エラー: {e}")
 
+#------------------------------
+#📬 メイン処理
+#------------------------------
 def run_reply_bot():
     print("✅ Checking if generate_reply_via_groq is defined:", globals().get("generate_reply_via_groq"))
     lock_fd = None
@@ -805,7 +836,7 @@ def run_reply_bot():
 
             reply_ref, post_uri = handle_post(record, notification)
             reply_text = None
-            hashtags = []  # ★追加: ハッシュタグ初期化
+            hashtags = []
 
             # 固定リプライチェック
             for keyword, fixed_reply in REPLY_TABLE.items():
