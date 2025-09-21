@@ -290,7 +290,7 @@ def generate_image(prompt):
 
         # ★修正: モデルキャッシュの事前チェック
         from huggingface_hub import snapshot_download
-        model_id = "runwayml/stable-diffusion-v1-5"
+        model_id = "stabilityai/stable-diffusion-2-1"
         try:
             print(f"📥 モデル {model_id} のキャッシュ確認中...")
             snapshot_download(repo_id=model_id, token=HF_TOKEN, allow_patterns=["*.json", "*.bin", "*.safetensors"])
