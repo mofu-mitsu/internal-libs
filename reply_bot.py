@@ -522,16 +522,23 @@ def generate_reply_via_groq(user_input):
     # 画像生成キーワードチェック
     image_match = IMAGE_KEYWORDS.match(user_input)
     if image_match:
-        # 前後のテキストを結合
-        before_keyword = image_match.group(1).strip() if image_match.group(1) else ""
-        after_keyword = image_match.group(4).strip() if image_match.group(4) else ""
-        prompt = f"{before_keyword} {after_keyword}".strip()
-        print(f"🖼️ 画像生成トリガー検知: 前='{before_keyword}', 後='{after_keyword}', 結合プロンプト='{prompt}'")
-        image = generate_image(prompt)
-        if image:
-            return {"type": "image", "image": image, "prompt": prompt}
-        else:
-            return image_failure_message
+        try:
+            before_keyword = image_match.group(1).strip() if image_match.group(1) else ""
+            after_keyword = image_match.group(4).strip() if image_match.group(4) else ""
+            prompt = f"{before_keyword} {after_keyword}".strip()
+            print(f"🖼️ 画像生成トリガー検知: 前='{before_keyword}', 後='{after_keyword}', 結合プロンプト='{prompt}'")
+            image = generate_image(prompt)
+            if image:
+                return {"type": "image", "image": image, "prompt": prompt}
+            else:
+                return image_failure_message
+        except IndexError as e:
+            print(f"⚠️ 正規表現グループエラー: {e}, フォールバックプロンプトを使用")
+            image = generate_image("")  # 空プロンプトでフォールバック
+            if image:
+                return {"type": "image", "image": image, "prompt": ""}
+            else:
+                return image_failure_message
 
 
     # グッズ系キーワード
