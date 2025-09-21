@@ -252,40 +252,39 @@ def check_diagnosis_limit(user_did, is_daytime):
 #------------------------------
 def generate_image(prompt):
     try:
-        client = InferenceClient("stabilityai/stable-diffusion-2-1", token=HF_TOKEN)
-        # プロンプトが空ならフォールバック、句読点や短い文字は除去
+        client = InferenceClient("stabilityai/stable-diffusion-xl-base-1.0", token=HF_TOKEN)  # ★モデル変更
         cleaned_prompt = re.sub(r'[。！？、!?\s]+', ' ', prompt).strip() if prompt else ""
         enhanced_prompt = f"{cleaned_prompt}, anime style, soft colors, detailed, kawaii" if cleaned_prompt else "fuwamoko mirinteya character, anime style, soft colors, detailed, kawaii"
         print(f"🖼️ 画像生成プロンプト: {enhanced_prompt}")
         
-        # DANGER_ZONEチェック
         if any(danger_word in enhanced_prompt.lower() for danger_word in DANGER_ZONE):
             print(f"⚠️ 危険ワード検知: {enhanced_prompt}")
             return None
             
-        for attempt in range(3):  # ★追加: リトライ3回
+        for attempt in range(3):
             try:
                 image = client.text_to_image(
                     prompt=enhanced_prompt,
-                    negative_prompt="low quality, blurry, realistic, photorealistic",
+                    negative_prompt="low quality, blurry, realistic, photorealistic, cartoonish, 3d",
                     guidance_scale=7.5,
                     num_inference_steps=30,
                     width=512,
-                    height=512
+                    height=512,
+                    timeout=30  # ★追加: タイムアウト設定
                 )
                 print(f"✅ 画像生成成功: 試行 {attempt + 1}")
                 return image
             except Exception as e:
-                print(f"⚠️ 画像生成エラー (試行 {attempt + 1}): {e}")
+                print(f"⚠️ 画像生成エラー (試行 {attempt + 1}): {type(e).__name__}: {str(e)}")
                 traceback.print_exc()
                 if attempt < 2:
-                    print(f"⏳ リトライします（{attempt + 2}/3）")
-                    time.sleep(2 * (attempt + 1))
+                    print(f"⏳ リトライします（{attempt + 2}/3）、待機時間: {5 * (attempt + 1)}秒")
+                    time.sleep(5 * (attempt + 1))  # ★リトライ間隔を5秒に
                 continue
         print("❌ 画像生成リトライ上限到達")
         return None
     except Exception as e:
-        print(f"❌ 画像生成エラー: {e}")
+        print(f"❌ 画像生成初期化エラー: {type(e).__name__}: {str(e)}")
         traceback.print_exc()
         return None
 
