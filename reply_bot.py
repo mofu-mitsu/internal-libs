@@ -22,6 +22,11 @@ from groq import Groq
 import fcntl
 from huggingface_hub import InferenceClient
 from transformers import pipeline  # ★追加
+try:
+    import torch
+except ImportError:
+    print("⚠️ PyTorchが見つかりません。CPU-onlyモードで画像生成を試みます")
+    torch = None
 
 #------------------------------
 #🔐 環境変数
