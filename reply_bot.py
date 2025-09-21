@@ -253,13 +253,21 @@ def check_diagnosis_limit(user_did, is_daytime):
 def generate_image(prompt):
     try:
         client = InferenceClient("stabilityai/stable-diffusion-2-1", token=HF_TOKEN)
-        enhanced_prompt = f"{prompt}, anime style, soft colors, detailed, kawaii" if prompt else "fuwamoko mirinteya character, anime style, soft colors, detailed, kawaii"
+        # プロンプトが空ならフォールバック、句読点や短い文字は除去
+        cleaned_prompt = re.sub(r'[。！？、!?\s]+', ' ', prompt).strip() if prompt else ""
+        enhanced_prompt = f"{cleaned_prompt}, anime style, soft colors, detailed, kawaii" if cleaned_prompt else "fuwamoko mirinteya character, anime style, soft colors, detailed, kawaii"
         print(f"🖼️ 画像生成プロンプト: {enhanced_prompt}")
+        
+        # DANGER_ZONEチェック
+        if any(danger_word in enhanced_prompt.lower() for danger_word in DANGER_ZONE):
+            print(f"⚠️ 危険ワード検知: {enhanced_prompt}")
+            return None
+            
         image = client.text_to_image(
             prompt=enhanced_prompt,
             negative_prompt="low quality, blurry, realistic, photorealistic",
             guidance_scale=7.5,
-            num_steps=30,
+            num_inference_steps=30,  # ★修正: num_steps → num_inference_steps
             width=512,
             height=512
         )
@@ -512,15 +520,19 @@ def generate_reply_via_groq(user_input):
     ]
 
     # 画像生成キーワードチェック
-    image_match = IMAGE_KEYWORDS.search(user_input)
+    image_match = IMAGE_KEYWORDS.match(user_input)
     if image_match:
-        prompt = user_input[image_match.end():].strip() if image_match.end() < len(user_input) else ""
-        print(f"🖼️ 画像生成トリガー検知: プロンプト='{prompt}'")
+        # 前後のテキストを結合
+        before_keyword = image_match.group(1).strip() if image_match.group(1) else ""
+        after_keyword = image_match.group(4).strip() if image_match.group(4) else ""
+        prompt = f"{before_keyword} {after_keyword}".strip()
+        print(f"🖼️ 画像生成トリガー検知: 前='{before_keyword}', 後='{after_keyword}', 結合プロンプト='{prompt}'")
         image = generate_image(prompt)
         if image:
             return {"type": "image", "image": image, "prompt": prompt}
         else:
             return image_failure_message
+
 
     # グッズ系キーワード
     for keyword in PRODUCT_KEYWORDS.keys():
