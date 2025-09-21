@@ -98,12 +98,12 @@ def normalize_uri(uri):
 #------------------------------
 def load_gist_data(filename):
     print(f"🌐 Gistデータ読み込み開始 → URL: {GIST_API_URL}")
-    for attempt in range(5):
+    for attempt in range(5):  # ★リトライを5回に
         try:
             curl_command = [
                 "curl", "-X", "GET", GIST_API_URL,
                 "-H", f"Authorization: token {GIST_TOKEN_REPLY}",
-                "-H", "Accept": "application/vnd.github+json"
+                "-H", "Accept: application/vnd.github+json"
             ]
             result = subprocess.run(curl_command, capture_output=True, text=True)
             print(f"📥 試行 {attempt + 1} レスポンスステータス: {result.returncode}")
@@ -141,7 +141,7 @@ def load_gist_data(filename):
 def save_replied(replied_set):
     print("💾 Gist保存準備中...")
     cleaned_set = set(uri for uri in replied_set if normalize_uri(uri))
-    for attempt in range(5):
+    for attempt in range(5):  # ★リトライを5回に
         try:
             content = json.dumps(list(cleaned_set), ensure_ascii=False, indent=2)
             payload = {"files": {REPLIED_GIST_FILENAME: {"content": content}}}
@@ -176,7 +176,7 @@ def save_replied(replied_set):
 
 def save_gist_data(filename, data):
     print(f"💾 Gist保存準備中 → File: {filename}")
-    for attempt in range(5):
+    for attempt in range(5):  # ★リトライを5回に
         try:
             content = json.dumps(data, ensure_ascii=False, indent=2)
             payload = {"files": {filename: {"content": content}}}
