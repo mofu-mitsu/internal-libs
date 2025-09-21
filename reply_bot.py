@@ -39,7 +39,6 @@ print(f"🔑 トークンの長さ: {len(GIST_TOKEN_REPLY)}")
 print(f"🖼️ HF_TOKEN: {repr(HF_TOKEN)[:8]}...") # ★画像生成
 
 #--- 固定値 ---
-#--- 固定値 ---
 REPLIED_GIST_FILENAME = "replied.json"
 DIAGNOSIS_LIMITS_GIST_FILENAME = "diagnosis_limits.json"
 GIST_API_URL = f"https://api.github.com/gists/{GIST_ID}"
