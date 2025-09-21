@@ -38,6 +38,7 @@ print(f"✅ 環境変数読み込み完了: HANDLE={HANDLE[:8]}..., GIST_ID={GIS
 print(f"🧪 GIST_TOKEN_REPLY: {repr(GIST_TOKEN_REPLY)[:8]}...")
 print(f"🔑 トークンの長さ: {len(GIST_TOKEN_REPLY)}")
 print(f"🖼️ HF_TOKEN: {repr(HF_TOKEN)[:8]}...")
+print("✅ Module imports completed:", dir())
 
 #--- 固定値 ---
 REPLIED_GIST_FILENAME = "replied.json"
@@ -50,11 +51,30 @@ HEADERS = {
 }
 LOCK_FILE = "bot.lock"
 IMAGE_KEYWORDS = re.compile(r"(.*?)(\s*(画像生成して|画像作って|描いて|絵描いて)\s*(.*))", re.IGNORECASE)
-FALLBACK_CUTE_LINES = [  # ★グローバルに移動
+FALLBACK_CUTE_LINES = [
     "えへへ〜♡ みりんてゃ、君のこと考えるとドキドキなのっ♪",
     "今日も君に甘えたい気分なのっ♡ ぎゅーってして？",
     "だ〜いすきっ♡ ね、ね、もっと構ってくれる？"
 ]
+failure_messages = [
+    "えへへ、ごめんね〜……今ちょっと調子悪いみたい…またお話しよ？♡",
+    "うぅ、ごめん〜〜…上手くお返事できなかったの。ちょっと待ってて？♡",
+    "あれれ？みりんてゃ、おねむかも……またあとで頑張るねっ！♡",
+    "ふわぁ……ねむねむでお返事遅れちゃった…ごめんねぇ💭",
+    "あわわっ…💭 みりんてゃの中の妖精さん、いま整備中みたい…またすぐ戻るねっ♡",
+    "今日はちょっと電波がふわもこ迷子みたい……もう一回呼んでくれる？♡",
+]
+image_failure_message = "ごめん、画像生成失敗しちゃった♡ また試してみてね！"
+
+# ★追加: グッズ系キーワード定義
+PRODUCT_KEYWORDS = {
+    "おすすめグッズ": "推し活おすすめグッズだよ〜♡",
+    "ぬい撮り": "ぬい撮りにピッタリなアイテムだよ〜♡",
+    "寝れない": "ぐっすり安眠グッズだよ〜♡",
+    "推し活": "推し活がもっと楽しくなるグッズだよ〜♡",
+    "可愛いアイテム": "みりんてゃイチオシの可愛いアイテムだよ〜♡",
+    "可愛いもの": "ふわふわ可愛い雑貨だよ〜♡"
+}
 
 #------------------------------
 #🔗 URI正規化
@@ -77,7 +97,7 @@ def normalize_uri(uri):
 #------------------------------
 def load_gist_data(filename):
     print(f"🌐 Gistデータ読み込み開始 → URL: {GIST_API_URL}")
-    for attempt in range(5):  # ★リトライを5回に
+    for attempt in range(5):
         try:
             curl_command = [
                 "curl", "-X", "GET", GIST_API_URL,
@@ -120,7 +140,7 @@ def load_gist_data(filename):
 def save_replied(replied_set):
     print("💾 Gist保存準備中...")
     cleaned_set = set(uri for uri in replied_set if normalize_uri(uri))
-    for attempt in range(5):  # ★リトライを5回に
+    for attempt in range(5):
         try:
             content = json.dumps(list(cleaned_set), ensure_ascii=False, indent=2)
             payload = {"files": {REPLIED_GIST_FILENAME: {"content": content}}}
@@ -128,7 +148,7 @@ def save_replied(replied_set):
                 "curl", "-X", "PATCH", GIST_API_URL,
                 "-H", f"Authorization: token {GIST_TOKEN_REPLY}",
                 "-H", "Accept: application/vnd.github+json",
-                "-H", "Content-Type: application/json",
+                "-H", "Content-Type": "application/json",
                 "-d", json.dumps(payload, ensure_ascii=False)
             ]
             result = subprocess.run(curl_command, capture_output=True, text=True)
@@ -155,7 +175,7 @@ def save_replied(replied_set):
 
 def save_gist_data(filename, data):
     print(f"💾 Gist保存準備中 → File: {filename}")
-    for attempt in range(5):  # ★リトライを5回に
+    for attempt in range(5):
         try:
             content = json.dumps(data, ensure_ascii=False, indent=2)
             payload = {"files": {filename: {"content": content}}}
@@ -163,7 +183,7 @@ def save_gist_data(filename, data):
                 "curl", "-X", "PATCH", GIST_API_URL,
                 "-H", f"Authorization: token {GIST_TOKEN_REPLY}",
                 "-H", "Accept: application/vnd.github+json",
-                "-H", "Content-Type: application/json",
+                "-H", "Content-Type": "application/json",
                 "-d", json.dumps(payload, ensure_ascii=False)
             ]
             result = subprocess.run(curl_command, capture_output=True, text=True)
@@ -252,13 +272,12 @@ def check_diagnosis_limit(user_did, is_daytime):
         return False, "ごめんね、みりんてゃ今ちょっと忙しいの…また後でね？♡"
     print("✅ diagnosis_limits 保存成功")
     return True, None
-    
+
 #------------------------------
 #🆕 画像生成機能（transformers版）
 #------------------------------
 def generate_image(prompt):
     try:
-        # CPUでも動く軽量モデルに変更
         pipe = pipeline("text-to-image", model="runwayml/stable-diffusion-v1-5", token=HF_TOKEN, device=0 if torch.cuda.is_available() else -1)
         cleaned_prompt = re.sub(r'[。！？、!?\s]+', ' ', prompt).strip() if prompt else ""
         enhanced_prompt = f"{cleaned_prompt}, anime style, soft colors, detailed, kawaii" if cleaned_prompt else "fuwamoko mirinteya character, anime style, soft colors, detailed, kawaii"
@@ -327,12 +346,14 @@ def generate_facets_from_text(text, hashtags=None):
 def generate_diagnosis(text, user_did):
     if not DIAGNOSIS_KEYWORDS.search(text):
         return None, []
+    print(f"🔬 診断キーワード検知: {text}")
     jst = pytz.timezone('Asia/Tokyo')
     hour = datetime.now(jst).hour
     is_daytime = 6 <= hour < 18
     is_english = re.search(r"Fuwamoko Fortune|Emotion Check|Mirinteya Mood|Tell me my fortune|diagnose|Fortune", text, re.IGNORECASE)
     can_diagnose, limit_msg = check_diagnosis_limit(user_did, is_daytime)
     if not can_diagnose:
+        print(f"⏰ 診断制限: {limit_msg}")
         return limit_msg, []
     if is_daytime:
         templates = FUWAMOKO_TEMPLATES_EN if is_english else FUWAMOKO_TEMPLATES
@@ -344,6 +365,7 @@ def generate_diagnosis(text, user_did):
             f"🎀{'Lucky Item' if is_english else 'ラッキーアイテム'}：{template['item']}\n"
             f"{'🫧' if is_english else '💭'}{template['msg']}"
         )
+        print(f"✅ 診断生成: {reply_text}")
         return reply_text, []
     else:
         templates = EMOTION_TEMPLATES_EN if is_english else EMOTION_TEMPLATES
@@ -356,6 +378,7 @@ def generate_diagnosis(text, user_did):
             f"{'🫧' if is_english else '💭'}{'Coping' if is_english else '対処法'}：{template['coping']}\n"
             f"{'Mirinteya’s here for you…' if is_english else 'みりんてゃもそばにいるよ…'}"
         )
+        print(f"✅ 診断生成: {reply_text}")
         return reply_text, []
 
 INTRO_MESSAGE = (
@@ -479,6 +502,7 @@ def clean_sentence_ending(reply):
 #★ カスタマイズポイント5: グッズ提案ロジック
 #------------------------------
 def generate_product_reply(keyword, app_id="1055088369869282145", affiliate_id="3d94ea21.0d257908.3d94ea22.0ed11c6e"):
+    print(f"🛍️ グッズ提案ロジック開始: キーワード={keyword}")
     api_url = "https://app.rakuten.co.jp/services/api/IchibaItem/Search/20170706"
     keywords = {
         "おすすめグッズ": "推し活 グッズ",
@@ -488,7 +512,7 @@ def generate_product_reply(keyword, app_id="1055088369869282145", affiliate_id="
         "可愛いアイテム": "可愛い インテリア",
         "可愛いもの": "可愛い 雑貨"
     }
-    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}  # ★追加
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
     params = {
         "applicationId": app_id,
         "keyword": keywords.get(keyword, keyword),
@@ -505,6 +529,7 @@ def generate_product_reply(keyword, app_id="1055088369869282145", affiliate_id="
             product_url = item["itemUrl"].split("?")[0]
             affiliate_link = f"https://hb.afl.rakuten.co.jp/hgc/{affiliate_id}/?pc={urllib.parse.quote(product_url)}"
             reply = f"{PRODUCT_KEYWORDS[keyword]} → {affiliate_link}"
+            print(f"✅ グッズ提案生成: {reply}")
             return reply, [f"#{keyword.replace('？', '').replace('…', '')}"]
         else:
             print(f"⚠️ 楽天APIで商品が見つかりませんでした: {data}")
@@ -514,25 +539,18 @@ def generate_product_reply(keyword, app_id="1055088369869282145", affiliate_id="
         traceback.print_exc()
         return "うぅ、ごめんね〜今ちょっとバタバタなの…またね？♡", []
 
-    #------------------------------
-    #★ カスタマイズポイント4: 返信生成（Groq版＋画像生成）
-    #------------------------------
+#------------------------------
+#★ カスタマイズポイント4: 返信生成（Groq版＋画像生成）
+#------------------------------
 def generate_reply_via_groq(user_input):
-    print("✅ generate_reply_via_groq defined!")
-# グローバルスコープ（既存のFALLBACK_CUTE_LINESの近く）
-failure_messages = [
-    "えへへ、ごめんね〜……今ちょっと調子悪いみたい…またお話しよ？♡",
-    "うぅ、ごめん〜〜…上手くお返事できなかったの。ちょっと待ってて？♡",
-    "あれれ？みりんてゃ、おねむかも……またあとで頑張るねっ！♡",
-    "ふわぁ……ねむねむでお返事遅れちゃった…ごめんねぇ💭",
-    "あわわっ…💭 みりんてゃの中の妖精さん、いま整備中みたい…またすぐ戻るねっ♡",
-    "今日はちょっと電波がふわもこ迷子みたい……もう一回呼んでくれる？♡",
-]
-image_failure_message = "ごめん、画像生成失敗しちゃった♡ また試してみてね！"  # ★画像生成: 専用フォールバック
+    print(f"✅ generate_reply_via_groq called with input: {user_input}")
+    
+    # ★修正: 診断ロジックを最初にチェック
+    diagnosis_result = generate_diagnosis(user_input, "dummy_did")  # 仮のDID、実際は呼び出し元で設定
+    if diagnosis_result[0] is not None:
+        print(f"🔬 診断ロジックで処理完了: {diagnosis_result[0]}")
+        return diagnosis_result[0]
 
-# generate_reply_via_groq関数内（修正後）
-def generate_reply_via_groq(user_input):
-    print("✅ generate_reply_via_groq defined!")
     # 画像生成キーワードチェック
     image_match = IMAGE_KEYWORDS.match(user_input)
     if image_match:
@@ -556,8 +574,6 @@ def generate_reply_via_groq(user_input):
             else:
                 print(f"⚠️ フォールバック画像生成も失敗、フォールバックメッセージを返します")
                 return image_failure_message
-    # （以下、既存のコードはそのまま）
-
 
     # グッズ系キーワード
     for keyword in PRODUCT_KEYWORDS.keys():
@@ -697,7 +713,7 @@ def post_replies_to_bluesky():
     unreplied = fetch_bluesky_posts()
     for post in unreplied:
         try:
-            reply = generate_reply_via_groq(post["text"])  # ★Groqに変更
+            reply = generate_reply_via_groq(post["text"])
             client.send_post(text=reply, reply_to={"uri": post["post_id"]})
             print(f"📤 投稿成功: {reply}")
         except Exception as e:
@@ -707,6 +723,7 @@ def post_replies_to_bluesky():
 #📬 メイン処理
 #------------------------------
 def run_reply_bot():
+    print("✅ Checking if generate_reply_via_groq is defined:", globals().get("generate_reply_via_groq"))
     lock_fd = None
     try:
         lock_fd = open(LOCK_FILE, 'w')
