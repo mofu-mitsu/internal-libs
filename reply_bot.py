@@ -21,10 +21,9 @@ from dotenv import load_dotenv
 import urllib.parse
 from groq import Groq
 import fcntl
-# ★変更: diffusersに切り替え
 from diffusers import StableDiffusionPipeline
 import torch
-import signal  # ★追加: タイムアウトハンドリング
+import signal  # タイムアウトハンドリング
 
 #------------------------------
 #🔐 環境変数
@@ -104,7 +103,7 @@ def load_gist_data(filename):
             curl_command = [
                 "curl", "-X", "GET", GIST_API_URL,
                 "-H", f"Authorization: token {GIST_TOKEN_REPLY}",
-                "-H", "Accept: application/vnd.github+json"
+                "-H", "Accept": "application/vnd.github+json"
             ]
             result = subprocess.run(curl_command, capture_output=True, text=True)
             print(f"📥 試行 {attempt + 1} レスポンスステータス: {result.returncode}")
@@ -150,7 +149,7 @@ def save_replied(replied_set):
                 "curl", "-X", "PATCH", GIST_API_URL,
                 "-H", f"Authorization: token {GIST_TOKEN_REPLY}",
                 "-H", "Accept": "application/vnd.github+json",
-                "-H", "Content-Type: application/json",
+                "-H", "Content-Type": "application/json",
                 "-d", json.dumps(payload, ensure_ascii=False)
             ]
             result = subprocess.run(curl_command, capture_output=True, text=True)
@@ -185,7 +184,7 @@ def save_gist_data(filename, data):
                 "curl", "-X", "PATCH", GIST_API_URL,
                 "-H", f"Authorization: token {GIST_TOKEN_REPLY}",
                 "-H", "Accept": "application/vnd.github+json",
-                "-H", "Content-Type: application/json",
+                "-H", "Content-Type": "application/json",
                 "-d", json.dumps(payload, ensure_ascii=False)
             ]
             result = subprocess.run(curl_command, capture_output=True, text=True)
@@ -288,7 +287,7 @@ def generate_image(prompt):
 
         # モデルキャッシュの確認
         from huggingface_hub import snapshot_download
-        model_id = "CompVis/stable-diffusion-v1-4"  # ★超軽量モデル
+        model_id = "stabilityai/sd-turbo"  # ★軽量モデルに変更
         try:
             print(f"📥 モデル {model_id} のキャッシュ確認中...")
             snapshot_download(
@@ -301,35 +300,41 @@ def generate_image(prompt):
             print(f"✅ モデル {model_id} のキャッシュ確認完了")
         except Exception as e:
             print(f"⚠️ モデルキャッシュダウンロードエラー: {type(e).__name__}: {str(e)}")
+            print("💡 提案: ネットワーク接続を確認し、HF_TOKENが正しいかチェックしてください")
+            print(f"💡 モデルページ: https://huggingface.co/{model_id}")
             return None
 
         # Diffusersパイプライン
         pipe = StableDiffusionPipeline.from_pretrained(
             model_id,
-            torch_dtype=torch.float16,  # ★CPUでも軽量化
+            torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
             use_safetensors=True,
             token=HF_TOKEN,
             cache_dir="/tmp/hf_cache"
         )
-        pipe = pipe.to("cpu")  # ★GPUなし環境を想定
-        print(f"✅ モデル {model_id} ロード完了 (デバイス: CPU)")
+        pipe = pipe.to("cuda" if torch.cuda.is_available() else "cpu")
+        print(f"✅ モデル {model_id} ロード完了 (デバイス: {'GPU' if torch.cuda.is_available() else 'CPU'})")
 
         cleaned_prompt = re.sub(r'[。！？、!?\s]+', ' ', prompt).strip() if prompt else ""
         enhanced_prompt = f"{cleaned_prompt}, anime style, soft colors, detailed, kawaii" if cleaned_prompt else "fuwamoko mirinteya character, anime style, soft colors, detailed, kawaii"
         print(f"🖼️ 画像生成プロンプト: {enhanced_prompt}")
-
+        
+        if any(danger_word in enhanced_prompt.lower() for danger_word in DANGER_ZONE):
+            print(f"⚠️ 危険ワード検知: {enhanced_prompt}")
+            return None
+            
         # タイムアウトハンドリング
         def timeout_handler(signum, frame):
             raise TimeoutError("Image generation timeout")
 
         signal.signal(signal.SIGALRM, timeout_handler)
-        signal.alarm(180)  # 3分タイムアウト
+        signal.alarm(300)  # 5分タイムアウト
 
-        for attempt in range(2):
+        for attempt in range(3):
             try:
                 image = pipe(
                     prompt=enhanced_prompt,
-                    negative_prompt="low quality, blurry, realistic",
+                    negative_prompt="low quality, blurry, realistic, photorealistic, cartoonish, 3d",
                     guidance_scale=7.5,
                     num_inference_steps=20,  # ★ステップ削減で高速化
                     width=512,
@@ -344,14 +349,24 @@ def generate_image(prompt):
                 return None
             except Exception as e:
                 print(f"⚠️ 画像生成エラー (試行 {attempt + 1}): {type(e).__name__}: {str(e)}")
-                if attempt < 1:
-                    time.sleep(5)
+                traceback.print_exc()
+                if attempt < 2:
+                    print(f"⏳ リトライします（{attempt + 2}/3）、待機時間: {5 * (attempt + 1)}秒")
+                    time.sleep(5 * (attempt + 1))
                 continue
         print("❌ 画像生成リトライ上限到達")
         return None
     except Exception as e:
         print(f"❌ 画像生成初期化エラー: {type(e).__name__}: {str(e)}")
+        print(f"💡 提案: 以下の点を確認してください")
+        print(f"  - HF_TOKENが正しいか: https://huggingface.co/settings/tokens")
+        print(f"  - diffusersライブラリのバージョン: `pip install --upgrade diffusers`")
+        print(f"  - モデルキャッシュ: `rm -rf /tmp/hf_cache` で削除して再試行")
+        print(f"  - ネットワーク接続: モデル {model_id} のダウンロードが可能か")
+        print(f"💡 モデルページ: https://huggingface.co/{model_id}")
+        traceback.print_exc()
         return None
+
 #------------------------------
 #🆕 Facets生成（URLリンク化を強化）
 #------------------------------
