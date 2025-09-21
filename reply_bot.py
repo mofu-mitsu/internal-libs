@@ -21,6 +21,7 @@ import urllib.parse
 from groq import Groq
 import fcntl
 from huggingface_hub import InferenceClient
+from transformers import pipeline  # ★追加
 
 #------------------------------
 #🔐 環境変数
@@ -48,7 +49,12 @@ HEADERS = {
     "Content-Type": "application/json"
 }
 LOCK_FILE = "bot.lock"
-IMAGE_KEYWORDS = re.compile(r"(.*?)(\s*(画像生成して|画像作って|描いて|絵描いて)\s*(.*))", re.IGNORECASE)  # ★修正: 前後キャプチャ
+IMAGE_KEYWORDS = re.compile(r"(.*?)(\s*(画像生成して|画像作って|描いて|絵描いて)\s*(.*))", re.IGNORECASE)
+FALLBACK_CUTE_LINES = [  # ★グローバルに移動
+    "えへへ〜♡ みりんてゃ、君のこと考えるとドキドキなのっ♪",
+    "今日も君に甘えたい気分なのっ♡ ぎゅーってして？",
+    "だ〜いすきっ♡ ね、ね、もっと構ってくれる？"
+]
 
 #------------------------------
 #🔗 URI正規化
@@ -248,11 +254,12 @@ def check_diagnosis_limit(user_did, is_daytime):
     return True, None
     
 #------------------------------
-#🆕 画像生成機能
+#🆕 画像生成機能（transformers版）
 #------------------------------
 def generate_image(prompt):
     try:
-        client = InferenceClient("stabilityai/stable-diffusion-xl-base-1.0", token=HF_TOKEN)  # ★モデル変更
+        # CPUでも動く軽量モデルに変更
+        pipe = pipeline("text-to-image", model="runwayml/stable-diffusion-v1-5", token=HF_TOKEN, device=0 if torch.cuda.is_available() else -1)
         cleaned_prompt = re.sub(r'[。！？、!?\s]+', ' ', prompt).strip() if prompt else ""
         enhanced_prompt = f"{cleaned_prompt}, anime style, soft colors, detailed, kawaii" if cleaned_prompt else "fuwamoko mirinteya character, anime style, soft colors, detailed, kawaii"
         print(f"🖼️ 画像生成プロンプト: {enhanced_prompt}")
@@ -263,15 +270,14 @@ def generate_image(prompt):
             
         for attempt in range(3):
             try:
-                image = client.text_to_image(
+                image = pipe(
                     prompt=enhanced_prompt,
                     negative_prompt="low quality, blurry, realistic, photorealistic, cartoonish, 3d",
                     guidance_scale=7.5,
                     num_inference_steps=30,
                     width=512,
-                    height=512,
-                    timeout=30  # ★追加: タイムアウト設定
-                )
+                    height=512
+                ).images[0]
                 print(f"✅ 画像生成成功: 試行 {attempt + 1}")
                 return image
             except Exception as e:
@@ -279,7 +285,7 @@ def generate_image(prompt):
                 traceback.print_exc()
                 if attempt < 2:
                     print(f"⏳ リトライします（{attempt + 2}/3）、待機時間: {5 * (attempt + 1)}秒")
-                    time.sleep(5 * (attempt + 1))  # ★リトライ間隔を5秒に
+                    time.sleep(5 * (attempt + 1))
                 continue
         print("❌ 画像生成リトライ上限到達")
         return None
@@ -472,15 +478,6 @@ def clean_sentence_ending(reply):
 #------------------------------
 #★ カスタマイズポイント5: グッズ提案ロジック
 #------------------------------
-PRODUCT_KEYWORDS = {
-    "おすすめグッズ": "ふわもこLoverなあなたにピッタリなアイテムはこちらっ♡",
-    "ぬい撮り": "撮影映え命♡のあなたに：おすすめはこの背景布っ！",
-    "寝れない": "みりんてゃが夜のお守りを選んできたよ〜☁️",
-    "推し活": "神アイテムで推し活が捗るよ〜！🧸💕",
-    "可愛いアイテム": "今いちばんバズってる可愛いアイテム教えちゃうっ☆",
-    "可愛いもの": "ねぇねぇっ♡とびきり可愛いもの、みりんてゃ見つけちゃったの〜〜っ♪"
-}
-
 def generate_product_reply(keyword, app_id="1055088369869282145", affiliate_id="3d94ea21.0d257908.3d94ea22.0ed11c6e"):
     api_url = "https://app.rakuten.co.jp/services/api/IchibaItem/Search/20170706"
     keywords = {
@@ -491,6 +488,7 @@ def generate_product_reply(keyword, app_id="1055088369869282145", affiliate_id="
         "可愛いアイテム": "可愛い インテリア",
         "可愛いもの": "可愛い 雑貨"
     }
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}  # ★追加
     params = {
         "applicationId": app_id,
         "keyword": keywords.get(keyword, keyword),
@@ -498,18 +496,22 @@ def generate_product_reply(keyword, app_id="1055088369869282145", affiliate_id="
         "format": "json"
     }
     try:
-        response = requests.get(api_url, params=params)
+        response = requests.get(api_url, params=params, headers=headers)
+        response.raise_for_status()
         data = response.json()
-        if data["Items"]:
+        if data.get("Items"):
             items = data["Items"]
             item = random.choice(items)["Item"]
             product_url = item["itemUrl"].split("?")[0]
-            affiliate_link = f"https://hb.afl.rakuten.co.jp/hgc/{affiliate_id}/?pc={product_url}"
+            affiliate_link = f"https://hb.afl.rakuten.co.jp/hgc/{affiliate_id}/?pc={urllib.parse.quote(product_url)}"
             reply = f"{PRODUCT_KEYWORDS[keyword]} → {affiliate_link}"
             return reply, [f"#{keyword.replace('？', '').replace('…', '')}"]
         else:
+            print(f"⚠️ 楽天APIで商品が見つかりませんでした: {data}")
             return "えへへ、みりんてゃ今探し中なのっ♡ また後で聞いてね！", []
-    except Exception:
+    except Exception as e:
+        print(f"⚠️ 楽天APIエラー: {type(e).__name__}: {str(e)}")
+        traceback.print_exc()
         return "うぅ、ごめんね〜今ちょっとバタバタなの…またね？♡", []
 
     #------------------------------
@@ -628,7 +630,7 @@ def generate_product_reply(keyword, app_id="1055088369869282145", affiliate_id="
                 print(f"📝 生の生成テキスト: {repr(raw_reply)}")
                 reply_text = clean_sentence_ending(raw_reply)
 
-                if any(re.search(rf"\b{re.escape(msg)}\b", reply_text) for msg in failure_messages + FALLBACK_CUTE_LINES):  # ★変更
+                if any(re.search(rf"\b{re.escape(msg)}\b", reply_text) for msg in failure_messages + FALLBACK_CUTE_LINES):
                     print(f"⚠️ フォールバック検知、リトライ中…")
                     continue
 
@@ -642,7 +644,7 @@ def generate_product_reply(keyword, app_id="1055088369869282145", affiliate_id="
                     time.sleep(2 * (attempt + 1))
                 continue
         else:
-            reply_text = random.choice(FALLBACK_CUTE_LINES)  # ★変更
+            reply_text = random.choice(FALLBACK_CUTE_LINES)
             print(f"⚠️ リトライ上限到達、フォールバックを使用: {reply_text}")
             return reply_text
 
@@ -786,6 +788,7 @@ def run_reply_bot():
                     break
 
             if not reply_text:
+                print(f"🔄 generate_reply_via_groq を呼び出します: 入力={text}")
                 reply_text = generate_reply_via_groq(text)
                 hashtags = []
                 if isinstance(reply_text, dict) and reply_text.get("type") == "image":
@@ -827,7 +830,7 @@ def run_reply_bot():
                     print(f"🔬 診断ロジックで生成: {repr(reply_text)}")
 
             if not isinstance(reply_text, str) or not reply_text.strip():
-                reply_text = random.choice(FALLBACK_CUTE_LINES)  # ★変更
+                reply_text = random.choice(FALLBACK_CUTE_LINES)
                 hashtags = []
                 print(f"⚠️ reply_textが不正（{repr(reply_text)}）、フォールバックを使用: {reply_text}")
 
