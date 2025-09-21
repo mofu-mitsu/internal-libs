@@ -628,7 +628,7 @@ def generate_product_reply(keyword, app_id="1055088369869282145", affiliate_id="
                 print(f"📝 生の生成テキスト: {repr(raw_reply)}")
                 reply_text = clean_sentence_ending(raw_reply)
 
-                if any(re.search(rf"\b{re.escape(msg)}\b", reply_text) for msg in failure_messages + fallback_cute_lines):
+                if any(re.search(rf"\b{re.escape(msg)}\b", reply_text) for msg in failure_messages + FALLBACK_CUTE_LINES):  # ★変更
                     print(f"⚠️ フォールバック検知、リトライ中…")
                     continue
 
@@ -636,18 +636,18 @@ def generate_product_reply(keyword, app_id="1055088369869282145", affiliate_id="
                 return reply_text
 
             except Exception as gen_error:
-                print(f"⚠️ 生成エラー: {gen_error}")
+                print(f"⚠️ 生成エラー: {type(gen_error).__name__}: {str(gen_error)}")
                 if "rate limit" in str(gen_error).lower():
                     print(f"⏳ レートリミット検知、{2 * (attempt + 1)}秒待機")
                     time.sleep(2 * (attempt + 1))
                 continue
         else:
-            reply_text = random.choice(fallback_cute_lines)
+            reply_text = random.choice(FALLBACK_CUTE_LINES)  # ★変更
             print(f"⚠️ リトライ上限到達、フォールバックを使用: {reply_text}")
             return reply_text
 
     except Exception as e:
-        print(f"❌ Groq APIエラー: {e}")
+        print(f"❌ Groq APIエラー: {type(e).__name__}: {str(e)}")
         return random.choice(failure_messages)
 
 #------------------------------
