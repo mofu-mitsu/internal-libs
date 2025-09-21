@@ -519,22 +519,21 @@ def generate_product_reply(keyword, app_id="1055088369869282145", affiliate_id="
     #------------------------------
 def generate_reply_via_groq(user_input):
     print("✅ generate_reply_via_groq defined!")
-        failure_messages = [
-            "えへへ、ごめんね〜……今ちょっと調子悪いみたい…またお話しよ？♡",
-            "うぅ、ごめん〜〜…上手くお返事できなかったの。ちょっと待ってて？♡",
-            "あれれ？みりんてゃ、おねむかも……またあとで頑張るねっ！♡",
-            "ふわぁ……ねむねむでお返事遅れちゃった…ごめんねぇ💭",
-            "あわわっ…💭 みりんてゃの中の妖精さん、いま整備中みたい…またすぐ戻るねっ♡",
-            "今日はちょっと電波がふわもこ迷子みたい……もう一回呼んでくれる？♡",
-        ]
-        image_failure_message = "ごめん、画像生成失敗しちゃった♡ また試してみてね！"  # ★画像生成: 専用フォールバック
-        fallback_cute_lines = [
-            "えへへ〜♡ みりんてゃ、君のこと考えるとドキドキなのっ♪",
-            "今日も君に甘えたい気分なのっ♡ ぎゅーってして？",
-            "だ〜いすきっ♡ ね、ね、もっと構ってくれる？"
-        ]
-    
-        # 画像生成キーワードチェック
+# グローバルスコープ（既存のFALLBACK_CUTE_LINESの近く）
+failure_messages = [
+    "えへへ、ごめんね〜……今ちょっと調子悪いみたい…またお話しよ？♡",
+    "うぅ、ごめん〜〜…上手くお返事できなかったの。ちょっと待ってて？♡",
+    "あれれ？みりんてゃ、おねむかも……またあとで頑張るねっ！♡",
+    "ふわぁ……ねむねむでお返事遅れちゃった…ごめんねぇ💭",
+    "あわわっ…💭 みりんてゃの中の妖精さん、いま整備中みたい…またすぐ戻るねっ♡",
+    "今日はちょっと電波がふわもこ迷子みたい……もう一回呼んでくれる？♡",
+]
+image_failure_message = "ごめん、画像生成失敗しちゃった♡ また試してみてね！"  # ★画像生成: 専用フォールバック
+
+# generate_reply_via_groq関数内（修正後）
+def generate_reply_via_groq(user_input):
+    print("✅ generate_reply_via_groq defined!")
+    # 画像生成キーワードチェック
     image_match = IMAGE_KEYWORDS.match(user_input)
     if image_match:
         try:
@@ -557,6 +556,7 @@ def generate_reply_via_groq(user_input):
             else:
                 print(f"⚠️ フォールバック画像生成も失敗、フォールバックメッセージを返します")
                 return image_failure_message
+    # （以下、既存のコードはそのまま）
 
 
     # グッズ系キーワード
