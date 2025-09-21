@@ -1,3 +1,4 @@
+# reply_bot.py
 #------------------------------
 #🌐 基本ライブラリ・API
 #------------------------------
@@ -20,13 +21,8 @@ from dotenv import load_dotenv
 import urllib.parse
 from groq import Groq
 import fcntl
-from huggingface_hub import InferenceClient
-from transformers import pipeline
-try:
-    import torch
-except ImportError:
-    print("⚠️ PyTorchが見つかりません。CPU-onlyモードで画像生成を試みます")
-    torch = None
+from diffusers import StableDiffusionPipeline
+import torch
 
 #------------------------------
 #🔐 環境変数
@@ -73,11 +69,11 @@ image_failure_message = "ごめん、画像生成失敗しちゃった♡ また
 
 PRODUCT_KEYWORDS = {
     "おすすめグッズ": "推し活おすすめグッズだよ〜♡",
-    "ぬい撮り": "ぬい撮りにピッタリなアイテムだよ〜♡",
-    "寝れない": "ぐっすり安眠グッズだよ〜♡",
-    "推し活": "推し活がもっと楽しくなるグッズだよ〜♡",
-    "可愛いアイテム": "みりんてゃイチオシの可愛いアイテムだよ〜♡",
-    "可愛いもの": "ふわふわ可愛い雑貨だよ〜♡"
+    "ぬい撮り": "ぬいぐるみ 背景布",
+    "寝れない": "安眠 グッズ",
+    "推し活": "推し活 収納",
+    "可愛いアイテム": "可愛い インテリア",
+    "可愛いもの": "可愛い 雑貨"
 }
 
 #------------------------------
@@ -152,7 +148,7 @@ def save_replied(replied_set):
                 "curl", "-X", "PATCH", GIST_API_URL,
                 "-H", f"Authorization: token {GIST_TOKEN_REPLY}",
                 "-H", "Accept: application/vnd.github+json",
-                "-H", "Content-Type: application/json",
+                "-H", "Content-Type": "application/json",
                 "-d", json.dumps(payload, ensure_ascii=False)
             ]
             result = subprocess.run(curl_command, capture_output=True, text=True)
@@ -187,7 +183,7 @@ def save_gist_data(filename, data):
                 "curl", "-X", "PATCH", GIST_API_URL,
                 "-H", f"Authorization: token {GIST_TOKEN_REPLY}",
                 "-H", "Accept: application/vnd.github+json",
-                "-H", "Content-Type: application/json",
+                "-H", "Content-Type": "application/json",
                 "-d", json.dumps(payload, ensure_ascii=False)
             ]
             result = subprocess.run(curl_command, capture_output=True, text=True)
@@ -278,19 +274,19 @@ def check_diagnosis_limit(user_did, is_daytime):
     return True, None
 
 #------------------------------
-#🆕 画像生成機能（transformers版）
+#🆕 画像生成機能（diffusers版）
 #------------------------------
 def generate_image(prompt):
     print(f"🖼️ 画像生成開始: プロンプト={prompt}")
     try:
-        # ★修正: HF_TOKENの検証
+        # HF_TOKEN検証
         if not HF_TOKEN or len(HF_TOKEN) < 10:
             print(f"❌ HF_TOKENが無効または短すぎます: {repr(HF_TOKEN)[:8]}...")
             return None
 
-        # ★修正: モデルキャッシュの事前チェック
+        # モデルキャッシュの確認
         from huggingface_hub import snapshot_download
-        model_id = "stabilityai/stable-diffusion-2-1"
+        model_id = "runwayml/stable-diffusion-v1-5"
         try:
             print(f"📥 モデル {model_id} のキャッシュ確認中...")
             snapshot_download(repo_id=model_id, token=HF_TOKEN, allow_patterns=["*.json", "*.bin", "*.safetensors"])
@@ -301,15 +297,16 @@ def generate_image(prompt):
             print(f"💡 モデルページ: https://huggingface.co/{model_id}")
             return None
 
-        # デバイス選択
-        device = 0 if torch and torch.cuda.is_available() else -1
-        print(f"🖥️ 使用デバイス: {'GPU' if device == 0 else 'CPU'}")
-        
-        # ★修正: モデルロード前にログ
-        print(f"🖼️ モデル {model_id} をロード中...")
-        pipe = pipeline("text-to-image", model=model_id, token=HF_TOKEN, device=device)
-        print(f"✅ モデル {model_id} ロード完了")
-        
+        # Diffusersパイプライン
+        pipe = StableDiffusionPipeline.from_pretrained(
+            model_id,
+            torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
+            use_safetensors=True,
+            token=HF_TOKEN
+        )
+        pipe = pipe.to("cuda" if torch.cuda.is_available() else "cpu")
+        print(f"✅ モデル {model_id} ロード完了 (デバイス: {'GPU' if torch.cuda.is_available() else 'CPU'})")
+
         cleaned_prompt = re.sub(r'[。！？、!?\s]+', ' ', prompt).strip() if prompt else ""
         enhanced_prompt = f"{cleaned_prompt}, anime style, soft colors, detailed, kawaii" if cleaned_prompt else "fuwamoko mirinteya character, anime style, soft colors, detailed, kawaii"
         print(f"🖼️ 画像生成プロンプト: {enhanced_prompt}")
@@ -343,8 +340,8 @@ def generate_image(prompt):
         print(f"❌ 画像生成初期化エラー: {type(e).__name__}: {str(e)}")
         print(f"💡 提案: 以下の点を確認してください")
         print(f"  - HF_TOKENが正しいか: https://huggingface.co/settings/tokens")
-        print(f"  - transformersライブラリのバージョン: `pip install --upgrade transformers`")
-        print(f"  - モデルキャッシュ: `~/.cache/huggingface/hub` を削除して再試行")
+        print(f"  - diffusersライブラリのバージョン: `pip install --upgrade diffusers`")
+        print(f"  - モデルキャッシュ: `rm -rf ~/.cache/huggingface/hub` で削除して再試行")
         print(f"  - ネットワーク接続: モデル {model_id} のダウンロードが可能か")
         print(f"💡 モデルページ: https://huggingface.co/{model_id}")
         traceback.print_exc()
@@ -504,7 +501,7 @@ def clean_sentence_ending(reply):
         return random.choice([
             f"えへへ〜♡ ややこしくなっちゃった！{BOT_NAME}、君と甘々トークしたいなのっ♪",
             f"うぅ、難しい話わかんな〜い！{BOT_NAME}、君にぎゅーってしてほしいなのっ♡",
-            f"ん〜〜変な話に！{BOT_NAME}、君のこと大好きだから、構ってくれる？♡"
+            f"ん〜〜〜変な話に！{BOT_NAME}、君のこと大好きだから、構ってくれる？♡"
         ])
 
     if re.search(r"(無理|距離|付き合え|関係ない|興味ない|仲良くできない|苦手|縁がない|嫌い|気持ち悪い|キモい|きらい)", reply, re.IGNORECASE):
@@ -692,7 +689,7 @@ def generate_reply_via_groq(user_input):
                 return reply_text
 
             except Exception as gen_error:
-                print(f"⚠️ 生成エラー: {type(gen_error).__name__}: {str(e)}")
+                print(f"⚠️ 生成エラー: {type(gen_error).__name__}: {str(gen_error)}")
                 if "rate limit" in str(gen_error).lower():
                     print(f"⏳ レートリミット検知、{2 * (attempt + 1)}秒待機")
                     time.sleep(2 * (attempt + 1))
