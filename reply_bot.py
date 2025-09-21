@@ -724,9 +724,6 @@ def post_replies_to_bluesky():
         except Exception as e:
             print(f"❌ 投稿エラー: {e}")
 
-#------------------------------
-#📬 メイン処理
-#------------------------------
 def run_reply_bot():
     print("✅ Checking if generate_reply_via_groq is defined:", globals().get("generate_reply_via_groq"))
     lock_fd = None
@@ -804,19 +801,24 @@ def run_reply_bot():
 
             reply_ref, post_uri = handle_post(record, notification)
             reply_text = None
+            hashtags = []  # ★追加: ハッシュタグ初期化
+
+            # 固定リプライチェック
             for keyword, fixed_reply in REPLY_TABLE.items():
                 if keyword.lower() in text.lower():
                     reply_text = fixed_reply
                     print(f"🎯 キーワード '{keyword}' に反応（入力: {text}）→ 固定返信: {reply_text}")
                     break
 
+            # generate_reply_via_groqで返信生成
             if not reply_text:
                 print(f"🔄 generate_reply_via_groq を呼び出します: 入力={text}")
-                reply_text = generate_reply_via_groq(text)
-                hashtags = []
-                if isinstance(reply_text, dict) and reply_text.get("type") == "image":
-                    image = reply_text["image"]
-                    prompt = reply_text["prompt"]
+                reply_result = generate_reply_via_groq(text)
+                print(f"📝 generate_reply_via_groq 結果: {repr(reply_result)}")
+
+                if isinstance(reply_result, dict) and reply_result.get("type") == "image":
+                    image = reply_result["image"]
+                    prompt = reply_result["prompt"]
                     reply_text = f"みりんてゃが描いたよ♡ どうかな？{'「' + prompt + '」' if prompt else ''}"
                     try:
                         from io import BytesIO
@@ -848,15 +850,26 @@ def run_reply_bot():
                         print(f"⚠️ 画像投稿エラー: {type(e).__name__}: {str(e)}")
                         traceback.print_exc()
                         reply_text = "ごめん、画像生成失敗しちゃった♡ また試してみてね！"
+                        hashtags = []
                 else:
-                    reply_text, hashtags = generate_diagnosis(text, author_did) or (reply_text, [])
-                    print(f"🔬 診断ロジックで生成: {repr(reply_text)}")
+                    reply_text = reply_result
+                    # 診断ロジックを再チェック（generate_reply_via_groq内で既に処理済みのはずだが念のため）
+                    diagnosis_result = generate_diagnosis(text, author_did)
+                    if diagnosis_result[0] is not None:
+                        reply_text, hashtags = diagnosis_result
+                        print(f"🔬 診断ロジックで生成: {reply_text}")
+                    else:
+                        hashtags = []
+                        print(f"🔬 診断ロジック非適用: {text}")
 
+            # reply_textの検証
+            print(f"📝 投稿前reply_text: {repr(reply_text)}")
             if not isinstance(reply_text, str) or not reply_text.strip():
                 reply_text = random.choice(FALLBACK_CUTE_LINES)
                 hashtags = []
                 print(f"⚠️ reply_textが不正（{repr(reply_text)}）、フォールバックを使用: {reply_text}")
 
+            # 投稿処理
             try:
                 post_data = {
                     "text": reply_text,
