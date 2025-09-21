@@ -1,4 +1,4 @@
-name: Bluesky Reply 
+name: Bluesky Reply
 
 on:
   schedule:
@@ -11,7 +11,8 @@ concurrency:
 
 jobs:
   run-reply-bot:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest  # 高スペックが必要なら「ubuntu-latest-8-cores」に変更（有料プラン）
+    timeout-minutes: 10  # 全体のタイムアウトを10分に設定
 
     steps:
       - name: Checkout repository
@@ -19,6 +20,7 @@ jobs:
 
       - name: Clear HuggingFace cache
         run: rm -rf ~/.cache/huggingface
+        continue-on-error: true  # キャッシュ削除失敗でも続行
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -31,10 +33,9 @@ jobs:
           pip install -r requirements.txt
           pip install torch==2.0.1
           pip install pytz
-          pip install transformers==4.39.3 accelerate sentencepiece psutil
+          pip install diffusers==0.29.2 accelerate sentencepiece psutil
           pip install groq
-          pip install huggingface_hub  # ★画像生成: Hugging Face API用
-          pip install --upgrade transformers huggingface_hub
+          pip install huggingface_hub==0.23.0  # 最新のhuggingface_hub
 
       - name: Run Reply Bot with Groq
         env:
@@ -43,6 +44,8 @@ jobs:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           GIST_TOKEN_REPLY: ${{ secrets.GIST_TOKEN_REPLY }}
           GIST_ID: 40391085a2e0b8a48935ad0b460cf422
-          HF_TOKEN: ${{ secrets.HF_API_TOKEN }}  # ★画像生成: Hugging Face APIキー
+          HF_TOKEN: ${{ secrets.HF_API_TOKEN }}
         run: |
           python reply_bot.py
+        timeout-minutes: 5  # 実行に5分制限
+        continue-on-error: true  # 画像生成失敗でもワークフロー続行
