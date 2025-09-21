@@ -20,3 +20,4 @@ opencv-python==4.8.1.78  # ← バージョン固定もオススメ（最新版�
 typing-extensions>=4.5.0,<5.0.0
 numpy>=1.17,<2.0
 huggingface_hub
+diffusers==0.29.2
