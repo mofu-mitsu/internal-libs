@@ -789,12 +789,10 @@ def run_reply_bot():
                 reply_text = generate_reply_via_groq(text)
                 hashtags = []
                 if isinstance(reply_text, dict) and reply_text.get("type") == "image":
-                    # 画像生成の場合
                     image = reply_text["image"]
                     prompt = reply_text["prompt"]
                     reply_text = f"みりんてゃが描いたよ♡ どうかな？{'「' + prompt + '」' if prompt else ''}"
                     try:
-                        # 画像をBlueSkyにアップロード
                         from io import BytesIO
                         img_bytes = BytesIO()
                         image.save(img_bytes, format="PNG")
@@ -821,17 +819,15 @@ def run_reply_bot():
                         time.sleep(REPLY_INTERVAL)
                         continue
                     except Exception as e:
-                        print(f"⚠️ 画像投稿エラー: {e}")
+                        print(f"⚠️ 画像投稿エラー: {type(e).__name__}: {str(e)}")
                         traceback.print_exc()
                         reply_text = "ごめん、画像生成失敗しちゃった♡ また試してみてね！"
                 else:
-                    # 診断ロジック
                     reply_text, hashtags = generate_diagnosis(text, author_did) or (reply_text, [])
                     print(f"🔬 診断ロジックで生成: {repr(reply_text)}")
 
-            # Noneチェックを強化
             if not isinstance(reply_text, str) or not reply_text.strip():
-                reply_text = random.choice(fallback_cute_lines)
+                reply_text = random.choice(FALLBACK_CUTE_LINES)  # ★変更
                 hashtags = []
                 print(f"⚠️ reply_textが不正（{repr(reply_text)}）、フォールバックを使用: {reply_text}")
 
@@ -853,7 +849,7 @@ def run_reply_bot():
                 reply_count += 1
                 time.sleep(REPLY_INTERVAL)
             except Exception as e:
-                print(f"⚠️ 投稿失敗: {e}")
+                print(f"⚠️ 投稿失敗: {type(e).__name__}: {str(e)}")
                 traceback.print_exc()
                 if "JSON serializable" in str(e):
                     print("⚠️ ReplyRefシリアライズエラー検知、リプライなしで再試行")
@@ -866,14 +862,14 @@ def run_reply_bot():
                         reply_count += 1
                         time.sleep(REPLY_INTERVAL)
                     except Exception as retry_e:
-                        print(f"⚠️ リトライも失敗: {retry_e}")
+                        print(f"⚠️ リトライも失敗: {type(retry_e).__name__}: {str(retry_e)}")
                         traceback.print_exc()
 
     except IOError as e:
-        print(f"🔒 ロック取得失敗（Botが既に実行中）: {e}")
+        print(f"🔒 ロック取得失敗（Botが既に実行中）: {type(e).__name__}: {str(e)}")
         return
     except Exception as e:
-        print(f"❌ 実行エラー: {e}")
+        print(f"❌ 実行エラー: {type(e).__name__}: {str(e)}")
         traceback.print_exc()
     finally:
         if lock_fd:
