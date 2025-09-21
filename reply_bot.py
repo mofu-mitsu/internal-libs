@@ -18,9 +18,9 @@ from atproto_client.models.com.atproto.repo.strong_ref import Main as StrongRef
 from atproto_client.models.app.bsky.feed.post import ReplyRef
 from dotenv import load_dotenv
 import urllib.parse
-from groq import Groq  # ★追加: Groq SDK
-import fcntl  # ★追加: ファイルロック用
-from huggingface_hub import InferenceClient # ★画像生成: Hugging Face API用
+from groq import Groq
+import fcntl
+from huggingface_hub import InferenceClient
 
 #------------------------------
 #🔐 環境変数
@@ -30,13 +30,13 @@ HANDLE = os.getenv("HANDLE") or exit("❌ HANDLEが設定されていません")
 APP_PASSWORD = os.getenv("APP_PASSWORD") or exit("❌ APP_PASSWORDが設定されていません")
 GIST_TOKEN_REPLY = os.getenv("GIST_TOKEN_REPLY") or exit("❌ GIST_TOKEN_REPLYが設定されていません")
 GIST_ID = os.getenv("GIST_ID") or exit("❌ GIST_IDが設定されていません")
-GROQ_API_KEY = os.getenv("GROQ_API_KEY") or exit("❌ GROQ_API_KEYが設定されていません")  # ★追加
-HF_TOKEN = os.getenv("HF_TOKEN") or exit("❌ HF_TOKENが設定されていません") # ★画像生成: Hugging Face APIキー
+GROQ_API_KEY = os.getenv("GROQ_API_KEY") or exit("❌ GROQ_API_KEYが設定されていません")
+HF_TOKEN = os.getenv("HF_TOKEN") or exit("❌ HF_TOKENが設定されていません")
 
 print(f"✅ 環境変数読み込み完了: HANDLE={HANDLE[:8]}..., GIST_ID={GIST_ID[:8]}...")
 print(f"🧪 GIST_TOKEN_REPLY: {repr(GIST_TOKEN_REPLY)[:8]}...")
 print(f"🔑 トークンの長さ: {len(GIST_TOKEN_REPLY)}")
-print(f"🖼️ HF_TOKEN: {repr(HF_TOKEN)[:8]}...") # ★画像生成
+print(f"🖼️ HF_TOKEN: {repr(HF_TOKEN)[:8]}...")
 
 #--- 固定値 ---
 REPLIED_GIST_FILENAME = "replied.json"
