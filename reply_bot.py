@@ -39,6 +39,7 @@ print(f"🔑 トークンの長さ: {len(GIST_TOKEN_REPLY)}")
 print(f"🖼️ HF_TOKEN: {repr(HF_TOKEN)[:8]}...") # ★画像生成
 
 #--- 固定値 ---
+#--- 固定値 ---
 REPLIED_GIST_FILENAME = "replied.json"
 DIAGNOSIS_LIMITS_GIST_FILENAME = "diagnosis_limits.json"
 GIST_API_URL = f"https://api.github.com/gists/{GIST_ID}"
@@ -48,7 +49,7 @@ HEADERS = {
     "Content-Type": "application/json"
 }
 LOCK_FILE = "bot.lock"
-IMAGE_KEYWORDS = re.compile(r"画像生成して|画像作って|描いて|絵描いて", re.IGNORECASE) # ★画像生成: トリガーキーワード
+IMAGE_KEYWORDS = re.compile(r"(.*?)(\s*(画像生成して|画像作って|描いて|絵描いて)\s*(.*))", re.IGNORECASE)  # ★修正: 前後キャプチャ
 
 #------------------------------
 #🔗 URI正規化
