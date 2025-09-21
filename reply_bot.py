@@ -786,7 +786,7 @@ def run_reply_bot():
                     break
 
             if not reply_text:
-                reply_text = generate_reply_via_groq(text)  # ★画像生成: ここで画像も返ってくる可能性
+                reply_text = generate_reply_via_groq(text)
                 hashtags = []
                 if isinstance(reply_text, dict) and reply_text.get("type") == "image":
                     # 画像生成の場合
@@ -822,18 +822,18 @@ def run_reply_bot():
                         continue
                     except Exception as e:
                         print(f"⚠️ 画像投稿エラー: {e}")
+                        traceback.print_exc()
                         reply_text = "ごめん、画像生成失敗しちゃった♡ また試してみてね！"
                 else:
                     # 診断ロジック
                     reply_text, hashtags = generate_diagnosis(text, author_did) or (reply_text, [])
                     print(f"🔬 診断ロジックで生成: {repr(reply_text)}")
-            else:
-                hashtags = []
 
-            print(f"🤖 生成された返信: {repr(reply_text)} (型: {type(reply_text)})")
+            # Noneチェックを強化
             if not isinstance(reply_text, str) or not reply_text.strip():
-                reply_text = "えへへ〜♡ みりんてゃ、ちょっとおねむかも……またお話しよ？♡"
+                reply_text = random.choice(fallback_cute_lines)
                 hashtags = []
+                print(f"⚠️ reply_textが不正（{repr(reply_text)}）、フォールバックを使用: {reply_text}")
 
             try:
                 post_data = {
