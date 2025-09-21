@@ -21,8 +21,10 @@ from dotenv import load_dotenv
 import urllib.parse
 from groq import Groq
 import fcntl
+# ★変更: diffusersに切り替え
 from diffusers import StableDiffusionPipeline
 import torch
+import signal  # ★追加: タイムアウトハンドリング
 
 #------------------------------
 #🔐 環境変数
@@ -69,11 +71,11 @@ image_failure_message = "ごめん、画像生成失敗しちゃった♡ また
 
 PRODUCT_KEYWORDS = {
     "おすすめグッズ": "推し活おすすめグッズだよ〜♡",
-    "ぬい撮り": "ぬいぐるみ 背景布",
-    "寝れない": "安眠 グッズ",
-    "推し活": "推し活 収納",
-    "可愛いアイテム": "可愛い インテリア",
-    "可愛いもの": "可愛い 雑貨"
+    "ぬい撮り": "ぬい撮りにピッタリなアイテムだよ〜♡",
+    "寝れない": "ぐっすり安眠グッズだよ〜♡",
+    "推し活": "推し活がもっと楽しくなるグッズだよ〜♡",
+    "可愛いアイテム": "みりんてゃイチオシの可愛いアイテムだよ〜♡",
+    "可愛いもの": "ふわふわ可愛い雑貨だよ〜♡"
 }
 
 #------------------------------
@@ -147,8 +149,8 @@ def save_replied(replied_set):
             curl_command = [
                 "curl", "-X", "PATCH", GIST_API_URL,
                 "-H", f"Authorization: token {GIST_TOKEN_REPLY}",
-                "-H", "Accept: application/vnd.github+json",
-                "-H", "Content-Type: application/json",
+                "-H", "Accept": "application/vnd.github+json",
+                "-H", "Content-Type": "application/json",
                 "-d", json.dumps(payload, ensure_ascii=False)
             ]
             result = subprocess.run(curl_command, capture_output=True, text=True)
@@ -182,8 +184,8 @@ def save_gist_data(filename, data):
             curl_command = [
                 "curl", "-X", "PATCH", GIST_API_URL,
                 "-H", f"Authorization: token {GIST_TOKEN_REPLY}",
-                "-H", "Accept: application/vnd.github+json",
-                "-H", "Content-Type: application/json",
+                "-H", "Accept": "application/vnd.github+json",
+                "-H", "Content-Type": "application/json",
                 "-d", json.dumps(payload, ensure_ascii=False)
             ]
             result = subprocess.run(curl_command, capture_output=True, text=True)
@@ -286,10 +288,10 @@ def generate_image(prompt):
 
         # モデルキャッシュの確認
         from huggingface_hub import snapshot_download
-        model_id = "stabilityai/stable-diffusion-xl-base-1.0"
+        model_id = "runwayml/stable-diffusion-v1-5"  # ★軽いモデルに変更
         try:
             print(f"📥 モデル {model_id} のキャッシュ確認中...")
-            snapshot_download(repo_id=model_id, token=HF_TOKEN, allow_patterns=["*.json", "*.bin", "*.safetensors"])
+            snapshot_download(repo_id=model_id, token=HF_TOKEN, allow_patterns=["*.json", "*.bin", "*.safetensors"], resume_download=True)
             print(f"✅ モデル {model_id} のキャッシュ確認完了")
         except Exception as e:
             print(f"⚠️ モデルキャッシュダウンロードエラー: {type(e).__name__}: {str(e)}")
@@ -315,6 +317,13 @@ def generate_image(prompt):
             print(f"⚠️ 危険ワード検知: {enhanced_prompt}")
             return None
             
+        # タイムアウトハンドリング
+        def timeout_handler(signum, frame):
+            raise TimeoutError("Image generation timeout")
+
+        signal.signal(signal.SIGALRM, timeout_handler)
+        signal.alarm(300)  # 5分タイムアウト
+
         for attempt in range(3):
             try:
                 image = pipe(
@@ -325,8 +334,13 @@ def generate_image(prompt):
                     width=512,
                     height=512
                 ).images[0]
+                signal.alarm(0)  # タイマー解除
                 print(f"✅ 画像生成成功: 試行 {attempt + 1}")
                 return image
+            except TimeoutError:
+                print("❌ 画像生成がタイムアウト")
+                signal.alarm(0)
+                return None
             except Exception as e:
                 print(f"⚠️ 画像生成エラー (試行 {attempt + 1}): {type(e).__name__}: {str(e)}")
                 traceback.print_exc()
@@ -338,12 +352,6 @@ def generate_image(prompt):
         return None
     except Exception as e:
         print(f"❌ 画像生成初期化エラー: {type(e).__name__}: {str(e)}")
-        print(f"💡 提案: 以下の点を確認してください")
-        print(f"  - HF_TOKENが正しいか: https://huggingface.co/settings/tokens")
-        print(f"  - diffusersライブラリのバージョン: `pip install --upgrade diffusers`")
-        print(f"  - モデルキャッシュ: `rm -rf ~/.cache/huggingface/hub` で削除して再試行")
-        print(f"  - ネットワーク接続: モデル {model_id} のダウンロードが可能か")
-        print(f"💡 モデルページ: https://huggingface.co/{model_id}")
         traceback.print_exc()
         return None
 
@@ -501,7 +509,7 @@ def clean_sentence_ending(reply):
         return random.choice([
             f"えへへ〜♡ ややこしくなっちゃった！{BOT_NAME}、君と甘々トークしたいなのっ♪",
             f"うぅ、難しい話わかんな〜い！{BOT_NAME}、君にぎゅーってしてほしいなのっ♡",
-            f"ん〜〜〜変な話に！{BOT_NAME}、君のこと大好きだから、構ってくれる？♡"
+            f"ん〜〜変な話に！{BOT_NAME}、君のこと大好きだから、構ってくれる？♡"
         ])
 
     if re.search(r"(無理|距離|付き合え|関係ない|興味ない|仲良くできない|苦手|縁がない|嫌い|気持ち悪い|キモい|きらい)", reply, re.IGNORECASE):
