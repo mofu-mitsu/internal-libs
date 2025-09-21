@@ -263,17 +263,30 @@ def generate_image(prompt):
             print(f"⚠️ 危険ワード検知: {enhanced_prompt}")
             return None
             
-        image = client.text_to_image(
-            prompt=enhanced_prompt,
-            negative_prompt="low quality, blurry, realistic, photorealistic",
-            guidance_scale=7.5,
-            num_inference_steps=30,  # ★修正: num_steps → num_inference_steps
-            width=512,
-            height=512
-        )
-        return image
+        for attempt in range(3):  # ★追加: リトライ3回
+            try:
+                image = client.text_to_image(
+                    prompt=enhanced_prompt,
+                    negative_prompt="low quality, blurry, realistic, photorealistic",
+                    guidance_scale=7.5,
+                    num_inference_steps=30,
+                    width=512,
+                    height=512
+                )
+                print(f"✅ 画像生成成功: 試行 {attempt + 1}")
+                return image
+            except Exception as e:
+                print(f"⚠️ 画像生成エラー (試行 {attempt + 1}): {e}")
+                traceback.print_exc()
+                if attempt < 2:
+                    print(f"⏳ リトライします（{attempt + 2}/3）")
+                    time.sleep(2 * (attempt + 1))
+                continue
+        print("❌ 画像生成リトライ上限到達")
+        return None
     except Exception as e:
         print(f"❌ 画像生成エラー: {e}")
+        traceback.print_exc()
         return None
 
 #------------------------------
@@ -531,6 +544,7 @@ def generate_reply_via_groq(user_input):
             if image:
                 return {"type": "image", "image": image, "prompt": prompt}
             else:
+                print(f"⚠️ 画像生成失敗、フォールバックメッセージを返します")
                 return image_failure_message
         except IndexError as e:
             print(f"⚠️ 正規表現グループエラー: {e}, フォールバックプロンプトを使用")
@@ -538,6 +552,7 @@ def generate_reply_via_groq(user_input):
             if image:
                 return {"type": "image", "image": image, "prompt": ""}
             else:
+                print(f"⚠️ フォールバック画像生成も失敗、フォールバックメッセージを返します")
                 return image_failure_message
 
 
