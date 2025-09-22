@@ -891,7 +891,7 @@ def run_reply_bot():
                     reply_text = f"みりんてゃが描いたよ♡ どうかな？{'「' + prompt + '」' if prompt else ''}"
                     try:
                         with open(image_path, "rb") as f:
-                            blob_resp = client.com.atproto.repo.upload_blob(data=f.read(), mime_type='image/png')
+                            blob_resp = client.com.atproto.repo.upload_blob(data=f.read())  # mime_type削除
                         blob_ref = blob_resp.blob
                         post_data = {
                             "text": reply_text,
@@ -918,6 +918,88 @@ def run_reply_bot():
                             print(f"🧹 一時ファイル {image_path} 削除成功")
                         except Exception as e:
                             print(f"⚠️ 一時ファイル削除失敗: {e}")
+                        continue
+                    except Exception as e:
+                        print(f"⚠️ 画像投稿エラー: {type(e).__name__}: {str(e)}")
+                        traceback.print_exc()
+                        reply_text = "ごめん…画像生成失敗しちゃった♡ また試してみてね！"
+                        hashtags = []
+                else:
+                    reply_text = reply_result
+                    # 診断ロジックを再チェック（generate_reply_via_groq内で既に処理済みのはずだが念のため）
+                    diagnosis_result = generate_diagnosis(text, author_did)
+                    if diagnosis_result[0] is not None:
+                        reply_text, hashtags = diagnosis_result
+                        print(f"🔬 診断ロジックで生成: {reply_text}")
+                    else:
+                        hashtags = []
+                        print(f"🔬 診断ロジック非適用: {text}")
+
+            # reply_textの検証
+            print(f"📝 投稿前reply_text: {repr(reply_text)}")
+            if not isinstance(reply_text, str) or not reply_text.strip():
+                reply_text = random.choice(FALLBACK_CUTE_LINES)
+                hashtags = []
+                print(f"⚠️ reply_textが不正（{repr(reply_text)}）、フォールバックを使用: {reply_text}")
+
+            # 投稿処理
+            try:
+                post_data = {
+                    "text": reply_text,
+                    "createdAt": datetime.now(timezone.utc).isoformat(),
+                }
+                if reply_ref:
+                    post_data["reply"] = reply_ref
+                facets = generate_facets_from_text(reply_text, hashtags)
+                if facets:
+                    post_data["facets"] = facets
+                client.app.bsky.feed.post.create(record=post_data, repo=client.me.did)
+                replied.add(notification_uri)
+                save_replied(replied)
+                print(f"✅ @{author_handle} に返信完了！ → {notification_uri}")
+                reply_count += 1
+                time.sleep(REPLY_INTERVAL)
+            except Exception as e:
+                print(f"⚠️ 投稿失敗: {type(e).__name__}: {str(e)}")
+                traceback.print_exc()
+                if "JSON serializable" in str(e):
+                    print("⚠️ ReplyRefシリアライズエラー検知、リプライなしで再試行")
+                    try:
+                        post_data.pop("reply", None)
+                        client.app.bsky.feed.post.create(record=post_data, repo=client.me.did)
+                        print(f"✅ @{author_handle} にリプライなしで投稿完了！ → {notification_uri}")
+                        replied.add(notification_uri)
+                        save_replied(replied)
+                        reply_count += 1
+                        time.sleep(REPLY_INTERVAL)
+                    except Exception as retry_e:
+                        print(f"⚠️ リトライも失敗: {type(retry_e).__name__}: {str(retry_e)}")
+                        traceback.print_exc()
+
+    except IOError as e:
+        print(f"🔒 ロック取得失敗（Botが既に実行中）: {type(e).__name__}: {str(e)}")
+        return
+    except Exception as e:
+        print(f"❌ 実行エラー: {type(e).__name__}: {str(e)}")
+        traceback.print_exc()
+    finally:
+        if lock_fd:
+            fcntl.flock(lock_fd, fcntl.LOCK_UN)
+            lock_fd.close()
+            try:
+                os.remove(LOCK_FILE)
+                print("🧹 ロックファイル削除成功")
+            except Exception as e:
+                print(f"⚠️ ロックファイル削除失敗: {e}")
+        # 一時画像ファイルのクリーンアップ
+        for i in range(3):
+            temp_file = f"output_{i}.png"
+            if os.path.exists(temp_file):
+                try:
+                    os.remove(temp_file)
+                    print(f"🧹 一時ファイル {temp_file} 削除成功")
+                except Exception as e:
+                    print(f"⚠️ 一時ファイル削除失敗: {e}")
                         continue
                     except Exception as e:
                         print(f"⚠️ 画像投稿エラー: {type(e).__name__}: {str(e)}")
