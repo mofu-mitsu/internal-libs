@@ -287,7 +287,7 @@ def generate_image(prompt):
             return None
 
         DEEPAI_API_KEY = os.getenv("DEEPAI_API_KEY")
-        STABLE_HORDE_API_KEY = os.getenv("STABLE_HORDE_API_KEY") or "0000000000"  # 匿名キー追加
+        STABLE_HORDE_API_KEY = os.getenv("STABLE_HORDE_API_KEY") or "0000000000"  # 匿名キー
 
         cleaned_prompt = re.sub(r'[。！？、!?\s]+', ' ', prompt).strip() if prompt else ""
         enhanced_prompt = f"{cleaned_prompt}, anime style, soft colors, detailed, kawaii" if cleaned_prompt else "fuwamoko mirinteya character, anime style, soft colors, detailed, kawaii"
@@ -300,11 +300,21 @@ def generate_image(prompt):
 
         api_configs = [
             {
-                "url": "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-dev",
-                "headers": {"Authorization": f"Bearer {HF_TOKEN}"},
-                "payload": {"inputs": enhanced_prompt},
-                "type": "huggingface",
-                "timeout": 500
+                "url": "https://stablehorde.net/api/v2/generate/sync",
+                "headers": {"apikey": STABLE_HORDE_API_KEY},
+                "payload": {
+                    "prompt": enhanced_prompt,
+                    "params": {
+                        "width": 512,
+                        "height": 512,
+                        "steps": 20,
+                        "cfg_scale": 7.5,
+                        "sampler_name": "k_euler_a",
+                        "model": "prompthero/openjourney"  # FLUX.1に近いモデル
+                    }
+                },
+                "type": "stablehorde",
+                "timeout": 120
             },
             {
                 "url": "https://api.deepai.org/api/text2img",
@@ -317,20 +327,11 @@ def generate_image(prompt):
                 "timeout": 30
             },
             {
-                "url": "https://stablehorde.net/api/v2/generate/sync",
-                "headers": {"apikey": STABLE_HORDE_API_KEY},
-                "payload": {
-                    "prompt": enhanced_prompt,
-                    "params": {
-                        "width": 512,
-                        "height": 512,
-                        "steps": 20,
-                        "cfg_scale": 7.5,
-                        "sampler_name": "k_euler_a"
-                    }
-                },
-                "type": "stablehorde",
-                "timeout": 120
+                "url": "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-dev",
+                "headers": {"Authorization": f"Bearer {HF_TOKEN}"},
+                "payload": {"inputs": enhanced_prompt},
+                "type": "huggingface",
+                "timeout": 500
             }
         ]
 
@@ -378,7 +379,7 @@ def generate_image(prompt):
                     else:
                         print(f"⚠️ APIエラー (試行 {attempt + 1}): {response.status_code} - {response.text}")
                         if attempt < 2:
-                            time.sleep(60 * (attempt + 1))  # 混雑時対応
+                            time.sleep(60 * (attempt + 1))
                         continue
                 except requests.exceptions.Timeout:
                     print(f"❌ 画像生成タイムアウト (試行 {attempt + 1})")
