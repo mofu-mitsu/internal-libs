@@ -287,8 +287,7 @@ def generate_image(prompt):
             return None
 
         DEEPAI_API_KEY = os.getenv("DEEPAI_API_KEY")
-        if not DEEPAI_API_KEY:
-            print("❌ DEEPAI_API_KEYが設定されていません。無料枠キーも試行します")
+        STABLE_HORDE_API_KEY = os.getenv("STABLE_HORDE_API_KEY") or "0000000000"  # 匿名キー追加
 
         cleaned_prompt = re.sub(r'[。！？、!?\s]+', ' ', prompt).strip() if prompt else ""
         enhanced_prompt = f"{cleaned_prompt}, anime style, soft colors, detailed, kawaii" if cleaned_prompt else "fuwamoko mirinteya character, anime style, soft colors, detailed, kawaii"
@@ -316,6 +315,22 @@ def generate_image(prompt):
                 "payload": {"text": enhanced_prompt},
                 "type": "deepai",
                 "timeout": 30
+            },
+            {
+                "url": "https://stablehorde.net/api/v2/generate/sync",
+                "headers": {"apikey": STABLE_HORDE_API_KEY},
+                "payload": {
+                    "prompt": enhanced_prompt,
+                    "params": {
+                        "width": 512,
+                        "height": 512,
+                        "steps": 20,
+                        "cfg_scale": 7.5,
+                        "sampler_name": "k_euler_a"
+                    }
+                },
+                "type": "stablehorde",
+                "timeout": 120
             }
         ]
 
@@ -343,6 +358,13 @@ def generate_image(prompt):
                             else:
                                 print(f"⚠️ DeepAIレスポンスにoutput_urlなし: {result}")
                                 continue
+                        elif api_type == "stablehorde":
+                            result = response.json()
+                            if "generations" in result and result["generations"]:
+                                image_data = base64.b64decode(result["generations"][0]["img"])
+                            else:
+                                print(f"⚠️ Stable Hordeレスポンスにgenerationsなし: {result}")
+                                continue
                         else:
                             image_data = response.content
 
@@ -356,7 +378,7 @@ def generate_image(prompt):
                     else:
                         print(f"⚠️ APIエラー (試行 {attempt + 1}): {response.status_code} - {response.text}")
                         if attempt < 2:
-                            time.sleep(60 * (attempt + 1))  # 60秒→120秒→180秒
+                            time.sleep(60 * (attempt + 1))  # 混雑時対応
                         continue
                 except requests.exceptions.Timeout:
                     print(f"❌ 画像生成タイムアウト (試行 {attempt + 1})")
