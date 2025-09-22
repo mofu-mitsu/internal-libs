@@ -375,10 +375,19 @@ def generate_image(prompt):
                                     status_result = status_response.json()
                                     if status_result.get("done"):
                                         if "generations" in status_result and status_result["generations"]:
-                                            image_data = base64.b64decode(status_result["generations"][0]["img"])
+                                            img_data = status_result["generations"][0]["img"]
+                                            if img_data.startswith("http"):  # URL形式
+                                                image_response = requests.get(img_data, timeout=10)
+                                                if image_response.status_code == 200:
+                                                    image_data = image_response.content
+                                                else:
+                                                    print(f"⚠️ 画像URL取得失敗: {img_data}, ステータス: {image_response.status_code}")
+                                                    continue
+                                            else:  # base64形式
+                                                image_data = base64.b64decode(img_data)
                                             break
                                         else:
-                                            print(f"⚠️ ポーリング完了したがgenerationsなし: {status_result}")
+                                            print(f"⚠️ ポーリング完了だがgenerationsなし: {status_result}")
                                             continue
                                     elif status_result.get("faulted"):
                                         print(f"⚠️ Stable Horde生成失敗: {status_result}")
@@ -390,13 +399,15 @@ def generate_image(prompt):
                         else:
                             image_data = response.content
 
-                        from io import BytesIO
-                        from PIL import Image
-                        image = Image.open(BytesIO(image_data))
-                        image_path = f"output_{attempt}.png"
-                        image.save(image_path, "PNG")
-                        print(f"✅ 画像生成成功: API={api_url}, 試行={attempt + 1}, 保存先={image_path}")
-                        return image_path
+                        try:
+                            image = Image.open(BytesIO(image_data))
+                            image_path = f"output_{attempt}.png"
+                            image.save(image_path, "PNG")
+                            print(f"✅ 画像生成成功: API={api_url}, 試行={attempt + 1}, 保存先={image_path}")
+                            return image_path
+                        except Exception as img_err:
+                            print(f"⚠️ 画像処理エラー: {type(img_err).__name__}: {str(img_err)}")
+                            continue
                     else:
                         print(f"⚠️ APIエラー (試行 {attempt + 1}): {response.status_code} - {response.text}")
                         if attempt < 2:
