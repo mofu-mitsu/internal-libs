@@ -277,7 +277,6 @@ def check_diagnosis_limit(user_did, is_daytime):
 #------------------------------
 #🆕 画像生成機能（軽量版）
 #------------------------------
-
 DANGER_ZONE = ["nsfw", "nude", "gore"]
 
 def generate_image(prompt):
@@ -296,53 +295,57 @@ def generate_image(prompt):
             print(f"⚠️ 危険ワード検知: {enhanced_prompt}")
             return None
 
-        # Hugging Face Inference API優先
-        api_urls = [
-            "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-dev",  # 優先
-            "https://deepai.org/machine-learning-model/text2img"  # フォールバック (DeepAI)
+        # APIリスト
+        api_configs = [
+            {
+                "url": "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-dev",
+                "headers": {"Authorization": f"Bearer {HF_TOKEN}"},
+                "payload": {"inputs": enhanced_prompt},
+                "type": "huggingface"
+            },
+            {
+                "url": "https://api.deepai.org/api/text2img",
+                "headers": {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"},
+                "payload": {"text": enhanced_prompt},
+                "type": "deepai"
+            }
         ]
 
-        for api_url in api_urls:
+        for config in api_configs:
+            api_url = config["url"]
+            headers = config["headers"]
+            payload = config["payload"]
+            api_type = config["type"]
+
             for attempt in range(3):
                 try:
-                    if "huggingface.co" in api_url:
-                        payload = {
-                            "prompt": enhanced_prompt,
-                            "negative_prompt": negative_prompt,
-                            "num_inference_steps": 20,
-                            "guidance_scale": 7.5,
-                            "width": 512,
-                            "height": 512
-                        }
-                        headers = {"Authorization": f"Bearer {HF_TOKEN}"}
+                    if api_type == "deepai":
+                        # DeepAIはmultipart/form-data
+                        response = requests.post(api_url, data=payload, headers=headers, timeout=30)
                     else:
-                        # DeepAI
-                        payload = {
-                            "text": enhanced_prompt
-                        }
-                        headers = {}  # DeepAIはトークン不要
-                    response = requests.post(api_url, json=payload, headers=headers, timeout=300)
+                        # Hugging FaceはJSON
+                        response = requests.post(api_url, json=payload, headers=headers, timeout=30)
                     print(f"📥 試行 {attempt + 1} レスポンス: {response.status_code} - {response.text[:500]}...")
+
                     if response.status_code == 200:
-                        result = response.json()
-                        print(f"📝 APIレスポンス: {json.dumps(result, ensure_ascii=False)[:500]}...")
-                        image_data = None
-                        if "output" in result:  # DeepAI形式
-                            image_data = requests.get(result["output"]).content
-                        elif "data" in result and len(result["data"]) > 0:
-                            image_data = result["data"][0]
-                            if isinstance(image_data, str):
-                                image_data = base64.b64decode(image_data.split(",")[-1] if "," in image_data else image_data)
-                        if image_data:
-                            from io import BytesIO
-                            from PIL import Image
-                            image = Image.open(BytesIO(image_data))
-                            image_path = f"output_{attempt}.png"
-                            image.save(image_path, "PNG")
-                            print(f"✅ 画像生成成功: API={api_url}, 試行={attempt + 1}, 保存先={image_path}")
-                            return image_path
+                        if api_type == "deepai":
+                            result = response.json()
+                            if "output_url" in result:
+                                image_data = requests.get(result["output_url"]).content
+                            else:
+                                print(f"⚠️ DeepAIレスポンスにoutput_urlなし: {result}")
+                                continue
                         else:
-                            print(f"⚠️ レスポンスに画像データなし: {result}")
+                            # Hugging Faceはバイナリ画像データ
+                            image_data = response.content
+
+                        from io import BytesIO
+                        from PIL import Image
+                        image = Image.open(BytesIO(image_data))
+                        image_path = f"output_{attempt}.png"
+                        image.save(image_path, "PNG")
+                        print(f"✅ 画像生成成功: API={api_url}, 試行={attempt + 1}, 保存先={image_path}")
+                        return image_path
                     else:
                         print(f"⚠️ APIエラー (試行 {attempt + 1}): {response.status_code} - {response.text}")
                         if attempt < 2:
@@ -912,7 +915,7 @@ def run_reply_bot():
                     except Exception as e:
                         print(f"⚠️ 画像投稿エラー: {type(e).__name__}: {str(e)}")
                         traceback.print_exc()
-                        reply_text = "ごめん、画像生成失敗しちゃった♡ また試してみてね！"
+                        reply_text = "ごめん…画像生成失敗しちゃった♡ また試してみてね！"
                         hashtags = []
                 else:
                     reply_text = reply_result
