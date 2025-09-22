@@ -840,21 +840,29 @@ def run_reply_bot():
                 print(f"📝 generate_reply_via_groq 結果: {repr(reply_result)}")
 
                 if isinstance(reply_result, dict) and reply_result.get("type") == "image":
-                    image = reply_result["image"]
+                    image_data = reply_result["image"]  # ← ここは bytes を想定
                     prompt = reply_result["prompt"]
                     reply_text = f"みりんてゃが描いたよ♡ どうかな？{'「' + prompt + '」' if prompt else ''}"
                     try:
                         from io import BytesIO
-                        img_bytes = BytesIO()
-                        image.save(img_bytes, format="PNG")
-                        blob_resp = client.com.atproto.repo.upload_blob(data=img_bytes.getvalue(), mime_type='image/png')
+                        img_bytes = BytesIO(image_data)  # 直接BytesIOに入れる
+                        blob_resp = client.com.atproto.repo.upload_blob(
+                            data=img_bytes.getvalue(),
+                            mime_type='image/png'
+                        )
                         blob_ref = blob_resp.blob
+
                         post_data = {
                             "text": reply_text,
                             "createdAt": datetime.now(timezone.utc).isoformat(),
                             "embed": {
                                 "$type": "app.bsky.embed.images",
-                                "images": [{"image": blob_ref, "alt": f"Generated image: {prompt or 'fuwamoko mirinteya'}"}]
+                                "images": [
+                                    {
+                                        "image": blob_ref,
+                                        "alt": f"Generated image: {prompt or 'fuwamoko mirinteya'}"
+                                    }
+                                ]
                             }
                         }
                         if reply_ref:
@@ -862,6 +870,7 @@ def run_reply_bot():
                         facets = generate_facets_from_text(reply_text, hashtags)
                         if facets:
                             post_data["facets"] = facets
+
                         client.app.bsky.feed.post.create(record=post_data, repo=client.me.did)
                         replied.add(notification_uri)
                         save_replied(replied)
