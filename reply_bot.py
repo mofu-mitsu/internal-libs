@@ -52,7 +52,7 @@ HEADERS = {
     "Content-Type": "application/json"
 }
 LOCK_FILE = "bot.lock"
-IMAGE_KEYWORDS = re.compile(r"(.*?)(\s*(画像生成して|画像作って|描いて|絵描いて)\s*(.*))", re.IGNORECASE)
+IMAGE_KEYWORDS = re.compile(r"(.*?)(\s*(画像生成して|画像作って|描いて|絵を描いて|絵描いて)\s*(.*))", re.IGNORECASE)
 FALLBACK_CUTE_LINES = [
     "えへへ〜♡ みりんてゃ、君のこと考えるとドキドキなのっ♪",
     "今日も君に甘えたい気分なのっ♡ ぎゅーってして？",
