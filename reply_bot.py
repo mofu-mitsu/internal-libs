@@ -283,7 +283,7 @@ HEADERS = {"Authorization": f"Bearer {HF_TOKEN}"}
 DANGER_ZONE = ["nsfw", "nude", "gore"]
 
 def generate_image(prompt):
-    print(f"🖼️ API画像生成開始: プロンプト={prompt}")
+    print(f"🖼️ Spaces API画像生成開始: プロンプト={prompt}")
     try:
         if not HF_TOKEN or len(HF_TOKEN) < 10:
             print(f"❌ HF_TOKENが無効または短すぎます: {repr(HF_TOKEN)[:8]}...")
@@ -291,49 +291,71 @@ def generate_image(prompt):
 
         cleaned_prompt = re.sub(r'[。！？、!?\s]+', ' ', prompt).strip() if prompt else ""
         enhanced_prompt = f"{cleaned_prompt}, anime style, soft colors, detailed, kawaii" if cleaned_prompt else "fuwamoko mirinteya character, anime style, soft colors, detailed, kawaii"
-        print(f"🖼️ API送信プロンプト: {enhanced_prompt}")
+        print(f"🖼️ Spaces送信プロンプト: {enhanced_prompt}")
 
         if any(danger_word in enhanced_prompt.lower() for danger_word in DANGER_ZONE):
             print(f"⚠️ 危険ワード検知: {enhanced_prompt}")
             return None
 
+        # Spaces APIエンドポイントリスト
+        spaces_urls = [
+            "https://stabilityai-stable-diffusion-3-5-large.hf.space/run/predict",  # 優先
+            "https://stabilityai-stable-diffusion.hf.space/run/predict",  # フォールバック
+        ]
         payload = {
-            "inputs": enhanced_prompt[:50],  # プロンプト長制限
-            "parameters": {
-                "negative_prompt": "low quality, blurry, realistic, photorealistic, cartoonish, 3d",
-                "num_inference_steps": 20,
-                "guidance_scale": 7.5,
-                "width": 512,
-                "height": 512,
-            }
+            "data": [enhanced_prompt[:50]],  # プロンプトを50文字に制限
+            "fn_index": 0  # Gradioのデフォルト関数インデックス
         }
 
-        for attempt in range(3):
-            try:
-                response = requests.post(API_URL, headers=HEADERS, json=payload, timeout=300)  # タイムアウト短縮
-                if response.status_code == 200:
-                    image_path = "output.png"
-                    with open(image_path, "wb") as f:
-                        f.write(response.content)
-                    print(f"✅ 画像生成成功: 試行 {attempt + 1}, 保存先: {image_path}")
-                    return image_path
-                else:
-                    print(f"⚠️ APIエラー (試行 {attempt + 1}): {response.status_code} - {response.text}")
+        for spaces_url in spaces_urls:
+            for attempt in range(3):
+                try:
+                    response = requests.post(spaces_url, json=payload, timeout=30)
+                    if response.status_code == 200:
+                        result = response.json()
+                        print(f"📝 Spacesレスポンス: {result}")
+                        # 柔軟なレスポンス処理
+                        image_data = None
+                        if "data" in result and len(result["data"]) > 0:
+                            data = result["data"][0]
+                            if isinstance(data, dict) and "data" in data and isinstance(data["data"], list) and data["data"]:
+                                image_data = data["data"][0]  # ネストされたbase64
+                            elif isinstance(data, dict) and "url" in data:
+                                image_data = requests.get(data["url"]).content  # URL形式
+                            elif isinstance(data, str):
+                                image_data = data  # 直接base64
+                        if image_data:
+                            import base64
+                            from io import BytesIO
+                            from PIL import Image
+                            # base64かバイナリデータか判定
+                            if isinstance(image_data, str):
+                                image_data = base64.b64decode(image_data)
+                            image = Image.open(BytesIO(image_data))
+                            image_path = f"output_{attempt}.png"  # 試行ごとに別ファイル
+                            image.save(image_path, "PNG")
+                            print(f"✅ 画像生成成功: Spaces={spaces_url}, 試行={attempt + 1}, 保存先={image_path}")
+                            return image_path
+                        else:
+                            print(f"⚠️ レスポンスに画像データなし: {result}")
+                    else:
+                        print(f"⚠️ Spaces APIエラー (試行 {attempt + 1}): {response.status_code} - {response.text}")
+                        if attempt < 2:
+                            time.sleep(10 * (attempt + 1))
+                        continue
+                except requests.exceptions.Timeout:
+                    print(f"❌ 画像生成タイムアウト (試行 {attempt + 1})")
                     if attempt < 2:
-                        time.sleep(10 * (attempt + 1))  # リトライ間隔増
+                        time.sleep(10 * (attempt + 1))
                     continue
-            except requests.exceptions.Timeout:
-                print(f"❌ 画像生成タイムアウト (試行 {attempt + 1})")
-                if attempt < 2:
-                    time.sleep(10 * (attempt + 1))
-                continue
-            except Exception as e:
-                print(f"⚠️ APIリクエストエラー (試行 {attempt + 1}): {type(e).__name__}: {str(e)}")
-                traceback.print_exc()
-                if attempt < 2:
-                    time.sleep(10 * (attempt + 1))
-                continue
-        print("❌ APIリトライ上限到達")
+                except Exception as e:
+                    print(f"⚠️ APIリクエストエラー (試行 {attempt + 1}): {type(e).__name__}: {str(e)}")
+                    traceback.print_exc()
+                    if attempt < 2:
+                        time.sleep(10 * (attempt + 1))
+                    continue
+            print(f"❌ Spacesリトライ上限到達: {spaces_url}")
+        print("❌ すべてのSpacesで失敗")
         return None
     except Exception as e:
         print(f"❌ 初期化エラー: {type(e).__name__}: {str(e)}")
