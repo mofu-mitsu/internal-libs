@@ -302,16 +302,16 @@ def generate_image(prompt):
             "https://stabilityai-stable-diffusion-3-5-large.hf.space/run/predict",  # 優先
             "https://stabilityai-stable-diffusion.hf.space/run/predict",  # フォールバック
         ]
-        # デフォルトペイロード（/configに基づく）
+        # デフォルトペイロード（Gradioドキュメントに基づく）
         payload = {
             "data": [
-                enhanced_prompt[:50],  # プロンプト
+                enhanced_prompt[:50],  # プロンプト（50文字制限）
                 20,                   # steps
                 7.5,                  # cfg_scale
                 512,                  # width
                 512                   # height
             ],
-            "fn_index": 1  # /configで確認（通常1）
+            "fn_index": 1  # デフォルト（後で/configから取得）
         }
 
         for spaces_url in spaces_urls:
@@ -322,7 +322,7 @@ def generate_image(prompt):
                 if config_response.status_code == 200:
                     config = config_response.json()
                     print(f"📋 Spaces config: {json.dumps(config, ensure_ascii=False)[:500]}...")
-                    # fn_indexを動的に設定（仮に0か1を想定）
+                    # fn_indexを動的に設定（componentsの数で推測）
                     payload["fn_index"] = 1 if "components" in config and len(config["components"]) > 1 else 0
             except Exception as e:
                 print(f"⚠️ /config取得失敗: {type(e).__name__}: {str(e)}")
