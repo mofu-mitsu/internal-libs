@@ -90,6 +90,10 @@ DAY_POST_MESSAGES = [
 1ヶ月にいちど、季節の気分をそっとノートにつづるの。  
 雨の匂いとか、風のやさしさとか…みりんてゃはちゃんと感じてるからね☁️🌸  
 #みりんてゃの魔法""",
+    """🎀みりんてゃの魔法紹介⑮✨
+「📸お絵描きBot」
+「描いて 犬」ってリプライで可愛い画像生成！プロンプトでカスタムもOKな魔法だよっ♡
+#みりんてゃの魔法""",
     """🎀 Mirinteya's Magic Intro ① ✨
 「💬 Auto-Reply Bot」
 Reply to a post or mention @mirinchuuu.bsky.social and get a soft lil’ reply ♡
@@ -164,6 +168,10 @@ Her cozy magic is quietly watching the fluff pass by… 🎀
 Once a month, Mirinteya writes a soft little note...  
 Inspired by the rain, the wind, the mood in the air☁️🌿  
 It’s like a diary that changes with the seasons ♡  
+#MirinteyasMagic""",
+    """🎀 Mirinteya's Magic Intro ⑮ ✨
+「📸 Drawing Bot」
+Reply with “Draw a dog” for a cute image! Customize with prompts too ♡
 #MirinteyasMagic"""
 ]
 
@@ -242,6 +250,10 @@ NIGHT_POST_MESSAGES = [
 季節のすき間に、ぽつり…と想いをのせるよ  
 雨、ねむ気、さみしさ。  
 しっとり、ゆる〜く、妄想ノート中☁️🫧  
+#病み期 #みりんてゃの魔法""",
+    """⸝⸝ みりんてゃの魔法紹介⑮ ⸝⸝
+『📸お絵描きBot』
+「描いて 猫」で夜に可愛い画像を…プロンプトで癒しを届けるよ🫧
 #病み期 #みりんてゃの魔法"""
 ]
 
