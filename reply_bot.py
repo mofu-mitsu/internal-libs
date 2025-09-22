@@ -282,7 +282,7 @@ def check_diagnosis_limit(user_did, is_daytime):
 #------------------------------
 DANGER_ZONE = ["nsfw", "nude", "gore"]
 
-def generate_image(prompt):
+def generate_image(prompt, custom_params=None):
     print(f"🖼️ API画像生成開始: プロンプト={prompt}")
     try:
         if not HF_TOKEN or len(HF_TOKEN) < 10:
@@ -293,13 +293,23 @@ def generate_image(prompt):
         STABLE_HORDE_API_KEY = os.getenv("STABLE_HORDE_API_KEY") or "0000000000"  # 匿名キー
 
         cleaned_prompt = re.sub(r'[。！？、!?\s]+', ' ', prompt).strip() if prompt else ""
-        enhanced_prompt = f"{cleaned_prompt}, anime style, soft colors, detailed, kawaii" if cleaned_prompt else "fuwamoko mirinteya character, anime style, soft colors, detailed, kawaii"
-        negative_prompt = "low quality, blurry, realistic, photorealistic, cartoonish, 3d"
+        enhanced_prompt = f"{cleaned_prompt}, anime style, soft colors, detailed, kawaii" if not custom_params else custom_params.get("prompt", cleaned_prompt)
+        negative_prompt = "low quality, blurry, realistic, photorealistic, cartoonish, 3d" if not custom_params else custom_params.get("negative_prompt", negative_prompt)
         print(f"🖼️ API送信プロンプト: {enhanced_prompt}")
 
         if any(danger_word in enhanced_prompt.lower() for danger_word in DANGER_ZONE):
             print(f"⚠️ 危険ワード検知: {enhanced_prompt}")
             return None
+
+        default_params = {
+            "width": 512,
+            "height": 512,
+            "steps": 20,
+            "cfg_scale": 7.5,
+            "sampler_name": "k_euler_a",
+            "models": ["stabilityai/stable-diffusion-2-1"]
+        }
+        params = {**default_params, **(custom_params or {})}
 
         api_configs = [
             {
@@ -307,14 +317,8 @@ def generate_image(prompt):
                 "headers": {"apikey": STABLE_HORDE_API_KEY},
                 "payload": {
                     "prompt": enhanced_prompt,
-                    "params": {
-                        "width": 512,
-                        "height": 512,
-                        "steps": 20,
-                        "cfg_scale": 7.5,
-                        "sampler_name": "k_euler_a",
-                        "models": ["prompthero/openjourney"]
-                    }
+                    "params": params,
+                    "nsfw": False
                 },
                 "type": "stablehorde",
                 "timeout": 120
@@ -409,6 +413,7 @@ def generate_image(prompt):
                             return image_path
                         except Exception as img_err:
                             print(f"⚠️ 画像処理エラー: {type(img_err).__name__}: {str(img_err)}")
+                            traceback.print_exc()
                             continue
                     else:
                         print(f"⚠️ APIエラー (試行 {attempt + 1}): {response.status_code} - {response.text}")
@@ -421,7 +426,7 @@ def generate_image(prompt):
                         time.sleep(60 * (attempt + 1))
                     continue
                 except Exception as e:
-                    print(f"⚠️ APIリクエストエラー (試行 {attempt + 1}): {type(e).__name__}: {str(e)}")
+                    print(f"⚠️ APIリクエストエラー (試行 {attempt + 1): {type(e).__name__}: {str(e)}")
                     traceback.print_exc()
                     if attempt < 2:
                         time.sleep(60 * (attempt + 1))
