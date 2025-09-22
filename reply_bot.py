@@ -288,9 +288,7 @@ def generate_image(prompt):
 
         DEEPAI_API_KEY = os.getenv("DEEPAI_API_KEY")
         if not DEEPAI_API_KEY:
-            print("❌ DEEPAI_API_KEYが設定されていません")
-            # DeepAIをスキップしないで、無料枠試行
-            # return None
+            print("❌ DEEPAI_API_KEYが設定されていません。無料枠キーも試行します")
 
         cleaned_prompt = re.sub(r'[。！？、!?\s]+', ' ', prompt).strip() if prompt else ""
         enhanced_prompt = f"{cleaned_prompt}, anime style, soft colors, detailed, kawaii" if cleaned_prompt else "fuwamoko mirinteya character, anime style, soft colors, detailed, kawaii"
@@ -308,13 +306,13 @@ def generate_image(prompt):
                 "headers": {"Authorization": f"Bearer {HF_TOKEN}"},
                 "payload": {"inputs": enhanced_prompt},
                 "type": "huggingface",
-                "timeout": 500  # FLUX.1-devは重いので120秒
+                "timeout": 500  # FLUX.1-dev用
             },
             {
                 "url": "https://api.deepai.org/api/text2img",
                 "headers": {
                     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-                    "api-key": DEEPAI_API_KEY or "quickstart-QUdJIGlzIGNvbWluZy4uLi4K"  # 無料枠のデフォルトキー
+                    "api-key": DEEPAI_API_KEY or "quickstart-QUdJIGlzIGNvbWluZy4uLi4K"
                 },
                 "payload": {"text": enhanced_prompt},
                 "type": "deepai",
@@ -332,12 +330,10 @@ def generate_image(prompt):
             for attempt in range(3):
                 try:
                     if api_type == "deepai":
-                        # DeepAIはmultipart/form-data
                         response = requests.post(api_url, data=payload, headers=headers, timeout=timeout)
                     else:
-                        # Hugging FaceはJSON
                         response = requests.post(api_url, json=payload, headers=headers, timeout=timeout)
-                    print(f"📥 試行 {attempt + 1} レスポンス: {response.status_code} - {response.text[:500]}...")
+                    print(f"📥 試行 {attempt + 1} レスポンス: {response.status_code} - {response.content[:50]}...")
 
                     if response.status_code == 200:
                         if api_type == "deepai":
@@ -348,7 +344,6 @@ def generate_image(prompt):
                                 print(f"⚠️ DeepAIレスポンスにoutput_urlなし: {result}")
                                 continue
                         else:
-                            # Hugging Faceはバイナリ画像データ
                             image_data = response.content
 
                         from io import BytesIO
@@ -361,7 +356,7 @@ def generate_image(prompt):
                     else:
                         print(f"⚠️ APIエラー (試行 {attempt + 1}): {response.status_code} - {response.text}")
                         if attempt < 2:
-                            time.sleep(20 * (attempt + 1))  # リトライ間隔を20秒に
+                            time.sleep(20 * (attempt + 1))
                         continue
                 except requests.exceptions.Timeout:
                     print(f"❌ 画像生成タイムアウト (試行 {attempt + 1})")
