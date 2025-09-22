@@ -290,11 +290,11 @@ def generate_image(prompt):
             return None
 
         DEEPAI_API_KEY = os.getenv("DEEPAI_API_KEY")
-        STABLE_HORDE_API_KEY = os.getenv("STABLE_HORDE_API_KEY") or "y5Fox28OEJcdC8lc4aaBrA"  # 登録キーに変更
+        STABLE_HORDE_API_KEY = os.getenv("STABLE_HORDE_API_KEY") or "y5Fox28OEJcdC8lc4aaBrA"  # 登録キー
 
         cleaned_prompt = re.sub(r'[。！？、!?\s]+', ' ', prompt).strip() if prompt else ""
-        enhanced_prompt = f"{cleaned_prompt}, anime style, soft colors, detailed, kawaii" if cleaned_prompt else "fuwamoko mirinteya, anime style, soft colors, detailed, kawaii"
-        negative_prompt = "low quality, blurry, realistic, photorealistic, cartoonish, 3d, human"
+        enhanced_prompt = f"{cleaned_prompt}, anime style, soft colors, detailed, kawaii" if cleaned_prompt else "fuwamoko mirinteya dog, anime style, soft colors, detailed, kawaii"
+        negative_prompt = "low quality, blurry, realistic, photorealistic, cartoonish, 3d, human, split, distorted anatomy"
         print(f"🖼️ API送信プロンプト: {enhanced_prompt}")
 
         if any(danger_word in enhanced_prompt.lower() for danger_word in DANGER_ZONE):
@@ -303,23 +303,30 @@ def generate_image(prompt):
 
         api_configs = [
             {
+                "url": "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-dev",
+                "headers": {"Authorization": f"Bearer {HF_TOKEN}"},
+                "payload": {"inputs": enhanced_prompt},
+                "type": "huggingface",
+                "timeout": 500
+            },
+            {
                 "url": "https://stablehorde.net/api/v2/generate/async",
                 "headers": {"apikey": STABLE_HORDE_API_KEY},
                 "payload": {
                     "prompt": enhanced_prompt,
                     "params": {
-                        "width": 768,  # 解像度アップ
+                        "width": 768,
                         "height": 768,
-                        "steps": 30,  # 詳細度アップ
-                        "cfg_scale": 9.0,  # プロンプト忠実度強化
+                        "steps": 40,
+                        "cfg_scale": 10.0,
                         "sampler_name": "k_euler_a",
-                        "models": ["prompthero/openjourney"]  # モデル戻し
+                        "models": ["runwayml/stable-diffusion-v1-5"]
                     },
                     "nsfw": False,
                     "negative_prompt": negative_prompt
                 },
                 "type": "stablehorde",
-                "timeout": 180  # 待ち時間延長
+                "timeout": 180
             },
             {
                 "url": "https://api.deepai.org/api/text2img",
@@ -330,13 +337,6 @@ def generate_image(prompt):
                 "payload": {"text": enhanced_prompt},
                 "type": "deepai",
                 "timeout": 30
-            },
-            {
-                "url": "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-dev",
-                "headers": {"Authorization": f"Bearer {HF_TOKEN}"},
-                "payload": {"inputs": enhanced_prompt},
-                "type": "huggingface",
-                "timeout": 500
             }
         ]
 
@@ -364,6 +364,8 @@ def generate_image(prompt):
                             else:
                                 print(f"⚠️ DeepAIレスポンスにoutput_urlなし: {result}")
                                 continue
+                        elif api_type == "huggingface":
+                            image_data = response.content
                         elif api_type == "stablehorde":
                             result = response.json()
                             if "id" not in result:
@@ -372,7 +374,7 @@ def generate_image(prompt):
                             id = result["id"]
                             print(f"🔄 Stable Horde ID取得: {id}, ポーリング開始")
                             status_url = f"https://stablehorde.net/api/v2/generate/status/{id}"
-                            for poll in range(12):  # 2分間ポーリング
+                            for poll in range(12):
                                 status_response = requests.get(status_url, headers=headers, timeout=10)
                                 print(f"📥 ポーリング {poll + 1} レスポンス: {status_response.text}")
                                 if status_response.status_code == 200:
@@ -380,14 +382,14 @@ def generate_image(prompt):
                                     if status_result.get("done"):
                                         if "generations" in status_result and status_result["generations"]:
                                             img_data = status_result["generations"][0]["img"]
-                                            if img_data.startswith("http"):  # URL形式
+                                            if img_data.startswith("http"):
                                                 image_response = requests.get(img_data, timeout=10)
                                                 if image_response.status_code == 200:
                                                     image_data = image_response.content
                                                 else:
                                                     print(f"⚠️ 画像URL取得失敗: {img_data}, ステータス: {image_response.status_code}")
                                                     continue
-                                            else:  # base64形式
+                                            else:
                                                 image_data = base64.b64decode(img_data)
                                             break
                                         else:
@@ -400,8 +402,6 @@ def generate_image(prompt):
                             else:
                                 print(f"⚠️ Stable Hordeポーリングタイムアウト: {id}")
                                 continue
-                        else:
-                            image_data = response.content
 
                         try:
                             image = Image.open(BytesIO(image_data))
