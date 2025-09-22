@@ -284,74 +284,39 @@ def generate_image(prompt):
     print(f"🖼️ Spaces API画像生成開始: プロンプト={prompt}")
     try:
         if not HF_TOKEN or len(HF_TOKEN) < 10:
-            print(f"❌ HF_TOKENが無効または短すぎます")
+            print(f"❌ HF_TOKENが無効または短すぎます: {repr(HF_TOKEN)[:8]}...")
             return None
 
         enhanced_prompt = f"{prompt}, anime style, kawaii" if prompt else "cute anime character"
-        print(f"🖼️ 送信プロンプト: {enhanced_prompt}")
-
         spaces_url = "https://stabilityai-stable-diffusion.hf.space/run/predict"
-        payload = {
-            "data": [enhanced_prompt[:100]]  # プロンプトのみ
-        }
+        payload = {"data": [enhanced_prompt]}
 
-        for attempt in range(2):
-            try:
-                response = requests.post(spaces_url, json=payload, timeout=60)
-                print(f"📥 レスポンス: {response.status_code}")
-                
-                if response.status_code == 200:
-                    result = response.json()
-                    print(f"📋 Spacesレスポンス構造: {json.dumps(result, ensure_ascii=False)[:200]}...")
-                    
-                    # 柔軟なレスポンス処理
-                    image_data = None
-                    if "data" in result:
-                        data = result["data"]
-                        if isinstance(data, list) and len(data) > 0:
-                            # パターン1: data[0]が直接画像データ
-                            if isinstance(data[0], str):
-                                image_data = data[0]
-                            # パターン2: data[0]がオブジェクトの場合
-                            elif isinstance(data[0], dict):
-                                # いろんなキーを試す
-                                for key in ["image", "url", "data", "output"]:
-                                    if key in data[0]:
-                                        image_data = data[0][key]
-                                        break
-                    
-                    if image_data:
-                        # Base64処理
-                        if "," in str(image_data):
-                            image_data = str(image_data).split(",")[-1]
-                        
-                        import base64
-                        from io import BytesIO
-                        from PIL import Image
-                        
-                        image_bytes = base64.b64decode(image_data)
-                        image = Image.open(BytesIO(image_bytes))
-                        image_path = f"output_{attempt}.png"
-                        image.save(image_path)
-                        print(f"✅ 画像生成成功: {image_path}")
-                        return image_path
-                    else:
-                        print(f"⚠️ 画像データが見つからない: {result}")
-                        
-                else:
-                    print(f"⚠️ APIエラー: {response.status_code} - {response.text}")
-                    
-                if attempt < 1:
-                    time.sleep(10)
-                    
-            except Exception as e:
-                print(f"⚠️ リクエストエラー: {type(e).__name__}: {str(e)}")
-                if attempt < 1:
-                    time.sleep(10)
-                continue
-                
-        return None
-        
+        response = requests.post(spaces_url, json=payload, timeout=60)
+        print(f"📥 レスポンス: {response.status_code}")
+
+        if response.status_code != 200:
+            print(f"⚠️ APIエラー: {response.status_code} - {response.text}")
+            return None
+
+        result = response.json()
+        print(f"📋 Spacesレスポンス構造: {json.dumps(result, ensure_ascii=False)[:200]}...")
+
+        if "data" in result and len(result["data"]) > 0:
+            import base64
+            from io import BytesIO
+            from PIL import Image
+
+            image_base64 = result["data"][0]
+            image_bytes = base64.b64decode(image_base64)
+            image = Image.open(BytesIO(image_bytes))
+            image_path = "output.png"
+            image.save(image_path, "PNG")
+            print(f"✅ 画像生成成功: {image_path}")
+            return image_path
+        else:
+            print("⚠️ 画像データが見つからない:", result)
+            return None
+
     except Exception as e:
         print(f"❌ 画像生成エラー: {type(e).__name__}: {str(e)}")
         return None
