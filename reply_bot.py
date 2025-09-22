@@ -281,7 +281,7 @@ def check_diagnosis_limit(user_did, is_daytime):
 DANGER_ZONE = ["nsfw", "nude", "gore"]
 
 def generate_image(prompt):
-    print(f"🖼️ Spaces API画像生成開始: プロンプト={prompt}")
+    print(f"🖼️ API画像生成開始: プロンプト={prompt}")
     try:
         if not HF_TOKEN or len(HF_TOKEN) < 10:
             print(f"❌ HF_TOKENが無効または短すぎます: {repr(HF_TOKEN)[:8]}...")
@@ -290,78 +290,61 @@ def generate_image(prompt):
         cleaned_prompt = re.sub(r'[。！？、!?\s]+', ' ', prompt).strip() if prompt else ""
         enhanced_prompt = f"{cleaned_prompt}, anime style, soft colors, detailed, kawaii" if cleaned_prompt else "fuwamoko mirinteya character, anime style, soft colors, detailed, kawaii"
         negative_prompt = "low quality, blurry, realistic, photorealistic, cartoonish, 3d"
-        print(f"🖼️ Spaces送信プロンプト: {enhanced_prompt}")
+        print(f"🖼️ API送信プロンプト: {enhanced_prompt}")
 
         if any(danger_word in enhanced_prompt.lower() for danger_word in DANGER_ZONE):
             print(f"⚠️ 危険ワード検知: {enhanced_prompt}")
             return None
 
-        # Spaces APIエンドポイント
-        spaces_urls = [
-            "https://stabilityai-stable-diffusion-3-5-large.hf.space/run/predict",  # 優先
-            "https://stabilityai-stable-diffusion.hf.space/run/predict",  # フォールバック
+        # Hugging Face Inference API優先
+        api_urls = [
+            "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-dev",  # 優先
+            "https://deepai.org/machine-learning-model/text2img"  # フォールバック (DeepAI)
         ]
 
-        for spaces_url in spaces_urls:
-            # /configで入力形式とfn_index確認
-            try:
-                config_url = spaces_url.replace("/run/predict", "/config")
-                config_response = requests.get(config_url, timeout=10)
-                if config_response.status_code == 200:
-                    config = config_response.json()
-                    print(f"📋 Spaces config: {json.dumps(config, ensure_ascii=False)[:500]}...")
-                    # fn_index設定
-                    fn_index = 2 if "infer" in str(config) else 0
-                else:
-                    fn_index = 0
-            except Exception as e:
-                print(f"⚠️ /config取得失敗: {type(e).__name__}: {str(e)}")
-                fn_index = 0
-
-            # ペイロード
-            payload = {
-                "data": [
-                    enhanced_prompt[:50],
-                    negative_prompt,
-                    -1,  # seed (-1 for random)
-                    True,  # randomize_seed
-                    512,
-                    512,
-                    7.5,
-                    20
-                ],
-                "fn_index": fn_index  # 動的に設定
-            }
-
+        for api_url in api_urls:
             for attempt in range(3):
                 try:
-                    response = requests.post(spaces_url, json=payload, timeout=60)
+                    if "huggingface.co" in api_url:
+                        payload = {
+                            "prompt": enhanced_prompt,
+                            "negative_prompt": negative_prompt,
+                            "num_inference_steps": 20,
+                            "guidance_scale": 7.5,
+                            "width": 512,
+                            "height": 512
+                        }
+                        headers = {"Authorization": f"Bearer {HF_TOKEN}"}
+                    else:
+                        # DeepAI
+                        payload = {
+                            "text": enhanced_prompt
+                        }
+                        headers = {}  # DeepAIはトークン不要
+                    response = requests.post(api_url, json=payload, headers=headers, timeout=30)
                     print(f"📥 試行 {attempt + 1} レスポンス: {response.status_code} - {response.text[:500]}...")
                     if response.status_code == 200:
                         result = response.json()
-                        print(f"📝 Spacesレスポンス: {json.dumps(result, ensure_ascii=False)[:500]}...")
-                        if "data" in result and len(result["data"]) > 0:
+                        print(f"📝 APIレスポンス: {json.dumps(result, ensure_ascii=False)[:500]}...")
+                        image_data = None
+                        if "output" in result:  # DeepAI形式
+                            image_data = requests.get(result["output"]).content
+                        elif "data" in result and len(result["data"]) > 0:
                             image_data = result["data"][0]
-                            import base64
-                            from io import BytesIO
-                            from PIL import Image
-                            # base64処理
                             if isinstance(image_data, str):
                                 image_data = base64.b64decode(image_data.split(",")[-1] if "," in image_data else image_data)
-                            elif isinstance(image_data, dict) and "url" in image_data:
-                                image_data = requests.get(image_data["url"]).content
-                            else:
-                                print(f"⚠️ 予期しないデータ形式: {image_data}")
-                                continue
+                        if image_data:
+                            from io import BytesIO
+                            from PIL import Image
                             image = Image.open(BytesIO(image_data))
                             image_path = f"output_{attempt}.png"
                             image.save(image_path, "PNG")
-                            print(f"✅ 画像生成成功: Spaces={spaces_url}, 試行={attempt + 1}, 保存先={image_path}")
+                            print(f"✅ 画像生成成功: API={api_url}, 試行={attempt + 1}, 保存先={image_path}")
                             return image_path
                         else:
                             print(f"⚠️ レスポンスに画像データなし: {result}")
                     else:
-                        print(f"⚠️ Spaces APIエラー (試行 {attempt + 1}): {response.status_code} - {response.text}")
+                        print(f"⚠️ APIエラー (試行 {attempt + 1}): {response.status_code} - {response.text}")
                         if attempt < 2:
                             time.sleep(10 * (attempt + 1))
                         continue
@@ -376,8 +359,8 @@ def generate_image(prompt):
                     if attempt < 2:
                         time.sleep(10 * (attempt + 1))
                     continue
-            print(f"❌ Spacesリトライ上限到達: {spaces_url}")
-        print("❌ すべてのSpacesで失敗")
+            print(f"❌ APIリトライ上限到達: {api_url}")
+        print("❌ すべてのAPIで失敗")
         return None
     except Exception as e:
         print(f"❌ 初期化エラー: {type(e).__name__}: {str(e)}")
