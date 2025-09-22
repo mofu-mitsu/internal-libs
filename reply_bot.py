@@ -284,105 +284,78 @@ def generate_image(prompt):
     print(f"🖼️ Spaces API画像生成開始: プロンプト={prompt}")
     try:
         if not HF_TOKEN or len(HF_TOKEN) < 10:
-            print(f"❌ HF_TOKENが無効または短すぎます: {repr(HF_TOKEN)[:8]}...")
+            print(f"❌ HF_TOKENが無効または短すぎます")
             return None
 
-        cleaned_prompt = re.sub(r'[。！？、!?\s]+', ' ', prompt).strip() if prompt else ""
-        enhanced_prompt = f"{cleaned_prompt}, anime style, soft colors, detailed, kawaii" if cleaned_prompt else "fuwamoko mirinteya character, anime style, soft colors, detailed, kawaii"
-        print(f"🖼️ Spaces送信プロンプト: {enhanced_prompt}")
+        enhanced_prompt = f"{prompt}, anime style, kawaii" if prompt else "cute anime character"
+        print(f"🖼️ 送信プロンプト: {enhanced_prompt}")
 
-        if any(danger_word in enhanced_prompt.lower() for danger_word in DANGER_ZONE):
-            print(f"⚠️ 危険ワード検知: {enhanced_prompt}")
-            return None
-
-        # Spaces APIエンドポイント
-        spaces_urls = [
-            "https://stabilityai-stable-diffusion-3-5-large.hf.space/run/predict",  # 優先
-            "https://stabilityai-stable-diffusion.hf.space/run/predict",  # フォールバック
-        ]
-        # デフォルトペイロード
+        spaces_url = "https://stabilityai-stable-diffusion.hf.space/run/predict"
         payload = {
-            "data": [
-                enhanced_prompt[:50],  # プロンプト（50文字制限）
-                20,                   # steps
-                7.5,                  # cfg_scale
-                512,                  # width
-                512                   # height
-            ]
+            "data": [enhanced_prompt[:100]]  # プロンプトのみ
         }
 
-        for spaces_url in spaces_urls:
-            # /configでfn_index確認（必要なら）
-            fn_index = None
+        for attempt in range(2):
             try:
-                config_url = spaces_url.replace("/run/predict", "/config")
-                config_response = requests.get(config_url, timeout=10)
-                if config_response.status_code == 200:
-                    config = config_response.json()
-                    print(f"📋 Spaces config: {json.dumps(config, ensure_ascii=False)[:500]}...")
-                    # fn_indexを動的に設定（componentsの数で推測）
-                    fn_index = 1 if "components" in config and len(config["components"]) > 1 else 0
-                    payload["fn_index"] = fn_index
-            except Exception as e:
-                print(f"⚠️ /config取得失敗: {type(e).__name__}: {str(e)}")
-                fn_index = None  # fn_indexなしで試す
-
-            for attempt in range(3):
-                try:
-                    # fn_indexを付ける/付けない両方で試す
-                    current_payload = payload.copy()
-                    if fn_index is None:
-                        current_payload.pop("fn_index", None)  # fn_indexなし
-                    response = requests.post(spaces_url, json=current_payload, timeout=60)
-                    print(f"📥 試行 {attempt + 1} レスポンス: {response.status_code} - {response.text[:500]}...")
-                    if response.status_code == 200:
-                        result = response.json()
-                        print(f"📝 Spacesレスポンス: {json.dumps(result, ensure_ascii=False)[:500]}...")
-                        if "data" in result and len(result["data"]) > 0:
-                            image_data = result["data"][0]
-                            import base64
-                            from io import BytesIO
-                            from PIL import Image
-                            # base64文字列の処理（"data:image/png;base64,"プレフィックス対応）
-                            if isinstance(image_data, str):
-                                image_data = image_data.split(",")[-1] if "," in image_data else image_data
-                                image_bytes = base64.b64decode(image_data)
-                            elif isinstance(image_data, dict) and "url" in image_data:
-                                image_bytes = requests.get(image_data["url"], timeout=10).content
-                            else:
-                                print(f"⚠️ 予期しないデータ形式: {image_data}")
-                                continue
-                            image = Image.open(BytesIO(image_bytes))
-                            image_path = f"output_{attempt}.png"
-                            image.save(image_path, "PNG")
-                            print(f"✅ 画像生成成功: Spaces={spaces_url}, 試行={attempt + 1}, 保存先={image_path}")
-                            return image_path
-                        else:
-                            print(f"⚠️ レスポンスに画像データなし: {result}")
+                response = requests.post(spaces_url, json=payload, timeout=60)
+                print(f"📥 レスポンス: {response.status_code}")
+                
+                if response.status_code == 200:
+                    result = response.json()
+                    print(f"📋 Spacesレスポンス構造: {json.dumps(result, ensure_ascii=False)[:200]}...")
+                    
+                    # 柔軟なレスポンス処理
+                    image_data = None
+                    if "data" in result:
+                        data = result["data"]
+                        if isinstance(data, list) and len(data) > 0:
+                            # パターン1: data[0]が直接画像データ
+                            if isinstance(data[0], str):
+                                image_data = data[0]
+                            # パターン2: data[0]がオブジェクトの場合
+                            elif isinstance(data[0], dict):
+                                # いろんなキーを試す
+                                for key in ["image", "url", "data", "output"]:
+                                    if key in data[0]:
+                                        image_data = data[0][key]
+                                        break
+                    
+                    if image_data:
+                        # Base64処理
+                        if "," in str(image_data):
+                            image_data = str(image_data).split(",")[-1]
+                        
+                        import base64
+                        from io import BytesIO
+                        from PIL import Image
+                        
+                        image_bytes = base64.b64decode(image_data)
+                        image = Image.open(BytesIO(image_bytes))
+                        image_path = f"output_{attempt}.png"
+                        image.save(image_path)
+                        print(f"✅ 画像生成成功: {image_path}")
+                        return image_path
                     else:
-                        print(f"⚠️ Spaces APIエラー (試行 {attempt + 1}): {response.status_code} - {response.text}")
-                        if attempt < 2:
-                            time.sleep(10 * (attempt + 1))
-                        continue
-                except requests.exceptions.Timeout:
-                    print(f"❌ 画像生成タイムアウト (試行 {attempt + 1})")
-                    if attempt < 2:
-                        time.sleep(10 * (attempt + 1))
-                    continue
-                except Exception as e:
-                    print(f"⚠️ APIリクエストエラー (試行 {attempt + 1}): {type(e).__name__}: {str(e)}")
-                    traceback.print_exc()
-                    if attempt < 2:
-                        time.sleep(10 * (attempt + 1))
-                    continue
-            print(f"❌ Spacesリトライ上限到達: {spaces_url}")
-        print("❌ すべてのSpacesで失敗")
+                        print(f"⚠️ 画像データが見つからない: {result}")
+                        
+                else:
+                    print(f"⚠️ APIエラー: {response.status_code} - {response.text}")
+                    
+                if attempt < 1:
+                    time.sleep(10)
+                    
+            except Exception as e:
+                print(f"⚠️ リクエストエラー: {type(e).__name__}: {str(e)}")
+                if attempt < 1:
+                    time.sleep(10)
+                continue
+                
         return None
+        
     except Exception as e:
-        print(f"❌ 初期化エラー: {type(e).__name__}: {str(e)}")
-        traceback.print_exc()
+        print(f"❌ 画像生成エラー: {type(e).__name__}: {str(e)}")
         return None
-
+        
 #------------------------------
 #🆕 Facets生成（URLリンク化を強化）
 #------------------------------
