@@ -282,7 +282,7 @@ def check_diagnosis_limit(user_did, is_daytime):
 #------------------------------
 DANGER_ZONE = ["nsfw", "nude", "gore"]
 
-def generate_image(prompt, custom_params=None):
+def generate_image(prompt):
     print(f"🖼️ API画像生成開始: プロンプト={prompt}")
     try:
         if not HF_TOKEN or len(HF_TOKEN) < 10:
@@ -290,26 +290,16 @@ def generate_image(prompt, custom_params=None):
             return None
 
         DEEPAI_API_KEY = os.getenv("DEEPAI_API_KEY")
-        STABLE_HORDE_API_KEY = os.getenv("STABLE_HORDE_API_KEY") or "0000000000"  # 匿名キー
+        STABLE_HORDE_API_KEY = os.getenv("STABLE_HORDE_API_KEY") or "y5Fox28OEJcdC8lc4aaBrA"  # 登録キーに変更
 
         cleaned_prompt = re.sub(r'[。！？、!?\s]+', ' ', prompt).strip() if prompt else ""
-        enhanced_prompt = f"{cleaned_prompt}, anime style, soft colors, detailed, kawaii" if not custom_params else custom_params.get("prompt", cleaned_prompt)
-        negative_prompt = "low quality, blurry, realistic, photorealistic, cartoonish, 3d" if not custom_params else custom_params.get("negative_prompt", negative_prompt)
+        enhanced_prompt = f"{cleaned_prompt}, anime style, soft colors, detailed, kawaii" if cleaned_prompt else "fuwamoko mirinteya, anime style, soft colors, detailed, kawaii"
+        negative_prompt = "low quality, blurry, realistic, photorealistic, cartoonish, 3d, human"
         print(f"🖼️ API送信プロンプト: {enhanced_prompt}")
 
         if any(danger_word in enhanced_prompt.lower() for danger_word in DANGER_ZONE):
             print(f"⚠️ 危険ワード検知: {enhanced_prompt}")
             return None
-
-        default_params = {
-            "width": 512,
-            "height": 512,
-            "steps": 20,
-            "cfg_scale": 7.5,
-            "sampler_name": "k_euler_a",
-            "models": ["stabilityai/stable-diffusion-2-1"]
-        }
-        params = {**default_params, **(custom_params or {})}
 
         api_configs = [
             {
@@ -317,11 +307,19 @@ def generate_image(prompt, custom_params=None):
                 "headers": {"apikey": STABLE_HORDE_API_KEY},
                 "payload": {
                     "prompt": enhanced_prompt,
-                    "params": params,
-                    "nsfw": False
+                    "params": {
+                        "width": 768,  # 解像度アップ
+                        "height": 768,
+                        "steps": 30,  # 詳細度アップ
+                        "cfg_scale": 9.0,  # プロンプト忠実度強化
+                        "sampler_name": "k_euler_a",
+                        "models": ["prompthero/openjourney"]  # モデル戻し
+                    },
+                    "nsfw": False,
+                    "negative_prompt": negative_prompt
                 },
                 "type": "stablehorde",
-                "timeout": 120
+                "timeout": 180  # 待ち時間延長
             },
             {
                 "url": "https://api.deepai.org/api/text2img",
