@@ -749,6 +749,78 @@ def post_replies_to_bluesky():
 #------------------------------
 #📬 メイン処理
 #------------------------------
+def generate_image(prompt):
+    print(f"🖼️ Spaces API画像生成開始: プロンプト={prompt}")
+    try:
+        if not HF_TOKEN or len(HF_TOKEN) < 10:
+            print(f"❌ HF_TOKENが無効または短すぎます: {repr(HF_TOKEN)[:8]}...")
+            return None
+
+        cleaned_prompt = re.sub(r'[。！？、!?\s]+', ' ', prompt).strip() if prompt else ""
+        enhanced_prompt = f"{cleaned_prompt}, anime style, soft colors, detailed, kawaii" if cleaned_prompt else "fuwamoko mirinteya character, anime style, soft colors, detailed, kawaii"
+        print(f"🖼️ Spaces送信プロンプト: {enhanced_prompt}")
+
+        if any(danger_word in enhanced_prompt.lower() for danger_word in DANGER_ZONE):
+            print(f"⚠️ 危険ワード検知: {enhanced_prompt}")
+            return None
+
+        # Spaces APIエンドポイント
+        spaces_url = "https://stabilityai-stable-diffusion.hf.space/run/predict"  # 推奨Spaces
+        payload = {
+            "data": [enhanced_prompt[:50]],  # Spaces形式: data配列
+            "fn_index": 0  # デフォルトのpredict関数
+        }
+
+        for attempt in range(3):
+            try:
+                response = requests.post(spaces_url, json=payload, timeout=30)
+                if response.status_code == 200:
+                    result = response.json()
+                    if "data" in result and len(result["data"]) > 0 and "data" in result["data"][0]:
+                        # Spacesの出力はbase64画像データ
+                        import base64
+                        from io import BytesIO
+                        from PIL import Image
+                        image_data = base64.b64decode(result["data"][0]["data"][0])  # base64デコード
+                        image_path = "output.png"
+                        image = Image.open(BytesIO(image_data))
+                        image.save(image_path, "PNG")
+                        print(f"✅ 画像生成成功: 試行 {attempt + 1}, 保存先: {image_path}")
+                        return image_path
+                    else:
+                        print(f"⚠️ Spacesレスポンス異常: {result}")
+                else:
+                    print(f"⚠️ Spaces APIエラー (試行 {attempt + 1}): {response.status_code} - {response.text}")
+                    if response.status_code == 404 and attempt == 0:
+                        # フォールバックSpaces
+                        spaces_url = "https://stabilityai-stable-diffusion-3-5-large.hf.space/run/predict"
+                        print("⚠️ 404検知、フォールバックSpaces(stabilityai-stable-diffusion-3-5-large)に切り替え")
+                        continue
+                    if attempt < 2:
+                        time.sleep(10 * (attempt + 1))
+                    continue
+            except requests.exceptions.Timeout:
+                print(f"❌ 画像生成タイムアウト (試行 {attempt + 1})")
+                if attempt < 2:
+                    time.sleep(10 * (attempt + 1))
+                continue
+            except Exception as e:
+                print(f"⚠️ APIリクエストエラー (試行 {attempt + 1}): {type(e).__name__}: {str(e)}")
+                traceback.print_exc()
+                if attempt < 2:
+                    time.sleep(10 * (attempt + 1))
+                continue
+        print("❌ APIリトライ上限到達")
+        return None
+    except Exception as e:
+        print(f"❌ 初期化エラー: {type(e).__name__}: {str(e)}")
+        traceback.print_exc()
+        return None
+
+def log_resources():
+    print(f"🖥️ CPU使用率: {psutil.cpu_percent()}%")
+    print(f"🧠 メモリ使用量: {psutil.virtual_memory().used / 1024**3:.2f}GB / {psutil.virtual_memory().total / 1024**3:.2f}GB")
+
 def run_reply_bot():
     print("✅ Checking if generate_reply_via_groq is defined:", globals().get("generate_reply_via_groq"))
     lock_fd = None
@@ -756,6 +828,7 @@ def run_reply_bot():
         lock_fd = open(LOCK_FILE, 'w')
         fcntl.flock(lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
         print("🔒 ロック取得成功")
+        log_resources()  # リソース監視
 
         self_did = client.me.did
         replied = load_gist_data(REPLIED_GIST_FILENAME)
@@ -782,6 +855,7 @@ def run_reply_bot():
         reply_count = 0
 
         for notification in notifications:
+            log_resources()  # 各通知処理前にリソース監視
             notification_uri = getattr(notification, "uri", None) or getattr(notification, "reasonSubject", None)
             if not notification_uri:
                 record = getattr(notification, "record", None)
@@ -842,29 +916,19 @@ def run_reply_bot():
                 print(f"📝 generate_reply_via_groq 結果: {repr(reply_result)}")
 
                 if isinstance(reply_result, dict) and reply_result.get("type") == "image":
-                    image_data = reply_result["image"]  # ← ここは bytes を想定
+                    image_path = reply_result["image"]  # ファイルパスを想定
                     prompt = reply_result["prompt"]
                     reply_text = f"みりんてゃが描いたよ♡ どうかな？{'「' + prompt + '」' if prompt else ''}"
                     try:
-                        from io import BytesIO
-                        img_bytes = BytesIO(image_data)  # 直接BytesIOに入れる
-                        blob_resp = client.com.atproto.repo.upload_blob(
-                            data=img_bytes.getvalue(),
-                            mime_type='image/png'
-                        )
+                        with open(image_path, "rb") as f:
+                            blob_resp = client.com.atproto.repo.upload_blob(data=f.read(), mime_type='image/png')
                         blob_ref = blob_resp.blob
-
                         post_data = {
                             "text": reply_text,
                             "createdAt": datetime.now(timezone.utc).isoformat(),
                             "embed": {
                                 "$type": "app.bsky.embed.images",
-                                "images": [
-                                    {
-                                        "image": blob_ref,
-                                        "alt": f"Generated image: {prompt or 'fuwamoko mirinteya'}"
-                                    }
-                                ]
+                                "images": [{"image": blob_ref, "alt": f"Generated image: {prompt or 'fuwamoko mirinteya'}"}]
                             }
                         }
                         if reply_ref:
@@ -872,13 +936,18 @@ def run_reply_bot():
                         facets = generate_facets_from_text(reply_text, hashtags)
                         if facets:
                             post_data["facets"] = facets
-
                         client.app.bsky.feed.post.create(record=post_data, repo=client.me.did)
                         replied.add(notification_uri)
                         save_replied(replied)
                         print(f"✅ @{author_handle} に画像付き返信完了！ → {notification_uri}")
                         reply_count += 1
                         time.sleep(REPLY_INTERVAL)
+                        # 一時ファイル削除
+                        try:
+                            os.remove(image_path)
+                            print(f"🧹 一時ファイル {image_path} 削除成功")
+                        except Exception as e:
+                            print(f"⚠️ 一時ファイル削除失敗: {e}")
                         continue
                     except Exception as e:
                         print(f"⚠️ 画像投稿エラー: {type(e).__name__}: {str(e)}")
@@ -914,7 +983,6 @@ def run_reply_bot():
                 facets = generate_facets_from_text(reply_text, hashtags)
                 if facets:
                     post_data["facets"] = facets
-
                 client.app.bsky.feed.post.create(record=post_data, repo=client.me.did)
                 replied.add(notification_uri)
                 save_replied(replied)
@@ -948,7 +1016,20 @@ def run_reply_bot():
         if lock_fd:
             fcntl.flock(lock_fd, fcntl.LOCK_UN)
             lock_fd.close()
-            print("🔓 ロック解放")
+            try:
+                os.remove(LOCK_FILE)
+                print("🧹 ロックファイル削除成功")
+            except Exception as e:
+                print(f"⚠️ ロックファイル削除失敗: {e}")
+        # 一時画像ファイルのクリーンアップ
+        for i in range(3):
+            temp_file = f"output_{i}.png"
+            if os.path.exists(temp_file):
+                try:
+                    os.remove(temp_file)
+                    print(f"🧹 一時ファイル {temp_file} 削除成功")
+                except Exception as e:
+                    print(f"⚠️ 一時ファイル削除失敗: {e}")
 
 if __name__ == "__main__":
     print("🤖 Reply Bot 起動中…")
