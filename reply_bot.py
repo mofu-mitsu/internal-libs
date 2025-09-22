@@ -279,11 +279,6 @@ def check_diagnosis_limit(user_did, is_daytime):
 #------------------------------
 DANGER_ZONE = ["nsfw", "nude", "gore"]
 
-#------------------------------
-#🆕 画像生成機能（軽量版）
-#------------------------------
-DANGER_ZONE = ["nsfw", "nude", "gore"]
-
 def generate_image(prompt):
     print(f"🖼️ API画像生成開始: プロンプト={prompt}")
     try:
@@ -315,7 +310,7 @@ def generate_image(prompt):
                         "steps": 20,
                         "cfg_scale": 7.5,
                         "sampler_name": "k_euler_a",
-                        "models": ["prompthero/openjourney"]  # FLUX.1に近いモデル
+                        "models": ["prompthero/openjourney"]  # アニメ風モデル
                     }
                 },
                 "type": "stablehorde",
@@ -356,7 +351,7 @@ def generate_image(prompt):
                         response = requests.post(api_url, json=payload, headers=headers, timeout=timeout)
                     print(f"📥 試行 {attempt + 1} フルレスポンス: {response.text}")
 
-                    if response.status_code == 200:
+                    if response.status_code == 200 or response.status_code == 202:  # 202 Accepted対応
                         if api_type == "deepai":
                             result = response.json()
                             if "output_url" in result:
@@ -366,20 +361,24 @@ def generate_image(prompt):
                                 continue
                         elif api_type == "stablehorde":
                             result = response.json()
-                            id = result["id"]
-                            # ポーリングでステータスチェック
-                            status_url = f"https://stablehorde.net/api/v2/generate/status/{id}"
-                            for poll_attempt in range(10):
-                                status_response = requests.get(status_url, headers=headers, timeout=10)
-                                if status_response.status_code == 200:
-                                    status_result = status_response.json()
-                                    if status_result["done"]:
-                                        if "generations" in status_result and status_result["generations"]:
-                                            image_data = base64.b64decode(status_result["generations"][0]["img"])
-                                            break
-                                time.sleep(10)  # 10秒待機
+                            if "id" in result:
+                                id = result["id"]
+                                # ポーリング
+                                status_url = f"https://stablehorde.net/api/v2/generate/status/{id}"
+                                for poll in range(12):  # 12回（2分間隔）
+                                    status_response = requests.get(status_url, headers=headers, timeout=10)
+                                    if status_response.status_code == 200:
+                                        status_result = status_response.json()
+                                        if status_result.get("done"):
+                                            if "generations" in status_result and status_result["generations"]:
+                                                image_data = base64.b64decode(status_result["generations"][0]["img"])
+                                                break
+                                    time.sleep(10)
+                                else:
+                                    print(f"⚠️ Stable Hordeポーリングタイムアウト: {id}")
+                                    continue
                             else:
-                                print(f"⚠️ Stable Hordeポーリングタイムアウト: {status_url}")
+                                print(f"⚠️ Stable Hordeレスポンスにidなし: {result}")
                                 continue
                         else:
                             image_data = response.content
