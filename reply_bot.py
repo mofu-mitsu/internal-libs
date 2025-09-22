@@ -297,24 +297,44 @@ def generate_image(prompt):
             print(f"⚠️ 危険ワード検知: {enhanced_prompt}")
             return None
 
-        # Spaces APIエンドポイントリスト
+        # Spaces APIエンドポイント
         spaces_urls = [
             "https://stabilityai-stable-diffusion-3-5-large.hf.space/run/predict",  # 優先
             "https://stabilityai-stable-diffusion.hf.space/run/predict",  # フォールバック
         ]
+        # デフォルトペイロード（/configに基づく）
         payload = {
-            "data": [enhanced_prompt[:50]],  # プロンプトを50文字に制限
-            "fn_index": 0  # Gradioのデフォルト関数インデックス
+            "data": [
+                enhanced_prompt[:50],  # プロンプト
+                20,                   # steps
+                7.5,                  # cfg_scale
+                512,                  # width
+                512                   # height
+            ],
+            "fn_index": 1  # /configで確認（通常1）
         }
 
         for spaces_url in spaces_urls:
+            # /configでfn_index確認
+            try:
+                config_url = spaces_url.replace("/run/predict", "/config")
+                config_response = requests.get(config_url, timeout=10)
+                if config_response.status_code == 200:
+                    config = config_response.json()
+                    print(f"📋 Spaces config: {json.dumps(config, ensure_ascii=False)[:500]}...")
+                    # fn_indexを動的に設定（仮に0か1を想定）
+                    payload["fn_index"] = 1 if "components" in config and len(config["components"]) > 1 else 0
+            except Exception as e:
+                print(f"⚠️ /config取得失敗: {type(e).__name__}: {str(e)}")
+                payload["fn_index"] = 1  # デフォルト
+
             for attempt in range(3):
                 try:
                     response = requests.post(spaces_url, json=payload, timeout=30)
+                    print(f"📥 試行 {attempt + 1} レスポンス: {response.status_code} - {response.text[:500]}...")
                     if response.status_code == 200:
                         result = response.json()
-                        print(f"📝 Spacesレスポンス: {result}")
-                        # 柔軟なレスポンス処理
+                        print(f"📝 Spacesレスポンス: {json.dumps(result, ensure_ascii=False)[:500]}...")
                         image_data = None
                         if "data" in result and len(result["data"]) > 0:
                             data = result["data"][0]
@@ -328,11 +348,10 @@ def generate_image(prompt):
                             import base64
                             from io import BytesIO
                             from PIL import Image
-                            # base64かバイナリデータか判定
                             if isinstance(image_data, str):
                                 image_data = base64.b64decode(image_data)
                             image = Image.open(BytesIO(image_data))
-                            image_path = f"output_{attempt}.png"  # 試行ごとに別ファイル
+                            image_path = f"output_{attempt}.png"
                             image.save(image_path, "PNG")
                             print(f"✅ 画像生成成功: Spaces={spaces_url}, 試行={attempt + 1}, 保存先={image_path}")
                             return image_path
