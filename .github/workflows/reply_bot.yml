@@ -47,4 +47,5 @@ jobs:
           GIST_TOKEN_REPLY: ${{ secrets.GIST_TOKEN_REPLY }}
           GIST_ID: 40391085a2e0b8a48935ad0b460cf422
           HF_TOKEN: ${{ secrets.HF_API_TOKEN }}
+          DEEPAI_API_KEY: ${{ secrets.DEEPAI_API_KEY }}  # 追加
         run: python reply_bot.py
