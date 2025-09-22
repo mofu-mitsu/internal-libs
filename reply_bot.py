@@ -277,93 +277,64 @@ def check_diagnosis_limit(user_did, is_daytime):
 #------------------------------
 #🆕 画像生成機能（軽量版）
 #------------------------------
+
+API_URL = "https://api-inference.huggingface.co/models/stabilityai/sd-turbo"
+HEADERS = {"Authorization": f"Bearer {HF_TOKEN}"}
+DANGER_ZONE = ["nsfw", "nude", "gore"]
+
 def generate_image(prompt):
-    print(f"🖼️ 画像生成開始: プロンプト={prompt}")
+    print(f"🖼️ API画像生成開始: プロンプト={prompt}")
     try:
-        # HF_TOKEN検証
         if not HF_TOKEN or len(HF_TOKEN) < 10:
             print(f"❌ HF_TOKENが無効または短すぎます: {repr(HF_TOKEN)[:8]}...")
             return None
 
-        # モデルキャッシュの確認
-        from huggingface_hub import snapshot_download
-        model_id = "stabilityai/sd-turbo"  # ★軽量モデルに変更
-        try:
-            print(f"📥 モデル {model_id} のキャッシュ確認中...")
-            snapshot_download(
-                repo_id=model_id,
-                token=HF_TOKEN,
-                allow_patterns=["*.json", "*.bin", "*.safetensors"],
-                resume_download=True,
-                cache_dir="/tmp/hf_cache"
-            )
-            print(f"✅ モデル {model_id} のキャッシュ確認完了")
-        except Exception as e:
-            print(f"⚠️ モデルキャッシュダウンロードエラー: {type(e).__name__}: {str(e)}")
-            print("💡 提案: ネットワーク接続を確認し、HF_TOKENが正しいかチェックしてください")
-            print(f"💡 モデルページ: https://huggingface.co/{model_id}")
-            return None
-
-        # Diffusersパイプライン
-        pipe = StableDiffusionPipeline.from_pretrained(
-            model_id,
-            torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
-            use_safetensors=True,
-            token=HF_TOKEN,
-            cache_dir="/tmp/hf_cache"
-        )
-        pipe = pipe.to("cuda" if torch.cuda.is_available() else "cpu")
-        print(f"✅ モデル {model_id} ロード完了 (デバイス: {'GPU' if torch.cuda.is_available() else 'CPU'})")
-
         cleaned_prompt = re.sub(r'[。！？、!?\s]+', ' ', prompt).strip() if prompt else ""
         enhanced_prompt = f"{cleaned_prompt}, anime style, soft colors, detailed, kawaii" if cleaned_prompt else "fuwamoko mirinteya character, anime style, soft colors, detailed, kawaii"
-        print(f"🖼️ 画像生成プロンプト: {enhanced_prompt}")
-        
+        print(f"🖼️ API送信プロンプト: {enhanced_prompt}")
+
         if any(danger_word in enhanced_prompt.lower() for danger_word in DANGER_ZONE):
             print(f"⚠️ 危険ワード検知: {enhanced_prompt}")
             return None
-            
-        # タイムアウトハンドリング
-        def timeout_handler(signum, frame):
-            raise TimeoutError("Image generation timeout")
 
-        signal.signal(signal.SIGALRM, timeout_handler)
-        signal.alarm(300)  # 5分タイムアウト
+        payload = {
+            "inputs": enhanced_prompt,
+            "parameters": {
+                "negative_prompt": "low quality, blurry, realistic, photorealistic, cartoonish, 3d",
+                "num_inference_steps": 20,
+                "guidance_scale": 7.5,
+                "width": 512,
+                "height": 512,
+            }
+        }
 
         for attempt in range(3):
             try:
-                image = pipe(
-                    prompt=enhanced_prompt,
-                    negative_prompt="low quality, blurry, realistic, photorealistic, cartoonish, 3d",
-                    guidance_scale=7.5,
-                    num_inference_steps=20,  # ★ステップ削減で高速化
-                    width=512,
-                    height=512
-                ).images[0]
-                signal.alarm(0)  # タイマー解除
-                print(f"✅ 画像生成成功: 試行 {attempt + 1}")
-                return image
-            except TimeoutError:
-                print("❌ 画像生成がタイムアウト")
-                signal.alarm(0)
-                return None
-            except Exception as e:
-                print(f"⚠️ 画像生成エラー (試行 {attempt + 1}): {type(e).__name__}: {str(e)}")
-                traceback.print_exc()
+                response = requests.post(API_URL, headers=HEADERS, json=payload, timeout=300)
+                if response.status_code == 200:
+                    image_bytes = response.content
+                    print(f"✅ 画像生成成功: 試行 {attempt + 1}")
+                    return image_bytes  # バイナリデータ（PNG/JPEG）
+                else:
+                    print(f"⚠️ APIエラー (試行 {attempt + 1}): {response.status_code} {response.text}")
+                    if attempt < 2:
+                        time.sleep(5 * (attempt + 1))
+                    continue
+            except requests.exceptions.Timeout:
+                print(f"❌ 画像生成タイムアウト (試行 {attempt + 1})")
                 if attempt < 2:
-                    print(f"⏳ リトライします（{attempt + 2}/3）、待機時間: {5 * (attempt + 1)}秒")
                     time.sleep(5 * (attempt + 1))
                 continue
-        print("❌ 画像生成リトライ上限到達")
+            except Exception as e:
+                print(f"⚠️ APIリクエストエラー (試行 {attempt + 1}): {type(e).__name__}: {str(e)}")
+                traceback.print_exc()
+                if attempt < 2:
+                    time.sleep(5 * (attempt + 1))
+                continue
+        print("❌ APIリトライ上限到達")
         return None
     except Exception as e:
-        print(f"❌ 画像生成初期化エラー: {type(e).__name__}: {str(e)}")
-        print(f"💡 提案: 以下の点を確認してください")
-        print(f"  - HF_TOKENが正しいか: https://huggingface.co/settings/tokens")
-        print(f"  - diffusersライブラリのバージョン: `pip install --upgrade diffusers`")
-        print(f"  - モデルキャッシュ: `rm -rf /tmp/hf_cache` で削除して再試行")
-        print(f"  - ネットワーク接続: モデル {model_id} のダウンロードが可能か")
-        print(f"💡 モデルページ: https://huggingface.co/{model_id}")
+        print(f"❌ 初期化エラー: {type(e).__name__}: {str(e)}")
         traceback.print_exc()
         return None
 
