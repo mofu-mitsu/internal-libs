@@ -299,14 +299,13 @@ def generate_image(prompt):
             print(f"⚠️ 危険ワード検知: {enhanced_prompt}")
             return None
 
-        # APIリスト
         api_configs = [
             {
                 "url": "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-dev",
                 "headers": {"Authorization": f"Bearer {HF_TOKEN}"},
                 "payload": {"inputs": enhanced_prompt},
                 "type": "huggingface",
-                "timeout": 500  # FLUX.1-dev用
+                "timeout": 500
             },
             {
                 "url": "https://api.deepai.org/api/text2img",
@@ -316,7 +315,7 @@ def generate_image(prompt):
                 },
                 "payload": {"text": enhanced_prompt},
                 "type": "deepai",
-                "timeout": 30  # DeepAIは速い
+                "timeout": 30
             }
         ]
 
@@ -329,11 +328,12 @@ def generate_image(prompt):
 
             for attempt in range(3):
                 try:
+                    print(f"📡 APIリクエスト: URL={api_url}, Headers={headers}, Payload={payload}")
                     if api_type == "deepai":
                         response = requests.post(api_url, data=payload, headers=headers, timeout=timeout)
                     else:
                         response = requests.post(api_url, json=payload, headers=headers, timeout=timeout)
-                    print(f"📥 試行 {attempt + 1} レスポンス: {response.status_code} - {response.content[:50]}...")
+                    print(f"📥 試行 {attempt + 1} フルレスポンス: {response.text}")
 
                     if response.status_code == 200:
                         if api_type == "deepai":
@@ -356,18 +356,18 @@ def generate_image(prompt):
                     else:
                         print(f"⚠️ APIエラー (試行 {attempt + 1}): {response.status_code} - {response.text}")
                         if attempt < 2:
-                            time.sleep(20 * (attempt + 1))
+                            time.sleep(60 * (attempt + 1))  # 60秒→120秒→180秒
                         continue
                 except requests.exceptions.Timeout:
                     print(f"❌ 画像生成タイムアウト (試行 {attempt + 1})")
                     if attempt < 2:
-                        time.sleep(20 * (attempt + 1))
+                        time.sleep(60 * (attempt + 1))
                     continue
                 except Exception as e:
                     print(f"⚠️ APIリクエストエラー (試行 {attempt + 1}): {type(e).__name__}: {str(e)}")
                     traceback.print_exc()
                     if attempt < 2:
-                        time.sleep(20 * (attempt + 1))
+                        time.sleep(60 * (attempt + 1))
                     continue
             print(f"❌ APIリトライ上限到達: {api_url}")
         print("❌ すべてのAPIで失敗")
