@@ -321,7 +321,7 @@ def generate_image(prompt):
                             "text": enhanced_prompt
                         }
                         headers = {}  # DeepAIはトークン不要
-                    response = requests.post(api_url, json=payload, headers=headers, timeout=30)
+                    response = requests.post(api_url, json=payload, headers=headers, timeout=300)
                     print(f"📥 試行 {attempt + 1} レスポンス: {response.status_code} - {response.text[:500]}...")
                     if response.status_code == 200:
                         result = response.json()
