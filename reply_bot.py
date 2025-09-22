@@ -278,8 +278,6 @@ def check_diagnosis_limit(user_did, is_daytime):
 #🆕 画像生成機能（軽量版）
 #------------------------------
 
-API_URL = "https://api-inference.huggingface.co/models/runwayml/stable-diffusion-v1-5"
-HEADERS = {"Authorization": f"Bearer {HF_TOKEN}"}
 DANGER_ZONE = ["nsfw", "nude", "gore"]
 
 def generate_image(prompt):
