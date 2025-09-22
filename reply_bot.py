@@ -308,7 +308,7 @@ def generate_image(prompt):
                 "headers": {"Authorization": f"Bearer {HF_TOKEN}"},
                 "payload": {"inputs": enhanced_prompt},
                 "type": "huggingface",
-                "timeout": 120  # FLUX.1-devは重いので120秒
+                "timeout": 500  # FLUX.1-devは重いので120秒
             },
             {
                 "url": "https://api.deepai.org/api/text2img",
