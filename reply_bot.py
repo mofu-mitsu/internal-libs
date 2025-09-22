@@ -278,7 +278,7 @@ def check_diagnosis_limit(user_did, is_daytime):
 #🆕 画像生成機能（軽量版）
 #------------------------------
 
-API_URL = "https://api-inference.huggingface.co/models/stabilityai/sd-turbo"
+API_URL = "https://api-inference.huggingface.co/models/runwayml/stable-diffusion-v1-5"
 HEADERS = {"Authorization": f"Bearer {HF_TOKEN}"}
 DANGER_ZONE = ["nsfw", "nude", "gore"]
 
@@ -298,7 +298,7 @@ def generate_image(prompt):
             return None
 
         payload = {
-            "inputs": enhanced_prompt,
+            "inputs": enhanced_prompt[:50],  # プロンプト長制限
             "parameters": {
                 "negative_prompt": "low quality, blurry, realistic, photorealistic, cartoonish, 3d",
                 "num_inference_steps": 20,
@@ -310,26 +310,28 @@ def generate_image(prompt):
 
         for attempt in range(3):
             try:
-                response = requests.post(API_URL, headers=HEADERS, json=payload, timeout=300)
+                response = requests.post(API_URL, headers=HEADERS, json=payload, timeout=300)  # タイムアウト短縮
                 if response.status_code == 200:
-                    image_bytes = response.content
-                    print(f"✅ 画像生成成功: 試行 {attempt + 1}")
-                    return image_bytes  # バイナリデータ（PNG/JPEG）
+                    image_path = "output.png"
+                    with open(image_path, "wb") as f:
+                        f.write(response.content)
+                    print(f"✅ 画像生成成功: 試行 {attempt + 1}, 保存先: {image_path}")
+                    return image_path
                 else:
-                    print(f"⚠️ APIエラー (試行 {attempt + 1}): {response.status_code} {response.text}")
+                    print(f"⚠️ APIエラー (試行 {attempt + 1}): {response.status_code} - {response.text}")
                     if attempt < 2:
-                        time.sleep(5 * (attempt + 1))
+                        time.sleep(10 * (attempt + 1))  # リトライ間隔増
                     continue
             except requests.exceptions.Timeout:
                 print(f"❌ 画像生成タイムアウト (試行 {attempt + 1})")
                 if attempt < 2:
-                    time.sleep(5 * (attempt + 1))
+                    time.sleep(10 * (attempt + 1))
                 continue
             except Exception as e:
                 print(f"⚠️ APIリクエストエラー (試行 {attempt + 1}): {type(e).__name__}: {str(e)}")
                 traceback.print_exc()
                 if attempt < 2:
-                    time.sleep(5 * (attempt + 1))
+                    time.sleep(10 * (attempt + 1))
                 continue
         print("❌ APIリトライ上限到達")
         return None
