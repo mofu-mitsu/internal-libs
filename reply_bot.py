@@ -293,7 +293,7 @@ def generate_image(prompt):
         STABLE_HORDE_API_KEY = os.getenv("STABLE_HORDE_API_KEY") or "y5Fox28OEJcdC8lc4aaBrA"  # 登録キー
 
         cleaned_prompt = re.sub(r'[。！？、!?\s]+', ' ', prompt).strip() if prompt else ""
-        enhanced_prompt = f"{cleaned_prompt}, anime style, soft colors, detailed, kawaii" if cleaned_prompt else "fuwamoko mirinteya dog, anime style, soft colors, detailed, kawaii"
+        enhanced_prompt = f"{cleaned_prompt}, anime style, soft colors, detailed, kawaii" if cleaned_prompt else "fuwamoko, anime style, soft colors, detailed, kawaii"
         negative_prompt = "low quality, blurry, realistic, photorealistic, cartoonish, 3d, human, split, distorted anatomy"
         print(f"🖼️ API送信プロンプト: {enhanced_prompt}")
 
