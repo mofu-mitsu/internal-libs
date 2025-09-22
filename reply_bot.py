@@ -300,7 +300,7 @@ def generate_image(prompt):
             "https://stabilityai-stable-diffusion-3-5-large.hf.space/run/predict",  # 優先
             "https://stabilityai-stable-diffusion.hf.space/run/predict",  # フォールバック
         ]
-        # デフォルトペイロード（Gradioドキュメントに基づく）
+        # デフォルトペイロード
         payload = {
             "data": [
                 enhanced_prompt[:50],  # プロンプト（50文字制限）
@@ -308,12 +308,12 @@ def generate_image(prompt):
                 7.5,                  # cfg_scale
                 512,                  # width
                 512                   # height
-            ],
-            "fn_index": 1  # デフォルト（後で/configから取得）
+            ]
         }
 
         for spaces_url in spaces_urls:
-            # /configでfn_index確認
+            # /configでfn_index確認（必要なら）
+            fn_index = None
             try:
                 config_url = spaces_url.replace("/run/predict", "/config")
                 config_response = requests.get(config_url, timeout=10)
@@ -321,34 +321,38 @@ def generate_image(prompt):
                     config = config_response.json()
                     print(f"📋 Spaces config: {json.dumps(config, ensure_ascii=False)[:500]}...")
                     # fn_indexを動的に設定（componentsの数で推測）
-                    payload["fn_index"] = 1 if "components" in config and len(config["components"]) > 1 else 0
+                    fn_index = 1 if "components" in config and len(config["components"]) > 1 else 0
+                    payload["fn_index"] = fn_index
             except Exception as e:
                 print(f"⚠️ /config取得失敗: {type(e).__name__}: {str(e)}")
-                payload["fn_index"] = 1  # デフォルト
+                fn_index = None  # fn_indexなしで試す
 
             for attempt in range(3):
                 try:
-                    response = requests.post(spaces_url, json=payload, timeout=30)
+                    # fn_indexを付ける/付けない両方で試す
+                    current_payload = payload.copy()
+                    if fn_index is None:
+                        current_payload.pop("fn_index", None)  # fn_indexなし
+                    response = requests.post(spaces_url, json=current_payload, timeout=60)
                     print(f"📥 試行 {attempt + 1} レスポンス: {response.status_code} - {response.text[:500]}...")
                     if response.status_code == 200:
                         result = response.json()
                         print(f"📝 Spacesレスポンス: {json.dumps(result, ensure_ascii=False)[:500]}...")
-                        image_data = None
                         if "data" in result and len(result["data"]) > 0:
-                            data = result["data"][0]
-                            if isinstance(data, dict) and "data" in data and isinstance(data["data"], list) and data["data"]:
-                                image_data = data["data"][0]  # ネストされたbase64
-                            elif isinstance(data, dict) and "url" in data:
-                                image_data = requests.get(data["url"]).content  # URL形式
-                            elif isinstance(data, str):
-                                image_data = data  # 直接base64
-                        if image_data:
+                            image_data = result["data"][0]
                             import base64
                             from io import BytesIO
                             from PIL import Image
+                            # base64文字列の処理（"data:image/png;base64,"プレフィックス対応）
                             if isinstance(image_data, str):
-                                image_data = base64.b64decode(image_data)
-                            image = Image.open(BytesIO(image_data))
+                                image_data = image_data.split(",")[-1] if "," in image_data else image_data
+                                image_bytes = base64.b64decode(image_data)
+                            elif isinstance(image_data, dict) and "url" in image_data:
+                                image_bytes = requests.get(image_data["url"], timeout=10).content
+                            else:
+                                print(f"⚠️ 予期しないデータ形式: {image_data}")
+                                continue
+                            image = Image.open(BytesIO(image_bytes))
                             image_path = f"output_{attempt}.png"
                             image.save(image_path, "PNG")
                             print(f"✅ 画像生成成功: Spaces={spaces_url}, 試行={attempt + 1}, 保存先={image_path}")
