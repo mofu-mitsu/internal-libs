@@ -311,7 +311,7 @@ def generate_image(prompt):
                         "steps": 20,
                         "cfg_scale": 7.5,
                         "sampler_name": "k_euler_a",
-                        "models": ["prompthero/openjourney"]  # アニメ風モデル
+                        "models": ["prompthero/openjourney"]
                     }
                 },
                 "type": "stablehorde",
@@ -352,7 +352,7 @@ def generate_image(prompt):
                         response = requests.post(api_url, json=payload, headers=headers, timeout=timeout)
                     print(f"📥 試行 {attempt + 1} フルレスポンス: {response.text}")
 
-                    if response.status_code == 200 or response.status_code == 202:  # 202 Accepted対応
+                    if response.status_code == 200 or (api_type == "stablehorde" and response.status_code == 202):
                         if api_type == "deepai":
                             result = response.json()
                             if "output_url" in result:
@@ -362,24 +362,30 @@ def generate_image(prompt):
                                 continue
                         elif api_type == "stablehorde":
                             result = response.json()
-                            if "id" in result:
-                                id = result["id"]
-                                # ポーリング
-                                status_url = f"https://stablehorde.net/api/v2/generate/status/{id}"
-                                for poll in range(12):  # 12回（2分間隔）
-                                    status_response = requests.get(status_url, headers=headers, timeout=10)
-                                    if status_response.status_code == 200:
-                                        status_result = status_response.json()
-                                        if status_result.get("done"):
-                                            if "generations" in status_result and status_result["generations"]:
-                                                image_data = base64.b64decode(status_result["generations"][0]["img"])
-                                                break
-                                    time.sleep(10)
-                                else:
-                                    print(f"⚠️ Stable Hordeポーリングタイムアウト: {id}")
-                                    continue
-                            else:
+                            if "id" not in result:
                                 print(f"⚠️ Stable Hordeレスポンスにidなし: {result}")
+                                continue
+                            id = result["id"]
+                            print(f"🔄 Stable Horde ID取得: {id}, ポーリング開始")
+                            status_url = f"https://stablehorde.net/api/v2/generate/status/{id}"
+                            for poll in range(12):  # 2分間ポーリング
+                                status_response = requests.get(status_url, headers=headers, timeout=10)
+                                print(f"📥 ポーリング {poll + 1} レスポンス: {status_response.text}")
+                                if status_response.status_code == 200:
+                                    status_result = status_response.json()
+                                    if status_result.get("done"):
+                                        if "generations" in status_result and status_result["generations"]:
+                                            image_data = base64.b64decode(status_result["generations"][0]["img"])
+                                            break
+                                        else:
+                                            print(f"⚠️ ポーリング完了したがgenerationsなし: {status_result}")
+                                            continue
+                                    elif status_result.get("faulted"):
+                                        print(f"⚠️ Stable Horde生成失敗: {status_result}")
+                                        continue
+                                time.sleep(10)
+                            else:
+                                print(f"⚠️ Stable Hordeポーリングタイムアウト: {id}")
                                 continue
                         else:
                             image_data = response.content
