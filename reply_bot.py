@@ -26,6 +26,7 @@ from diffusers import StableDiffusionPipeline
 import torch
 import signal  # タイムアウトハンドリング
 from PIL import Image  # 明示的にインポート
+from io import BytesIO  # 明示的に追加
 
 #------------------------------
 #🔐 環境変数
