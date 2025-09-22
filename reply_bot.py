@@ -13,6 +13,7 @@ import requests
 import psutil
 import pytz
 import unicodedata
+import base64  # 追加
 from datetime import datetime, timezone, timedelta
 from atproto import Client, models
 from atproto_client.models.com.atproto.repo.strong_ref import Main as StrongRef
