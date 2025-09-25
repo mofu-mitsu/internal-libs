@@ -313,18 +313,18 @@ def generate_image(prompt):
         # 猫専用プロンプトパス
         cat_match = re.search(r"(猫|cat|キャット|kitten|🐈‍⬛|🐈|🐱)", cleaned_prompt, re.IGNORECASE)
         if cat_match:
-            cleaned_prompt = f"{cleaned_prompt}, adorable kitten, detailed fur, vibrant colors, sfw, safe, wholesome"
+            cleaned_prompt = f"{cleaned_prompt}, adorable kitten, anime style, 2d, cartoonish, detailed fur, vibrant colors, sfw, safe, wholesome"
             enhanced_prompt = cleaned_prompt
         else:
             # 人数と性別指定を追加
             gender_match = re.search(r"(男性|男の子|イケメン|1boy|boy)", cleaned_prompt, re.IGNORECASE)
             if gender_match:
-                cleaned_prompt = f"1boy, solo, upper body, centered, {cleaned_prompt}, sfw, safe, wholesome"
+                cleaned_prompt = f"1boy, solo, upper body, centered, {cleaned_prompt}, anime style, 2d, cartoonish, sfw, safe, wholesome"
             else:
-                cleaned_prompt = f"young girl, solo, upper body, centered, {cleaned_prompt}, sfw, safe, wholesome"
-            enhanced_prompt = f"{cleaned_prompt}, anime style, clean lines, detailed, accurate anatomy, looking at viewer, vibrant colors"
+                cleaned_prompt = f"young girl, solo, upper body, centered, {cleaned_prompt}, anime style, 2d, cartoonish, sfw, safe, wholesome"
+            enhanced_prompt = f"{cleaned_prompt}, clean lines, detailed, accurate anatomy, looking at viewer, vibrant colors"
 
-        negative_prompt = "low quality, blurry face, realistic, photorealistic, cartoonish, 3d, split, distorted anatomy, multiple subjects, multiple girls, multiple boys, extra limbs, extra faces, extra heads, extra body, two people, two boys, two girls, duplicate, clone, mutation, deformed, bad anatomy, disfigured, collage, fused, out of frame, nsfw, nude, sexual, explicit, low detail"
+        negative_prompt = "low quality, blurry face, realistic, photorealistic, 3d, split, distorted anatomy, multiple subjects, multiple girls, multiple boys, extra limbs, extra faces, extra heads, extra body, two people, two boys, two girls, duplicate, clone, mutation, deformed, bad anatomy, disfigured, collage, fused, out of frame, nsfw, nude, sexual, explicit, low detail"
         print(f"🖼️ API送信プロンプト: {enhanced_prompt}")
         print(f"🛑 ネガティブプロンプト: {negative_prompt}")
 
@@ -333,16 +333,6 @@ def generate_image(prompt):
             return None
 
         api_configs = [
-            {
-                "url": "https://api.deepai.org/api/text2img",
-                "headers": {
-                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-                    "api-key": DEEPAI_API_KEY or "quickstart-QUdJIGlzIGNvbWluZy4uLi4K"
-                },
-                "payload": {"text": enhanced_prompt},
-                "type": "deepai",
-                "timeout": 30
-            },
             {
                 "url": "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-dev",
                 "headers": {"Authorization": f"Bearer {HF_TOKEN}"},
@@ -358,10 +348,10 @@ def generate_image(prompt):
                     "params": {
                         "width": 768,
                         "height": 768,
-                        "steps": 20,  # 軽量化
-                        "cfg_scale": 6.0,  # 過剰解釈抑える
-                        "sampler_name": "k_euler_a",  # アニメ向け安定
-                        "models": ["prompthero/anything-v5-pruned", "Meina/MeinaMix"]  # 複数モデル
+                        "steps": 25,  # ディテール強化
+                        "cfg_scale": 7.0,  # アニメ調強調
+                        "sampler_name": "k_euler_a",  # アニメ向け
+                        "models": ["prompthero/anything-v5-pruned", "Meina/MeinaMix"]  # Counterfeit-V3.0回避
                     },
                     "nsfw": True,  # NSFWワーカー優先
                     "censor_nsfw": False,  # フィルター回避
@@ -369,6 +359,16 @@ def generate_image(prompt):
                 },
                 "type": "stablehorde",
                 "timeout": 180
+            },
+            {
+                "url": "https://api.deepai.org/api/text2img",
+                "headers": {
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+                    "api-key": DEEPAI_API_KEY or "quickstart-QUdJIGlzIGNvbWluZy4uLi4K"
+                },
+                "payload": {"text": enhanced_prompt},
+                "type": "deepai",
+                "timeout": 30
             }
         ]
 
