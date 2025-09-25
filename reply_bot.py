@@ -309,7 +309,7 @@ def generate_image(prompt):
 
         # 髪型を英語に変換
         hairstyle_map = {
-            "ツインテール": "twin tails, double ponytails, symmetrical hair",
+            "ツインテール": "twin tails, double ponytails, symmetrical hair, highly detailed hair",
             "ポニーテール": "ponytail, single high ponytail",
             "お団子": "hair buns, double buns",
             "ショートカット": "short hair, bob cut",
@@ -331,18 +331,18 @@ def generate_image(prompt):
                 else "bunny" if re.search(r"兎|rabbit|bunny|🐰", cleaned_prompt, re.IGNORECASE)
                 else "animal"
             )
-            cleaned_prompt = f"adorable {animal_type}, anime style, 2d, cartoonish, detailed fur, vibrant colors, sfw, safe, wholesome"
+            cleaned_prompt = f"adorable {animal_type}, high quality, polished anime style, 2d, cartoonish, detailed fur, vibrant colors, sfw, safe, wholesome"
             enhanced_prompt = cleaned_prompt
         else:
             # 人数と性別指定を追加
             gender_match = re.search(r"(男性|男の子|イケメン|1boy|boy)", cleaned_prompt, re.IGNORECASE)
             if gender_match:
-                cleaned_prompt = f"solo, single subject, one character, no background characters, 1boy, upper body, centered, {cleaned_prompt}, anime style, 2d, cartoonish, sfw, safe, wholesome"
+                cleaned_prompt = f"solo, single subject, one character, no background characters, centered focus, 1boy, upper body, {cleaned_prompt}, high quality, polished anime style, 2d, cartoonish, sfw, safe, wholesome"
             else:
-                cleaned_prompt = f"solo, single subject, one character, no background characters, young girl, upper body, centered, {cleaned_prompt}, anime style, 2d, cartoonish, sfw, safe, wholesome"
-            enhanced_prompt = f"{cleaned_prompt}, clean lines, detailed, accurate anatomy, looking at viewer, vibrant colors"
+                cleaned_prompt = f"solo, single subject, one character, no background characters, centered focus, young girl, upper body, {cleaned_prompt}, high quality, polished anime style, 2d, cartoonish, sfw, safe, wholesome"
+            enhanced_prompt = f"{cleaned_prompt}, pastel colors, soft shading, clean lines, sharp details, accurate anatomy, looking at viewer, vibrant colors"
 
-        negative_prompt = "low quality, blurry face, realistic, photorealistic, 3d, split, distorted anatomy, multiple subjects, multiple girls, multiple boys, extra limbs, extra faces, extra heads, extra body, two people, three people, duplicate, clone, mutation, deformed, bad anatomy, disfigured, collage, fused, out of frame, nsfw, nude, sexual, explicit, low detail, ponytail, short hair, bob cut, other hairstyles"
+        negative_prompt = "low quality, blurry face, realistic, photorealistic, 3d, split, distorted anatomy, multiple subjects, multiple girls, multiple boys, extra limbs, extra faces, extra heads, extra body, two people, three people, duplicate, clone, mutation, deformed, bad anatomy, disfigured, collage, fused, out of frame, nsfw, nude, sexual, explicit, low detail, childish, sketchy, poorly drawn, low effort, other hairstyles, loose hair, single ponytail"
         print(f"🖼️ API送信プロンプト: {enhanced_prompt}")
         print(f"🛑 ネガティブプロンプト: {negative_prompt}")
 
@@ -352,13 +352,6 @@ def generate_image(prompt):
 
         api_configs = [
             {
-                "url": "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-dev",
-                "headers": {"Authorization": f"Bearer {HF_TOKEN}"},
-                "payload": {"inputs": enhanced_prompt},
-                "type": "huggingface",
-                "timeout": 500
-            },
-            {
                 "url": "https://stablehorde.net/api/v2/generate/async",
                 "headers": {"apikey": STABLE_HORDE_API_KEY},
                 "payload": {
@@ -366,10 +359,10 @@ def generate_image(prompt):
                     "params": {
                         "width": 768,
                         "height": 768,
-                        "steps": 30,  # ディテール強化
-                        "cfg_scale": 7.5,  # プロンプト忠実度
+                        "steps": 35,  # ディテール強化
+                        "cfg_scale": 8.0,  # プロンプト忠実度
                         "sampler_name": "k_euler_a",  # アニメ向け
-                        "models": ["prompthero/anything-v5-pruned", "Meina/MeinaMix", "hakurei/Counterfeit-V3.0"]  # Counterfeit復活
+                        "models": ["Lykon/AnimePastelDream", "prompthero/anything-v5-pruned", "Meina/MeinaMix", "hakurei/Counterfeit-V3.0"]  # AnimePastelDream優先
                     },
                     "nsfw": True,  # NSFWワーカー優先
                     "censor_nsfw": False,  # フィルター回避
@@ -377,6 +370,13 @@ def generate_image(prompt):
                 },
                 "type": "stablehorde",
                 "timeout": 180
+            },
+            {
+                "url": "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-dev",
+                "headers": {"Authorization": f"Bearer {HF_TOKEN}"},
+                "payload": {"inputs": enhanced_prompt},
+                "type": "huggingface",
+                "timeout": 500
             },
             {
                 "url": "https://api.deepai.org/api/text2img",
@@ -424,12 +424,12 @@ def generate_image(prompt):
                             id = result["id"]
                             print(f"🔄 Stable Horde ID取得: {id}, ポーリング開始")
                             status_url = f"https://stablehorde.net/api/v2/generate/status/{id}"
-                            for poll in range(20):  # ポーリング回数増加
+                            for poll in range(30):  # ポーリング回数増加
                                 status_response = requests.get(status_url, headers=headers, timeout=10)
-                                print(f"📥 ポーリング {poll + 1} レスポンス: {status_response.text}")
                                 status_result = status_response.json()
+                                print(f"📥 ポーリング {poll + 1} レスポンス: {status_response.text}")
                                 if status_response.status_code == 200:
-                                    print(f"📊 ワーカー状態: キュー位置={status_result.get('queue_position', '不明')}, 待機時間={status_result.get('wait_time', '不明')}")
+                                    print(f"📊 ワーカー状態: キュー位置={status_result.get('queue_position', '不明')}, 待機時間={status_result.get('wait_time', '不明')}, ワーカー数={status_result.get('worker_count', '不明')}")
                                     if status_result.get("done"):
                                         if "generations" in status_result and status_result["generations"]:
                                             img_data = status_result["generations"][0]["img"]
@@ -449,7 +449,7 @@ def generate_image(prompt):
                                     elif status_result.get("faulted") or "CENSORED" in status_result.get("message", ""):
                                         print(f"⚠️ Stable Horde生成失敗: {status_result}")
                                         return None
-                                time.sleep(10 if poll == 0 else 15)  # 動的待ち時間
+                                time.sleep(10 if poll == 0 else 15 if poll < 10 else 20)  # 動的待ち時間
                             else:
                                 print(f"⚠️ Stable Hordeポーリングタイムアウト: {id}")
                                 continue
@@ -470,18 +470,18 @@ def generate_image(prompt):
                             print(f"⚠️ NSFWフィルター検知: {response.text}")
                             return None
                         if attempt < 2:
-                            time.sleep(60 * (attempt + 1))
+                            time.sleep(90 * (attempt + 1))  # リトライ間隔延長
                         continue
                 except requests.exceptions.Timeout:
                     print(f"❌ 画像生成タイムアウト (試行 {attempt + 1})")
                     if attempt < 2:
-                        time.sleep(60 * (attempt + 1))
+                        time.sleep(90 * (attempt + 1))
                     continue
                 except Exception as e:
                     print(f"⚠️ APIリクエストエラー (試行 {attempt + 1}): {type(e).__name__}: {str(e)}")
                     traceback.print_exc()
                     if attempt < 2:
-                        time.sleep(60 * (attempt + 1))
+                        time.sleep(90 * (attempt + 1))
                     continue
             print(f"❌ APIリトライ上限到達: {api_url}")
         print("❌ すべてのAPIで失敗")
