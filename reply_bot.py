@@ -310,10 +310,10 @@ def generate_image(prompt):
         # 髪型を英語に変換
         hairstyle_map = {
             "ツインテール": "twin tails, double ponytails, symmetrical hair, highly detailed hair",
-            "ポニーテール": "ponytail, single high ponytail",
-            "お団子": "hair buns, double buns",
-            "ショートカット": "short hair, bob cut",
-            "ロングヘア": "long hair, flowing hair",
+            "ポニーテール": "ponytail, single high ponytail, highly detailed hair, smooth hair texture",
+            "お団子": "hair buns, double buns, highly detailed hair",
+            "ショートカット": "short hair, bob cut, highly detailed hair",
+            "ロングヘア": "long hair, flowing hair, highly detailed hair",
         }
         for jp, en in hairstyle_map.items():
             prompt = prompt.replace(jp, en)
@@ -331,18 +331,18 @@ def generate_image(prompt):
                 else "bunny" if re.search(r"兎|rabbit|bunny|🐰", cleaned_prompt, re.IGNORECASE)
                 else "animal"
             )
-            cleaned_prompt = f"adorable {animal_type}, high quality, polished anime style, 2d, cartoonish, detailed fur, vibrant colors, sfw, safe, wholesome"
+            cleaned_prompt = f"adorable {animal_type}, ultra high quality, polished anime style, 2d, cartoonish, detailed fur, smooth fur texture, vibrant colors, sfw, safe, wholesome"
             enhanced_prompt = cleaned_prompt
         else:
             # 人数と性別指定を追加
             gender_match = re.search(r"(男性|男の子|イケメン|1boy|boy)", cleaned_prompt, re.IGNORECASE)
             if gender_match:
-                cleaned_prompt = f"solo, single subject, one character, no background characters, centered focus, 1boy, upper body, {cleaned_prompt}, high quality, polished anime style, 2d, cartoonish, sfw, safe, wholesome"
+                cleaned_prompt = f"solo, single subject, one character, no background characters, centered focus, 1boy, upper body, {cleaned_prompt}, ultra high quality, polished anime style, 2d, cartoonish, mature aesthetic, detailed outfit, sfw, safe, wholesome"
             else:
-                cleaned_prompt = f"solo, single subject, one character, no background characters, centered focus, young girl, upper body, {cleaned_prompt}, high quality, polished anime style, 2d, cartoonish, sfw, safe, wholesome"
-            enhanced_prompt = f"{cleaned_prompt}, pastel colors, soft shading, clean lines, sharp details, accurate anatomy, looking at viewer, vibrant colors"
+                cleaned_prompt = f"solo, single subject, one character, no background characters, centered focus, young girl, upper body, {cleaned_prompt}, ultra high quality, polished anime style, 2d, cartoonish, mature aesthetic, detailed gothic lolita outfit, intricate accessories, sfw, safe, wholesome"
+            enhanced_prompt = f"{cleaned_prompt}, pastel colors, soft shading, clean lines, sharp details, detailed painting, smooth shading, no artifacts, clean edges, accurate anatomy, looking at viewer, vibrant colors"
 
-        negative_prompt = "low quality, blurry face, realistic, photorealistic, 3d, split, distorted anatomy, multiple subjects, multiple girls, multiple boys, extra limbs, extra faces, extra heads, extra body, two people, three people, duplicate, clone, mutation, deformed, bad anatomy, disfigured, collage, fused, out of frame, nsfw, nude, sexual, explicit, low detail, childish, sketchy, poorly drawn, low effort, other hairstyles, loose hair, single ponytail"
+        negative_prompt = "low quality, blurry face, realistic, photorealistic, 3d, split, distorted anatomy, multiple subjects, multiple girls, multiple boys, extra limbs, extra faces, extra heads, extra body, two people, three people, duplicate, clone, mutation, deformed, bad anatomy, disfigured, collage, fused, out of frame, nsfw, nude, sexual, explicit, low detail, childish art, amateur drawing, uneven shading, painting errors, incomplete details, other hairstyles, loose hair, twin tails, messy hair"
         print(f"🖼️ API送信プロンプト: {enhanced_prompt}")
         print(f"🛑 ネガティブプロンプト: {negative_prompt}")
 
@@ -359,10 +359,10 @@ def generate_image(prompt):
                     "params": {
                         "width": 768,
                         "height": 768,
-                        "steps": 35,  # ディテール強化
-                        "cfg_scale": 8.0,  # プロンプト忠実度
-                        "sampler_name": "k_euler_a",  # アニメ向け
-                        "models": ["Lykon/AnimePastelDream", "prompthero/anything-v5-pruned", "Meina/MeinaMix", "hakurei/Counterfeit-V3.0"]  # AnimePastelDream優先
+                        "steps": 40,  # ディテール強化
+                        "cfg_scale": 8.5,  # プロンプト忠実度
+                        "sampler_name": "k_dpmpp_2m",  # 高品質塗り
+                        "models": ["andite/Yozora", "Lykon/AnimePastelDream", "prompthero/anything-v5-pruned", "Meina/MeinaMix", "hakurei/Counterfeit-V3.0"]  # Yozora優先
                     },
                     "nsfw": True,  # NSFWワーカー優先
                     "censor_nsfw": False,  # フィルター回避
@@ -424,12 +424,12 @@ def generate_image(prompt):
                             id = result["id"]
                             print(f"🔄 Stable Horde ID取得: {id}, ポーリング開始")
                             status_url = f"https://stablehorde.net/api/v2/generate/status/{id}"
-                            for poll in range(30):  # ポーリング回数増加
+                            for poll in range(30):  # ポーリング回数継続
                                 status_response = requests.get(status_url, headers=headers, timeout=10)
                                 status_result = status_response.json()
                                 print(f"📥 ポーリング {poll + 1} レスポンス: {status_response.text}")
                                 if status_response.status_code == 200:
-                                    print(f"📊 ワーカー状態: キュー位置={status_result.get('queue_position', '不明')}, 待機時間={status_result.get('wait_time', '不明')}, ワーカー数={status_result.get('worker_count', '不明')}")
+                                    print(f"📊 ワーカー状態: キュー位置={status_result.get('queue_position', '不明')}, 待機時間={status_result.get('wait_time', '不明')}, ワーカー数={status_result.get('worker_count', '不明')}, Kudosコスト={status_result.get('kudos_cost', '不明')}")
                                     if status_result.get("done"):
                                         if "generations" in status_result and status_result["generations"]:
                                             img_data = status_result["generations"][0]["img"]
@@ -470,7 +470,7 @@ def generate_image(prompt):
                             print(f"⚠️ NSFWフィルター検知: {response.text}")
                             return None
                         if attempt < 2:
-                            time.sleep(90 * (attempt + 1))  # リトライ間隔延長
+                            time.sleep(90 * (attempt + 1))  # リトライ間隔
                         continue
                 except requests.exceptions.Timeout:
                     print(f"❌ 画像生成タイムアウト (試行 {attempt + 1})")
