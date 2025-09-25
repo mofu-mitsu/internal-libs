@@ -685,8 +685,8 @@ def generate_reply_via_groq(user_input):
     if image_match:
         try:
             full_match = image_match.group(0)
-            # トリガーワードを除き、前後を結合、文末記号を削除
-            prompt = re.sub(r'[。！？]+', '', f"{image_match.group(1).strip()} {image_match.group(3).strip()}").strip()
+            # トリガーワードを除き、前後を結合、文末記号と「くれ」を削除
+            prompt = re.sub(r'(くれる|くれ|お願いできる|お願いします)[。！？]*', '', f"{image_match.group(1).strip()} {image_match.group(3).strip()}").strip()
             print(f"🖼️ 画像生成トリガー検知: マッチ='{full_match}', プロンプト='{prompt}'")
             image = generate_image(prompt)
             if image:
