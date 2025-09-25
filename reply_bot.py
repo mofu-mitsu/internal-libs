@@ -290,11 +290,11 @@ def generate_image(prompt):
             return None
 
         DEEPAI_API_KEY = os.getenv("DEEPAI_API_KEY")
-        STABLE_HORDE_API_KEY = os.getenv("STABLE_HORDE_API_KEY") or "y5Fox28OEJcdC8lc4aaBrA"  # 登録キー
+        STABLE_HORDE_API_KEY = os.getenv("STABLE_HORDE_API_KEY") or "y5Fox28OEJcdC8lc4aaBrA"
 
         cleaned_prompt = re.sub(r'[。！？、!?\s]+', ' ', prompt).strip() if prompt else ""
-        enhanced_prompt = f"{cleaned_prompt}, anime style, soft colors, detailed, kawaii" if cleaned_prompt else "fuwamoko, anime style, soft colors, detailed, kawaii"
-        negative_prompt = "low quality, blurry, realistic, photorealistic, cartoonish, 3d, human, split, distorted anatomy"
+        enhanced_prompt = f"{cleaned_prompt}, anime style, soft colors, detailed, kawaii, accurate anatomy" if cleaned_prompt else "fuwamoko mirinteya, anime style, soft colors, detailed, kawaii, accurate anatomy"
+        negative_prompt = "low quality, blurry, realistic, photorealistic, cartoonish, 3d, human, split, distorted anatomy, multiple humans"
         print(f"🖼️ API送信プロンプト: {enhanced_prompt}")
 
         if any(danger_word in enhanced_prompt.lower() for danger_word in DANGER_ZONE):
@@ -320,7 +320,7 @@ def generate_image(prompt):
                         "steps": 40,
                         "cfg_scale": 10.0,
                         "sampler_name": "k_euler_a",
-                        "models": ["runwayml/stable-diffusion-v1-5"]
+                        "models": ["Anything V5"]  # モデル変更
                     },
                     "nsfw": False,
                     "negative_prompt": negative_prompt
@@ -424,7 +424,7 @@ def generate_image(prompt):
                         time.sleep(60 * (attempt + 1))
                     continue
                 except Exception as e:
-                    print(f"⚠️ APIリクエストエラー (試行 {attempt + 1}): {type(e).__name__}: {str(e)}")
+                    print(f"⚠️ APIリクエストエラー (試行 {attempt + 1): {type(e).__name__}: {str(e)}")
                     traceback.print_exc()
                     if attempt < 2:
                         time.sleep(60 * (attempt + 1))
