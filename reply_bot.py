@@ -618,6 +618,10 @@ def clean_sentence_ending(reply):
         ("オレ", FIRST_PERSON),
         ("ぼく", FIRST_PERSON),
         ("お前", "きみ"),
+        ("できませんが", "できないけど"),
+        ("できません", "できない"),
+        ("ごめんなさい", "ごめんね"),
+        ("みます", "みるね"),
     ]
     for old, new in tone_map:
         if old in reply:
