@@ -292,10 +292,27 @@ def generate_image(prompt):
         DEEPAI_API_KEY = os.getenv("DEEPAI_API_KEY")
         STABLE_HORDE_API_KEY = os.getenv("STABLE_HORDE_API_KEY") or "y5Fox28OEJcdC8lc4aaBrA"
 
-        # プロンプトをクリーン（記号軽く除去）
-        cleaned_prompt = re.sub(r'[\s]+', ' ', prompt).strip() if prompt else ""
-        enhanced_prompt = f"{cleaned_prompt}, anime style, soft colors, detailed, kawaii, accurate anatomy" if cleaned_prompt else "fuwamoko mirinteya, anime style, soft colors, detailed, kawaii, accurate anatomy"
-        negative_prompt = "low quality, blurry face, realistic, photorealistic, cartoonish, 3d, human, split, distorted anatomy, multiple subjects, amputated limbs, nude, deformed face, extra characters, unwanted characters"
+        # 絵文字をテキストに変換
+        emoji_map = {
+            "🐈‍⬛": "cute black cat",
+            "🐈": "cute cat",
+            "🎀": "cute ribbon",
+            "💜": "purple aesthetic",
+            "🖤": "yamikawaii aesthetic",
+        }
+        for emoji, text in emoji_map.items():
+            prompt = prompt.replace(emoji, text)
+
+        # プロンプトをクリーン（トリガーの残骸や記号を削除）
+        cleaned_prompt = re.sub(r'(くれ|お願いします|して)[。！？]*', '', prompt).strip() if prompt else ""
+        # 人数指定を追加（性別を検出）
+        gender_match = re.search(r"(男性|男の子|イケメン|1boy|boy)", cleaned_prompt, re.IGNORECASE)
+        if gender_match:
+            cleaned_prompt = f"1boy, solo, {cleaned_prompt}"
+        else:
+            cleaned_prompt = f"1girl, solo, {cleaned_prompt}"
+        enhanced_prompt = f"{cleaned_prompt}, anime style, soft colors, detailed, kawaii, accurate anatomy, bust shot, looking at viewer" if cleaned_prompt else "fuwamoko mirinteya, 1girl, solo, anime style, soft colors, detailed, kawaii, accurate anatomy, bust shot, looking at viewer"
+        negative_prompt = "low quality, blurry face, realistic, photorealistic, cartoonish, 3d, split, distorted anatomy, multiple subjects, multiple girls, multiple boys, extra limbs, extra faces, two heads, three heads, mutation, clone, deformed face, extra characters, unwanted characters, fused body, collage"
         print(f"🖼️ API送信プロンプト: {enhanced_prompt}")
 
         if any(danger_word in enhanced_prompt.lower() for danger_word in DANGER_ZONE):
@@ -318,9 +335,9 @@ def generate_image(prompt):
                     "params": {
                         "width": 768,
                         "height": 768,
-                        "steps": 50,  # 詳細強化
-                        "cfg_scale": 8.5,  # バランス調整
-                        "sampler_name": "k_euler_a",
+                        "steps": 35,  # チャッピーの推奨
+                        "cfg_scale": 7.5,  # 調整
+                        "sampler_name": "k_euler",  # 安定性重視
                         "models": ["stabilityai/stable-diffusion-xl-base-1.0"]  # SDXL
                     },
                     "nsfw": False,
@@ -540,6 +557,23 @@ REPLY_TABLE = {
     "初めまして": "はじめましてぇ♡ 地雷系ツインテbotのみりんてゃだよ〜っ！仲良くしてくれるとうれしいなっ♪",
     "よろしく": "よろしくねっ♡ いっぱいふわふわできたらいいな〜って思ってるよぉ♡",
     "DM": "DMはあんまり見れないのっ💭 よかったらリプで話そ〜！♡",
+    REPLY_TABLE = {
+    "使い方": "使い方は「♡推しプロフィールメーカー♡」のページにあるよ〜！かんたんっ♪",
+    "作ったよ": "えっ…ほんと？ありがとぉ♡ 見せて見せてっ！",
+    "きたよ": "きゅ〜ん♡ 来てくれてとびきりの「すきっ」プレゼントしちゃう♡",
+    "フォローした": "ありがとぉ♡ みりんてゃ、超よろこびダンス中〜っ！",
+    "フォロー失礼": "フォローありがとぉ♡ みりんてゃ、おともだちふえた〜ってうれし泣きっ♪",
+    "誰？": "みりんてゃだよっ♡ ふわもこ妖精系botって感じっ♪",
+    "プロフィール": "プロフィールは固定ツイにあるよっ！ みりんのこと、もっと知ってくれるの〜？",
+    "bot": "中に小さいみりん妖精が入ってるらしいよっ♡ ふふふっ♪",
+    "はじめまして": "はじめましてぇ♡ 地雷系ツインテbotのみりんてゃだよ〜っ！仲良くしてくれるとうれしいなっ♪",
+    "初めまして": "はじめましてぇ♡ 地雷系ツインテbotのみりんてゃだよ〜っ！仲良くしてくれるとうれしいなっ♪",
+    "よろしく": "よろしくねっ♡ いっぱいふわふわできたらいいな〜って思ってるよぉ♡",
+    "DM": "DMはあんまり見れないのっ💭 よかったらリプで話そ〜！♡",
+    "画像生成できる？": "もちろんできるよっ♡ 『○○の画像生成して』か『画像生成して ○○』で言ってくれると、みりんてゃがふわもこ絵を描くよぉ♪ 例：『猫の画像生成して 白色』",
+    "画像作れる？": "うんうん、作れるよぉ♡ 『○○の画像作って』か『画像作って ○○』でリプしてね！例：『イケメンの画像作って』だよっ♪",
+    "画像作れるの？": "うんうん、作れるよぉ♡ 『○○の画像作って』か『画像作って ○○』でリプしてね！例：『イケメンの画像作って V系』だよっ♪",
+    "画像生成できますか？": "えへへ、できるよっ♡ 『○○の画像生成して』か『画像生成して ○○』でリプして！みりんてゃがキミの推し描いちゃうよぉ♪",
 }
 
 #------------------------------
