@@ -280,7 +280,7 @@ def check_diagnosis_limit(user_did, is_daytime):
 #------------------------------
 #🆕 画像生成機能（軽量版）
 #------------------------------
-DANGER_ZONE = ["nsfw", "nude", "gore", "sexual", "explicit", "yoga", "goth", "lolita", "heart", "cat", "cute", "kawaii", "girl"]
+DANGER_ZONE = ["nsfw", "nude", "gore"]
 
 def generate_image(prompt):
     print(f"🖼️ API画像生成開始: プロンプト={prompt}")
