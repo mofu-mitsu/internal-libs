@@ -282,8 +282,23 @@ def check_diagnosis_limit(user_did, is_daytime):
 #------------------------------
 DANGER_ZONE = ["nsfw", "nude", "gore"]
 
+def check_kudos():
+    """Stable HordeのKudos残高をチェック"""
+    try:
+        url = "https://stablehorde.net/api/v2/find_user"
+        headers = {"apikey": STABLE_HORDE_API_KEY}
+        response = requests.get(url, headers=headers, timeout=10)
+        if response.status_code == 200:
+            return response.json().get("kudos", 0)
+        print(f"⚠️ Kudosチェック失敗: {response.text}")
+        return 0
+    except Exception as e:
+        print(f"❌ Kudosチェックエラー: {type(e).__name__}: {str(e)}")
+        return 0
+
 def generate_image(prompt):
     print(f"🖼️ API画像生成開始: プロンプト={prompt}")
+    global STABLE_HORDE_API_KEY
     try:
         if not HF_TOKEN or len(HF_TOKEN) < 10:
             print(f"❌ HF_TOKENが無効または短すぎます: {repr(HF_TOKEN)[:8]}...")
@@ -292,7 +307,12 @@ def generate_image(prompt):
         DEEPAI_API_KEY = os.getenv("DEEPAI_API_KEY")
         STABLE_HORDE_API_KEY = os.getenv("STABLE_HORDE_API_KEY") or "y5Fox28OEJcdC8lc4aaBrA"
 
-        # 絵文字をテキストに変換（安全なキーワードに）
+        # Kudosチェック
+        kudos = check_kudos()
+        print(f"📊 Kudos残高: {kudos}")
+        use_low_load = kudos < 20  # Kudos不足なら低負荷モード
+
+        # 絵文字をテキストに変換
         emoji_map = {
             "🐈‍⬛": "adorable black kitten",
             "🐈": "adorable kitten",
@@ -307,21 +327,30 @@ def generate_image(prompt):
         for emoji, text in emoji_map.items():
             prompt = prompt.replace(emoji, text)
 
-        # 髪型を英語に変換
+        # 髪型とスタイルを英語に変換
         hairstyle_map = {
             "ツインテール": "twin tails, double ponytails, symmetrical hair, highly detailed hair",
             "ポニーテール": "ponytail, single high ponytail, highly detailed hair, smooth hair texture",
             "お団子": "hair buns, double buns, highly detailed hair",
             "ショートカット": "short hair, bob cut, highly detailed hair",
             "ロングヘア": "long hair, flowing hair, highly detailed hair",
-            "ふわもこ": "fuwamoko kawaii style, fluffy hair, soft aesthetic"
+            "ふわもこ": "fuwamoko kawaii style, fluffy hair, soft aesthetic",
+            "地雷系": "yamikawaii style",
+            "ゴスロリ": "gothic lolita",
         }
         for jp, en in hairstyle_map.items():
             prompt = prompt.replace(jp, en)
 
-        # プロンプトをクリーン（トリガーの残骸や記号を削除）
-        cleaned_prompt = re.sub(r'(くれ|お願いします|して|\d+歳|ヨガインストラクター|地雷系|ハートの瞳孔|女性|可愛い女の子)[。！？]*', '', prompt).strip() if prompt else ""
-        cleaned_prompt = cleaned_prompt.replace("ヨガインストラクター", "yoga girl, casual sportswear").replace("地雷系", "yamikawaii style").replace("ハートの瞳孔", "heart-shaped pupils").replace("女性", "girl").replace("可愛い女の子", "kawaii girl")
+        # プロンプトをクリーン
+        cleaned_prompt = re.sub(r'(くれ|お願いします|して|\d+歳|ヨガインストラクター|ハートの瞳孔|女性|可愛い女の子)[。！？]*', '', prompt).strip() if prompt else ""
+        cleaned_prompt = cleaned_prompt.replace("ヨガインストラクター", "yoga girl, casual sportswear").replace("ハートの瞳孔", "heart-shaped pupils").replace("女性", "girl").replace("可愛い女の子", "kawaii girl")
+
+        # 性別に応じたスタイル置換
+        gender_match = re.search(r"(男性|男の子|イケメン|1boy|boy)", cleaned_prompt, re.IGNORECASE)
+        if gender_match and "gothic lolita" in cleaned_prompt.lower():
+            cleaned_prompt = cleaned_prompt.replace("gothic lolita", "gothic male fashion, victorian suit, dark aesthetic")
+        elif not gender_match and "gothic lolita" in cleaned_prompt.lower():
+            cleaned_prompt = cleaned_prompt.replace("gothic lolita", "gothic lolita, frilly dress, intricate accessories")
 
         # 動物専用プロンプトパス
         animal_match = re.search(r"(猫|cat|キャット|kitten|🐈‍⬛|🐈|🐱|犬|dog|puppy|🐶|兎|rabbit|bunny|🐰|動物|animal)", cleaned_prompt, re.IGNORECASE)
@@ -335,12 +364,11 @@ def generate_image(prompt):
             cleaned_prompt = f"adorable {animal_type}, ultra high quality, polished anime style, 2d, cartoonish, detailed fur, smooth fur texture, vibrant colors, sfw, safe, wholesome"
             enhanced_prompt = cleaned_prompt
         else:
-            # 人数と性別指定を追加
-            gender_match = re.search(r"(男性|男の子|イケメン|1boy|boy)", cleaned_prompt, re.IGNORECASE)
+            # 人数と性別指定
             if gender_match:
                 cleaned_prompt = f"solo, single subject, one character, no background characters, centered focus, single head, single face, 1boy, upper body, {cleaned_prompt}, ultra high quality, polished anime style, 2d, cartoonish, mature aesthetic, detailed outfit, sfw, safe, wholesome"
             else:
-                cleaned_prompt = f"solo, single subject, one character, no background characters, centered focus, single head, single face, young girl, upper body, {cleaned_prompt}, ultra high quality, polished anime style, 2d, cartoonish, mature aesthetic, detailed, intricate accessories, sfw, safe, wholesome"
+                cleaned_prompt = f"solo, single subject, one character, no background characters, centered focus, single head, single face, young girl, upper body, {cleaned_prompt}, ultra high quality, polished anime style, 2d, cartoonish, mature aesthetic, detailed outfit, sfw, safe, wholesome"
             enhanced_prompt = f"{cleaned_prompt}, pastel colors, soft shading, clean lines, sharp details, detailed painting, smooth shading, no artifacts, clean edges, symmetrical face, balanced eyes, identical eye shape, detailed eyes, expressive eyes, accurate anatomy, looking at viewer, vibrant colors"
 
         negative_prompt = "low quality, blurry face, realistic, photorealistic, 3d, split, distorted anatomy, multiple subjects, multiple girls, multiple boys, extra limbs, extra faces, extra heads, multiple heads, fused heads, overlapping heads, two people, three people, duplicate, clone, mutation, deformed, bad anatomy, disfigured, collage, fused, out of frame, nsfw, nude, sexual, explicit, low detail, childish art, amateur drawing, uneven shading, painting errors, incomplete details, other hairstyles, loose hair, twin tails, messy hair, asymmetrical face, uneven eyes, mismatched eyes, creepy eyes, distorted face, horror, creepy, monstrous"
@@ -353,32 +381,53 @@ def generate_image(prompt):
 
         api_configs = [
             {
+                "url": "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-dev",
+                "headers": {"Authorization": f"Bearer {HF_TOKEN}"},
+                "payload": {"inputs": enhanced_prompt},
+                "type": "huggingface",
+                "timeout": 500
+            },
+            {
                 "url": "https://stablehorde.net/api/v2/generate/async",
                 "headers": {"apikey": STABLE_HORDE_API_KEY},
                 "payload": {
                     "prompt": enhanced_prompt,
                     "params": {
-                        "width": 1024,  # SDXL用
-                        "height": 1024,  # SDXL用
-                        "steps": 50,  # ディテール強化
-                        "cfg_scale": 9.0,  # プロンプト忠実度
-                        "sampler_name": "k_dpmpp_sde",  # 高品質安定
-                        "denoising_strength": 0.7,  # ノイズ減
-                        "models": ["andite/Yozora", "stabilityai/stable-diffusion-xl-base-1.0", "Lykon/AnimePastelDream", "prompthero/anything-v5-pruned", "Meina/MeinaMix", "hakurei/Counterfeit-V3.0"]  # SDXL追加
+                        "width": 512 if use_low_load else 1024,
+                        "height": 512 if use_low_load else 1024,
+                        "steps": 30 if use_low_load else 50,
+                        "cfg_scale": 9.0,
+                        "sampler_name": "k_euler_a" if use_low_load else "k_dpmpp_sde",
+                        "denoising_strength": 0.7,
+                        "models": ["andite/Yozora", "stabilityai/stable-diffusion-xl-base-1.0", "Lykon/AnimePastelDream", "prompthero/anything-v5-pruned", "Meina/MeinaMix", "hakurei/Counterfeit-V3.0"]
                     },
-                    "nsfw": True,  # NSFWワーカー優先
-                    "censor_nsfw": False,  # フィルター回避
+                    "nsfw": True,
+                    "censor_nsfw": False,
                     "negative_prompt": negative_prompt
                 },
                 "type": "stablehorde",
                 "timeout": 180
             },
             {
-                "url": "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-dev",
-                "headers": {"Authorization": f"Bearer {HF_TOKEN}"},
-                "payload": {"inputs": enhanced_prompt},
-                "type": "huggingface",
-                "timeout": 500
+                "url": "https://stablehorde.net/api/v2/generate/async",
+                "headers": {"apikey": "0000000000"},  # 匿名キー
+                "payload": {
+                    "prompt": enhanced_prompt,
+                    "params": {
+                        "width": 512,
+                        "height": 512,
+                        "steps": 30,
+                        "cfg_scale": 7.5,
+                        "sampler_name": "k_euler_a",
+                        "denoising_strength": 0.7,
+                        "models": ["andite/Yozora", "stabilityai/stable-diffusion-xl-base-1.0", "Lykon/AnimePastelDream"]
+                    },
+                    "nsfw": True,
+                    "censor_nsfw": False,
+                    "negative_prompt": negative_prompt
+                },
+                "type": "stablehorde_anon",
+                "timeout": 180
             },
             {
                 "url": "https://api.deepai.org/api/text2img",
@@ -401,14 +450,14 @@ def generate_image(prompt):
 
             for attempt in range(3):
                 try:
-                    print(f"📡 APIリクエスト: URL={api_url}, Headers={headers}, Payload={payload}")
+                    print(f"📡 APIリクエスト: URL={api_url}, Type={api_type}, 試行={attempt + 1}")
                     if api_type == "deepai":
                         response = requests.post(api_url, data=payload, headers=headers, timeout=timeout)
                     else:
                         response = requests.post(api_url, json=payload, headers=headers, timeout=timeout)
                     print(f"📥 試行 {attempt + 1} フルレスポンス: {response.text}")
 
-                    if response.status_code == 200 or (api_type == "stablehorde" and response.status_code == 202):
+                    if response.status_code == 200 or (api_type in ["stablehorde", "stablehorde_anon"] and response.status_code == 202):
                         if api_type == "deepai":
                             result = response.json()
                             if "output_url" in result:
@@ -418,7 +467,7 @@ def generate_image(prompt):
                                 continue
                         elif api_type == "huggingface":
                             image_data = response.content
-                        elif api_type == "stablehorde":
+                        elif api_type in ["stablehorde", "stablehorde_anon"]:
                             result = response.json()
                             if "id" not in result:
                                 print(f"⚠️ Stable Hordeレスポンスにidなし: {result}")
@@ -460,7 +509,7 @@ def generate_image(prompt):
                             image = Image.open(BytesIO(image_data))
                             image_path = f"output_{attempt}.png"
                             image.save(image_path, "PNG")
-                            print(f"✅ 画像生成成功: API={api_url}, 試行={attempt + 1}, 保存先={image_path}")
+                            print(f"✅ 画像生成成功: API={api_url}, Type={api_type}, 試行={attempt + 1}, 保存先={image_path}, 使用モデル={status_result.get('model', '不明') if api_type in ['stablehorde', 'stablehorde_anon'] else 'N/A'}")
                             return image_path
                         except Exception as img_err:
                             print(f"⚠️ 画像処理エラー: {type(img_err).__name__}: {str(img_err)}")
@@ -471,6 +520,14 @@ def generate_image(prompt):
                         if "CENSORED" in response.text or "NSFW" in response.text:
                             print(f"⚠️ NSFWフィルター検知: {response.text}")
                             return None
+                        if "KudosUpfront" in response.text and api_type == "stablehorde":
+                            print(f"⚠️ Kudos不足検知、匿名キーまたは低負荷モードへ")
+                            STABLE_HORDE_API_KEY = "0000000000"  # 匿名キーに切り替え
+                            config["headers"]["apikey"] = STABLE_HORDE_API_KEY
+                            config["payload"]["params"]["width"] = 512
+                            config["payload"]["params"]["height"] = 512
+                            config["payload"]["params"]["steps"] = 30
+                            config["payload"]["params"]["sampler_name"] = "k_euler_a"
                         if attempt < 2:
                             time.sleep(90 * (attempt + 1))
                         continue
