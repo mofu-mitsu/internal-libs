@@ -294,7 +294,7 @@ def generate_image(prompt):
 
         cleaned_prompt = re.sub(r'[。！？、!?\s]+', ' ', prompt).strip() if prompt else ""
         enhanced_prompt = f"{cleaned_prompt}, anime style, soft colors, detailed, kawaii, accurate anatomy" if cleaned_prompt else "fuwamoko mirinteya, anime style, soft colors, detailed, kawaii, accurate anatomy"
-        negative_prompt = "low quality, blurry, realistic, photorealistic, cartoonish, 3d, human, split, distorted anatomy, multiple humans, amputated limbs"
+        negative_prompt = "low quality, blurry, realistic, photorealistic, cartoonish, 3d, human, split, distorted anatomy, multiple humans, amputated limbs, nude"
         print(f"🖼️ API送信プロンプト: {enhanced_prompt}")
 
         if any(danger_word in enhanced_prompt.lower() for danger_word in DANGER_ZONE):
