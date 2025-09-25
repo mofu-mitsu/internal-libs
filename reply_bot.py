@@ -837,6 +837,44 @@ def post_replies_to_bluesky():
     for post in unreplied:
         try:
             reply = generate_reply_via_groq(post["text"])
+            if isinstance(reply, dict) and reply.get("type") == "image":
+                image_path = reply["image"]
+                prompt = reply.get("prompt", "")
+                reply_text = f"みりんてゃが描いたよ♡ どうかな？{'「' + prompt + '」' if prompt else ''}"
+                try:
+                    with open(image_path, "rb") as f:
+                        blob_resp = client.com.atproto.repo.upload_blob(data=f.read())
+                    blob_ref = blob_resp.blob
+                    post_data = {
+                        "text": reply_text,
+                        "createdAt": datetime.now(timezone.utc).isoformat(),
+                        "embed": {
+                            "$type": "app.bsky.embed.images",
+                            "images": [{"image": blob_ref, "alt": f"Generated image: {prompt or 'fuwamoko mirinteya'}"}]
+                        }
+                    }
+                    if reply_ref:
+                        post_data["reply"] = reply_ref
+                    facets = generate_facets_from_text(reply_text, hashtags)
+                    if facets:
+                        post_data["facets"] = facets
+                    client.app.bsky.feed.post.create(record=post_data, repo=client.me.did)
+                    replied.add(notification_uri)
+                    save_replied(replied)
+                    print(f"✅ @{author_handle} に画像付き返信完了！ → {notification_uri}")
+                    reply_count += 1
+                    time.sleep(REPLY_INTERVAL)
+                    try:
+                        os.remove(image_path)
+                        print(f"🧹 一時ファイル {image_path} 削除成功")
+                    except Exception as e:
+                        print(f"⚠️ 一時ファイル削除失敗: {e}")
+                    continue
+                except Exception as e:
+                    print(f"⚠️ 画像投稿エラー: {type(e).__name__}: {str(e)}")
+                    traceback.print_exc()
+                    reply_text = "ごめん…画像生成失敗しちゃった♡ また試してみてね！"
+                    hashtags = []
             client.send_post(text=reply, reply_to={"uri": post["post_id"]})
             print(f"📤 投稿成功: {reply}")
         except Exception as e:
