@@ -424,7 +424,7 @@ def generate_image(prompt):
                         time.sleep(60 * (attempt + 1))
                     continue
                 except Exception as e:
-                    print(f"⚠️ APIリクエストエラー (試行 {attempt + 1): {type(e).__name__}: {str(e)}")
+                    print(f"⚠️ APIリクエストエラー (試行 {attempt + 1}): {type(e).__name__}: {str(e)}")
                     traceback.print_exc()
                     if attempt < 2:
                         time.sleep(60 * (attempt + 1))
