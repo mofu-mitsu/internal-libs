@@ -277,9 +277,9 @@ def check_diagnosis_limit(user_did, is_daytime):
     print("✅ diagnosis_limits 保存成功")
     return True, None
 
-#------------------------------
-#🆕 画像生成機能（軽量版）
-#------------------------------
+    #------------------------------
+    #🆕 画像生成機能（軽量版）
+    #------------------------------
 DANGER_ZONE = ["nsfw", "nude", "gore"]
 
 def generate_image(prompt):
@@ -292,43 +292,43 @@ def generate_image(prompt):
         DEEPAI_API_KEY = os.getenv("DEEPAI_API_KEY")
         STABLE_HORDE_API_KEY = os.getenv("STABLE_HORDE_API_KEY") or "y5Fox28OEJcdC8lc4aaBrA"
 
-        # 記号やスペースは軽く整えるだけ
         cleaned_prompt = re.sub(r'[\s]+', ' ', prompt).strip() if prompt else ""
         enhanced_prompt = f"{cleaned_prompt}, anime style, soft colors, detailed, kawaii, accurate anatomy" if cleaned_prompt else "fuwamoko mirinteya, anime style, soft colors, detailed, kawaii, accurate anatomy"
-        negative_prompt = "low quality, blurry, realistic, photorealistic, cartoonish, 3d, human, split, distorted anatomy, multiple humans, amputated limbs, nude, broken eyes"
+        negative_prompt = "low quality, blurry, realistic, photorealistic, cartoonish, 3d, human, split, distorted anatomy, multiple humans, amputated limbs, nude, distorted face, extra characters"
         print(f"🖼️ API送信プロンプト: {enhanced_prompt}")
 
         if any(danger_word in enhanced_prompt.lower() for danger_word in DANGER_ZONE):
             print(f"⚠️ 危険ワード検知: {enhanced_prompt}")
             return None
-
-        api_configs = [
-            {
-                "url": "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-dev",
-                "headers": {"Authorization": f"Bearer {HF_TOKEN}"},
-                "payload": {"inputs": enhanced_prompt},
-                "type": "huggingface",
-                "timeout": 500
-            },
-            {
-                "url": "https://stablehorde.net/api/v2/generate/async",
-                "headers": {"apikey": STABLE_HORDE_API_KEY},
-                "payload": {
-                    "prompt": enhanced_prompt,
-                    "params": {
-                        "width": 768,
-                        "height": 768,
-                        "steps": 40,
-                        "cfg_scale": 10.0,
-                        "sampler_name": "k_euler_a",
-                        "models": ["Anything V5"]
-                    },
-                    "nsfw": False,
-                    "negative_prompt": negative_prompt
+    
+            api_configs = [
+                {
+                    "url": "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-dev",
+                    "headers": {"Authorization": f"Bearer {HF_TOKEN}"},
+                    "payload": {"inputs": enhanced_prompt},
+                    "type": "huggingface",
+                    "timeout": 500
                 },
-                "type": "stablehorde",
-                "timeout": 180
-            },
+                {
+                    "url": "https://stablehorde.net/api/v2/generate/async",
+                    "headers": {"apikey": STABLE_HORDE_API_KEY},
+                    "payload": {
+                        "prompt": enhanced_prompt,
+                        "params": {
+                            "width": 768,
+                            "height": 768,
+                            "steps": 40,
+                            "cfg_scale": 10.0,
+                            "sampler_name": "k_euler_a",
+                            "models": ["Anything V5"]
+                            "n_iter": 1  # 複数生成防止
+                        },
+                        "nsfw": False,
+                        "negative_prompt": negative_prompt
+                    },
+                    "type": "stablehorde",
+                    "timeout": 180
+                },
             {
                 "url": "https://api.deepai.org/api/text2img",
                 "headers": {
