@@ -574,6 +574,7 @@ def clean_sentence_ending(reply):
     reply = re.sub(rf"^{BOT_NAME}\s*[:：]\s*", "", reply)
     reply = re.sub(r"^ユーザー\s*[:：]\s*", "", reply)
     reply = re.sub(r"([！？笑])。$", r"\1", reply)
+    reply = re.sub(r"[ごおお][すすす][まぁ][すすす]|ございます", "なのっ♡", reply)  # 敬語除去強化
 
     tone_map = [
         ("俺", FIRST_PERSON),
