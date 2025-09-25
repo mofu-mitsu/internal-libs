@@ -280,7 +280,7 @@ def check_diagnosis_limit(user_did, is_daytime):
 #------------------------------
 #🆕 画像生成機能（軽量版）
 #------------------------------
-DANGER_ZONE = ["nsfw", "nude", "gore"]
+DANGER_ZONE = ["nsfw", "nude", "gore", "sexual", "explicit", "yoga", "goth", "lolita", "heart", "cat", "cute", "kawaii", "girl"]
 
 def generate_image(prompt):
     print(f"🖼️ API画像生成開始: プロンプト={prompt}")
@@ -298,6 +298,7 @@ def generate_image(prompt):
             "🐈": "adorable kitten",
             "🐱": "adorable kitten",
             "🐶": "adorable puppy",
+            "🐰": "adorable bunny",
             "🎀": "cute ribbon",
             "💜": "purple aesthetic",
             "🖤": "yamikawaii style",
@@ -306,25 +307,42 @@ def generate_image(prompt):
         for emoji, text in emoji_map.items():
             prompt = prompt.replace(emoji, text)
 
+        # 髪型を英語に変換
+        hairstyle_map = {
+            "ツインテール": "twin tails, double ponytails, symmetrical hair",
+            "ポニーテール": "ponytail, single high ponytail",
+            "お団子": "hair buns, double buns",
+            "ショートカット": "short hair, bob cut",
+            "ロングヘア": "long hair, flowing hair",
+        }
+        for jp, en in hairstyle_map.items():
+            prompt = prompt.replace(jp, en)
+
         # プロンプトをクリーン（トリガーの残骸や記号を削除）
         cleaned_prompt = re.sub(r'(くれ|お願いします|して|\d+歳|ヨガインストラクター|地雷系|ハートの瞳孔|女性)[。！？]*', '', prompt).strip() if prompt else ""
         cleaned_prompt = cleaned_prompt.replace("ヨガインストラクター", "yoga girl, casual sportswear").replace("地雷系", "yamikawaii style").replace("ハートの瞳孔", "heart-shaped pupils").replace("女性", "girl")
 
-        # 猫専用プロンプトパス
-        cat_match = re.search(r"(猫|cat|キャット|kitten|🐈‍⬛|🐈|🐱)", cleaned_prompt, re.IGNORECASE)
-        if cat_match:
-            cleaned_prompt = f"{cleaned_prompt}, adorable kitten, anime style, 2d, cartoonish, detailed fur, vibrant colors, sfw, safe, wholesome"
+        # 動物専用プロンプトパス
+        animal_match = re.search(r"(猫|cat|キャット|kitten|🐈‍⬛|🐈|🐱|犬|dog|puppy|🐶|兎|rabbit|bunny|🐰|動物|animal)", cleaned_prompt, re.IGNORECASE)
+        if animal_match:
+            animal_type = (
+                "kitten" if re.search(r"猫|cat|キャット|kitten|🐈‍⬛|🐈|🐱", cleaned_prompt, re.IGNORECASE)
+                else "puppy" if re.search(r"犬|dog|puppy|🐶", cleaned_prompt, re.IGNORECASE)
+                else "bunny" if re.search(r"兎|rabbit|bunny|🐰", cleaned_prompt, re.IGNORECASE)
+                else "animal"
+            )
+            cleaned_prompt = f"adorable {animal_type}, anime style, 2d, cartoonish, detailed fur, vibrant colors, sfw, safe, wholesome"
             enhanced_prompt = cleaned_prompt
         else:
             # 人数と性別指定を追加
             gender_match = re.search(r"(男性|男の子|イケメン|1boy|boy)", cleaned_prompt, re.IGNORECASE)
             if gender_match:
-                cleaned_prompt = f"1boy, solo, upper body, centered, {cleaned_prompt}, anime style, 2d, cartoonish, sfw, safe, wholesome"
+                cleaned_prompt = f"solo, single subject, one character, no background characters, 1boy, upper body, centered, {cleaned_prompt}, anime style, 2d, cartoonish, sfw, safe, wholesome"
             else:
-                cleaned_prompt = f"young girl, solo, upper body, centered, {cleaned_prompt}, anime style, 2d, cartoonish, sfw, safe, wholesome"
+                cleaned_prompt = f"solo, single subject, one character, no background characters, young girl, upper body, centered, {cleaned_prompt}, anime style, 2d, cartoonish, sfw, safe, wholesome"
             enhanced_prompt = f"{cleaned_prompt}, clean lines, detailed, accurate anatomy, looking at viewer, vibrant colors"
 
-        negative_prompt = "low quality, blurry face, realistic, photorealistic, 3d, split, distorted anatomy, multiple subjects, multiple girls, multiple boys, extra limbs, extra faces, extra heads, extra body, two people, two boys, two girls, duplicate, clone, mutation, deformed, bad anatomy, disfigured, collage, fused, out of frame, nsfw, nude, sexual, explicit, low detail"
+        negative_prompt = "low quality, blurry face, realistic, photorealistic, 3d, split, distorted anatomy, multiple subjects, multiple girls, multiple boys, extra limbs, extra faces, extra heads, extra body, two people, three people, duplicate, clone, mutation, deformed, bad anatomy, disfigured, collage, fused, out of frame, nsfw, nude, sexual, explicit, low detail, ponytail, short hair, bob cut, other hairstyles"
         print(f"🖼️ API送信プロンプト: {enhanced_prompt}")
         print(f"🛑 ネガティブプロンプト: {negative_prompt}")
 
@@ -348,10 +366,10 @@ def generate_image(prompt):
                     "params": {
                         "width": 768,
                         "height": 768,
-                        "steps": 25,  # ディテール強化
-                        "cfg_scale": 7.0,  # アニメ調強調
+                        "steps": 30,  # ディテール強化
+                        "cfg_scale": 7.5,  # プロンプト忠実度
                         "sampler_name": "k_euler_a",  # アニメ向け
-                        "models": ["prompthero/anything-v5-pruned", "Meina/MeinaMix"]  # Counterfeit-V3.0回避
+                        "models": ["prompthero/anything-v5-pruned", "Meina/MeinaMix", "hakurei/Counterfeit-V3.0"]  # Counterfeit復活
                     },
                     "nsfw": True,  # NSFWワーカー優先
                     "censor_nsfw": False,  # フィルター回避
@@ -406,11 +424,12 @@ def generate_image(prompt):
                             id = result["id"]
                             print(f"🔄 Stable Horde ID取得: {id}, ポーリング開始")
                             status_url = f"https://stablehorde.net/api/v2/generate/status/{id}"
-                            for poll in range(12):
+                            for poll in range(20):  # ポーリング回数増加
                                 status_response = requests.get(status_url, headers=headers, timeout=10)
                                 print(f"📥 ポーリング {poll + 1} レスポンス: {status_response.text}")
+                                status_result = status_response.json()
                                 if status_response.status_code == 200:
-                                    status_result = status_response.json()
+                                    print(f"📊 ワーカー状態: キュー位置={status_result.get('queue_position', '不明')}, 待機時間={status_result.get('wait_time', '不明')}")
                                     if status_result.get("done"):
                                         if "generations" in status_result and status_result["generations"]:
                                             img_data = status_result["generations"][0]["img"]
@@ -430,7 +449,7 @@ def generate_image(prompt):
                                     elif status_result.get("faulted") or "CENSORED" in status_result.get("message", ""):
                                         print(f"⚠️ Stable Horde生成失敗: {status_result}")
                                         return None
-                                time.sleep(10)
+                                time.sleep(10 if poll == 0 else 15)  # 動的待ち時間
                             else:
                                 print(f"⚠️ Stable Hordeポーリングタイムアウト: {id}")
                                 continue
