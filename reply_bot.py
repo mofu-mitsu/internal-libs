@@ -460,7 +460,7 @@ def generate_image(prompt):
                             image = Image.open(BytesIO(image_data))
                             image_path = f"output_{attempt}.png"
                             image.save(image_path, "PNG")
-                            print(f"✅ 画像生成成功: API={api_url}, 試行={attempt + 1}, 保存先={image_path}, 使用モデル={status_result.get('model', '不明')}")
+                            print(f"✅ 画像生成成功: API={api_url}, 試行={attempt + 1}, 保存先={image_path}")
                             return image_path
                         except Exception as img_err:
                             print(f"⚠️ 画像処理エラー: {type(img_err).__name__}: {str(img_err)}")
