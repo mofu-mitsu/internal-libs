@@ -362,7 +362,7 @@ def generate_image(prompt):
                         "steps": 40,  # ディテール強化
                         "cfg_scale": 8.5,  # プロンプト忠実度
                         "sampler_name": "k_dpmpp_2m",  # 高品質塗り
-                        "models": ["andite/Yozora", "Lykon/AnimePastelDream", "prompthero/anything-v5-pruned", "Meina/MeinaMix", "hakurei/Counterfeit-V3.0"]  # Yozora優先
+                        "models": ["andite/Yozora", "stabilityai/stable-diffusion-xl-base-1.0", "Lykon/AnimePastelDream", "prompthero/anything-v5-pruned", "Meina/MeinaMix", "hakurei/Counterfeit-V3.0"]  # Yozora優先
                     },
                     "nsfw": True,  # NSFWワーカー優先
                     "censor_nsfw": False,  # フィルター回避
