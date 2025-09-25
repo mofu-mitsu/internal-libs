@@ -313,7 +313,7 @@ def generate_image(prompt):
             cleaned_prompt = f"1boy, solo, {cleaned_prompt}"
         else:
             cleaned_prompt = f"1girl, solo, {cleaned_prompt}"
-        enhanced_prompt = f"{cleaned_prompt}, anime style, soft colors, detailed, accurate anatomy, bust shot, looking at viewer" if cleaned_prompt else "fuwamoko mirinteya, 1girl, solo, anime style, soft colors, detailed, kawaii, accurate anatomy, bust shot, looking at viewer"
+        enhanced_prompt = f"{cleaned_prompt}, anime style, soft colors, detailed, accurate anatomy, solo, bust shot, looking at viewer" if cleaned_prompt else "fuwamoko mirinteya, 1girl, solo, twin tail hair, anime style, soft colors, detailed, kawaii, accurate anatomy, bust shot, looking at viewer"
         negative_prompt = "low quality, blurry face, realistic, photorealistic, cartoonish, 3d, split, distorted anatomy, multiple subjects, multiple, extra limbs, extra faces, two heads, three heads, mutation, clone, deformed face, extra characters, unwanted characters, fused body, collage"
         print(f"🖼️ API送信プロンプト: {enhanced_prompt}")
 
