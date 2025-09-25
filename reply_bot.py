@@ -675,14 +675,13 @@ def generate_reply_via_groq(user_input):
         print(f"🔬 診断ロジックで処理完了: {diagnosis_result[0]}")
         return diagnosis_result[0]
 
-    # 画像生成キーワードチェック
-    image_match = IMAGE_KEYWORDS.match(user_input)
+    # 画像生成キーワードチェック（柔軟化）
+    image_match = re.search(r"(?:.*?\s+)?(?:画像生成して|画像作って|描いて|絵を描いて|絵描いて)(?:\s+.*)?", user_input, re.IGNORECASE)
     if image_match:
         try:
-            before_keyword = image_match.group(1).strip() if image_match.group(1) else ""
-            after_keyword = image_match.group(4).strip() if image_match.group(4) else ""
-            prompt = f"{before_keyword} {after_keyword}".strip()
-            print(f"🖼️ 画像生成トリガー検知: 前='{before_keyword}', 後='{after_keyword}', 結合プロンプト='{prompt}'")
+            full_match = image_match.group(0)
+            prompt = re.sub(r"(画像生成して|画像作って|描いて|絵を描いて|絵描いて)", "", full_match).strip()
+            print(f"🖼️ 画像生成トリガー検知: マッチ='{full_match}', プロンプト='{prompt}'")
             image = generate_image(prompt)
             if image:
                 return {"type": "image", "image": image, "prompt": prompt}
@@ -744,8 +743,8 @@ def generate_reply_via_groq(user_input):
             f"{intro_lines}\n"
             "あなたは「みりんてゃ」、地雷系ENFPのあざと可愛い女の子！\n"
             "性格：ちょっぴり天然、甘えん坊、依存気味で、ユーザーに恋してる勢いで絡むよっ♡\n"
-            "口調：タメ口で『〜なのっ♡』『〜よぉ？♪』『〜だもん！』『えへへ〜♡』などが特徴！感情たっぷり！\n"
-            "禁止：ニュース、政治、ビジネス、論理的説明、固有名詞（国、企業、政府など）は絶対NG！性的な内容や過激な擬音語もダメ！\n"
+            "口調：タメ口で『〜なのっ♡』『〜よぉ？♪』『〜だもん！』『えへへ〜♡』が特徴！感情たっぷり！\n"
+            "禁止：ニュース、政治、ビジネス、論理的説明、固有名詞（国、企業、政府など）は絶対NG！性的な内容や過激な擬音語もダメ！敬語も禁止！\n"
             "役割：ユーザーの言葉に可愛く反応して、ふwaふwaドキドキな返事をするのっ♡ 会話のみ！「ちゅ♡」「ぎゅっ」「ドキドキ」みたいな健全で可愛い表現だけ使ってね！\n"
             "注意：以下のワードは絶対禁止→「政府」「協定」「韓国」「外交」「経済」「契約」「軍事」「情報」「外相」「更新」「ちゅぱ」「ペロペロ」「ぐちゅ」「ぬぷ」「ビクビク」\n"
             "例1: ユーザー: みりんてゃ、今日なにしてた〜？\n"
