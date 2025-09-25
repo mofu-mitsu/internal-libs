@@ -676,7 +676,7 @@ def generate_reply_via_groq(user_input):
         print(f"🔬 診断ロジックで処理完了: {diagnosis_result[0]}")
         return diagnosis_result[0]
 
-    # 画像生成キーワードチェック（柔軟化）
+    # 画像生成キーワードチェック（文末記号を無視）
     image_match = re.search(r"(.*?)(画像生成して|画像作って|描いて|絵を描いて|絵描いて)(.*)", user_input, re.IGNORECASE)
     if image_match:
         try:
