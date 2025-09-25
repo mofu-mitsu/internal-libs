@@ -292,36 +292,57 @@ def generate_image(prompt):
         DEEPAI_API_KEY = os.getenv("DEEPAI_API_KEY")
         STABLE_HORDE_API_KEY = os.getenv("STABLE_HORDE_API_KEY") or "y5Fox28OEJcdC8lc4aaBrA"
 
-        # 絵文字をテキストに変換
+        # 絵文字をテキストに変換（安全なキーワードに）
         emoji_map = {
-            "🐈‍⬛": "cute black cat",
-            "🐈": "cute cat",
-            "🐱": "cute cat",
-            "🐶": "cute dog",
+            "🐈‍⬛": "adorable black kitten",
+            "🐈": "adorable kitten",
+            "🐱": "adorable kitten",
+            "🐶": "adorable puppy",
             "🎀": "cute ribbon",
             "💜": "purple aesthetic",
-            "🖤": "yamikawaii aesthetic",
+            "🖤": "yamikawaii style",
+            "💖": "cute aesthetic",
         }
         for emoji, text in emoji_map.items():
             prompt = prompt.replace(emoji, text)
 
         # プロンプトをクリーン（トリガーの残骸や記号を削除）
-        cleaned_prompt = re.sub(r'(くれ|お願いします|して)[。！？]*', '', prompt).strip() if prompt else ""
-        # 人数指定を追加（性別を検出）
-        gender_match = re.search(r"(男性|男の子|イケメン|1boy|boy)", cleaned_prompt, re.IGNORECASE)
-        if gender_match:
-            cleaned_prompt = f"1boy, solo, {cleaned_prompt}"
+        cleaned_prompt = re.sub(r'(くれ|お願いします|して|\d+歳|ヨガインストラクター|地雷系|ハートの瞳孔|女性)[。！？]*', '', prompt).strip() if prompt else ""
+        cleaned_prompt = cleaned_prompt.replace("ヨガインストラクター", "yoga girl, casual sportswear").replace("地雷系", "yamikawaii style").replace("ハートの瞳孔", "heart-shaped pupils").replace("女性", "girl")
+
+        # 猫専用プロンプトパス
+        cat_match = re.search(r"(猫|cat|キャット|kitten|🐈‍⬛|🐈|🐱)", cleaned_prompt, re.IGNORECASE)
+        if cat_match:
+            cleaned_prompt = f"{cleaned_prompt}, adorable kitten, detailed fur, vibrant colors, sfw, safe, wholesome"
+            enhanced_prompt = cleaned_prompt
         else:
-            cleaned_prompt = f"1girl, solo, {cleaned_prompt}"
-        enhanced_prompt = f"{cleaned_prompt}, anime style, soft colors, detailed, accurate anatomy, solo, bust shot, looking at viewer" if cleaned_prompt else "fuwamoko mirinteya, 1girl, solo, twin tail hair, anime style, soft colors, detailed, kawaii, accurate anatomy, bust shot, looking at viewer"
-        negative_prompt = "low quality, blurry face, realistic, photorealistic, cartoonish, 3d, split, distorted anatomy, multiple subjects, multiple, extra limbs, extra faces, two heads, three heads, mutation, clone, deformed face, extra characters, unwanted characters, fused body, collage"
+            # 人数と性別指定を追加
+            gender_match = re.search(r"(男性|男の子|イケメン|1boy|boy)", cleaned_prompt, re.IGNORECASE)
+            if gender_match:
+                cleaned_prompt = f"1boy, solo, upper body, centered, {cleaned_prompt}, sfw, safe, wholesome"
+            else:
+                cleaned_prompt = f"young girl, solo, upper body, centered, {cleaned_prompt}, sfw, safe, wholesome"
+            enhanced_prompt = f"{cleaned_prompt}, anime style, clean lines, detailed, accurate anatomy, looking at viewer, vibrant colors"
+
+        negative_prompt = "low quality, blurry face, realistic, photorealistic, cartoonish, 3d, split, distorted anatomy, multiple subjects, multiple girls, multiple boys, extra limbs, extra faces, extra heads, extra body, two people, two boys, two girls, duplicate, clone, mutation, deformed, bad anatomy, disfigured, collage, fused, out of frame, nsfw, nude, sexual, explicit, low detail"
         print(f"🖼️ API送信プロンプト: {enhanced_prompt}")
+        print(f"🛑 ネガティブプロンプト: {negative_prompt}")
 
         if any(danger_word in enhanced_prompt.lower() for danger_word in DANGER_ZONE):
             print(f"⚠️ 危険ワード検知: {enhanced_prompt}")
             return None
 
         api_configs = [
+            {
+                "url": "https://api.deepai.org/api/text2img",
+                "headers": {
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+                    "api-key": DEEPAI_API_KEY or "quickstart-QUdJIGlzIGNvbWluZy4uLi4K"
+                },
+                "payload": {"text": enhanced_prompt},
+                "type": "deepai",
+                "timeout": 30
+            },
             {
                 "url": "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-dev",
                 "headers": {"Authorization": f"Bearer {HF_TOKEN}"},
@@ -337,26 +358,17 @@ def generate_image(prompt):
                     "params": {
                         "width": 768,
                         "height": 768,
-                        "steps": 35,  # チャッピーの推奨
-                        "cfg_scale": 7.5,  # 調整
-                        "sampler_name": "k_euler",  # 安定性重視
-                        "models": ["stabilityai/stable-diffusion-xl-base-1.0"]  # SDXL
+                        "steps": 20,  # 軽量化
+                        "cfg_scale": 6.0,  # 過剰解釈抑える
+                        "sampler_name": "k_euler_a",  # アニメ向け安定
+                        "models": ["prompthero/anything-v5-pruned", "Meina/MeinaMix"]  # 複数モデル
                     },
-                    "nsfw": False,
+                    "nsfw": True,  # NSFWワーカー優先
+                    "censor_nsfw": False,  # フィルター回避
                     "negative_prompt": negative_prompt
                 },
                 "type": "stablehorde",
                 "timeout": 180
-            },
-            {
-                "url": "https://api.deepai.org/api/text2img",
-                "headers": {
-                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-                    "api-key": DEEPAI_API_KEY or "quickstart-QUdJIGlzIGNvbWluZy4uLi4K"
-                },
-                "payload": {"text": enhanced_prompt},
-                "type": "deepai",
-                "timeout": 30
             }
         ]
 
@@ -415,9 +427,9 @@ def generate_image(prompt):
                                         else:
                                             print(f"⚠️ ポーリング完了だがgenerationsなし: {status_result}")
                                             continue
-                                    elif status_result.get("faulted"):
+                                    elif status_result.get("faulted") or "CENSORED" in status_result.get("message", ""):
                                         print(f"⚠️ Stable Horde生成失敗: {status_result}")
-                                        continue
+                                        return None
                                 time.sleep(10)
                             else:
                                 print(f"⚠️ Stable Hordeポーリングタイムアウト: {id}")
@@ -435,6 +447,9 @@ def generate_image(prompt):
                             continue
                     else:
                         print(f"⚠️ APIエラー (試行 {attempt + 1}): {response.status_code} - {response.text}")
+                        if "CENSORED" in response.text or "NSFW" in response.text:
+                            print(f"⚠️ NSFWフィルター検知: {response.text}")
+                            return None
                         if attempt < 2:
                             time.sleep(60 * (attempt + 1))
                         continue
