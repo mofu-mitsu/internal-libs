@@ -284,48 +284,6 @@ DANGER_ZONE = ["nsfw", "nude", "gore"]
 
 def generate_image(prompt):
     print(f"🖼️ API画像生成開始: プロンプト={prompt}")
-    # api_configsをtryの外に移動
-    api_configs = [
-        {
-            "url": "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-dev",
-            "headers": {"Authorization": f"Bearer {HF_TOKEN}"},
-            "payload": {"inputs": enhanced_prompt},
-            "type": "huggingface",
-            "timeout": 500
-        },
-        {
-            "url": "https://stablehorde.net/api/v2/generate/async",
-            "headers": {"apikey": STABLE_HORDE_API_KEY},
-            "payload": {
-                "prompt": enhanced_prompt,
-                "params": {
-                    "width": 768,
-                    "height": 768,
-                    "steps": 40,
-                    "cfg_scale": 8.0,  # 調整
-                    "sampler_name": "k_euler_a",
-                    "models": ["Anything V5"],
-                    "n_iter": 1,
-                    "n": 1  # バッチサイズ制限
-                },
-                "nsfw": False,
-                "negative_prompt": negative_prompt
-            },
-            "type": "stablehorde",
-            "timeout": 180
-        },
-        {
-            "url": "https://api.deepai.org/api/text2img",
-            "headers": {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-                "api-key": DEEPAI_API_KEY or "quickstart-QUdJIGlzIGNvbWluZy4uLi4K"
-            },
-            "payload": {"text": enhanced_prompt},
-            "type": "deepai",
-            "timeout": 30
-        }
-    ]
-
     try:
         if not HF_TOKEN or len(HF_TOKEN) < 10:
             print(f"❌ HF_TOKENが無効または短すぎます: {repr(HF_TOKEN)[:8]}...")
@@ -334,15 +292,57 @@ def generate_image(prompt):
         DEEPAI_API_KEY = os.getenv("DEEPAI_API_KEY")
         STABLE_HORDE_API_KEY = os.getenv("STABLE_HORDE_API_KEY") or "y5Fox28OEJcdC8lc4aaBrA"
 
-        # 文末記号を除去してプロンプトをクリーン
-        cleaned_prompt = re.sub(r'[。！？]+', '', prompt).strip() if prompt else ""
+        # プロンプトをクリーン（文末記号とトリガーの残骸を削除）
+        cleaned_prompt = re.sub(r'(くれ|お願いします|して)[。！？]*', '', prompt).strip() if prompt else ""
         enhanced_prompt = f"{cleaned_prompt}, anime style, soft colors, detailed, kawaii, accurate anatomy" if cleaned_prompt else "fuwamoko mirinteya, anime style, soft colors, detailed, kawaii, accurate anatomy"
-        negative_prompt = "low quality, blurry, realistic, photorealistic, cartoonish, 3d, human, split, distorted anatomy, multiple humans, amputated limbs, nude, distorted face, extra characters, deformed face, unwanted characters"
+        negative_prompt = "low quality, blurry, realistic, photorealistic, cartoonish, 3d, human, split, distorted anatomy, multiple humans, amputated limbs, nude, distorted face, extra characters, deformed face, unwanted characters, irrelevant characters"
         print(f"🖼️ API送信プロンプト: {enhanced_prompt}")
 
         if any(danger_word in enhanced_prompt.lower() for danger_word in DANGER_ZONE):
             print(f"⚠️ 危険ワード検知: {enhanced_prompt}")
             return None
+
+        # api_configsを定義
+        api_configs = [
+            {
+                "url": "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-dev",
+                "headers": {"Authorization": f"Bearer {HF_TOKEN}"},
+                "payload": {"inputs": enhanced_prompt},
+                "type": "huggingface",
+                "timeout": 500
+            },
+            {
+                "url": "https://stablehorde.net/api/v2/generate/async",
+                "headers": {"apikey": STABLE_HORDE_API_KEY},
+                "payload": {
+                    "prompt": enhanced_prompt,
+                    "params": {
+                        "width": 768,
+                        "height": 768,
+                        "steps": 40,
+                        "cfg_scale": 7.5,  # 調整
+                        "sampler_name": "k_euler_a",
+                        "models": ["Anything V5"],
+                        "n_iter": 1,
+                        "n": 1  # バッチサイズ制限
+                    },
+                    "nsfw": False,
+                    "negative_prompt": negative_prompt
+                },
+                "type": "stablehorde",
+                "timeout": 180
+            },
+            {
+                "url": "https://api.deepai.org/api/text2img",
+                "headers": {
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+                    "api-key": DEEPAI_API_KEY or "quickstart-QUdJIGlzIGNvbWluZy4uLi4K"
+                },
+                "payload": {"text": enhanced_prompt},
+                "type": "deepai",
+                "timeout": 30
+            }
+        ]
 
         for config in api_configs:
             api_url = config["url"]
