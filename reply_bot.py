@@ -300,15 +300,15 @@ def generate_image(prompt):
             "🐶": "cute dog",
             "🎀": "cute ribbon",
             "💜": "purple aesthetic",
-            "🖤": "cute gothic aesthetic",
+            "🖤": "kawaii dark aesthetic",
             "💖": "cute aesthetic",
         }
         for emoji, text in emoji_map.items():
             prompt = prompt.replace(emoji, text)
 
         # プロンプトをクリーン（トリガーの残骸や記号を削除）
-        cleaned_prompt = re.sub(r'(くれ|お願いします|して|\d+歳|ヨガインストラクター|地雷系)[。！？]*', '', prompt).strip() if prompt else ""
-        cleaned_prompt = cleaned_prompt.replace("ヨガインストラクター", "yoga girl, casual sportswear").replace("地雷系", "cute gothic lolita")
+        cleaned_prompt = re.sub(r'(くれ|お願いします|して|\d+歳|ヨガインストラクター|地雷系|ハートの瞳孔)[。！？]*', '', prompt).strip() if prompt else ""
+        cleaned_prompt = cleaned_prompt.replace("ヨガインストラクター", "yoga girl, casual sportswear").replace("地雷系", "kawaii lolita, dark aesthetic").replace("ハートの瞳孔", "heart-shaped eyes")
         # 人数と性別指定を追加
         gender_match = re.search(r"(男性|男の子|イケメン|1boy|boy)", cleaned_prompt, re.IGNORECASE)
         if gender_match:
@@ -316,8 +316,9 @@ def generate_image(prompt):
         else:
             cleaned_prompt = f"1girl, solo, upper body, centered, {cleaned_prompt}"
         enhanced_prompt = f"{cleaned_prompt}, anime style, clean lines, detailed, kawaii, accurate anatomy, looking at viewer, vibrant colors" if cleaned_prompt else "fuwamoko mirinteya, 1girl, solo, upper body, centered, anime style, clean lines, detailed, kawaii, accurate anatomy, looking at viewer, vibrant colors"
-        negative_prompt = "low quality, blurry face, realistic, photorealistic, cartoonish, 3d, split, distorted anatomy, multiple subjects, multiple girls, multiple boys, extra limbs, extra faces, extra heads, extra body, two people, two boys, two girls, duplicate, clone, mutation, deformed, bad anatomy, disfigured, collage, fused, out of frame, nsfw, nude, sexual, explicit"
+        negative_prompt = "low quality, blurry face, realistic, photorealistic, cartoonish, 3d, split, distorted anatomy, multiple subjects, multiple girls, multiple boys, extra limbs, extra faces, extra heads, extra body, two people, two boys, two girls, duplicate, clone, mutation, deformed, bad anatomy, disfigured, collage, fused, out of frame, nsfw, nude, sexual, explicit, low detail"
         print(f"🖼️ API送信プロンプト: {enhanced_prompt}")
+        print(f"🛑 ネガティブプロンプト: {negative_prompt}")
 
         if any(danger_word in enhanced_prompt.lower() for danger_word in DANGER_ZONE):
             print(f"⚠️ 危険ワード検知: {enhanced_prompt}")
@@ -342,7 +343,7 @@ def generate_image(prompt):
                         "steps": 25,  # 軽量化
                         "cfg_scale": 6.5,  # 過剰解釈抑える
                         "sampler_name": "k_euler",  # 安定性
-                        "models": ["AnimePastelDream"]  # フィルター回避＆可愛い系
+                        "models": ["prompthero/anything-v5-pruned"]  # フィルター回避＆地雷系
                     },
                     "nsfw": False,
                     "negative_prompt": negative_prompt
