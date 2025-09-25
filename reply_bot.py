@@ -310,11 +310,11 @@ def generate_image(prompt):
         # 人数指定を追加（性別を検出）
         gender_match = re.search(r"(男性|男の子|イケメン|1boy|boy)", cleaned_prompt, re.IGNORECASE)
         if gender_match:
-            cleaned_prompt = f"1boy, solo, {cleaned_prompt}"
+            cleaned_prompt = f"1boy, solo, upper body, centered, {cleaned_prompt}"
         else:
-            cleaned_prompt = f"1girl, solo, {cleaned_prompt}"
-        enhanced_prompt = f"{cleaned_prompt}, anime style, soft colors, detailed, accurate anatomy, solo, bust shot, looking at viewer" if cleaned_prompt else "fuwamoko mirinteya, 1girl, solo, twin tail hair, anime style, soft colors, detailed, kawaii, accurate anatomy, bust shot, looking at viewer"
-        negative_prompt = "low quality, blurry face, realistic, photorealistic, cartoonish, 3d, split, distorted anatomy, multiple subjects, multiple, extra limbs, extra faces, two heads, three heads, mutation, clone, deformed face, extra characters, unwanted characters, fused body, collage"
+            cleaned_prompt = f"1girl, solo, upper body, centered, {cleaned_prompt}"
+        enhanced_prompt = f"{cleaned_prompt}, anime style, clean lines, detailed, solo, accurate anatomy, looking at viewer" if cleaned_prompt else "fuwamoko mirinteya, 1girl, solo, twin tail hair, anime style, soft colors, detailed, kawaii, accurate anatomy, bust shot, looking at viewer"
+        negative_prompt = "low quality, blurry face, realistic, photorealistic, cartoonish, 3d, split, distorted anatomy, multiple subjects, multiple girls, multiple boys, extra limbs, extra faces, extra heads, extra body, two people, two boys, two girls, duplicate, clone, mutation, deformed, bad anatomy, disfigured, collage, fused, out of frame"
         print(f"🖼️ API送信プロンプト: {enhanced_prompt}")
 
         if any(danger_word in enhanced_prompt.lower() for danger_word in DANGER_ZONE):
@@ -337,10 +337,10 @@ def generate_image(prompt):
                     "params": {
                         "width": 768,
                         "height": 768,
-                        "steps": 35,  # チャッピーの推奨
-                        "cfg_scale": 7.5,  # 調整
+                        "steps": 30,  # チャッピーの推奨
+                        "cfg_scale": 7.0,  # 調整
                         "sampler_name": "k_euler",  # 安定性重視
-                        "models": ["stabilityai/stable-diffusion-xl-base-1.0"]  # SDXL
+                        "models": ["hanafudapxl/Counterfeit-V3.0"]  # SDXL
                     },
                     "nsfw": False,
                     "negative_prompt": negative_prompt
