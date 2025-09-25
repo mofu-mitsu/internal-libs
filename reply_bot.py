@@ -677,11 +677,12 @@ def generate_reply_via_groq(user_input):
         return diagnosis_result[0]
 
     # 画像生成キーワードチェック（柔軟化）
-    image_match = re.search(r"(?:.*?\s+)?(?:画像生成して|画像作って|描いて|絵を描いて|絵描いて)(?:\s+.*)?", user_input, re.IGNORECASE)
+    image_match = re.search(r"(.*?)(画像生成して|画像作って|描いて|絵を描いて|絵描いて)(.*)", user_input, re.IGNORECASE)
     if image_match:
         try:
             full_match = image_match.group(0)
-            prompt = re.sub(r"(画像生成して|画像作って|描いて|絵を描いて|絵描いて)", "", full_match).strip()
+            # トリガーワードを除き、前後を結合してプロンプトに
+            prompt = f"{image_match.group(1).strip()} {image_match.group(3).strip()}".strip()
             print(f"🖼️ 画像生成トリガー検知: マッチ='{full_match}', プロンプト='{prompt}'")
             image = generate_image(prompt)
             if image:
