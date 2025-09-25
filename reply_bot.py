@@ -292,17 +292,16 @@ def generate_image(prompt):
         DEEPAI_API_KEY = os.getenv("DEEPAI_API_KEY")
         STABLE_HORDE_API_KEY = os.getenv("STABLE_HORDE_API_KEY") or "y5Fox28OEJcdC8lc4aaBrA"
 
-        # プロンプトをクリーン（文末記号とトリガーの残骸を削除）
-        cleaned_prompt = re.sub(r'(くれ|お願いします|して)[。！？]*', '', prompt).strip() if prompt else ""
+        # プロンプトをクリーン（記号軽く除去）
+        cleaned_prompt = re.sub(r'[\s]+', ' ', prompt).strip() if prompt else ""
         enhanced_prompt = f"{cleaned_prompt}, anime style, soft colors, detailed, kawaii, accurate anatomy" if cleaned_prompt else "fuwamoko mirinteya, anime style, soft colors, detailed, kawaii, accurate anatomy"
-        negative_prompt = "low quality, blurry, realistic, photorealistic, cartoonish, 3d, human, split, distorted anatomy, multiple humans, amputated limbs, nude, distorted face, extra characters, deformed face, unwanted characters, irrelevant characters"
+        negative_prompt = "low quality, blurry face, realistic, photorealistic, cartoonish, 3d, human, split, distorted anatomy, multiple subjects, amputated limbs, nude, deformed face, extra characters, unwanted characters"
         print(f"🖼️ API送信プロンプト: {enhanced_prompt}")
 
         if any(danger_word in enhanced_prompt.lower() for danger_word in DANGER_ZONE):
             print(f"⚠️ 危険ワード検知: {enhanced_prompt}")
             return None
 
-        # api_configsを定義
         api_configs = [
             {
                 "url": "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-dev",
@@ -319,12 +318,10 @@ def generate_image(prompt):
                     "params": {
                         "width": 768,
                         "height": 768,
-                        "steps": 40,
-                        "cfg_scale": 7.5,  # 調整
+                        "steps": 50,  # 詳細強化
+                        "cfg_scale": 8.5,  # バランス調整
                         "sampler_name": "k_euler_a",
-                        "models": ["Anything V5"],
-                        "n_iter": 1,
-                        "n": 1  # バッチサイズ制限
+                        "models": ["stabilityai/stable-diffusion-xl-base-1.0"]  # SDXL
                     },
                     "nsfw": False,
                     "negative_prompt": negative_prompt
