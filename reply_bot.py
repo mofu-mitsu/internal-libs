@@ -340,7 +340,7 @@ def generate_image(prompt):
                         "steps": 30,  # チャッピーの推奨
                         "cfg_scale": 7.0,  # 調整
                         "sampler_name": "k_euler",  # 安定性重視
-                        "models": ["hanafudapxl/Counterfeit-V3.0"]  # SDXL
+                        "models": ["Meina/MeinaMix"] 
                     },
                     "nsfw": False,
                     "negative_prompt": negative_prompt
