@@ -55,7 +55,7 @@ HEADERS = {
     "Content-Type": "application/json"
 }
 LOCK_FILE = "bot.lock"
-IMAGE_KEYWORDS = re.compile(r"(.*?)(\s*(画像生成して|画像作成して|画像作って|描いて|絵を描いて|絵描いて)\s*(.*))", re.IGNORECASE)
+IMAGE_KEYWORDS = re.compile(r"(.*?)(\s*(画像生成して|画像作成して|画像作って|画像お願い|画像生成お願い|画像作成お願い|描いて|絵を描いて|絵描いて)\s*(.*))", re.IGNORECASE)
 FALLBACK_CUTE_LINES = [
     "えへへ〜♡ みりんてゃ、君のこと考えるとドキドキなのっ♪",
     "今日も君に甘えたい気分なのっ♡ ぎゅーってして？",
@@ -678,7 +678,7 @@ def generate_reply_via_groq(user_input):
         return diagnosis_result[0]
 
     # 画像生成キーワードチェック（文末記号を無視）
-    image_match = re.search(r"(.*?)(画像生成して|画像作成して|画像作って|描いて|絵を描いて|絵描いて)(.*)", user_input, re.IGNORECASE)
+    image_match = re.search(r"(.*?)(画像生成して|画像お願い|画像生成お願い|画像作成お願い|画像作成して|画像作って|描いて|絵を描いて|絵描いて)(.*)", user_input, re.IGNORECASE)
     if image_match:
         try:
             full_match = image_match.group(0)
