@@ -320,7 +320,7 @@ def generate_image(prompt):
                             "steps": 40,
                             "cfg_scale": 10.0,
                             "sampler_name": "k_euler_a",
-                            "models": ["Anything V5"]
+                            "models": ["Anything V5"],
                             "n_iter": 1  # 複数生成防止
                         },
                         "nsfw": False,
