@@ -399,7 +399,7 @@ def generate_image(prompt):
                         "cfg_scale": 9.0,
                         "sampler_name": "k_euler_a" if use_low_load else "k_dpmpp_sde",
                         "denoising_strength": 0.7,
-                        "models": ["andite/Yozora", "stabilityai/stable-diffusion-xl-base-1.0", "Lykon/AnimePastelDream", "prompthero/anything-v5-pruned", "Meina/MeinaMix", "hakurei/Counterfeit-V3.0"]
+                        "models": [ "stabilityai/stable-diffusion-xl-base-1.0", "Lykon/AnimePastelDream","andite/Yozora", "prompthero/anything-v5-pruned", "Meina/MeinaMix", "hakurei/Counterfeit-V3.0"]
                     },
                     "nsfw": True,
                     "censor_nsfw": False,
@@ -420,7 +420,7 @@ def generate_image(prompt):
                         "cfg_scale": 7.5,
                         "sampler_name": "k_euler_a",
                         "denoising_strength": 0.7,
-                        "models": ["andite/Yozora", "stabilityai/stable-diffusion-xl-base-1.0", "Lykon/AnimePastelDream"]
+                        "models": [ "stabilityai/stable-diffusion-xl-base-1.0", "Lykon/AnimePastelDream","andite/Yozora"]
                     },
                     "nsfw": True,
                     "censor_nsfw": False,
