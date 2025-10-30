@@ -15,7 +15,7 @@ APP_PASSWORD = os.getenv("APP_PASSWORD")
 
 # 怪しいユーザー判定関数
 def is_suspicious_user(profile):
-    suspicious_keywords = ["援交", "nsfw", "稼げる", "click", "副収入"]
+    suspicious_keywords = ["援交","稼げる", ]
     suspicious_domains = ["xyz", "click", "cash", "club"]
 
     display_name = profile.display_name or ""
