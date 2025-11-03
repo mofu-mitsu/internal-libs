@@ -381,7 +381,7 @@ def generate_image(prompt):
 
         api_configs = [
             {
-                "url": "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-dev",
+                "url": "https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-dev",
                 "headers": {"Authorization": f"Bearer {HF_TOKEN}"},
                 "payload": {"inputs": enhanced_prompt},
                 "type": "huggingface",
