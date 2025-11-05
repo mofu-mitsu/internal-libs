@@ -6,6 +6,7 @@ multiformats==0.3.1.post4  # ← これが正解！
 pytz
 requests
 PyYAML
+beautifulsoup4
 playwright==1.43.0  # ← 推奨バージョン（GitHub Actionsで安定）
 # ─── リプ系Bot用（AI等） ───
 transformers==4.36.2
