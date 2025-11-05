@@ -399,7 +399,7 @@ def generate_image(prompt):
                         "cfg_scale": 9.0,
                         "sampler_name": "k_euler_a" if use_low_load else "k_dpmpp_sde",
                         "denoising_strength": 0.7,
-                        "models": [ "stabilityai/stable-diffusion-xl-base-1.0", "Lykon/AnimePastelDream","andite/Yozora", "prompthero/anything-v5-pruned", "Meina/MeinaMix", "hakurei/Counterfeit-V3.0"]
+                        "models": ["stabilityai/stable-diffusion-xl-base-1.0", "Lykon/AnimePastelDream", "andite/Yozora", "prompthero/anything-v5-pruned", "Meina/MeinaMix", "hakurei/Counterfeit-V3.0"]
                     },
                     "nsfw": True,
                     "censor_nsfw": False,
@@ -410,7 +410,7 @@ def generate_image(prompt):
             },
             {
                 "url": "https://stablehorde.net/api/v2/generate/async",
-                "headers": {"apikey": "0000000000"},  # 匿名キー
+                "headers": {"apikey": "0000000000"},
                 "payload": {
                     "prompt": enhanced_prompt,
                     "params": {
@@ -420,7 +420,7 @@ def generate_image(prompt):
                         "cfg_scale": 7.5,
                         "sampler_name": "k_euler_a",
                         "denoising_strength": 0.7,
-                        "models": [ "stabilityai/stable-diffusion-xl-base-1.0", "Lykon/AnimePastelDream","andite/Yozora"]
+                        "models": ["stabilityai/stable-diffusion-xl-base-1.0", "Lykon/AnimePastelDream", "andite/Yozora"]
                     },
                     "nsfw": True,
                     "censor_nsfw": False,
@@ -505,23 +505,29 @@ def generate_image(prompt):
                                 print(f"⚠️ Stable Hordeポーリングタイムアウト: {id}")
                                 continue
 
+                        # ★ここから画像圧縮処理★
                         try:
                             image = Image.open(BytesIO(image_data))
                             image_path = f"output_{attempt}.png"
-                            # 976KB以内に圧縮して保存
+                            
+                            # まず圧縮して保存
                             image.save(image_path, "PNG", optimize=True, compress_level=9)
-                            # サイズチェック＆リサイズ
-                        while os.path.getsize(image_path) > 976562:  # 976.56KB
-                            w, h = image.size
-                            image = image.resize((int(w*0.9), int(h*0.9)), Image.LANCZOS)
-                            image.save(image_path, "PNG", optimize=True, compress_level=9)
-                            print(f"✅ 画像生成成功: API={api_url}, Type={api_type}, 試行={attempt + 1}, 保存先={image_path}, 使用モデル={status_result.get('model', '不明') if api_type in ['stablehorde', 'stablehorde_anon'] else 'N/A'}")
+                            
+                            # サイズチェック＆自動リサイズ
+                            while os.path.getsize(image_path) > 976562:  # 976.56KB
+                                w, h = image.size
+                                image = image.resize((int(w * 0.9), int(h * 0.9)), Image.LANCZOS)
+                                image.save(image_path, "PNG", optimize=True, compress_level=9)
+                            
+                            print(f"✅ 画像生成成功: API={api_url}, Type={api_type}, 試行={attempt + 1}, 保存先={image_path}, サイズ={os.path.getsize(image_path)/1024:.1f}KB")
                             return image_path
                             
-                    except Exception as img_err:
+                        except Exception as img_err:
                             print(f"⚠️ 画像処理エラー: {type(img_err).__name__}: {str(img_err)}")
                             traceback.print_exc()
                             continue
+                        # ★ここまで★
+
                     else:
                         print(f"⚠️ APIエラー (試行 {attempt + 1}): {response.status_code} - {response.text}")
                         if "CENSORED" in response.text or "NSFW" in response.text:
@@ -529,7 +535,7 @@ def generate_image(prompt):
                             return None
                         if "KudosUpfront" in response.text and api_type == "stablehorde":
                             print(f"⚠️ Kudos不足検知、匿名キーまたは低負荷モードへ")
-                            STABLE_HORDE_API_KEY = "0000000000"  # 匿名キーに切り替え
+                            STABLE_HORDE_API_KEY = "0000000000"
                             config["headers"]["apikey"] = STABLE_HORDE_API_KEY
                             config["payload"]["params"]["width"] = 512
                             config["payload"]["params"]["height"] = 512
