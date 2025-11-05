@@ -1622,6 +1622,6 @@ if url_match:
 
 client.send_post(
     text=message,
-    facets=facets if facets else None
+    facets=facets if facets else None,
     embed=embed
 )
