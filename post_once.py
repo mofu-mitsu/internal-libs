@@ -5,6 +5,11 @@ from dotenv import load_dotenv
 from pathlib import Path
 import unicodedata
 import re
+import requests
+from bs4 import BeautifulSoup
+from urllib.parse import urlparse
+import tempfile
+import os
 
 # 環境変数読み込み
 env_path = Path('.') / '.env'
@@ -1539,6 +1544,61 @@ def generate_facets_from_text(text, hashtags):
 def normalize_text(text):
     return unicodedata.normalize("NFKC", text).strip()
 
+# OGP自動取得＆embed生成関数
+def generate_embed_from_url(client, url):
+    try:
+        # 1. URLからHTML取得
+        headers = {'User-Agent': 'Mozilla/5.0 (compatible; BlueskyBot/1.0)'}
+        response = requests.get(url, headers=headers, timeout=10)
+        if response.statusコード != 200:
+            return None
+
+        soup = BeautifulSoup(response.text, 'html.parser')
+
+        # 2. OGP metaタグ抽出
+        title = soup.find("meta", property="og:title")
+        description = soup.find("meta", property="og:description")
+        image = soup.find("meta", property="og:image")
+
+        title = (title["content"] if title else soup.title.string) or "みりんてゃのキラキラリンク♡"
+        description = description["content"] if description else "ふわもこ通信よりお届け〜🧸"
+        image_url = image["content"] if image else None
+
+        # 3. サムネ画像ダウンロード＆Blobアップロード
+        thumb_blob = None
+        if image_url:
+            try:
+                img_response = requests.get(image_url, timeout=10)
+                if img_response.status_code == 200 and len(img_response.content) < 1000000:  # 1MB制限
+                    # 一時ファイルに保存
+                    with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as tmp:
+                        tmp.write(img_response.content)
+                        tmp_path = tmp.name
+                    # Blobアップロード
+                    with open(tmp_path, 'rb') as f:
+                        thumb_blob = client.com.atproto.repo.upload_blob(f.read()).blob
+                    os.unlink(tmp_path)  # 削除
+            except:
+                pass  # 画像取れなくても無視
+
+        # 4. embed external作成
+        external = {
+            "uri": url,
+            "title": title[:300],  # Bluesky制限
+            "description": description[:300],
+        }
+        if thumb_blob:
+            external["thumb"] = thumb_blob
+
+        return {
+            "$type": "app.bsky.embed.external",
+            "external": external
+        }
+
+    except Exception as e:
+        print(f"OGP取得エラー: {e}")
+        return None
+
 # 投稿処理
 client = Client()
 client.login(HANDLE, APP_PASSWORD)
@@ -1548,7 +1608,20 @@ message = normalize_text(raw_message)
 hashtags = [word for word in message.split() if word.startswith("#")]
 facets = generate_facets_from_text(message, hashtags)
 
+raw_message = random.choice(POST_MESSAGES)
+message = normalize_text(raw_message)
+hashtags = [word for word in message.split() if word.startswith("#")]
+facets = generate_facets_from_text(message, hashtags)
+
+# URL抽出
+url_match = re.search(r'(https?://[^\s]+)', message)
+embed = None
+if url_match:
+    url = url_match.group(0)
+    embed = generate_embed_from_url(client, url)  # ★自動OGP取得！
+
 client.send_post(
     text=message,
     facets=facets if facets else None
+    embed=embed
 )
