@@ -508,10 +508,17 @@ def generate_image(prompt):
                         try:
                             image = Image.open(BytesIO(image_data))
                             image_path = f"output_{attempt}.png"
-                            image.save(image_path, "PNG")
+                            # 976KB以内に圧縮して保存
+                            image.save(image_path, "PNG", optimize=True, compress_level=9)
+                            # サイズチェック＆リサイズ
+                        while os.path.getsize(image_path) > 976562:  # 976.56KB
+                            w, h = image.size
+                            image = image.resize((int(w*0.9), int(h*0.9)), Image.LANCZOS)
+                            image.save(image_path, "PNG", optimize=True, compress_level=9)
                             print(f"✅ 画像生成成功: API={api_url}, Type={api_type}, 試行={attempt + 1}, 保存先={image_path}, 使用モデル={status_result.get('model', '不明') if api_type in ['stablehorde', 'stablehorde_anon'] else 'N/A'}")
                             return image_path
-                        except Exception as img_err:
+                            
+                    except Exception as img_err:
                             print(f"⚠️ 画像処理エラー: {type(img_err).__name__}: {str(img_err)}")
                             traceback.print_exc()
                             continue
