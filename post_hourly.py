@@ -1,5 +1,9 @@
 from atproto import Client
+import requests
+from bs4 import BeautifulSoup
+import tempfile
 import os
+import re
 from dotenv import load_dotenv
 from datetime import datetime
 import random
@@ -470,27 +474,76 @@ def normalize_text(text):
     return unicodedata.normalize("NFKC", text).strip()
 
 # facets生成（UTF-8バイト位置でハッシュタグ対応）
-def generate_facets_from_text(text, hashtags):
+def generate_url_facets(text):
     text_bytes = text.encode("utf-8")
     facets = []
-
-    for tag in hashtags:
-        tag_bytes = tag.encode("utf-8")
-        byte_start = text_bytes.find(tag_bytes)
-
-        if byte_start != -1:
+    url_pattern = r'(https?://[^\s]+)'
+    for match in re.finditer(url_pattern, text):
+        url = match.group(0)
+        url_bytes = url.encode("utf-8")
+        start = text_bytes.find(url_bytes)
+        if start != -1:
             facets.append({
                 "index": {
-                    "byteStart": byte_start,
-                    "byteEnd": byte_start + len(tag_bytes)
+                    "byteStart": start,
+                    "byteEnd": start + len(url_bytes)
                 },
                 "features": [{
-                    "$type": "app.bsky.richtext.facet#tag",
-                    "tag": tag.lstrip("#")
+                    "$type": "app.bsky.richtext.facet#link",
+                    "uri": url
                 }]
             })
-
     return facets
+
+
+def generate_embed_from_url(client, url):
+    try:
+        headers = {'User-Agent': 'Mozilla/5.0 (compatible; BlueskyBot/1.0)'}
+        response = requests.get(url, headers=headers, timeout=10)
+        if response.status_code != 200:
+            return None
+
+        soup = BeautifulSoup(response.text, 'html.parser')
+
+        title = soup.find("meta", property="og:title")
+        description = soup.find("meta", property="og:description")
+        image = soup.find("meta", property="og:image")
+
+        title = (title["content"] if title else soup.title.string) or "みりんてゃのキラキラ通信♡"
+        description = description["content"] if description else "ふわもこ病みかわなのっ🧸"
+        image_url = image["content"] if image else None
+
+        thumb_blob = None
+        if image_url:
+            try:
+                img_response = requests.get(image_url, timeout=10)
+                if img_response.status_code == 200 and len(img_response.content) < 1000000:
+                    with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as tmp:
+                        tmp.write(img_response.content)
+                        tmp_path = tmp.name
+                    with open(tmp_path, 'rb') as f:
+                        thumb_blob = client.com.atproto.repo.upload_blob(f.read()).blob
+                    os.unlink(tmp_path)
+            except:
+                pass
+
+        external = {
+            "uri": url,
+            "title": title[:300],
+            "description": description[:300],
+        }
+        if thumb_blob:
+            external["thumb"] = thumb_blob
+
+        return {
+            "$type": "app.bsky.embed.external",
+            "external": external
+        }
+
+    except Exception as e:
+        print(f"OGP取得エラー: {e}")
+        return None
+
 
 # --- 実行 ---
 def post_hourly_message():
@@ -501,16 +554,28 @@ def post_hourly_message():
     raw_message = random.choice(HOUR_MESSAGES[period])
     message = normalize_text(raw_message)
 
+    # ハッシュタグ抽出
     hashtags = [word for word in message.split() if word.startswith("#")]
     facets = generate_facets_from_text(message, hashtags)
+
+    # === URL抽出＆処理 ===
+    url_match = re.search(r'(https?://[^\s]+)', message)
+    embed = None
+    if url_match:
+        url = url_match.group(0)
+        # URLを青くするfacets追加
+        url_facets = generate_url_facets(message)
+        facets.extend(url_facets)
+        # OGPカード自動生成
+        embed = generate_embed_from_url(client, url)
 
     client.send_post(
         text=message,
         facets=facets if facets else None,
+        embed=embed  # ← カード付き！
     )
 
     print(f"[{period}] 投稿したよ: {message}")
-
 # エントリーポイント
 if __name__ == "__main__":
     post_hourly_message()
