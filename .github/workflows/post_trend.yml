@@ -1,0 +1,38 @@
+name: 🌟 みりんてゃトレンドBot（気分ラベル）
+
+on:
+  schedule:
+    - cron: '5 8 * * *'  # JST 朝8:05
+  workflow_dispatch:
+
+jobs:
+  run-trend-bot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: 📥 リポジトリをチェックアウト
+        uses: actions/checkout@v4
+
+      - name: 🧹 pipキャッシュクリア
+        run: |
+          pip cache purge
+
+      - name: 🐍 Pythonセットアップ
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: 📦 ライブラリインストール
+        run: |
+          pip install --upgrade pip
+          pip install --no-cache-dir atproto python-dotenv groq==0.9.0 httpx==0.27.2 pytrends
+
+      - name: 🔐 シークレット書き出し
+        run: |
+          echo "HANDLE=${{ secrets.HANDLE }}" >> .env
+          echo "APP_PASSWORD=${{ secrets.APP_PASSWORD }}" >> .env
+          echo "GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}" >> .env
+
+      - name: 🚀 Bot実行
+        run: python post_trend.py
