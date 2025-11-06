@@ -26,6 +26,7 @@ jobs:
       - name: 📦 ライブラリインストール
         run: |
           pip install --upgrade pip
+          pip install --no-cache-dir urllib3\<2.0.0
           pip install --no-cache-dir atproto python-dotenv groq==0.9.0 httpx==0.27.2 pytrends
 
       - name: 🔐 シークレット書き出し
