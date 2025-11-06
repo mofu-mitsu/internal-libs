@@ -82,30 +82,52 @@ def clean_poem(poem):
     return poem
 
 # ------------------------------
-# ★ トレンド取得（Google Trends - 無料）
+# ★ トレンド取得（404回避版）
 # ------------------------------
 def get_trend_word():
     fallback_words = ["ふわふわ", "きらきら", "ドキドキ", "えへへ", "なのっ"]
     try:
+        # 日本が死んでる時は「世界トレンド」から日本語だけ抽出
         pytrends = TrendReq(hl='ja-JP', tz=540, retries=2, backoff_factor=0.1)
-        trends = pytrends.trending_searches(pn='japan')  # 日本デイリートレンド
+        
+        # ① まず日本を試す
+        trends = pytrends.trending_searches(pn='japan')
+        if not trends.empty:
+            word = _pick_word(trends)
+            print(f"✅ 日本トレンドGET: {word}")
+            return word
+        
+        # ② 日本が404なら世界トレンドにフォールバック
+        print("⚠️ 日本404 → 世界トレンドに切り替え")
+        trends = pytrends.trending_searches(pn='united_states')  # ここは生きてる
         if trends.empty:
-            print("⚠️ トレンドデータが空です")
-            return random.choice(fallback_words)
+            raise Exception("世界も空っぽ")
         
-        trend_list = trends[0].dropna().tolist()
-        trend_list = [str(word) for word in trend_list if len(str(word)) <= 15]  # 長すぎるのは除外
-        if not trend_list:
-            return random.choice(fallback_words)
+        # ③ 日本語っぽいワードだけ抽出
+        import re
+        jp_words = []
+        for w in trends[0].dropna():
+            w = str(w)
+            if re.search(r'[ぁ-んァ-ン一-龠]', w) and len(w) <= 15:
+                jp_words.append(w)
+        if jp_words:
+            word = random.choice(jp_words)
+            print(f"✅ 世界→日本語トレンド: {word}")
+            return word
         
-        word = random.choice(trend_list)
-        print(f"✅ 選んだトレンド: {word}")
-        return word
+        # ④ それでもダメならランダムピック
+        word = random.choice(trends[0].dropna().tolist())
+        print(f"✅ 世界トレンド（英語）: {word}")
+        return str(word)[:15]
 
     except Exception as e:
-        print(f"⚠️ Trends取得エラー: {e}")
+        print(f"⚠️ 全部ダメ…フォールバック単語: {e}")
         return random.choice(fallback_words)
 
+# 小分け関数（コピペ用）
+def _pick_word(df):
+    words = [str(w) for w in df[0].dropna() if len(str(w)) <= 15]
+    return random.choice(words) if words else "きらきら"
 # ------------------------------
 # ★ 気分ラベル取得
 # ------------------------------
