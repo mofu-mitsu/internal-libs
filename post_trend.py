@@ -82,52 +82,39 @@ def clean_poem(poem):
     return poem
 
 # ------------------------------
-# ★ トレンド取得（404回避版）
+# ★ Xトレンド取得（無料・404永久耐性）
 # ------------------------------
 def get_trend_word():
     fallback_words = ["ふわふわ", "きらきら", "ドキドキ", "えへへ", "なのっ"]
     try:
-        # 日本が死んでる時は「世界トレンド」から日本語だけ抽出
-        pytrends = TrendReq(hl='ja-JP', tz=540, retries=2, backoff_factor=0.1)
+        import requests
+        from bs4 import BeautifulSoup
         
-        # ① まず日本を試す
-        trends = pytrends.trending_searches(pn='japan')
-        if not trends.empty:
-            word = _pick_word(trends)
-            print(f"✅ 日本トレンドGET: {word}")
-            return word
+        # Xの日本トレンドページ（ログイン不要）
+        url = "https://twitter.com/i/trends?cntry=JP"
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+        res = requests.get(url, headers=headers, timeout=10)
+        res.raise_for_status()
         
-        # ② 日本が404なら世界トレンドにフォールバック
-        print("⚠️ 日本404 → 世界トレンドに切り替え")
-        trends = pytrends.trending_searches(pn='united_states')  # ここは生きてる
-        if trends.empty:
-            raise Exception("世界も空っぽ")
+        soup = BeautifulSoup(res.text, 'html.parser')
+        trends = []
         
-        # ③ 日本語っぽいワードだけ抽出
-        import re
-        jp_words = []
-        for w in trends[0].dropna():
-            w = str(w)
-            if re.search(r'[ぁ-んァ-ン一-龠]', w) and len(w) <= 15:
-                jp_words.append(w)
-        if jp_words:
-            word = random.choice(jp_words)
-            print(f"✅ 世界→日本語トレンド: {word}")
-            return word
+        # Xのトレンドは <div data-testid="trend"> の中
+        for item in soup.find_all('div', {'data-testid': 'trend'}):
+            text = item.get_text(strip=True)
+            if text and len(text) <= 20 and '位' not in text:
+                trends.append(text)
         
-        # ④ それでもダメならランダムピック
-        word = random.choice(trends[0].dropna().tolist())
-        print(f"✅ 世界トレンド（英語）: {word}")
-        return str(word)[:15]
-
+        if not trends:
+            raise Exception("トレンド空っぽ")
+            
+        word = random.choice(trends[:10])  # 上位10からランダム
+        print(f"✅ X日本トレンドGET: {word}")
+        return word
+        
     except Exception as e:
-        print(f"⚠️ 全部ダメ…フォールバック単語: {e}")
+        print(f"⚠️ Xトレンド取れず…フォールバック: {e}")
         return random.choice(fallback_words)
-
-# 小分け関数（コピペ用）
-def _pick_word(df):
-    words = [str(w) for w in df[0].dropna() if len(str(w)) <= 15]
-    return random.choice(words) if words else "きらきら"
 # ------------------------------
 # ★ 気分ラベル取得
 # ------------------------------
