@@ -82,7 +82,7 @@ def clean_poem(poem):
     return poem
 
 # ------------------------------
-# ★ Xトレンド取得（無料・404永久耐性）
+# ★ 最終兵器：getdaytrendsスクレイプ（永久無料・JS不要）
 # ------------------------------
 def get_trend_word():
     fallback_words = ["ふわふわ", "きらきら", "ドキドキ", "えへへ", "なのっ"]
@@ -90,8 +90,7 @@ def get_trend_word():
         import requests
         from bs4 import BeautifulSoup
         
-        # Xの日本トレンドページ（ログイン不要）
-        url = "https://twitter.com/i/trends?cntry=JP"
+        url = "https://getdaytrends.com/japan/"
         headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
         res = requests.get(url, headers=headers, timeout=10)
         res.raise_for_status()
@@ -99,21 +98,21 @@ def get_trend_word():
         soup = BeautifulSoup(res.text, 'html.parser')
         trends = []
         
-        # Xのトレンドは <div data-testid="trend"> の中
-        for item in soup.find_all('div', {'data-testid': 'trend'}):
-            text = item.get_text(strip=True)
-            if text and len(text) <= 20 and '位' not in text:
+        # <h3 class="trend-card__title"> がトレンド名
+        for h3 in soup.find_all('h3', class_='trend-card__title'):
+            text = h3.get_text(strip=True)
+            if text and 2 <= len(text) <= 20:
                 trends.append(text)
         
         if not trends:
-            raise Exception("トレンド空っぽ")
+            raise Exception("getdaytrendsも空っぽ")
             
-        word = random.choice(trends[:10])  # 上位10からランダム
-        print(f"✅ X日本トレンドGET: {word}")
+        word = random.choice(trends[:8])  # 上位8からピック
+        print(f"✅ getdaytrends日本トレンドGET: {word}")
         return word
         
     except Exception as e:
-        print(f"⚠️ Xトレンド取れず…フォールバック: {e}")
+        print(f"⚠️ 全部ダメ…フォールバック: {e}")
         return random.choice(fallback_words)
 # ------------------------------
 # ★ 気分ラベル取得
