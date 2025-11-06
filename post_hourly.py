@@ -473,6 +473,28 @@ def get_time_period():
 def normalize_text(text):
     return unicodedata.normalize("NFKC", text).strip()
 
+# facets生成（ハッシュタグ用）← これが抜けてた！
+def generate_facets_from_text(text, hashtags):
+    text_bytes = text.encode("utf-8")
+    facets = []
+
+    for tag in hashtags:
+        tag_bytes = tag.encode("utf-8")
+        byte_start = text_bytes.find(tag_bytes)
+
+        if byte_start != -1:
+            facets.append({
+                "index": {
+                    "byteStart": byte_start,
+                    "byteEnd": byte_start + len(tag_bytes)
+                },
+                "features": [{
+                    "$type": "app.bsky.richtext.facet#tag",
+                    "tag": tag.lstrip("#")
+                }]
+            })
+
+    return facets
 # facets生成（UTF-8バイト位置でハッシュタグ対応）
 def generate_url_facets(text):
     text_bytes = text.encode("utf-8")
