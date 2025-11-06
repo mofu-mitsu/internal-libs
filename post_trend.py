@@ -87,7 +87,7 @@ def clean_poem(poem):
 def get_trend_word():
     fallback_words = ["ふわふわ", "きらきら", "ドキドキ", "えへへ", "なのっ"]
     try:
-        pytrends = TrendReq(hl='ja-JP', tz=540, timeout=(10,25), retries=2, backoff_factor=0.1)
+        pytrends = TrendReq(hl='ja-JP', tz=540, retries=2, backoff_factor=0.1)
         trends = pytrends.trending_searches(pn='japan')  # 日本デイリートレンド
         if trends.empty:
             print("⚠️ トレンドデータが空です")
