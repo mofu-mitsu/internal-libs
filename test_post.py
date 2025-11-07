@@ -765,7 +765,7 @@ def generate_embed_from_url(client, url):
         # 1. URLからHTML取得
         headers = {'User-Agent': 'Mozilla/5.0 (compatible; BlueskyBot/1.0)'}
         response = requests.get(url, headers=headers, timeout=10)
-        if response.statusコード != 200:
+        if response.status_code != 200:
             return None
 
         soup = BeautifulSoup(response.text, 'html.parser')
