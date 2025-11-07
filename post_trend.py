@@ -82,7 +82,7 @@ def clean_poem(poem):
     return poem
 
 # ------------------------------
-# ★ 最終最終兵器：getdaytrendsクラス名対応版（2025年11月最新）
+# ★ 永久不滅最終版：getdaytrends 2025年11月7日最新対応
 # ------------------------------
 def get_trend_word():
     fallback_words = ["ふわふわ", "きらきら", "ドキドキ", "えへへ", "なのっ"]
@@ -98,28 +98,25 @@ def get_trend_word():
         soup = BeautifulSoup(res.text, 'html.parser')
         trends = []
         
-        # ★2025年11月最新クラス名★
-        # <a href="/trend/..."><strong>トレンド名</strong></a> の中
-        for a in soup.find_all('a', href=lambda h: h and h.startswith('/trend/')):
+        # ★最新構造★ <a href="/trend/..."><strong>トレンド名</strong></a>
+        for a in soup.find_all('a', href=lambda h: h and '/trend/' in h):
             strong = a.find('strong')
             if strong:
                 text = strong.get_text(strip=True)
-                if text and 2 <= len(text) <= 25:
+                if 2 <= len(text) <= 25:
                     trends.append(text)
         
-        # それでもダメなら旧クラス名も試す（保険）
-        if not trends:
-            for div in soup.find_all('div', class_='trend-card'):
-                h3 = div.find('h3')
-                if h3:
-                    text = h3.get_text(strip=True)
-                    if text and 2 <= len(text) <= 25:
-                        trends.append(text)
+        # 保険で <h3> も拾う
+        if len(trends) < 5:
+            for h3 in soup.find_all('h3'):
+                text = h3.get_text(strip=True)
+                if 2 <= len(text) <= 25 and any(c in text for c in '#乃木坂メガベストLINEぐるナイ'):
+                    trends.append(text)
         
         if not trends:
-            raise Exception("トレンド本当に空っぽ…")
+            raise Exception("マジで空っぽ…サイト変わった？")
             
-        word = random.choice(trends[:10])  # 上位10からランダム
+        word = random.choice(trends[:10])
         print(f"✅ getdaytrends日本トレンドGET: {word}")
         return word
         
