@@ -55,8 +55,8 @@ BOOTHでDL（無料）→ https://torisproject.booth.pm/items/7328786 🧸""",
     #夢の裏切り #現実辛すぎワロタ #みりんてゃ""",
 
     """みりんの夢、毎回バトル漫画みたいなんだけど  
-    これって…前世の記憶…？？（違う）  
-    ➡︎ https://mofu-mitsu.github.io/yumekawa-dream-card/  
+これって…前世の記憶…？？（違う）  
+➡︎ https://mofu-mitsu.github.io/yumekawa-dream-card/  
     #夢はフィクションです #夢界転生 #みりんてゃ""",
     """ねむれない夜に、みりんは夢を編んだの…☁️  
     君の夢も、カードにしてみない…？  
