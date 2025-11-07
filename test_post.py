@@ -19,8 +19,6 @@ HANDLE = os.getenv('HANDLE')
 APP_PASSWORD = os.getenv('APP_PASSWORD')
 
 POST_MESSAGES = [
-    """寂しくてしんじゃいそう……なんちゃって♡ 
-#誰かに見つけてほしい""",
     """みりん、寂しくてキラキラ作っちゃった…♡  
 フィードで会いに来てくれたら、幸せだよ🥺  
     ➡︎ https://bsky.app/profile/did:plc:pvy7w75qks44sybd5wwpthb6/feed/aaae5hbblng6a  
