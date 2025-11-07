@@ -26,4 +26,4 @@ jobs:
           HANDLE: ${{ secrets.HANDLE }}
           APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
           HF_TOKEN: ${{ secrets.HF_TOKEN }}  # HuggingFace使う場合
-        run: python tesp_post.py
+        run: python test_post.py
