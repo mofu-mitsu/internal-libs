@@ -1,4 +1,4 @@
-name: 🌟 みりんてゃトレンドBot（自動青タグ）
+name: 🌟 みりんてゃトレンドBot（自動青タグ・不死身版）
 
 on:
   schedule:
@@ -22,23 +22,13 @@ jobs:
       - name: 📦 ライブラリインストール
         run: |
           pip install --upgrade pip
-          pip install --no-cache-dir atproto python-dotenv groq==0.9.0 selenium beautifulsoup4 unicodedata2
+          pip install --no-cache-dir atproto python-dotenv groq==0.9.0 selenium unicodedata2
 
-      - name: 🌐 Chromeインストール
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y wget unzip
-          wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-          sudo apt install -y ./google-chrome-stable_current_amd64.deb
+      - name: 🌐 Chrome自動インストール
+        uses: browser-actions/setup-chrome@v1
 
-      - name: 🔧 ChromeDriver手動インストール（バージョン自動取得）
-        run: |
-          CHROME_VERSION=$(google-chrome --version | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
-          DRIVER_VERSION=$(curl -s "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_${CHROME_VERSION%%.*}")
-          wget "https://chromedriver.storage.googleapis.com/${DRIVER_VERSION}/chromedriver_linux64.zip"
-          unzip chromedriver_linux64.zip
-          sudo mv chromedriver /usr/local/bin/
-          sudo chmod +x /usr/local/bin/chromedriver
+      - name: 🔧 ChromeDriver自動マッチ
+        uses: nanasess/setup-chromedriver@v2
 
       - name: 🔐 シークレット書き出し
         run: |
@@ -46,7 +36,7 @@ jobs:
           echo "APP_PASSWORD=${{ secrets.APP_PASSWORD }}" >> .env
           echo "GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}" >> .env
 
-      - name: 🚀 Bot実行（汚染防止でHOME移動）
+      - name: 🚀 Bot実行
         run: |
-          cd /home/runner
-          python $GITHUB_WORKSPACE/post_trend.py
+          export PATH="$PATH:/usr/local/bin"
+          python post_trend.py
