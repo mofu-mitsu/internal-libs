@@ -1,8 +1,9 @@
 name: test post
 
 on:
+  schedule:
+    - cron: '0 */5 * * *'  # 5時間ごとに実行（UTC）
   workflow_dispatch:  # 手動実行もできるように
-
 jobs:
   post:
     runs-on: ubuntu-latest
