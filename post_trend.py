@@ -82,7 +82,7 @@ def clean_poem(poem):
     return poem
 
 # ------------------------------
-# ★ 永久不滅最終版：getdaytrends 2025年11月7日最新対応
+# ★ 誤爆ゼロ最終版：getdaytrends 2025年11月8日最新（ヘッダー除外）
 # ------------------------------
 def get_trend_word():
     fallback_words = ["ふわふわ", "きらきら", "ドキドキ", "えへへ", "なのっ"]
@@ -98,26 +98,38 @@ def get_trend_word():
         soup = BeautifulSoup(res.text, 'html.parser')
         trends = []
         
-        # ★最新構造★ <a href="/trend/..."><strong>トレンド名</strong></a>
+        # ★本物のトレンドだけ狙い撃ち★
+        # 1. <a href="/trend/..."> の中の <strong>（ハッシュタグ多め）
         for a in soup.find_all('a', href=lambda h: h and '/trend/' in h):
             strong = a.find('strong')
             if strong:
                 text = strong.get_text(strip=True)
-                if 2 <= len(text) <= 25:
+                # 除外ワード + 長さチェック
+                if (text and 
+                    3 <= len(text) <= 20 and 
+                    'Trending' not in text and 
+                    'Longest' not in text and 
+                    'Daily' not in text and 
+                    text != 'Japan'):
                     trends.append(text)
         
-        # 保険で <h3> も拾う
+        # 2. 保険で <div class="trend-item"> 系も拾う
         if len(trends) < 5:
-            for h3 in soup.find_all('h3'):
-                text = h3.get_text(strip=True)
-                if 2 <= len(text) <= 25 and any(c in text for c in '#乃木坂メガベストLINEぐるナイ'):
+            for div in soup.find_all('div', class_=lambda c: c and 'trend' in c.lower()):
+                text = div.get_text(strip=True).split()[0]  # 最初のワードだけ
+                if (3 <= len(text) <= 20 and 
+                    'Trending' not in text and 
+                    'Longest' not in text):
                     trends.append(text)
+        
+        # 重複除去
+        trends = list(dict.fromkeys(trends))
         
         if not trends:
-            raise Exception("マジで空っぽ…サイト変わった？")
+            raise Exception("本物のトレンドゼロ…")
             
         word = random.choice(trends[:10])
-        print(f"✅ getdaytrends日本トレンドGET: {word}")
+        print(f"✅ 本物トレンドGET: {word}")
         return word
         
     except Exception as e:
