@@ -10,6 +10,12 @@ from groq import Groq
 import random
 import time
 from pytrends.request import TrendReq  # Google Trends
+# Selenium
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
 
 # ------------------------------
 # 🔐 環境変数
@@ -86,59 +92,65 @@ def clean_poem(poem):
     return poem
 
 # ------------------------------
-# ★ 誤爆ゼロ最終版：getdaytrends 2025年11月8日最新（ヘッダー除外）
+# ★ 自動トレンド取得（Selenium）
 # ------------------------------
 def get_trend_word():
     fallback_words = ["ふわふわ", "きらきら", "ドキドキ", "えへへ", "なのっ"]
     try:
-        import requests
-        from bs4 import BeautifulSoup
-        
-        url = "https://getdaytrends.com/japan/"
-        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
-        res = requests.get(url, headers=headers, timeout=10)
-        res.raise_for_status()
-        
-        soup = BeautifulSoup(res.text, 'html.parser')
+        chrome_options = Options()
+        chrome_options.add_argument("--headless")
+        chrome_options.add_argument("--no-sandbox")
+        chrome_options.add_argument("--disable-dev-shm-usage")
+        chrome_options.add_argument("--disable-gpu")
+        chrome_options.add_argument("--window-size=1920,1080")
+
+        driver = webdriver.Chrome(
+            service=Service(ChromeDriverManager().install()),
+            options=chrome_options
+        )
+        driver.get("https://getdaytrends.com/japan/")
+        time.sleep(5)  # JS描画待ち
+
         trends = []
-        
-        # ★本物のトレンドだけ狙い撃ち★
-        # 1. <a href="/trend/..."> の中の <strong>（ハッシュタグ多め）
-        for a in soup.find_all('a', href=lambda h: h and '/trend/' in h):
-            strong = a.find('strong')
-            if strong:
-                text = strong.get_text(strip=True)
-                # 除外ワード + 長さチェック
-                if (text and 
-                    3 <= len(text) <= 20 and 
-                    'Trending' not in text and 
-                    'Longest' not in text and 
-                    'Daily' not in text and 
-                    text != 'Japan'):
+        # テーブルからトレンド名取得
+        rows = driver.find_elements(By.CSS_SELECTOR, "table tr")
+        for row in rows[1:11]:  # 1位〜10位
+            cells = row.find_elements(By.TAG_NAME, "td")
+            if len(cells) >= 2:
+                text = cells[1].text.strip()
+                if text and 3 <= len(text) <= 25 and text.startswith("#"):
                     trends.append(text)
-        
-        # 2. 保険で <div class="trend-item"> 系も拾う
-        if len(trends) < 5:
-            for div in soup.find_all('div', class_=lambda c: c and 'trend' in c.lower()):
-                text = div.get_text(strip=True).split()[0]  # 最初のワードだけ
-                if (3 <= len(text) <= 20 and 
-                    'Trending' not in text and 
-                    'Longest' not in text):
-                    trends.append(text)
-        
-        # 重複除去
-        trends = list(dict.fromkeys(trends))
-        
+
+        driver.quit()
+
         if not trends:
-            raise Exception("本物のトレンドゼロ…")
-            
-        word = random.choice(trends[:10])
-        print(f"✅ 本物トレンドGET: {word}")
+            raise Exception("トレンド取得失敗")
+
+        word = random.choice(trends)
+        print(f"✅ 自動トレンドGET: {word}")
         return word
-        
+
     except Exception as e:
-        print(f"⚠️ 全部ダメ…フォールバック: {e}")
+        print(f"⚠️ トレンドエラー → フォールバック: {e}")
         return random.choice(fallback_words)
+
+# ------------------------------
+# ★ 青ハッシュタグ facets生成
+# ------------------------------
+def generate_facets(text, hashtags):
+    text_bytes = text.encode("utf-8")
+    facets = []
+    for tag in hashtags:
+        full_tag = f"#{tag.replace('#', '')}"
+        tag_bytes = full_tag.encode("utf-8")
+        start = text_bytes.find(tag_bytes)
+        if start != -1:
+            facets.append({
+                "index": {"byteStart": start, "byteEnd": start + len(tag_bytes)},
+                "features": [{"$type": "app.bsky.richtext.facet#tag", "tag": tag.replace('#', '')}]
+            })
+    return facets
+
 # ------------------------------
 # ★ 気分ラベル取得
 # ------------------------------
@@ -224,30 +236,42 @@ def generate_poem(trend_word, mood):
         return random.choice(fallback_poems)
 
 # ------------------------------
-# ★ メイン処理
+# ★ メイン（青タグ対応）
 # ------------------------------
 def main():
     try:
         client = Client()
-        print(f"DEBUG: ログイン試行: {HANDLE}")
         client.login(HANDLE, APP_PASSWORD)
-        print(f"DEBUG: ログイン成功")
 
-        trend_word = get_trend_word()
-        mood = get_mood()
+        trend_word = get_trend_word()  # 自動取得
+        mood = random.choice(MOOD_LABELS)
         poem = generate_poem(trend_word, mood)
 
-        # メッセージ構成：気分＋トレンド＋反応
-        message = f"「{mood}」で『{trend_word}』見つけたのっ。{poem}"
+        # トレンドからタグ名抽出（#を除く）
+        tag_name = trend_word.replace('#', '').replace(' ', '')
 
-        client.send_post(text=message)
-        print(f"投稿完了: {message}")
+        # メッセージ構成
+        message = (
+            f"「{mood}」で『{trend_word}』見つけたのっ。\n"
+            f"{poem}\n"
+            f"#{tag_name}"
+        )
+
+        # 正規化
+        normalized_text = unicodedata.normalize("NFKC", message)
+
+        # facets生成
+        facets = generate_facets(normalized_text, [tag_name])
+
+        # 投稿（facets付きで青タグ！）
+        client.send_post(
+            text=normalized_text,
+            facets=facets if facets else None
+        )
+        print(f"投稿完了:\n{message}")
 
     except Exception as e:
-        print(f"❌ 実行エラー: {e}")
-        with open("trend_log.txt", "a", encoding="utf-8") as f:
-            f.write(f"{datetime.now(timezone('Asia/Tokyo'))}: エラー - {str(e)}\n")
+        print(f"❌ エラー: {e}")
 
 if __name__ == "__main__":
-    print("🤖 トレンドBot（気分ラベル付き）起動中…")
     main()
