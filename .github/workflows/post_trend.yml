@@ -29,6 +29,19 @@ jobs:
           pip install --no-cache-dir urllib3\<2.0.0
           pip install --no-cache-dir atproto python-dotenv groq==0.9.0 httpx==0.27.2 beautifulsoup4 lxml pytz pytrends
 
+      - name: 🌐 Chrome とドライバをインストール
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget unzip
+          wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+          sudo apt install -y ./google-chrome-stable_current_amd64.deb
+          CHROME_VERSION=$(google-chrome --version | awk '{print $3}')
+          CHROMEDRIVER_VERSION=$(curl -s "https://googlechromelabs.github.io/chrome-for-testing/LATEST_RELEASE_STABLE")
+          wget "https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/${CHROMEDRIVER_VERSION}/linux64/chromedriver-linux64.zip"
+          unzip chromedriver-linux64.zip
+          sudo mv chromedriver-linux64/chromedriver /usr/local/bin/
+          sudo chmod +x /usr/local/bin/chromedriver
+
       - name: 🔐 シークレット書き出し
         run: |
           echo "HANDLE=${{ secrets.HANDLE }}" >> .env
