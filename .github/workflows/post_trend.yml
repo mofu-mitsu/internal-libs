@@ -22,7 +22,7 @@ jobs:
       - name: 📦 ライブラリインストール
         run: |
           pip install --upgrade pip
-          pip install --no-cache-dir atproto python-dotenv groq==0.9.0 selenium unicodedata2
+          pip install --no-cache-dir atproto python-dotenv groq==0.9.0 selenium unicodedata2 pytz
 
       - name: 🌐 Chrome自動インストール
         uses: browser-actions/setup-chrome@v1
