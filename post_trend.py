@@ -250,11 +250,12 @@ def main():
         # トレンドからタグ名抽出（#を除く）
         tag_name = trend_word.replace('#', '').replace(' ', '')
 
-        # メッセージ構成
+        trend_display = trend_word.replace('#', '')  # #抜き！
+
         message = (
-            f"「{mood}」で『{trend_word}』見つけたのっ。\n"
+            f"「{mood}」で『{trend_display}』見つけたのっ。\n"
             f"{poem}\n"
-            f"#{tag_name}"  # ここだけ#！
+            f"#{tag_name}"  # 最後に#だけ！
         )
 
         # 正規化
