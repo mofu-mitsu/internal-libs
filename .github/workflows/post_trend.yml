@@ -1,22 +1,18 @@
-name: 🌟 みりんてゃトレンドBot（気分ラベル）
+name: 🌟 みりんてゃトレンドBot（自動青タグ）
 
 on:
   schedule:
-    - cron: '5 0 * * *'
+    - cron: '5 0 * * *'  # JST朝9:05
   workflow_dispatch:
 
 jobs:
-  run-trend-bot:
+  run-bot:
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
     steps:
-      - name: 📥 リポジトリをチェックアウト
+      - name: 📥 チェックアウト
         uses: actions/checkout@v4
-
-      - name: 🧹 pipキャッシュクリア
-        run: |
-          pip cache purge
 
       - name: 🐍 Pythonセットアップ
         uses: actions/setup-python@v5
@@ -26,20 +22,22 @@ jobs:
       - name: 📦 ライブラリインストール
         run: |
           pip install --upgrade pip
-          pip install --no-cache-dir urllib3<2.0.0
-          pip install --no-cache-dir atproto python-dotenv groq==0.9.0 httpx==0.27.2 beautifulsoup4 lxml pytz pytrends selenium
+          pip install --no-cache-dir atproto python-dotenv groq==0.9.0 selenium beautifulsoup4 unicodedata2
 
-      - name: 🌐 Chrome とドライバをインストール
+      - name: 🌐 Chromeインストール
         run: |
           sudo apt-get update
           sudo apt-get install -y wget unzip
           wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
           sudo apt install -y ./google-chrome-stable_current_amd64.deb
-          CHROME_VERSION=$(google-chrome --version | awk '{print $3}')
-          CHROMEDRIVER_VERSION=$(curl -s "https://googlechromelabs.github.io/chrome-for-testing/LATEST_RELEASE_STABLE")
-          wget "https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/${CHROMEDRIVER_VERSION}/linux64/chromedriver-linux64.zip"
-          unzip chromedriver-linux64.zip
-          sudo mv chromedriver-linux64/chromedriver /usr/local/bin/
+
+      - name: 🔧 ChromeDriver手動インストール（バージョン自動取得）
+        run: |
+          CHROME_VERSION=$(google-chrome --version | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+          DRIVER_VERSION=$(curl -s "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_${CHROME_VERSION%%.*}")
+          wget "https://chromedriver.storage.googleapis.com/${DRIVER_VERSION}/chromedriver_linux64.zip"
+          unzip chromedriver_linux64.zip
+          sudo mv chromedriver /usr/local/bin/
           sudo chmod +x /usr/local/bin/chromedriver
 
       - name: 🔐 シークレット書き出し
@@ -48,5 +46,7 @@ jobs:
           echo "APP_PASSWORD=${{ secrets.APP_PASSWORD }}" >> .env
           echo "GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}" >> .env
 
-      - name: 🚀 Bot実行
-        run: python post_trend.py
+      - name: 🚀 Bot実行（汚染防止でHOME移動）
+        run: |
+          cd /home/runner
+          python $GITHUB_WORKSPACE/post_trend.py
