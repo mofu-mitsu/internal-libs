@@ -85,8 +85,8 @@ def clean_poem(poem):
     poem = poem.strip()
 
     # 100文字以内に強制カット（保険）
-    if len(poem) > 100:
-        poem = poem[:97] + "…"
+    if len(poem) > 120:
+        poem = poem[:117] + "…"
 
     return poem
 
@@ -162,7 +162,10 @@ def generate_poem(trend_word, mood):
     fallback_poems = [
         f"「{mood}」で『{trend_word}』見つけたのっ…♡",
         f"えへへ〜♡ 『{trend_word}』って、{mood}な気持ちになるよね♪",
-        f"『{trend_word}』が流行ってるの？ {mood}なみりんてゃも気になるな…♡"
+        f"『{trend_word}』が流行ってるの？ {mood}なみりんてゃも気になるな…♡",
+        f"「{mood}」な今日、『{trend_word}』見てふわふわしちゃった…きみも一緒に{mood}になろ♡",
+        f"えへへ〜♡ 『{trend_word}』が{mood}な香りで包んでくれて…きみとシェアしたいな♪",
+        f"{mood}なみりんてゃ、『{trend_word}』にきゅんってなっちゃった…きみも感じてみて？♡"
     ]
 
     try:
@@ -251,7 +254,7 @@ def main():
         message = (
             f"「{mood}」で『{trend_word}』見つけたのっ。\n"
             f"{poem}\n"
-            f"#{tag_name}"
+            f"#{tag_name}"  # ここだけ#！
         )
 
         # 正規化
