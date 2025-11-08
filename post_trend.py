@@ -98,22 +98,22 @@ def get_trend_word():
         chrome_options.add_argument("--no-sandbox")
         chrome_options.add_argument("--disable-dev-shm-usage")
         chrome_options.add_argument("--disable-gpu")
-        chrome_options.add_argument("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36")  # ←偽装追加！
+        chrome_options.add_argument("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
 
         driver = webdriver.Chrome(options=chrome_options)
         driver.get("https://getdaytrends.com/japan/")
         
-        # ★超強化待ち★ JS完全描画まで待機
-        time.sleep(8)
+        # ★ツール解析神待ち★ テーブル完全出現まで待機
         from selenium.webdriver.support.ui import WebDriverWait
         from selenium.webdriver.support import expected_conditions as EC
-        WebDriverWait(driver, 20).until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, "td.trend a"))
+        WebDriverWait(driver, 30).until(
+            EC.presence_of_all_elements_located((By.CSS_SELECTOR, "table tr td a[href*='/japan/trend/']"))
         )
+        time.sleep(2)  # 保険待ち
 
         trends = []
-        # ★神セレクタ★ <td class="trend"><a href="...">#それスノ</a></td>
-        for a in driver.find_elements(By.CSS_SELECTOR, "td.trend a"):
+        # ★ツール解析神セレクタ★ <td><a href="/japan/trend/...">#それスノ</a></td>
+        for a in driver.find_elements(By.CSS_SELECTOR, "table tr td a[href*='/japan/trend/']"):
             text = a.text.strip()
             if text.startswith("#") and 3 <= len(text) <= 30:
                 trends.append(text)
@@ -124,7 +124,7 @@ def get_trend_word():
             raise Exception(f"トレンド少なすぎ: {len(trends)}個 → {trends}")
 
         word = random.choice(trends[:10])
-        print(f"✅ 神トレンドGET: {word} (総数: {len(trends)})")
+        print(f"✅ ツール解析神トレンドGET: {word} (総数: {len(trends)})")
         return word
 
     except Exception as e:
