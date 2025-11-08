@@ -94,46 +94,40 @@ def clean_poem(poem):
 # ------------------------------
 # ★ 自動トレンド取得（Selenium）
 # ------------------------------
+# get_trend_word() だけ変更！
 def get_trend_word():
     fallback_words = ["ふわふわ", "きらきら", "ドキドキ", "えへへ", "なのっ"]
     try:
         chrome_options = Options()
-        chrome_options.add_argument("--headless")
+        chrome_options.add_argument("--headless=new")
         chrome_options.add_argument("--no-sandbox")
         chrome_options.add_argument("--disable-dev-shm-usage")
         chrome_options.add_argument("--disable-gpu")
-        chrome_options.add_argument("--window-size=1920,1080")
 
-        driver = webdriver.Chrome(
-            service=Service(ChromeDriverManager().install()),
-            options=chrome_options
-        )
+        driver = webdriver.Chrome(options=chrome_options)  # 手動ドライバ使用！
         driver.get("https://getdaytrends.com/japan/")
-        time.sleep(5)  # JS描画待ち
+        time.sleep(6)
 
         trends = []
-        # テーブルからトレンド名取得
         rows = driver.find_elements(By.CSS_SELECTOR, "table tr")
-        for row in rows[1:11]:  # 1位〜10位
+        for row in rows[1:11]:
             cells = row.find_elements(By.TAG_NAME, "td")
             if len(cells) >= 2:
                 text = cells[1].text.strip()
-                if text and 3 <= len(text) <= 25 and text.startswith("#"):
+                if text.startswith("#") and 3 <= len(text) <= 25:
                     trends.append(text)
 
         driver.quit()
-
         if not trends:
-            raise Exception("トレンド取得失敗")
+            raise Exception("トレンドゼロ")
 
         word = random.choice(trends)
         print(f"✅ 自動トレンドGET: {word}")
         return word
 
     except Exception as e:
-        print(f"⚠️ トレンドエラー → フォールバック: {e}")
+        print(f"⚠️ トレンドエラー: {e}")
         return random.choice(fallback_words)
-
 # ------------------------------
 # ★ 青ハッシュタグ facets生成
 # ------------------------------
