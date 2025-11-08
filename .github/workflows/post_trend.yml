@@ -1,4 +1,4 @@
-name: 🌟 みりんてゃトレンドBot（自動青タグ・不死身版）
+name: 🌟 みりんてゃトレンドBot（神不死身版）
 
 on:
   schedule:
@@ -24,13 +24,10 @@ jobs:
           pip install --upgrade pip
           pip install --no-cache-dir atproto python-dotenv "groq>=0.11.0" selenium pytz
 
-      - name: 🌐 Chrome自動インストール
-        uses: browser-actions/setup-chrome@v1
-
-      - name: 🔧 ChromeDriver自動マッチ
-        uses: nanasess/setup-chromedriver@v2
+      - name: 🌐 Chrome & Driver公式自動インストール
+        uses: browser-actions/setup-chrome@latest
         with:
-          chromedriver-version: latest
+          chrome-version: stable
 
       - name: 🔐 シークレット書き出し
         run: |
@@ -40,5 +37,6 @@ jobs:
 
       - name: 🚀 Bot実行
         run: |
-          export DISPLAY=:99
+          chrome --version
+          chromedriver --version
           python post_trend.py
