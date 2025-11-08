@@ -94,6 +94,10 @@ DAY_POST_MESSAGES = [
 「📸お絵描きBot」
 「描いて 犬」ってリプライで可愛い画像生成！プロンプトでカスタムもOKな魔法だよっ♡
 #みりんてゃの魔法""",
+    """🎀みりんてゃの魔法紹介⑯✨
+「📈トレンドBot」
+朝9時に日本トレンドキャッチ！もちもち気分でLLaMAポエムをふわっと届けるよ♡
+#みりんてゃの魔法""",
     """🎀 Mirinteya's Magic Intro ① ✨
 「💬 Auto-Reply Bot」
 Reply to a post or mention @mirinchuuu.bsky.social and get a soft lil’ reply ♡
@@ -172,6 +176,10 @@ It’s like a diary that changes with the seasons ♡
     """🎀 Mirinteya's Magic Intro ⑮ ✨
 「📸 Drawing Bot」
 Reply with “Draw a dog” for a cute image! Customize with prompts too ♡
+#MirinteyasMagic""",
+    """🎀 Mirinteya's Magic Intro ⑯ ✨
+「📈 Trend Bot」
+Catches Japan trends at 9AM! Delivers LLaMA poem with mochi-mochi mood ♡
 #MirinteyasMagic"""
 ]
 
@@ -254,6 +262,10 @@ NIGHT_POST_MESSAGES = [
     """⸝⸝ みりんてゃの魔法紹介⑮ ⸝⸝
 『📸お絵描きBot』
 「描いて 猫」で夜に可愛い画像を…プロンプトで癒しを届けるよ🫧
+#病み期 #みりんてゃの魔法""",
+    """⸝⸝ みりんてゃの魔法紹介⑯ ⸝⸝
+『📈トレンドBot』
+朝9時にトレンド見つけて…もちもちな夜にきゅんポエムをそっと囁くよ♡
 #病み期 #みりんてゃの魔法"""
 ]
 
