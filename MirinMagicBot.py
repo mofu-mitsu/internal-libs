@@ -96,7 +96,7 @@ DAY_POST_MESSAGES = [
 #みりんてゃの魔法""",
     """🎀みりんてゃの魔法紹介⑯✨
 「📈トレンドBot」
-朝9時頃に日本トレンドキャッチ！もちもち気分でLLaMAポエムをふわっと届けるよ♡
+朝10〜11時頃に日本トレンドキャッチ！もちもち気分でLLaMAポエムをふわっと届けるよ♡
 #みりんてゃの魔法""",
     """🎀 Mirinteya's Magic Intro ① ✨
 「💬 Auto-Reply Bot」
@@ -179,7 +179,7 @@ Reply with “Draw a dog” for a cute image! Customize with prompts too ♡
 #MirinteyasMagic""",
     """🎀 Mirinteya's Magic Intro ⑯ ✨
 「📈 Trend Bot」
-Catches Japan trends at 9AM! Delivers LLaMA poem with mochi-mochi mood ♡
+Catches Japan trends at 10〜11AM! Delivers LLaMA poem with mochi-mochi mood ♡
 #MirinteyasMagic"""
 ]
 
@@ -265,7 +265,7 @@ NIGHT_POST_MESSAGES = [
 #病み期 #みりんてゃの魔法""",
     """⸝⸝ みりんてゃの魔法紹介⑯ ⸝⸝
 『📈トレンドBot』
-朝9時頃にトレンド見つけて…もちもちな夜にきゅんポエムをそっと囁くよ♡
+朝10〜11時頃にトレンド見つけて…もちもちな夜にきゅんポエムをそっと囁くよ♡
 #病み期 #みりんてゃの魔法"""
 ]
 
