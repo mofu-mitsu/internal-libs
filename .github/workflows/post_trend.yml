@@ -22,13 +22,15 @@ jobs:
       - name: 📦 ライブラリインストール
         run: |
           pip install --upgrade pip
-          pip install --no-cache-dir atproto python-dotenv groq==0.9.0 selenium unicodedata2 pytz
+          pip install --no-cache-dir atproto python-dotenv "groq>=0.11.0" selenium pytz
 
       - name: 🌐 Chrome自動インストール
         uses: browser-actions/setup-chrome@v1
 
       - name: 🔧 ChromeDriver自動マッチ
         uses: nanasess/setup-chromedriver@v2
+        with:
+          chromedriver-version: latest
 
       - name: 🔐 シークレット書き出し
         run: |
@@ -38,5 +40,5 @@ jobs:
 
       - name: 🚀 Bot実行
         run: |
-          export PATH="$PATH:/usr/local/bin"
+          export DISPLAY=:99
           python post_trend.py
