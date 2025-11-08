@@ -2,7 +2,7 @@ name: 🌟 みりんてゃトレンドBot（気分ラベル）
 
 on:
   schedule:
-    - cron: '5 0 * * *'  
+    - cron: '5 0 * * *'
   workflow_dispatch:
 
 jobs:
@@ -16,7 +16,7 @@ jobs:
 
       - name: 🧹 pipキャッシュクリア
         run: |
-          pip cache purge
+          pip cache purge || true
 
       - name: 🐍 Pythonセットアップ
         uses: actions/setup-python@v5
@@ -25,22 +25,22 @@ jobs:
 
       - name: 📦 ライブラリインストール
         run: |
-          pip install --upgrade pip
-          pip install --no-cache-dir urllib3\<2.0.0
-          pip install --no-cache-dir atproto python-dotenv groq==0.9.0 httpx==0.27.2 beautifulsoup4 lxml pytz pytrends
+          python -m pip install --upgrade pip
+          python -m pip install --no-cache-dir urllib3<2.0.0
+          python -m pip install --no-cache-dir atproto python-dotenv groq==0.9.0 httpx==0.27.2 beautifulsoup4 lxml pytz pytrends selenium webdriver-manager
 
-      - name: 🌐 Chrome とドライバをインストール
+      - name: 🌐 Chrome をインストール（stable）
         run: |
           sudo apt-get update
-          sudo apt-get install -y wget unzip
+          sudo apt-get install -y wget unzip ca-certificates fonts-liberation libasound2
           wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-          sudo apt install -y ./google-chrome-stable_current_amd64.deb
-          CHROME_VERSION=$(google-chrome --version | awk '{print $3}')
-          CHROMEDRIVER_VERSION=$(curl -s "https://googlechromelabs.github.io/chrome-for-testing/LATEST_RELEASE_STABLE")
-          wget "https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/${CHROMEDRIVER_VERSION}/linux64/chromedriver-linux64.zip"
-          unzip chromedriver-linux64.zip
-          sudo mv chromedriver-linux64/chromedriver /usr/local/bin/
-          sudo chmod +x /usr/local/bin/chromedriver
+          sudo apt install -y ./google-chrome-stable_current_amd64.deb || sudo apt-get -f install -y
+
+      - name: 🔧 確認: pip ライブラリ一覧（デバッグ用）
+        run: |
+          python -m pip show selenium || true
+          python -m pip show webdriver-manager || true
+          python -m pip list
 
       - name: 🔐 シークレット書き出し
         run: |
