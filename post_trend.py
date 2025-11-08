@@ -9,7 +9,6 @@ from pytz import timezone
 from groq import Groq
 import random
 import time
-from pytrends.request import TrendReq  # Google Trends
 # Selenium
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
