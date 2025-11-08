@@ -90,9 +90,8 @@ def clean_poem(poem):
     return poem
 
 # ------------------------------
-# ★ 自動トレンド取得（Selenium）
+# ★ 自動トレンド取得（最新HTML完全対応）
 # ------------------------------
-# get_trend_word() だけ置き換え！
 def get_trend_word():
     fallback_words = ["ふわふわ", "きらきら", "ドキドキ", "えへへ", "なのっ"]
     try:
@@ -101,13 +100,14 @@ def get_trend_word():
         chrome_options.add_argument("--no-sandbox")
         chrome_options.add_argument("--disable-dev-shm-usage")
 
-        driver = webdriver.Chrome(options=chrome_options) 
+        driver = webdriver.Chrome(options=chrome_options)
         driver.get("https://getdaytrends.com/japan/")
-        time.sleep(7)
+        time.sleep(8)  # 描画待ち強化
 
         trends = []
-        # ★2025/11/08最新★ <td class="trend"><a href="...">#それスノ</a></td>
-        for a in driver.find_elements(By.CSS_SELECTOR, "td.trend a"):
+        # ★最新構造★ <td class="trend"><a href="...">#それスノ</a></td>
+        for td in driver.find_elements(By.CSS_SELECTOR, "td.trend"):
+            a = td.find_element(By.TAG_NAME, "a")
             text = a.text.strip()
             if text.startswith("#") and 3 <= len(text) <= 30:
                 trends.append(text)
@@ -115,7 +115,7 @@ def get_trend_word():
         driver.quit()
 
         if len(trends) < 5:
-            raise Exception(f"トレンド少なすぎ: {len(trends)}個")
+            raise Exception(f"トレンド少なすぎ: {len(trends)}個 → {trends}")
 
         word = random.choice(trends[:10])
         print(f"✅ 最新トレンドGET: {word}")
@@ -160,6 +160,7 @@ def generate_poem(trend_word, mood):
     ]
 
     try:
+        # ★groq 0.11.0+ 対応（proxies削除）
         groq_client = Groq(api_key=GROQ_API_KEY)
         prompt = f"今日の気分は「{mood}」、トレンドワードは『{trend_word}』。みりんてゃがそれを見て、ふわっと浮かんだやさしい反応を短くつぶやく。"
 
