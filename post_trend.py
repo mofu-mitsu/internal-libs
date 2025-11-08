@@ -91,7 +91,7 @@ def clean_poem(poem):
     return poem
 
 # ------------------------------
-# ★ 自動トレンド取得（2025/11/08超超最新HTML対応）
+# ★ 自動トレンド取得（2025/11/08ツール解析完全対応）
 # ------------------------------
 def get_trend_word():
     fallback_words = ["ふわふわ", "きらきら", "ドキドキ", "えへへ", "なのっ"]
@@ -100,14 +100,16 @@ def get_trend_word():
         chrome_options.add_argument("--headless=new")
         chrome_options.add_argument("--no-sandbox")
         chrome_options.add_argument("--disable-dev-shm-usage")
+        chrome_options.add_argument("--disable-gpu")
+        chrome_options.add_argument("--remote-debugging-port=9222")
 
         driver = webdriver.Chrome(options=chrome_options)
         driver.get("https://getdaytrends.com/japan/")
-        time.sleep(10)  # 描画待ち最強
+        time.sleep(12)  # 描画待ち超最強
 
         trends = []
-        # ★永遠の構造★ <div class="trend-item"><div class="trend"><a>#それスノ</a></div></div>
-        for a in driver.find_elements(By.CSS_SELECTOR, "div.trend-item div.trend a"):
+        # ★ツール解析構造★ <td class="trend"><a href="...">#それスノ</a></td>
+        for a in driver.find_elements(By.CSS_SELECTOR, "td.trend a"):
             text = a.text.strip()
             if text.startswith("#") and 3 <= len(text) <= 30:
                 trends.append(text)
@@ -118,7 +120,7 @@ def get_trend_word():
             raise Exception(f"トレンド少なすぎ: {len(trends)}個 → {trends}")
 
         word = random.choice(trends[:10])
-        print(f"✅ 永遠トレンドGET: {word}")
+        print(f"✅ ツール解析トレンドGET: {word}")
         return word
 
     except Exception as e:
