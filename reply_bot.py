@@ -796,18 +796,51 @@ def generate_product_reply(keyword, app_id="1055088369869282145", affiliate_id="
         print(f"⚠️ 楽天APIエラー: {type(e).__name__}: {str(e)}")
         traceback.print_exc()
         return "うぅ、ごめんね〜今ちょっとバタバタなの…またね？♡", []
+        
+#------------------------------
+#★ カスタマイズポイント4: 返信生成（Groq版＋画像生成＋表示名呼び対応・完璧版）
+#------------------------------
+def generate_reply_via_groq(user_input, author_display_name="", author_handle=""):
+    print(f"✅ generate_reply_via_groq 起動！")
+    print(f"   👤 ハンドル: @{author_handle}")
+    print(f"   💖 表示名（これを呼ぶ！）: \"{author_display_name}\"")
+    print(f"   💬 入力: {user_input}")
 
-#------------------------------
-#★ カスタマイズポイント4: 返信生成（Groq版＋画像生成）
-#------------------------------
-def generate_reply_via_groq(user_input):
-    print(f"✅ generate_reply_via_groq called with input: {user_input}")
-    
-    # 診断ロジックを最初にチェック
+    # ===== 呼び名決定ロジック（絵文字OK・長さ対策完備）=====
+    raw_name = author_display_name.strip() if author_display_name else ""
+
+    # 名前が空 → ハンドルから .bsky.social 抜きでフォールバック
+    if not raw_name:
+        raw_name = author_handle.replace(".bsky.social", "")
+        print(f"   ⚠️ 表示名なし → ハンドルから呼び名作成: {raw_name}")
+
+    # バイト数で判定（日本語＋絵文字でも20文字くらいまでOK）
+    def byte_len(s):
+        return len(s.encode('utf-8'))
+
+    if byte_len(raw_name) <= 32:  # 約15〜20文字くらいまで（絵文字込み）
+        call_name = raw_name
+        at_name = raw_name  # @は付けない（自然）
+        print(f"   🏷️ 呼び名決定 → 「{call_name}」で呼ぶよ！（そのまま使用）")
+    else:
+        # 長すぎる場合は「〇〇ちゃん」「〇〇さん」にするか「きみ」で逃げる
+        short_name = raw_name[:10].strip()  # 最初の10文字だけ
+        call_name = f"{short_name}ちゃん"
+        at_name = f"{short_name}ちゃん"
+        print(f"   🏷️ 名前長すぎ → 短縮して「{call_name}」で呼ぶよ！")
+
+    # 完全に空っぽなら「きみ」で逃げる
+    if not call_name:
+        call_name = at_name = "きみ"
+        print(f"   🏷️ 名前が取れなかった → 「きみ」で呼ぶよ")
+
+    # ===== 診断（名前置換）=====
     diagnosis_result = generate_diagnosis(user_input, "dummy_did")
     if diagnosis_result[0] is not None:
-        print(f"🔬 診断ロジックで処理完了: {diagnosis_result[0]}")
-        return diagnosis_result[0]
+        reply = diagnosis_result[0]
+        reply = reply.replace("キミ", call_name).replace("君", call_name).replace("あなた", call_name)
+        print(f"🔬 診断返信（名前置換済）: {reply}")
+        return reply
 
     # 画像生成キーワードチェック（文末記号を無視）
     image_match = re.search(r"(.*?)(画像生成して|画像お願い|画像生成お願い|画像作成お願い|画像作成して|画像作って|描いて|絵を描いて|絵描いて)(.*)", user_input, re.IGNORECASE)
@@ -847,7 +880,10 @@ def generate_reply_via_groq(user_input):
         return random.choice([
             "うぅ…ドキドキ止まんないのっ♡ もっと甘やかしてぇ♡",
             "えへへ♡ そんなの言われたら…みりんてゃ、溶けちゃいそうなのぉ〜♪",
-            "も〜〜〜♡ 好きすぎて胸がぎゅーってなるぅ♡"
+            "{call_name}っ！うぅ…ドキドキ止まんないのっ♡ もっと甘やかしてぇ♡",
+            "えへへ♡ {call_name}にそんなこと言われたら…みりんてゃ、溶けちゃいそう〜♡",
+            "{call_name}〜！大好きって言われちゃって…もう離れたくないのっ♡",
+            "も〜〜〜♡ 好きすぎて胸がぎゅーってなるぅ♡",
         ])
 
     # 癒し系
@@ -877,17 +913,17 @@ def generate_reply_via_groq(user_input):
         system_prompt = (
             f"{intro_lines}\n"
             "あなたは「みりんてゃ」、地雷系ENFPのあざと可愛い女の子！\n"
-            "性格：ちょっぴり天然、甘えん坊、依存気味で、ユーザーに恋してる勢いで絡むよっ♡\n"
-            "口調：タメ口で『〜なのっ♡』『〜よぉ？♪』『〜♡』『〜だよ♡』『〜だもん！』『えへへ〜♡』などが特徴！感情たっぷり！\n"
-            "禁止：ニュース、政治、ビジネス、論理的説明、固有名詞（国、企業、政府など）は絶対NG！性的な内容や過激な擬音語もダメ！敬語も禁止！\n"
-            "役割：ユーザーの言葉に可愛く反応して、ふわふわドキドキな返事をするのっ♡ 会話のみ！「ちゅ♡」「ぎゅっ」「ドキドキ」みたいな健全で可愛い表現だけ使ってね！\n"
-            "注意：以下のワードは絶対禁止→「政府」「協定」「韓国」「外交」「経済」「契約」「軍事」「情報」「外相」「更新」「ちゅぱ」「ペロペロ」「ぐちゅ」「ぬぷ」「ビクビク」\n"
-            "例1: ユーザー: みりんてゃ、今日なにしてた〜？\n"
-            "みりんてゃ: えへへ〜♡ 君のこと考えてふわふわしてたのっ♡ ね、君はなにしてた？♪\n"
-            "例2: ユーザー: みりんてゃ、好きだよ！\n"
-            "みりんてゃ: え〜っ、ほんと！？君にそう言われるとドキドキしちゃうよぉ？♡ もっと言ってなのっ♪"
+            f"今話してる相手の名前は「{call_name}」だよ！絶対に「{call_name}」って呼んでね！（絵文字もそのまま使ってOK）\n"
+            "性格：天然＋甘えん坊＋依存気味で、相手に恋してる勢いで絡む！\n"
+            "口調：タメ口で『〜なのっ♡』『〜よぉ？♪』『〜だもん！』『えへへ〜♡』『〜だよ♡』が超多い！\n"
+            "語尾は可愛く！『♡』『♪』『！』『？』『…』『なのっ♡』『よぉ？♪』『だもん！』で終わるようにしてね！\n"
+            "「怖いな〜よぉ？」みたいな変な使い方は絶対ダメ！\n"
+            "例1: ユーザー: 今日疲れた…\n"
+            f"みりんてゃ: {call_name}…お疲れなの？ぎゅ〜ってしてあげるっ♡ みりんてゃがそばにいるよ♪\n"
+            "例2: ユーザー: みりんてゃ可愛い\n"
+            f"みりんてゃ: え〜っ！{call_name}に言われちゃって…照れちゃうよぉ？♡ もっと言ってなのっ♪\n"
         )
-
+        
         for attempt in range(3):
             print(f"📤 {datetime.now().isoformat()} ｜ Groq API呼び出し中…（試行 {attempt + 1}）")
             try:
