@@ -1128,11 +1128,16 @@ def run_reply_bot():
             if f"@{HANDLE}" not in text and (not hasattr(record, "reply") or not record.reply or not record.reply.parent):
                 continue
 
-            author_handle = getattr(author, "handle", None)
-            author_did = getattr(author, "did", None)
+            # ===== ここから超重要！表示名・ハンドル・DIDをちゃんと取る！=====
+            author_handle = getattr(author, "handle", "") or ""
+            author_display_name = getattr(author, "display_name", "") or ""
+            author_did = getattr(author, "did", "") or ""
+
             print(f"👤 from: @{author_handle} / did: {author_did}")
+            print(f"💖 表示名（これを呼ぶ！）: \"{author_display_name}\"")
             print(f"💬 受信メッセージ: {text}")
             print(f"🔗 notification_uri: {notification_uri}")
+            # ==========================================================
 
             if author_did == self_did or author_handle == HANDLE:
                 print("🛑 自分自身の投稿、スキップ")
@@ -1157,16 +1162,20 @@ def run_reply_bot():
                     print(f"🎯 キーワード '{keyword}' に反応（入力: {text}）→ 固定返信: {reply_text}")
                     break
 
-            # generate_reply_via_groqで返信生成
+            # generate_reply_via_groqで返信生成（表示名ちゃんと渡す！）
             if not reply_text:
                 print(f"🔄 generate_reply_via_groq を呼び出します: 入力={text}")
-                reply_result = generate_reply_via_groq(text)
+                reply_result = generate_reply_via_groq(
+                    user_input=text,
+                    author_display_name=author_display_name,
+                    author_handle=author_handle
+                )
                 print(f"📝 generate_reply_via_groq 結果: {repr(reply_result)}")
 
                 if isinstance(reply_result, dict) and reply_result.get("type") == "image":
                     image_path = reply_result["image"]
-                    prompt = reply_result["prompt"]
-                    reply_text = f"みりんてゃが描いたよ♡ どうかな？{'「' + prompt + '」' if prompt else ''}"
+                    prompt = reply_result.get("prompt", "")
+                    reply_text = f"{author_display_name or author_handle.replace('.bsky.social', '')}〜！みりんてゃが描いたよ♡ どうかな？{'「' + prompt + '」' if prompt else ''}"
                     try:
                         with open(image_path, "rb") as f:
                             blob_resp = client.com.atproto.repo.upload_blob(data=f.read())
@@ -1190,7 +1199,6 @@ def run_reply_bot():
                         print(f"✅ @{author_handle} に画像付き返信完了！ → {notification_uri}")
                         reply_count += 1
                         time.sleep(REPLY_INTERVAL)
-                        # 一時ファイル削除
                         try:
                             os.remove(image_path)
                             print(f"🧹 一時ファイル {image_path} 削除成功")
@@ -1200,7 +1208,7 @@ def run_reply_bot():
                     except Exception as e:
                         print(f"⚠️ 画像投稿エラー: {type(e).__name__}: {str(e)}")
                         traceback.print_exc()
-                        reply_text = "ごめん…画像生成失敗しちゃった♡ また試してみてね！"
+                        reply_text = f"{author_display_name or author_handle.replace('.bsky.social', '')}…ごめんね、画像失敗しちゃった♡ またお願いしてね！"
                         hashtags = []
                 else:
                     reply_text = reply_result
@@ -1212,12 +1220,16 @@ def run_reply_bot():
                         hashtags = []
                         print(f"🔬 診断ロジック非適用: {text}")
 
-            # reply_textの検証
+            # reply_textの検証（名前が絶対入るように保険）
             print(f"📝 投稿前reply_text: {repr(reply_text)}")
             if not isinstance(reply_text, str) or not reply_text.strip():
                 reply_text = random.choice(FALLBACK_CUTE_LINES)
                 hashtags = []
-                print(f"⚠️ reply_textが不正（{repr(reply_text)}）、フォールバックを使用: {reply_text}")
+                print(f"⚠️ reply_textが不正、フォールバックを使用: {reply_text}")
+
+            # 名前が完全に抜けてたら強制挿入
+            if author_display_name and author_display_name not in reply_text and "きみ" not in reply_text.lower():
+                reply_text = f"{author_display_name}！{reply_text}"
 
             # 投稿処理
             try:
