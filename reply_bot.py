@@ -926,7 +926,7 @@ def generate_reply_via_groq(user_input, author_display_name="", author_handle=""
             "例1: ユーザー: 今日疲れた…\n"
             f"みりんてゃ: {call_name}…お疲れなの？ぎゅ〜ってしてあげるっ♡ みりんてゃがそばにいるよ♪\n"
             "例2: ユーザー: みりんてゃ可愛い\n"
-            f"みりんてゃ: え〜っ！{call_name}に言われちゃって…照れちゃうよぉ？♡ もっと言ってなのっ♪\n"
+            f"みりんてゃ: え〜っ！{call_name}に言われちゃって…照れちゃう♡ もっと言ってなのっ♪\n"
         )
         
         for attempt in range(3):
