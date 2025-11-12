@@ -342,21 +342,52 @@ def groq_reply(image_url="", text="", context="ふわもこ共感", lang="ja", a
         try:
             response = requests.get(image_url, timeout=10)
             img = Image.open(BytesIO(response.content))
-            inputs = clip_processor(text=["ぬいぐるみ", "毛布", "クッション", "雲", "綿あめ", "食べ物", "人"], images=img, return_tensors="pt", padding=True).to(device)
-            with torch.no_grad():
-                outputs = clip_model(**inputs)
-                probs = outputs.logits_per_image.softmax(dim=1)[0]
-            labels = ["ぬいぐるみ", "毛布", "クッション", "雲", "綿あめ", "食べ物", "人"]
-            top_label = labels[probs.argmax().item()]
-            top_prob = probs.max().item()
 
-            # ★もっと細かい言語化！！★
-            desc_prompt = f"画像は{top_label}だよ！確信度{top_prob:.1%}！これを見て「{text}」って投稿に、みりんてゃっぽく可愛く返事して！"
+            # ★ステップ1：CLIPで画像を「数値ベクトル」に変換★
+            inputs = clip_processor(images=img, return_tensors="pt").to(device)
+            with torch.no_grad():
+                image_features = clip_model.get_image_features(**inputs)
+                image_vector = image_features[0].cpu().numpy()
+
+            # ★ステップ2：ベクトルを「人間が読める説明」に変換★
+            # ここで「似てるラベル」を大量にぶつけて、一番近いやつを抽出
+            candidate_texts = [
+                "ふわふわのピンクのぬいぐるみ", "もこもこの白いクッション", "ふわふわ毛布",
+                "パステルピンクの雲", "綿あめ", "ケーキ", "人の顔", "犬", "猫", "コスメ","食べ物", 
+                "ふわふわのうさぎ", "もこもこクマちゃん", "ふわふわタオル", "白い雪","楽器","花",
+                "ピンクのマカロン", "ふわふわの羊", "もこもこシープ", "ふわふわの綿", "服", "虫", 
+                "ピンクの桜", "ふわふわの天使の羽", "もこもこモコモコの何か", "空", "動物", "イラスト", "その他"
+            ]
+            text_inputs = clip_processor(text=candidate_texts, return_tensors="pt", padding=True).to(device)
+            with torch.no_grad():
+                text_features = clip_model.get_text_features(**text_inputs)
+                similarities = (image_features @ text_features.T).softmax(dim=-1)[0]
+            
+            # トップ3を抽出
+            top3_idx = similarities.topk(3).indices
+            top3_labels = [candidate_texts[i] for i in top3_idx]
+            top3_probs = [similarities[i].item() for i in top3_idx]
+
+            # ★ステップ3：Llamaに「これが写ってるよ！」って伝える★
+            desc_prompt = f"""
+画像見てきたよ〜！
+1位：{top3_labels[0]}（確信度{top3_probs[0]:.1%}）
+2位：{top3_labels[1]}（確信度{top3_probs[1]:.1%}）
+3位：{top3_labels[2]}（確信度{top3_probs[2]:.1%}）
+
+これ見て「{text}」って投稿してるの！みりんてゃっぽく超自然に返事してね♡
+例：きゃ〜！めっちゃふわふわのピンクぬいぐるみだよぉ〜♡ ぎゅってしたいのっ♪
+"""
+
+            # ★ステップ4：Llamaが自由に言語化！！★
             desc_response = Groq(api_key=GROQ_API_KEY).chat.completions.create(
-                model="llama-3.1-8b-instant",
-                messages=[{"role": "system", "content": system_prompt}, {"role": "user", "content": desc_prompt}],
-                max_tokens=100,
-                temperature=0.7
+                model="llama-3.1-70b-versatile",
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": desc_prompt}
+                ],
+                max_tokens=120,
+                temperature=0.8
             )
             reply = desc_response.choices[0].message.content.strip()
             reply = clean_output(reply)
