@@ -818,27 +818,23 @@ def generate_reply_via_groq(user_input, author_display_name="", author_handle=""
     def byte_len(s):
         return len(s.encode('utf-8'))
 
-        # 呼び名が長すぎたり変だったら、Llamaに自然な呼び方を考えさせる
-        if byte_len(raw_name) > 32 or "作家" in raw_name or "Scientist" in raw_name:
-            name_prompt = f"ユーザーの表示名は「{raw_name}」です。みりんてゃが可愛く自然に呼べる短い呼び方を1つだけ提案して。例えば「ぐれもんちゃん」「たろうくん」など。"
-            try:
-                name_response = groq_client.chat.completions.create(
-                    model="llama-3.1-8b-instant",
-                    messages=[{"role": "user", "content": name_prompt}],
-                    max_tokens=10,
-                    temperature=0.7
-                )
-                suggested = name_response.choices[0].message.content.strip().strip("「」").strip("『』")
-                if suggested and len(suggested) < 15:
-                    call_name = at_name = suggested
-                    print(f"   呼び名AI提案 → 「{call_name}」に決定！")
-            except:
-                pass  # 失敗しても無視
+    if byte_len(raw_name) <= 32:  # 約15〜20文字くらいまで（絵文字込み）
+        call_name = raw_name
+        at_name = raw_name  # @は付けない（自然）
+        print(f"   🏷️ 呼び名決定 → 「{call_name}」で呼ぶよ！（そのまま使用）")
+    else:
+        # 長すぎる場合は「〇〇ちゃん」「〇〇さん」にするか「きみ」で逃げる
+        short_name = raw_name[:10].strip()  # 最初の10文字だけ
+        call_name = f"{short_name}ちゃん"
+        at_name = f"{short_name}ちゃん"
+        print(f"   🏷️ 名前長すぎ → 短縮して「{call_name}」で呼ぶよ！")
 
     # 完全に空っぽなら「きみ」で逃げる
     if not call_name:
         call_name = at_name = "きみ"
         print(f"   🏷️ 名前が取れなかった → 「きみ」で呼ぶよ")
+
+    # ===== ここから call_name は絶対に存在する！=====
 
     # ===== 診断（名前置換）=====
     diagnosis_result = generate_diagnosis(user_input, "dummy_did")
