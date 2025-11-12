@@ -895,44 +895,66 @@ def process_post(post_data, client, reposted_uris, replied_uris):
         post_id = uri.split('/')[-1]
         text = getattr(actual_post.record, 'text', '') if hasattr(actual_post.record, 'text') else ''
         author = actual_post.author.handle
-        is_reply = hasattr(actual_post.record, 'reply') and actual_post.record.reply is not None
+        author_name = getattr(actual_post.author, "display_name", "") or author.split('.')[0]
+        
+        # 基本スキップ判定
         if is_reply and not (is_priority_post(text) or is_reply_to_self(post_data)):
-            print(f"⏷️ スキップ: リプライ（非@mirinchuuu/非自己）: {text[:20]} ({post_id})")
-            logging.debug(f"スキップ: リプライ: {post_id}")
             return False
-        print(f"🦊 POST処理開始: @{author} ({post_id})")
-        logging.info(f"🟢 POST処理開始: @{author} ({post_id})")
         normalized_uri = normalize_uri(uri)
         if normalized_uri in fuwamoko_uris or normalized_uri in replied_uris:
-            print(f"⏷️ スキップ: 既存投稿: {post_id}")
-            logging.debug(f"スキップ: 既存投稿: {post_id}")
             return False
-        if author == HANDLE:
-            print(f"⏷️ スキップ: 自分の投稿: {post_id}")
-            logging.debug(f"スキップ: 自分の投稿: {post_id}")
+        if author == HANDLE or is_quoted_repost(post_data) or post_id in reposted_uris:
             return False
-        if is_quoted_repost(post_data):
-            print(f"⏷️ スキップ: 引用リポスト: {post_id}")
-            logging.debug(f"スキップ: 引用リポスト: {post_id}")
-            return False
-        if post_id in reposted_uris:
-            print(f"⏷️ スキップ: 再投稿済み: {post_id}")
-            logging.debug(f"スキップ: 再投稿済み: {post_id}")
-            return False
-
         if author in recent_replies and (datetime.now(timezone.utc) - recent_replies[author]).total_seconds() < 24 * 3600:
-            print(f"⏷️ スキップ: 同ユーザーに24時間以内リプ済み: @{author} ({post_id})")
-            logging.debug(f"⏷️ スキップ: 同ユーザーに24時間以内リプ済み: @{author} ({post_id})")
             save_fuwamoko_uri(uri, actual_post.indexed_at)
             return False
 
-        if not has_image(post_data):
-            print(f"⏷️ スキップ: 画像なし: {post_id}")
-            logging.debug(f"スキップ: 画像なし: {post_id}")
+        # 相互チェック
+        if not is_mutual_follow(client, author):
             return False
 
-        image_data_list = []
+        # ★おはよう投稿（画像なしでも拾う！）★
+        if re.search(r"おはよう|おはよ|おっはー|morning|ohayo", text, re.IGNORECASE):
+            if random.random() < 0.1:  # 10%運ゲー！！
+                try:
+                    reply = groq_reply(
+                        image_url="", 
+                        text="おはよう！", 
+                        context="おはよう挨拶", 
+                        lang=detect_language(client, author, text),
+                        author_name=author_name
+                    )
+                    if not reply or len(reply) < 5:
+                        raise Exception("生成失敗")
+                except:
+                    reply = random.choice([
+                        f"{author_name}！おはようなのっ♡ 今日もふわふわな1日になりますように♪",
+                        f"おはよ〜♡ {author_name}！みりんてゃも起きたよぉ〜！ぎゅってしてあげるね♡",
+                        f"{author_name}〜！おはよぉ〜♡ 今日も一緒にふわもこしようね♪"
+                    ])
+                
+                client.send_post(
+                    text=reply,
+                    reply_to=AppBskyFeedPost.ReplyRef(
+                        parent=models.ComAtprotoRepoStrongRef.Main(uri=uri, cid=str(actual_post.cid)),
+                        root=models.ComAtprotoRepoStrongRef.Main(uri=uri, cid=str(actual_post.cid))
+                    )
+                )
+                recent_replies[author] = datetime.now(timezone.utc)
+                save_replied_uri(uri)
+                save_fuwamoko_uri(uri, actual_post.indexed_at)
+                logging.info(f"おはようリプ成功: {reply}")
+                return True
+            else:
+                return False
+
+        # 画像なしはスルー（おはよう以外）
+        if not has_image(post_data):
+            return False
+
+        # 画像取得
         embed = getattr(actual_post.record, 'embed', None)
+        image_data_list = []
         if embed:
             if hasattr(embed, 'images') and embed.images:
                 image_data_list.extend(embed.images)
@@ -941,62 +963,65 @@ def process_post(post_data, client, reposted_uris, replied_uris):
             elif getattr(embed, '$type', '') == 'app.bsky.embed.recordWithMedia' and hasattr(embed, 'media') and hasattr(embed.media, 'images'):
                 image_data_list.extend(embed.media.images)
 
-        if not is_mutual_follow(client, author):
-            print(f"⏷️ スキップ: 非相互フォロー: @{author} ({post_id})")
-            logging.debug(f"スキップ: 非相互フォロー: @{author} ({post_id})")
-            return False
-
+        # 各画像を処理
         for i, image_data in enumerate(image_data_list):
+            if not process_image(image_data, text, client=client, post=post_data):
+                continue
+
+            # ★ふわもこ検出 → 20%運ゲー！！★
+            if random.random() > 0.2:  # 20%しかリプしない！
+                save_fuwamoko_uri(uri, actual_post.indexed_at)
+                logging.debug(f"運ゲースキップ: {post_id}")
+                continue
+
+            # 画像URL生成
+            cid = extract_valid_cid(image_data.image.ref)
+            if not cid:
+                continue
+            image_url = f"https://cdn.bsky.app/img/feed_fullsize/plain/{actual_post.author.did}/{cid}@jpeg"
+
+            # ★Llamaで超自然リプ生成★
             try:
-                print(f"🦊 画像処理開始: {i+1}/{len(image_data_list)} ({post_id})")
-                logging.debug(f"画像処理開始: {i+1}/{len(image_data_list)} ({post_id})")
-                if process_image(image_data, text, client=client, post=post_data):
-                    if random.random() > 0.1:
-                        print(f"🎲 スキップ: ランダム（90%）: {post_id}")
-                        logging.debug(f"スキップ: ランダム: {post_id}")
-                        save_fuwamoko_uri(uri, actual_post.indexed_at)
-                        return False
-                    lang = detect_language(client, author, text)
-                    reply_text = groq_reply("", text, lang=lang)
-                    if not reply_text:
-                        print(f"⏷️ スキップ: 返信生成失敗: {post_id}")
-                        logging.debug(f"⏷️ スキップ: 返信生成失敗: {post_id}")
-                        save_fuwamoko_uri(uri, actual_post.indexed_at)
-                        return False
-                    try:
-                        reply_record = client.send_post(
-                            text=reply_text,
-                            reply_to=AppBskyFeedPost.ReplyRef(
-                                parent=models.ComAtprotoRepoStrongRef.Main(
-                                    uri=str(post_data.post.uri),
-                                    cid=str(post_data.post.cid)
-                                ),
-                                root=models.ComAtprotoRepoStrongRef.Main(
-                                    uri=str(post_data.post.uri),
-                                    cid=str(post_data.post.cid)
-                                )
-                            )
-                        )
-                        recent_replies[author] = datetime.now(timezone.utc)
-                        save_replied_uri(uri)
-                        save_fuwamoko_uri(uri, actual_post.indexed_at)
-                        print(f"🟢 返信成功: {reply_text[:20]}... ({post_id})")
-                        logging.info(f"🟢 返信成功: {reply_text} ({post_id})")
-                        return True
-                    except Exception as e:
-                        print(f"❌ 返信投稿エラー: {type(e).__name__}: {e} ({post_id})")
-                        logging.error(f"❌ 返信投稿エラー: {type(e).__name__}: {e} ({post_id})")
-                        save_fuwamoko_uri(uri, actual_post.indexed_at)
-                        return False
+                reply_text = groq_reply(
+                    image_url=image_url,
+                    text=text,
+                    context="ふわもこ共感",
+                    lang=detect_language(client, author, text),
+                    author_name=author_name
+                )
+                if not reply_text or len(reply_text) < 8:
+                    raise Exception("生成失敗")
+            except:
+                reply_text = random.choice([
+                    f"{author_name}！そのふわふわ、めっちゃ癒されるよぉ〜♡",
+                    f"きゃっ！{author_name}！もこもこすぎてぎゅってしたくなるのっ♡",
+                    f"{author_name}〜！ふわもこ最高すぎて溶けちゃいそう〜♡"
+                ])
+
+            # 投稿！
+            try:
+                client.send_post(
+                    text=reply_text,
+                    reply_to=AppBskyFeedPost.ReplyRef(
+                        parent=models.ComAtprotoRepoStrongRef.Main(uri=uri, cid=str(actual_post.cid)),
+                        root=models.ComAtprotoRepoStrongRef.Main(uri=uri, cid=str(actual_post.cid))
+                    )
+                )
+                recent_replies[author] = datetime.now(timezone.utc)
+                save_replied_uri(uri)
+                save_fuwamoko_uri(uri, actual_post.indexed_at)
+                print(f"ふわもこリプ成功: {reply_text[:30]}... (@{author})")
+                logging.info(f"ふわもこリプ成功: {reply_text}")
+                return True
             except Exception as e:
-                print(f"❌ 画像処理エラー: {type(e).__name__}: {e} ({post_id}, uri={uri}, cid={actual_post.cid})")
-                logging.error(f"❌ 画像処理エラー: {type(e).__name__}: {e} ({post_id}, uri={uri}, cid={actual_post.cid})")
+                logging.error(f"投稿エラー: {e}")
                 save_fuwamoko_uri(uri, actual_post.indexed_at)
                 return False
+
+        return False
+
     except Exception as e:
-        print(f"❌ 投稿処理エラー: {type(e).__name__}: {e} ({post_id}, uri={uri})")
-        logging.error(f"❌ 投稿処理エラー: {type(e).__name__}: {e} ({post_id}, uri={uri})")
-        save_fuwamoko_uri(uri, actual_post.indexed_at)
+        logging.error(f"process_post全体エラー: {e}")
         return False
 
 def run_once():
