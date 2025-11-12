@@ -299,16 +299,39 @@ def groq_reply(image_url="", text="", context="ふわもこ共感", lang="ja", a
         templates = auto_revert_templates(templates)
     audit_templates_changes(ORIGINAL_TEMPLATES, templates)
 
+    # ★★★★★ ここから超重要！テンプレ優先処理復活！！ ★★★★★
     detected_tags = []
     for tag, words in globals()["EMOTION_TAGS"].items():
         if any(word in text.lower() for word in words):
             detected_tags.append(tag)
 
-    # NG判定（従来通り）
     if "food_ng" in detected_tags or any(word.lower() in text.lower() for word in NG_WORDS) or "パン" in text.lower():
         return random.choice(templates["MOGUMOGU_TEMPLATES_JP"]) if lang == "ja" else random.choice(templates["MOGUMOGU_TEMPLATES_EN"])
     elif "shonbori" in detected_tags:
         return random.choice(templates["SHONBORI_TEMPLATES_JP"]) if lang == "ja" else random.choice(templates["NORMAL_TEMPLATES_EN"])
+    elif "safe_cosmetics" in detected_tags:
+        if lang == "ja":
+            for cosmetic, cosmetic_templates in templates["COSMETICS_TEMPLATES_JP"].items():
+                if cosmetic in text.lower():
+                    logging.debug(f"推奨コスメ検出: {cosmetic}")
+                    return random.choice(cosmetic_templates)
+        else:
+            for cosmetic, cosmetic_templates in templates["COSMETICS_TEMPLATES_EN"].items():
+                if any(word in text.lower() for word in globals()["EMOTION_TAGS"]["safe_cosmetics"]):
+                    return random.choice(cosmetic_templates)
+    elif any(tag in detected_tags for tag in globals()["SAFE_CHARACTER"]):
+        if lang == "ja":
+            for char_type, char_templates in templates["CHARACTER_TEMPLATES_JP"].items():
+                if any(word in text.lower() for word in globals()["SAFE_CHARACTER"][char_type]):
+                    logging.debug(f"推奨キャラ検出: {char_type}")
+                    return random.choice(char_templates)
+        else:
+            for char_type, char_templates in templates["CHARACTER_TEMPLATES_EN"].items():
+                if any(word in text.lower() for word in globals()["SAFE_CHARACTER"][char_type]):
+                    return random.choice(char_templates)
+    elif any(word in text.lower() for word in globals()["GENERAL_TAGS"]):
+        return random.choice(templates["NORMAL_TEMPLATES_JP"]) if lang == "ja" else random.choice(templates["NORMAL_TEMPLATES_EN"])
+        
     # コスメ・キャラ判定もそのまま
 
     if len(text.strip()) <= 2:
