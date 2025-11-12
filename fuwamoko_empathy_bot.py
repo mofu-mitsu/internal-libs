@@ -950,9 +950,11 @@ def process_post(post_data, client, reposted_uris, replied_uris):
         text = getattr(actual_post.record, 'text', '') if hasattr(actual_post.record, 'text') else ''
         author = actual_post.author.handle
         author_name = getattr(actual_post.author, "display_name", "") or author.split('.')[0]
+        is_reply = hasattr(actual_post.record, 'reply') and actual_post.record.reply is not None
         
         # 基本スキップ判定
         if is_reply and not (is_priority_post(text) or is_reply_to_self(post_data)):
+            print(f"⏷️ スキップ: リプライ（非@mirinchuuu/非自己）: {text[:20]} ({post_id})")
             return False
         normalized_uri = normalize_uri(uri)
         if normalized_uri in fuwamoko_uris or normalized_uri in replied_uris:
