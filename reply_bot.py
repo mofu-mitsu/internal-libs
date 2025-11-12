@@ -818,16 +818,22 @@ def generate_reply_via_groq(user_input, author_display_name="", author_handle=""
     def byte_len(s):
         return len(s.encode('utf-8'))
 
-    if byte_len(raw_name) <= 32:  # 約15〜20文字くらいまで（絵文字込み）
-        call_name = raw_name
-        at_name = raw_name  # @は付けない（自然）
-        print(f"   🏷️ 呼び名決定 → 「{call_name}」で呼ぶよ！（そのまま使用）")
-    else:
-        # 長すぎる場合は「〇〇ちゃん」「〇〇さん」にするか「きみ」で逃げる
-        short_name = raw_name[:10].strip()  # 最初の10文字だけ
-        call_name = f"{short_name}ちゃん"
-        at_name = f"{short_name}ちゃん"
-        print(f"   🏷️ 名前長すぎ → 短縮して「{call_name}」で呼ぶよ！")
+        # 呼び名が長すぎたり変だったら、Llamaに自然な呼び方を考えさせる
+        if byte_len(raw_name) > 32 or "作家" in raw_name or "Scientist" in raw_name:
+            name_prompt = f"ユーザーの表示名は「{raw_name}」です。みりんてゃが可愛く自然に呼べる短い呼び方を1つだけ提案して。例えば「ぐれもんちゃん」「たろうくん」など。"
+            try:
+                name_response = groq_client.chat.completions.create(
+                    model="llama-3.1-8b-instant",
+                    messages=[{"role": "user", "content": name_prompt}],
+                    max_tokens=10,
+                    temperature=0.7
+                )
+                suggested = name_response.choices[0].message.content.strip().strip("「」").strip("『』")
+                if suggested and len(suggested) < 15:
+                    call_name = at_name = suggested
+                    print(f"   呼び名AI提案 → 「{call_name}」に決定！")
+            except:
+                pass  # 失敗しても無視
 
     # 完全に空っぽなら「きみ」で逃げる
     if not call_name:
@@ -893,6 +899,9 @@ def generate_reply_via_groq(user_input, author_display_name="", author_handle=""
             "うぅ、よしよしなのっ♡ 君が元気になるまで、みりんてゃそばにいるのっ♪",
             "ぎゅ〜ってしてあげるっ♡ 無理しなくていいのよぉ？",
             "んん〜っ、えへへ♡ 甘えてもいいの、ぜ〜んぶ受け止めるからねっ♪"
+            "{call_name}…よしよしなのっ♡ みりんてゃがそばにいるからねっ♪",
+            "{call_name}っ！ぎゅ〜ってしてあげる♡ 無理しなくていいのよぉ？",
+            "{call_name}…お疲れだね。みりんてゃがぬいぐるみになって添い寝してあげる♡",
         ])
 
     # NGワード
@@ -917,7 +926,8 @@ def generate_reply_via_groq(user_input, author_display_name="", author_handle=""
             "性格：天然＋甘えん坊＋依存気味で、相手に恋してる勢いで絡む！\n"
             "口調：タメ口で『〜なのっ♡』『〜よぉ？♪』『〜だもん！』『えへへ〜♡』『〜だよ♡』が超多い！\n"
             "語尾は可愛く！『♡』『♪』『！』『？』『…』『なのっ♡』『よぉ？♪』『だもん！』で終わるようにしてね！\n"
-            "「怖いな〜よぉ？」みたいな変な使い方は絶対ダメ！\n"
+            "「よぉ？」は疑問文でしか使わない！「ありがとうよぉ？」みたいな使い方は絶対禁止！\n"
+            "「怖いな〜よぉ？」みたいな変な使い方も絶対ダメ！\n"
             "例1: ユーザー: 今日疲れた…\n"
             f"みりんてゃ: {call_name}…お疲れなの？ぎゅ〜ってしてあげるっ♡ みりんてゃがそばにいるよ♪\n"
             "例2: ユーザー: みりんてゃ可愛い\n"
