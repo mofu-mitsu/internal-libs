@@ -340,18 +340,18 @@ def groq_reply(image_url="", text="", context="ふわもこ共感", lang="ja", a
     # ★画像がある場合→言語化して超自然リプ★
     if image_url:
         try:
-            # 画像ダウンロード
             response = requests.get(image_url, timeout=10)
             img = Image.open(BytesIO(response.content))
-            # CLIPで候補
             inputs = clip_processor(text=["ぬいぐるみ", "毛布", "クッション", "雲", "綿あめ", "食べ物", "人"], images=img, return_tensors="pt", padding=True).to(device)
             with torch.no_grad():
                 outputs = clip_model(**inputs)
                 probs = outputs.logits_per_image.softmax(dim=1)[0]
             labels = ["ぬいぐるみ", "毛布", "クッション", "雲", "綿あめ", "食べ物", "人"]
             top_label = labels[probs.argmax().item()]
-            # Groqで自然言語化
-            desc_prompt = f"画像は{top_label}だよ！これを見て「{text}」って投稿に、みりんてゃっぽく可愛く返事して！"
+            top_prob = probs.max().item()
+
+            # ★もっと細かい言語化！！★
+            desc_prompt = f"画像は{top_label}だよ！確信度{top_prob:.1%}！これを見て「{text}」って投稿に、みりんてゃっぽく可愛く返事して！"
             desc_response = Groq(api_key=GROQ_API_KEY).chat.completions.create(
                 model="llama-3.1-8b-instant",
                 messages=[{"role": "system", "content": system_prompt}, {"role": "user", "content": desc_prompt}],
