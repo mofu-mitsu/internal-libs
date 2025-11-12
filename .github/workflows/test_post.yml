@@ -2,7 +2,7 @@ name: test post
 
 on:
   schedule:
-    - cron: '0 */9 * * *'  # 5時間ごとに実行（UTC）
+    - cron: '5 24 * * *'  # JST 8:05  # 5時間ごとに実行（UTC）
   workflow_dispatch:  # 手動実行もできるように
 jobs:
   post:
