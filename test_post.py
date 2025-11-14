@@ -797,7 +797,7 @@ IMAGE_POSTS = [
     },
     {
         "text": "cocotteで書いた今日のメモ、ちょっと恥ずかしいけど…心の中こんな感じだったの。シンプルすぎて逆に全部さらけ出しそうで怖い♡\nhttps://cocotte-simple-memo.vercel.app/\n#みりんてゃ #メモ魔",
-        "image": "images/cocotte_screenshot.png",
+        "image": "images/IMG_9041.jpeg",
         "alt": "みりんてゃのメモ：『返信待ちの時間いや』『今日こそ早く寝る』『かわいいって言われたい日』"
     },
     # ここに10〜20個追加（オリキャラ、夢日記とかも）
