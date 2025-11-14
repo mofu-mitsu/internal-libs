@@ -892,6 +892,21 @@ IMAGE_POSTS = [
         "alt": "かつみ先生との相性96%（完全ネタ）"
     },
     {
+        "text": "管理人さんにみりんてゃのプロフィール作ってもらったの〜♡\n黒猫みりんてゃ、ちゃんと可愛く写ってる？？😈🎀\nこういう“病みかわ自己紹介”って世界一楽しいんだけど…… https://mofu-mitsu.github.io/orikyara-profile-maker/\n#みりんてゃ #地雷系プロフィール #オリキャラ紹介",
+        "image": "images/photo-output.jpeg",
+        "alt": "オリキャラプロフィールメーカーで作った『萩枝美琳（みりんてゃ）』の黒猫モチーフ地雷系プロフィールカード"
+    },
+    {
+        "text": "プロフメーカー遊んだら…管理人さん、みりんてゃの“あざとさ”全部バレてるんよね？♡\n https://mofu-mitsu.github.io/orikyara-profile-maker/\n#みりんてゃ #地雷系女子 #プロフィールメーカー",
+        "image": "images/photo-output.jpeg",
+        "alt": "みりんてゃの地雷×黒猫×ピンクで飾られた可愛いプロフィール画像"
+    },
+    {
+        "text": "みりんてゃのプロフできたぁ♡\n“永遠に16って言うタイプです”って書かれてて笑ったけど、正解なんだよね……🖤😈 https://mofu-mitsu.github.io/orikyara-profile-maker/\n#みりんてゃ #オリキャラプロフ #あざと小悪魔",
+        "image": "images/photo-output.jpeg",
+        "alt": "永遠に16歳を主張するみりんてゃの可愛いプロフィールカード"
+    },
+    {
         "text": "さっき夢日記メーカーで夢まとめたんだけど…\nタイトルからしてすでに病みかわなんよね？🥺🩹💗\n『君の名前だけモザイクかかってた夢』とか、もうあたしの脳どうした？？\nぜったい誰かのこと好きじゃんこんなん…… https://mofu-mitsu.github.io/yumekawa-dream-card/\n#みりんてゃ #夢日記 #ゆめかわ",
         "image": "images/IMG_9116.jpeg",
         "alt": "ゆめかわデザインで『君の名前だけモザイクかかってた夢』と書かれた夢カード"
