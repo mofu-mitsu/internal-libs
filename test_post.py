@@ -791,19 +791,14 @@ https://mofu-mitsu.github.io/orikyara-profile-maker/
 # ------------------------------
 IMAGE_POSTS = [
     {
-        "text": "cocotteでメモ書いたら、みりんてゃの心がふわっと整理された♡ シンプルすぎて依存しそう… https://cocotte-simple-memo.vercel.app/ #みりんてゃ #メモ魔",
+        "text": "cocotteでメモ書いたら、みりんてゃの心がふわっと整理された♡ シンプルすぎて依存しそう…\nhttps://cocotte-simple-memo.vercel.app/\n#みりんてゃ #メモ魔",
         "image": "images/IMG_9041.jpeg",  # 自分で撮ったやつ！
         "alt": "みりんてゃがcocotteで可愛いメモ書いてるスクショ♡"
     },
     {
-        "text": "cocotteで書いた今日のメモ、ちょっと恥ずかしいけど…心の中こんな感じだったの。シンプルすぎて逆に全部さらけ出しそうで怖い♡ https://cocotte-simple-memo.vercel.app/ #みりんてゃ #メモ魔",
+        "text": "cocotteで書いた今日のメモ、ちょっと恥ずかしいけど…心の中こんな感じだったの。シンプルすぎて逆に全部さらけ出しそうで怖い♡\nhttps://cocotte-simple-memo.vercel.app/\n#みりんてゃ #メモ魔",
         "image": "images/cocotte_screenshot.png",
         "alt": "みりんてゃのメモ：『返信待ちの時間いや』『今日こそ早く寝る』『かわいいって言われたい日』"
-    },
-    {
-        "text": "相性診断100%出た瞬間、運命感じて泣いた…（嘘）でも本気で嬉しい♡ https://mofu-mitsu.github.io/fluffy-love-check/ #ふわふわ相性 #みりんてゃ",
-        "image": "images/fluffy_100.png",
-        "alt": "相性100%の結果画面！ みりんてゃの妄想爆発"
     },
     # ここに10〜20個追加（オリキャラ、夢日記とかも）
     # 画像は事前にツール開いて、みりんてゃ風に入力→スクショ→images/に保存
