@@ -9,7 +9,9 @@ import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse
 import tempfile
-import os
+import io
+from urllib.parse import urlparse
+from PIL import Image
 
 # 環境変数読み込み
 env_path = Path('.') / '.env'
@@ -784,7 +786,89 @@ https://mofu-mitsu.github.io/orikyara-profile-maker/
 #オリキャラ #創作クラスタ""",
 ]
 
-# facets生成（絵文字対応＆バイト位置対応）
+# ------------------------------
+# ★ 手動スクショ投稿リスト (cocotteとか自分で撮ったやつ入れる！)
+# ------------------------------
+IMAGE_POSTS = [
+    {
+        "text": "cocotteでメモ書いたら、みりんてゃの心がふわっと整理された♡ シンプルすぎて依存しそう… https://cocotte-simple-memo.vercel.app/ #みりんてゃ #メモ魔",
+        "image": "images/cocotte_screenshot.png",  # 自分で撮ったやつ！
+        "alt": "みりんてゃがcocotteで可愛いメモ書いてるスクショ♡"
+    },
+    {
+        "text": "推しプロフ完成した瞬間、心臓バクバク…これが推し活の醍醐味だよね？？ https://mofu-mitsu.github.io/oshi-profile-maker/ #みりんてゃ #推しプロフ",
+        "image": "images/oshi_screenshot.png",
+        "alt": "みりんてゃが推しプロフ作ってニヤニヤしてるスクショ"
+    },
+    {
+        "text": "相性診断100%出た瞬間、運命感じて泣いた…（嘘）でも本気で嬉しい♡ https://mofu-mitsu.github.io/fluffy-love-check/ #ふわふわ相性 #みりんてゃ",
+        "image": "images/fluffy_100.png",
+        "alt": "相性100%の結果画面！ みりんてゃの妄想爆発"
+    },
+    # ここに10〜20個追加（オリキャラ、夢日記とかも）
+    # 画像は事前にツール開いて、みりんてゃ風に入力→スクショ→images/に保存
+]
+
+# ------------------------------
+# ★ 画像アップロード (圧縮対応)
+# ------------------------------
+def upload_image(client, image_path):
+    img = Image.open(image_path)
+    max_dimension = 1024
+    if max(img.size) > max_dimension:
+        ratio = max_dimension / max(img.size)
+        new_size = (int(img.width * ratio), int(img.height * ratio))
+        img = img.resize(new_size, Image.LANCZOS)
+
+    buffer = io.BytesIO()
+    quality = 95
+    while True:
+        buffer.seek(0)
+        buffer.truncate(0)
+        img.convert("RGB").save(buffer, format="JPEG", quality=quality, optimize=True)
+        if buffer.tell() / 1024 <= 976 or quality <= 20:
+            break
+        quality -= 5
+    buffer.seek(0)
+    return client.com.atproto.repo.upload_blob(buffer.read()).blob
+
+# ------------------------------
+# ★ OGP embed
+# ------------------------------
+def generate_embed_from_url(client, url):
+    try:
+        headers = {'User-Agent': 'Mozilla/5.0'}
+        response = requests.get(url, headers=headers, timeout=10)
+        if response.status_code != 200:
+            return None
+        soup = BeautifulSoup(response.text, 'html.parser')
+        title = soup.find("meta", property="og:title") or soup.find("title")
+        description = soup.find("meta", property="og:description")
+        image = soup.find("meta", property="og:image")
+
+        title = (title["content"] if title and "content" in title.attrs else title.string) if title else "もふみつ工房♡"
+        description = description["content"] if description else "ふわもこツールで遊んでみて♡"
+        image_url = image["content"] if image else None
+
+        thumb_blob = None
+        if image_url:
+            try:
+                img_res = requests.get(image_url, timeout=10)
+                if img_res.status_code == 200 and len(img_res.content) < 1000000:
+                    thumb_blob = client.com.atproto.repo.upload_blob(img_res.content).blob
+            except:
+                pass
+
+        external = {"uri": url, "title": title[:300], "description": description[:300]}
+        if thumb_blob:
+            external["thumb"] = thumb_blob
+        return {"$type": "app.bsky.embed.external", "external": external}
+    except:
+        return None
+
+# ------------------------------
+# ★ facets & 正規化
+# ------------------------------
 def generate_facets_from_text(text, hashtags):
     text_bytes = text.encode("utf-8")
     facets = []
@@ -793,116 +877,60 @@ def generate_facets_from_text(text, hashtags):
         start = text_bytes.find(tag_bytes)
         if start != -1:
             facets.append({
-                "index": {
-                    "byteStart": start,
-                    "byteEnd": start + len(tag_bytes)
-                },
-                "features": [{
-                    "$type": "app.bsky.richtext.facet#tag",
-                    "tag": tag.lstrip("#")
-                }]
+                "index": {"byteStart": start, "byteEnd": start + len(tag_bytes)},
+                "features": [{"$type": "app.bsky.richtext.facet#tag", "tag": tag.lstrip("#")}]
             })
-    # URL facets
     url_pattern = r'(https?://[^\s]+)'
     for match in re.finditer(url_pattern, text):
         url = match.group(0)
-        start = text_bytes.find(url.encode("utf-8"))
+        url_bytes = url.encode("utf-8")
+        start = text_bytes.find(url_bytes)
         if start != -1:
             facets.append({
-                "index": {
-                    "byteStart": start,
-                    "byteEnd": start + len(url.encode("utf-8"))
-                },
-                "features": [{
-                    "$type": "app.bsky.richtext.facet#link",
-                    "uri": url
-                }]
+                "index": {"byteStart": start, "byteEnd": start + len(url_bytes)},
+                "features": [{"$type": "app.bsky.richtext.facet#link", "uri": url}]
             })
-
     return facets
 
-# 文字正規化
 def normalize_text(text):
     return unicodedata.normalize("NFKC", text).strip()
 
-# OGP自動取得＆embed生成関数
-def generate_embed_from_url(client, url):
-    try:
-        # 1. URLからHTML取得
-        headers = {'User-Agent': 'Mozilla/5.0 (compatible; BlueskyBot/1.0)'}
-        response = requests.get(url, headers=headers, timeout=10)
-        if response.status_code != 200:
-            return None
-
-        soup = BeautifulSoup(response.text, 'html.parser')
-
-        # 2. OGP metaタグ抽出
-        title = soup.find("meta", property="og:title")
-        description = soup.find("meta", property="og:description")
-        image = soup.find("meta", property="og:image")
-
-        title = (title["content"] if title else soup.title.string) or "みりんてゃのキラキラリンク♡"
-        description = description["content"] if description else "ふわもこ通信よりお届け〜🧸"
-        image_url = image["content"] if image else None
-
-        # 3. サムネ画像ダウンロード＆Blobアップロード
-        thumb_blob = None
-        if image_url:
-            try:
-                img_response = requests.get(image_url, timeout=10)
-                if img_response.status_code == 200 and len(img_response.content) < 1000000:  # 1MB制限
-                    # 一時ファイルに保存
-                    with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as tmp:
-                        tmp.write(img_response.content)
-                        tmp_path = tmp.name
-                    # Blobアップロード
-                    with open(tmp_path, 'rb') as f:
-                        thumb_blob = client.com.atproto.repo.upload_blob(f.read()).blob
-                    os.unlink(tmp_path)  # 削除
-            except:
-                pass  # 画像取れなくても無視
-
-        # 4. embed external作成
-        external = {
-            "uri": url,
-            "title": title[:300],  # Bluesky制限
-            "description": description[:300],
-        }
-        if thumb_blob:
-            external["thumb"] = thumb_blob
-
-        return {
-            "$type": "app.bsky.embed.external",
-            "external": external
-        }
-
-    except Exception as e:
-        print(f"OGP取得エラー: {e}")
-        return None
-
-# 投稿処理
+# ------------------------------
+# ★ メイン投稿
+# ------------------------------
 client = Client()
 client.login(HANDLE, APP_PASSWORD)
 
-raw_message = random.choice(POST_MESSAGES)
-message = normalize_text(raw_message)
+# ランダム選択：70%テキストだけ、30%画像付き（調整自由）
+if random.random() < 0.3 and IMAGE_POSTS:
+    post_data = random.choice(IMAGE_POSTS)
+    message = normalize_text(post_data["text"])
+    image_blob = upload_image(client, post_data["image"])
+    embed = {
+        "$type": "app.bsky.embed.images",
+        "images": [{"image": image_blob, "alt": post_data["alt"]}]
+    }
+    # URLあればOGPも複合
+    url_match = re.search(r'(https?://[^\s]+)', message)
+    if url_match:
+        ogp_embed = generate_embed_from_url(client, url_match.group(0))
+        if ogp_embed:
+            embed = {
+                "$type": "app.bsky.embed.recordWithMedia",
+                "record": {"$type": "app.bsky.embed.record", "record": ogp_embed["external"]},  # 簡易
+                "media": embed
+            }
+else:
+    raw_message = random.choice(POST_MESSAGES)
+    message = normalize_text(raw_message)
+
 hashtags = [word for word in message.split() if word.startswith("#")]
 facets = generate_facets_from_text(message, hashtags)
 
-raw_message = random.choice(POST_MESSAGES)
-message = normalize_text(raw_message)
-hashtags = [word for word in message.split() if word.startswith("#")]
-facets = generate_facets_from_text(message, hashtags)
-
-# URL抽出
-url_match = re.search(r'(https?://[^\s]+)', message)
+# URLあればOGP
 embed = None
+url_match = re.search(r'(https?://[^\s]+)', message)
 if url_match:
-    url = url_match.group(0)
-    embed = generate_embed_from_url(client, url)  # ★自動OGP取得！
+    embed = generate_embed_from_url(client, url_match.group(0))
 
-client.send_post(
-    text=message,
-    facets=facets if facets else None,
-    embed=embed
-)
+client.send_post(text=message, facets=facets, embed=embed)
