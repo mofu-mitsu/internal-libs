@@ -796,9 +796,9 @@ IMAGE_POSTS = [
         "alt": "みりんてゃがcocotteで可愛いメモ書いてるスクショ♡"
     },
     {
-        "text": "推しプロフ完成した瞬間、心臓バクバク…これが推し活の醍醐味だよね？？ https://mofu-mitsu.github.io/oshi-profile-maker/ #みりんてゃ #推しプロフ",
-        "image": "images/oshi_screenshot.png",
-        "alt": "みりんてゃが推しプロフ作ってニヤニヤしてるスクショ"
+        "text": "cocotteで書いた今日のメモ、ちょっと恥ずかしいけど…心の中こんな感じだったの。シンプルすぎて逆に全部さらけ出しそうで怖い♡ https://cocotte-simple-memo.vercel.app/ #みりんてゃ #メモ魔",
+        "image": "images/cocotte_screenshot.png",
+        "alt": "みりんてゃのメモ：『返信待ちの時間いや』『今日こそ早く寝る』『かわいいって言われたい日』"
     },
     {
         "text": "相性診断100%出た瞬間、運命感じて泣いた…（嘘）でも本気で嬉しい♡ https://mofu-mitsu.github.io/fluffy-love-check/ #ふわふわ相性 #みりんてゃ",
