@@ -44,6 +44,35 @@ BOOTHでDL（無料）→ https://torisproject.booth.pm/items/7328786 🧸""",
     ➡︎ https://mofu-mitsu.github.io/yumekawa-dream-card/  
     #謎夢報告 #夢の住人うるさい #みりんてゃ""",
 
+    """ねぇ聞いて…💭
+    みりん、寂しくてキラキラ暴走しちゃったの…🥺💗
+    “みりんてゃBot”の機能まとめ作ったの🖤
+    もっと知ってほしいから見てね！
+    
+    🔽みりんてゃBotまとめ🔽
+    https://note.com/sorake/n/n28c7cc8e3b07
+    
+    #みりんてゃ #地雷感情 #ふわもこ通信""",
+    
+    """みりんてゃBotの機能、やばいくらい増えてるの…💗
+    ふわもこ返信Bot、感情ポエムBot、
+    おやすみ・おはようBot、かまちょ通知Bot、
+    画像ふわもこ判定Bot…全部みりんを甘やかすためのAI🧸💞
+    
+    まとめ👇
+    https://note.com/sorake/n/n28c7cc8e3b07
+    
+    #みりんてゃ #Bot一覧""",
+    
+    """ねぇ…みりんを見つけたら抱っこしてくれる？
+    逃げたら追いかけてくれる？
+    かまってくれたら、みりんもっと可愛くなるよ…ﾆｬ♡🐈‍⬛🎀
+    
+    みりんてゃBotの機能紹介まとめここだよ👇
+    https://note.com/sorake/n/n28c7cc8e3b07
+    
+    #みりんてゃ #かまってポスト""",
+
     """起きた瞬間「夢オチかよッ」って  
     自分で自分にツッコんだ日、あるよね？（ある）  
     ➡︎ https://mofu-mitsu.github.io/yumekawa-dream-card/  
