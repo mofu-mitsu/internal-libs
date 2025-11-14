@@ -792,7 +792,7 @@ https://mofu-mitsu.github.io/orikyara-profile-maker/
 IMAGE_POSTS = [
     {
         "text": "cocotteでメモ書いたら、みりんてゃの心がふわっと整理された♡ シンプルすぎて依存しそう… https://cocotte-simple-memo.vercel.app/ #みりんてゃ #メモ魔",
-        "image": "images/cocotte_screenshot.png",  # 自分で撮ったやつ！
+        "image": "images/IMG_9041.jpeg",  # 自分で撮ったやつ！
         "alt": "みりんてゃがcocotteで可愛いメモ書いてるスクショ♡"
     },
     {
