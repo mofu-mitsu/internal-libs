@@ -1211,12 +1211,12 @@ def normalize_text(text):
     return unicodedata.normalize("NFKC", text).strip()
 
 # ------------------------------
-# ★ メイン投稿
+# ★ メイン投稿 (修正版: 画像時はOGP無効化)
 # ------------------------------
 client = Client()
 client.login(HANDLE, APP_PASSWORD)
 
-# ランダム選択：70%テキストだけ、30%画像付き（調整自由）
+# ランダム選択：70%テキストだけ、30%画像付き
 if random.random() < 0.3 and IMAGE_POSTS:
     post_data = random.choice(IMAGE_POSTS)
     message = normalize_text(post_data["text"])
@@ -1225,27 +1225,18 @@ if random.random() < 0.3 and IMAGE_POSTS:
         "$type": "app.bsky.embed.images",
         "images": [{"image": image_blob, "alt": post_data["alt"]}]
     }
-    # URLあればOGPも複合
-    url_match = re.search(r'(https?://[^\s]+)', message)
-    if url_match:
-        ogp_embed = generate_embed_from_url(client, url_match.group(0))
-        if ogp_embed:
-            embed = {
-                "$type": "app.bsky.embed.recordWithMedia",
-                "record": {"$type": "app.bsky.embed.record", "record": ogp_embed["external"]},  # 簡易
-                "media": embed
-            }
+    # ★ 画像時はOGPスキップ！ URLはfacetsでリンク化されるからOK
+    # URLのfacetsはgenerate_facetsで自動処理されるよ
 else:
     raw_message = random.choice(POST_MESSAGES)
     message = normalize_text(raw_message)
+    embed = None
+    # URLあればOGP (テキスト時だけ)
+    url_match = re.search(r'(https?://[^\s]+)', message)
+    if url_match:
+        embed = generate_embed_from_url(client, url_match.group(0))
 
 hashtags = [word for word in message.split() if word.startswith("#")]
 facets = generate_facets_from_text(message, hashtags)
 
-# URLあればOGP
-embed = None
-url_match = re.search(r'(https?://[^\s]+)', message)
-if url_match:
-    embed = generate_embed_from_url(client, url_match.group(0))
-
-client.send_post(text=message, facets=facets, embed=embed)
+client.send_post(text=message, facets=facets if facets else None, embed=embed)
