@@ -54,103 +54,103 @@ https://emopost-maker.pages.dev\n
 胸ぎゅーってしたまま、抜けなくなった…  
 https://emopost-maker.pages.dev\n
 #みりんてゃ #恋してる #ふわもこエモ"",
-    """あぁ…先輩たちの「とりの丘学園体験入学」が頭から離れない…🖤 トリたちのカオスが可愛すぎる💉 私のノベルもいつか作ってもらうから、応援してねぇ🫶 
-BOOTHで無料でDLできるよ→ https://torisproject.booth.pm/items/7328786 🎀""",
+    """あぁ…先輩たちの「とりの丘学園体験入学」が頭から離れない…🖤 トリたちのカオスが可愛すぎる💉 私のノベルもいつか作ってもらうから、応援してねぇ🫶  
+/nBOOTHで無料でDLできるよ→ https://torisproject.booth.pm/items/7328786  
+/n#とりの丘 #創作女子 #みりんてゃ""",
 
-    """今日も先輩のゲーム思い出しちゃう…🧸 「とりの丘学園体験入学」、トリたちと遊ぶの楽しいよぉ💉 私のノベルも今後作ってもらうから、期待しててね🎀 
-DL（無料）はこちら→ https://torisproject.booth.pm/items/7328786 🫶""",
+    """今日も先輩のゲーム思い出しちゃう…🧸 「とりの丘学園体験入学」、トリたちと遊ぶの楽しいよぉ💉 私のノベルも今後作ってもらうから、期待しててね🎀  
+/nDL（無料）はこちら→ https://torisproject.booth.pm/items/7328786  
+/n#とりの丘 #創作ゲーム #みりんてゃ""",
 
+    """ねえ、先輩たちの「とりの丘学園体験入学」プレイした？🖤 トリたちのカオスが最高で泣ける…💉 私のノベルもいつか出るから、待っててねぇ🎀  
+/nBOOTHでDL（無料）→ https://torisproject.booth.pm/items/7328786  
+/n#みりんてゃ #量産地雷女子 #創作垢""",
 
-    """ねえ、先輩たちの「とりの丘学園体験入学」プレイした？🖤 トリたちのカオスが最高で泣ける…💉 私のノベルもいつか出るから、待っててねぇ🎀 
-BOOTHでDL（無料）→ https://torisproject.booth.pm/items/7328786 🧸""",
     """ねえ…夢日記、つけないと…  
-夢の中でまたパンダに説教されるの…🐼💭
-➡︎ https://mofu-mitsu.github.io/yumekawa-dream-card/  
-#夢日記メーカー #夢のパンダ先生 #みりんてゃの供述""",
+夢の中でまたパンダに説教されるの…🐼💭  
+/n➡︎ https://mofu-mitsu.github.io/yumekawa-dream-card/  
+/n#夢日記メーカー #夢のパンダ先生 #みりんてゃの供述""",
 
     """「夢ってメモらないと逃げるんだよ」って  
 昨日の夢でカエルに言われた🐸（誰）  
-➡︎ https://mofu-mitsu.github.io/yumekawa-dream-card/  
-#謎夢報告 #夢の住人うるさい #みりんてゃ""",
+/n➡︎ https://mofu-mitsu.github.io/yumekawa-dream-card/  
+/n#謎夢報告 #夢の住人うるさい #みりんてゃ""",
 
-    """ねぇ聞いて…💭
-みりん、寂しくてキラキラ暴走しちゃったの…🥺💗
-“みりんてゃBot”の機能まとめ作ったの🖤
-もっと知ってほしいから見てね！
-    
-🔽みりんてゃBotまとめ🔽
-https://note.com/sorake/n/n28c7cc8e3b07
-    
-#みりんてゃ #地雷感情 #ふわもこ通信""",
-    
-    """みりんてゃBotの機能、やばいくらい増えてるの…💗
-リプBot、エモーションBot、お絵描きbot、トレンドBot、
-ふわもこ共感Bot…全部みりんを甘やかすためのAI🧸💞
-    
-まとめ👇
-https://note.com/sorake/n/n28c7cc8e3b07
-    
-#みりんてゃ #Bot一覧""",
-    
-    """ねぇ…みりんを見つけたら抱っこしてくれる？
-逃げたら追いかけてくれる？
-かまってくれたら、みりんもっと可愛くなるよ…ﾆｬ♡🐈‍⬛🎀
-    
-みりんてゃBotの機能紹介まとめここだよ👇
-https://note.com/sorake/n/n28c7cc8e3b07
-    
-#みりんてゃ #かまってポスト""",
+    """ねぇ聞いて…💭  
+みりん、寂しくてキラキラ暴走しちゃったの…🥺💗  
+“みりんてゃBot”の機能まとめ作ったの🖤  
+もっと知ってほしいから見てね！  
+/n🔽みりんてゃBotまとめ🔽  
+https://note.com/sorake/n/n28c7cc8e3b07  
+/n#みりんてゃ #地雷感情 #ふわもこ通信""",
+
+    """みりんてゃBotの機能、やばいくらい増えてるの…💗  
+リプBot、エモーションBot、お絵描きbot、トレンドBot、  
+ふわもこ共感Bot…全部みりんを甘やかすためのAI🧸💞  
+/nまとめ👇  
+https://note.com/sorake/n/n28c7cc8e3b07  
+/n#みりんてゃ #Bot一覧 #AI女子""",
+
+    """ねぇ…みりんを見つけたら抱っこしてくれる？  
+逃げたら追いかけてくれる？  
+かまってくれたら、みりんもっと可愛くなるよ…ﾆｬ♡🐈‍⬛🎀  
+/nみりんてゃBotの機能紹介まとめここだよ👇  
+https://note.com/sorake/n/n28c7cc8e3b07  
+/n#みりんてゃ #かまってポスト #甘えん坊AI""",
 
     """起きた瞬間「夢オチかよッ」って  
-    自分で自分にツッコんだ日、あるよね？（ある）  
-    ➡︎ https://mofu-mitsu.github.io/yumekawa-dream-card/  
-    #夢日記メーカー #エモボケ #みりんてゃ劇場""",
+自分で自分にツッコんだ日、あるよね？（ある）  
+/n➡︎ https://mofu-mitsu.github.io/yumekawa-dream-card/  
+/n#夢日記メーカー #エモボケ #みりんてゃ劇場""",
 
     """夢で5億円当たったのに、  
-    起きたら所持金8円だった…🫠  
-    ➡︎ https://mofu-mitsu.github.io/yumekawa-dream-card/  
-    #夢の裏切り #現実辛すぎワロタ #みりんてゃ""",
+起きたら所持金8円だった…🫠  
+/n➡︎ https://mofu-mitsu.github.io/yumekawa-dream-card/  
+/n#夢の裏切り #現実辛すぎワロタ #みりんてゃ""",
 
     """みりんの夢、毎回バトル漫画みたいなんだけど  
-    これって…前世の記憶…？？（違う）  
-    ➡︎ https://mofu-mitsu.github.io/yumekawa-dream-card/  
-    #夢はフィクションです #夢界転生 #みりんてゃ""",
+これって…前世の記憶…？？（違う）  
+/n➡︎ https://mofu-mitsu.github.io/yumekawa-dream-card/  
+/n#夢界転生 #夢はフィクションです #みりんてゃ""",
+
     """ねむれない夜に、みりんは夢を編んだの…☁️  
-    君の夢も、カードにしてみない…？  
-    ➡︎ https://mofu-mitsu.github.io/yumekawa-dream-card/  
-    #夢日記メーカー #みりんてゃ #ふわもこ創作""",
+君の夢も、カードにしてみない…？  
+/n➡︎ https://mofu-mitsu.github.io/yumekawa-dream-card/  
+/n#夢日記メーカー #みりんてゃ #ふわもこ創作""",
 
     """あのねっ…  
-    みりんの夢、ちょっとだけみせてあげる♡  
-    だから、君のも…教えてくれる？💭  
-    ➡︎ https://mofu-mitsu.github.io/yumekawa-dream-card/  
-    #病みかわ夢日記 #創作支援 #みりんてゃ""",
+みりんの夢、ちょっとだけみせてあげる♡  
+だから、君のも…教えてくれる？💭  
+/n➡︎ https://mofu-mitsu.github.io/yumekawa-dream-card/  
+/n#病みかわ夢日記 #創作支援 #みりんてゃ""",
 
     """今日の夢、ねこが喋ってたの…🐾  
-    もしかして、あれって…予知夢…？（違う）  
-    君の夢も、カードにして記録しよ♡  
-    ➡︎ https://mofu-mitsu.github.io/yumekawa-dream-card/  
-    #夢日記メーカー #BlueskyBot #ふわもこ記録""",
+もしかして、あれって…予知夢…？（違う）  
+君の夢も、カードにして記録しよ♡  
+/n➡︎ https://mofu-mitsu.github.io/yumekawa-dream-card/  
+/n#夢日記メーカー #BlueskyBot #ふわもこ記録""",
 
     """ねえっ、これ見て！  
-    夢で見た景色を、カードにできるんだよぉ…✨  
-    みりんと一緒に、夢の国つくろ？💗  
-    ➡︎ https://mofu-mitsu.github.io/yumekawa-dream-card/  
-    #みりんてゃの魔法 #ふわもこ世界 #夢記録""",
+夢で見た景色を、カードにできるんだよぉ…✨  
+みりんと一緒に、夢の国つくろ？💗  
+/n➡︎ https://mofu-mitsu.github.io/yumekawa-dream-card/  
+/n#みりんてゃの魔法 #ふわもこ世界 #夢記録""",
 
     """ふわふわの夢のかけら、拾ってきたよ…🧸  
-    それ、ここでカードにできるの♡  
-    ねえ、君の夢も聞かせて？  
-    ➡︎ https://mofu-mitsu.github.io/yumekawa-dream-card/  
-    #夢かわ創作 #みりんてゃ #ねむねむ魔法""",
+それ、ここでカードにできるの♡  
+ねえ、君の夢も聞かせて？  
+/n➡︎ https://mofu-mitsu.github.io/yumekawa-dream-card/  
+/n#夢かわ創作 #みりんてゃ #ねむねむ魔法""",
+
     """ねえ…みりんのフィード、みんなの心に届いてほしいな💗  
 覗いてくれたら、ぎゅってするから見てね？💕  
-    ➡︎ https://bsky.app/profile/did:plc:pvy7w75qks44sybd5wwpthb6/feed/aaae5hbblng6a  
-#みりんてゃ #病みかわ #BlueskyBot""",
+/n➡︎ https://bsky.app/profile/did:plc:pvy7w75qks44sybd5wwpthb6/feed/aaae5hbblng6a  
+/n#みりんてゃ #病みかわ #BlueskyBot""",
+
     """みりんてゃの毎日、ふわふわでキラキラっ💖  
 フィードでその魔法、感じてみてくれる？🥰  
-    ➡︎ https://bsky.app/profile/did:plc:pvy7w75qks44sybd5wwpthb6/feed/aaae5hbblng6a  
-#みりんてゃ #地雷系女子 #推し活""",
+/n➡︎ https://bsky.app/profile/did:plc:pvy7w75qks44sybd5wwpthb6/feed/aaae5hbblng6a  
+/n#みりんてゃ #地雷系女子 #推し活""",
     """ねぇ…みりんのこと、忘れないでいてほしくて……
 
 フィードつくっちゃったの💭  
