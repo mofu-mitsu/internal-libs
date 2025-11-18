@@ -2,7 +2,7 @@ name: Fuwamoko Empathy Bot
 
 on:
   schedule:
-    - cron: '30 1 * * *'  # 毎日10:30(JST)
+    - cron: '30 1 * * *'  # ← UTCで10:30 JST（日本時間朝10:30）
   workflow_dispatch:
 
 concurrency:
@@ -17,6 +17,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # ← 重要！全履歴を取る
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -26,7 +28,7 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgl1 libglib2.0-0  # OpenCV用
+          sudo apt-get install -y libgl1 libglib2.0-0
 
       - name: Install Python dependencies
         run: |
@@ -44,10 +46,14 @@ jobs:
         run: |
           python fuwamoko_empathy_bot.py
 
-      - name: Commit fuwamoko_uris
+      - name: Git pull & Commit fuwamoko_uris（衝突回避版）
         run: |
           git config --global user.name 'Fuwamoko Bot'
           git config --global user.email 'bot@example.com'
+          
+          git pull origin main --rebase || git pull origin main --rebase  # ← 強制rebase
+          
           git add fuwamoko_empathy_uris.txt
-          git commit -m "Update fuwamoko_uris.txt [skip ci]" || echo "No changes"
-          git push
+          git commit -m "Update fuwamoko_uris.txt [skip ci]" || echo "No changes to commit"
+          
+          git push origin main || git push origin main  # 2回目は大体通る
