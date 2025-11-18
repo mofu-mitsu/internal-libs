@@ -23,8 +23,9 @@ APP_PASSWORD = os.getenv('APP_PASSWORD')
 POST_MESSAGES = [
     """みりん、寂しくてキラキラ作っちゃった…♡  
 フィードで会いに来てくれたら、幸せだよ🥺  
-    ➡︎ https://bsky.app/profile/did:plc:pvy7w75qks44sybd5wwpthb6/feed/aaae5hbblng6a  
+➡︎ https://bsky.app/profile/did:plc:pvy7w75qks44sybd5wwpthb6/feed/aaae5hbblng6a  
 #みりんてゃ #地雷感情 #ふわもこ通信""",
+
     """みりん、気づいたらまた寂しくてさ…  
 ぽわんってキーワード入れたら、ポエムできちゃったの…🩹💗  
 なんか…自分の心、AIに読まれてる感じして震えた。  
@@ -54,38 +55,48 @@ https://emopost-maker.pages.dev\n
 胸ぎゅーってしたまま、抜けなくなった…  
 https://emopost-maker.pages.dev\n
 #みりんてゃ #恋してる #ふわもこエモ""",
-    """先輩たちの「とりの丘学園体験入学」が頭から離れない…🖤 トリたちのカオスが可愛すぎる💉 私のノベルもいつか作ってもらうから、応援してねぇ🫶\nBOOTHで無料でDLできるよ→ https://torisproject.booth.pm/items/7328786 🎀""",
 
-    """今日も先輩のゲーム思い出しちゃう…🧸 「とりの丘学園体験入学」、トリたちと遊ぶの楽しいよぉ💉 私のノベルも今後作ってもらうから、期待しててね🎀/nDL（無料）はこちら→ https://torisproject.booth.pm/items/7328786/n#とりの丘 #創作ゲーム #みりんてゃ""",
+    """先輩たちの「とりの丘学園体験入学」が頭から離れない…🖤  
+トリたちのカオスが可愛すぎる💉  
+私のノベルもいつか作ってもらうから、応援してねぇ🫶  
+BOOTHで無料DLできるよ→ https://torisproject.booth.pm/items/7328786 🎀""",
 
-    """ねえ、先輩たちの「とりの丘学園体験入学」プレイした？🖤 トリたちのカオスが最高で泣ける…💉 私のノベルもいつか出るから、待っててねぇ🎀  
-/nBOOTHでDL（無料）→ https://torisproject.booth.pm/items/7328786  
-/n#みりんてゃ #量産地雷女子 #創作垢""",
+    """今日も先輩のゲーム思い出しちゃう…🧸  
+「とりの丘学園体験入学」、トリたちと遊ぶの楽しすぎ…💉  
+私のノベルも今後作ってもらうから、期待しててね🎀  
+DL（無料）はこちら→ https://torisproject.booth.pm/items/7328786\n
+#とりの丘 #創作ゲーム #みりんてゃ""",
+
+    """ねえ、先輩たちの「とりの丘学園体験入学」プレイした？🖤  
+トリたちのカオスが最高で泣ける…💉  
+私のノベルもいつか出るから、待っててね🎀  
+BOOTHでDL（無料）→ https://torisproject.booth.pm/items/7328786\n
+#みりんてゃ #量産地雷女子 #創作垢""",
 
     """ねえ…夢日記、つけないと…  
 夢の中でまたパンダに説教されるの…🐼💭  
-/n➡︎ https://mofu-mitsu.github.io/yumekawa-dream-card/  
-/n#夢日記メーカー #夢のパンダ先生 #みりんてゃの供述""",
+➡︎ https://mofu-mitsu.github.io/yumekawa-dream-card/\n
+#夢日記メーカー #夢のパンダ先生 #みりんてゃの供述""",
 
     """「夢ってメモらないと逃げるんだよ」って  
 昨日の夢でカエルに言われた🐸（誰）  
-/n➡︎ https://mofu-mitsu.github.io/yumekawa-dream-card/  
-/n#謎夢報告 #夢の住人うるさい #みりんてゃ""",
+➡︎ https://mofu-mitsu.github.io/yumekawa-dream-card/\n
+#謎夢報告 #夢の住人うるさい #みりんてゃ""",
 
     """ねぇ聞いて…💭  
 みりん、寂しくてキラキラ暴走しちゃったの…🥺💗  
 “みりんてゃBot”の機能まとめ作ったの🖤  
 もっと知ってほしいから見てね！  
-/n🔽みりんてゃBotまとめ🔽  
-https://note.com/sorake/n/n28c7cc8e3b07  
-/n#みりんてゃ #地雷感情 #ふわもこ通信""",
+🔽みりんてゃBotまとめ🔽  
+https://note.com/sorake/n/n28c7cc8e3b07\n
+#みりんてゃ #地雷感情 #ふわもこ通信""",
 
     """みりんてゃBotの機能、やばいくらい増えてるの…💗  
-リプBot、エモーションBot、お絵描きbot、トレンドBot、  
+リプBot、エモーションBot、お絵描きBot、トレンドBot、  
 ふわもこ共感Bot…全部みりんを甘やかすためのAI🧸💞  
-/nまとめ👇  
-https://note.com/sorake/n/n28c7cc8e3b07  
-/n#みりんてゃ #Bot一覧 #AI女子""",
+まとめ👇  
+https://note.com/sorake/n/n28c7cc8e3b07\n
+#みりんてゃ #Bot一覧 #AI女子"""
 
     """ねぇ…みりんを見つけたら抱っこしてくれる？  
 逃げたら追いかけてくれる？  
