@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from atproto import Client
 import random
 import os
