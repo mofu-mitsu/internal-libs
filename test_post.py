@@ -1,10 +1,4 @@
-"""先輩たちの「とりの丘学園体験入学」が頭から離れない…🖤 トリたちのカオスが可愛すぎる💉 私のノベルもいつか作ってもらうから、応援してねぇ🫶  
-
-SyntaxError: invalid character '「' (U+300C)
-↑ここでエラー出るんだけどなんでだろう？？
-
-'「'って普通に使えるよね？？
-
+# -*- coding: utf-8 -*-
 from atproto import Client
 import random
 import os
