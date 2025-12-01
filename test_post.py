@@ -46,7 +46,7 @@ https://mofu-mitsu.github.io/oshiai-card-maker/
 天才すぎて笑ったんだけど💗  
 布教の火力、ぜったい上がるやつ…。  
 https://mofu-mitsu.github.io/oshiai-card-maker/  
-#推し活 #みりんてゃ #地雷系ENFP""",
+#推し活 #みりんてゃ #地雷系""",
 
     """今日のみりん、ちょっと情緒ぐらってたんだけど  
 推しの名言をカードに入れた瞬間、  
