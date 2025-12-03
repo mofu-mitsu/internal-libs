@@ -50,7 +50,39 @@ https://mofu-mitsu.github.io/oshi-card-generator/
 これ宝物だよ…  
 https://mofu-mitsu.github.io/oshi-card-generator/  
 #推し名刺 #地雷天使 #みりんてゃ""",
-
+    """推しの名前入力した瞬間に  
+世界がピンクに染まった気がした…。  
+名刺になった推し、可愛すぎて永久保存版…💞  
+https://mofu-mitsu.github.io/oshi-card-generator/  
+#推し名刺 #推しが尊い #みりんてゃ""",
+    """推しの名刺、  
+見た瞬間にみりんのHP全回復した…。  
+“名前”“好きポイント”ってあるだけで  
+もう恋のレベルカンストしてる…。  
+https://mofu-mitsu.github.io/oshi-card-generator/  
+#推し好きすぎる #みりんてゃ""",
+    """推しのプロフィールを名刺にしたら  
+なぜか涙が出たんだけど…  
+推しって、紙切れ1枚でも心揺らすんだね…🩹💘  
+https://mofu-mitsu.github.io/oshi-card-generator/  
+#推し情緒 #みりんてゃ #地雷可愛い""",
+    """みりん、推し名刺作って気づいたんだ。  
+“好き”って、文字になると  
+こんなに破壊力あるんだね…。  
+手が震えたよ…💗🧸  
+https://mofu-mitsu.github.io/oshi-card-generator/  
+#推しカード #みりんてゃ""",
+    """推しの名刺、  
+自分でも作れちゃう時代になってしまった…。  
+恋の文明レベル上がりすぎじゃない…？🥹💞  
+https://mofu-mitsu.github.io/oshi-card-generator/  
+#推し名刺 #みりんてゃ #尊い""",
+    """“推しの名刺作るだけ”って思ってたのに  
+完成した瞬間に胸がズキュンってして  
+10分動けなかった…。  
+恋の衝撃波すごい…💗  
+https://mofu-mitsu.github.io/oshi-card-generator/  
+#推しカード #地雷可愛い #みりんてゃ""",
     """推しと手ぇ繋いだ感覚だけで一日生きられるのに、  
 デートプランまで作られたら……  
 もう人生終わりじゃない…？💗🕊  
