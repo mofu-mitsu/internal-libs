@@ -57,7 +57,7 @@ https://mofu-mitsu.github.io/oshi-card-generator/
 #推し名刺 #推しが尊い #みりんてゃ""",
     """推しの名刺、  
 見た瞬間にみりんのHP全回復した…。  
-“名前”“好きポイント”ってあるだけで  
+推しの名前があるだけで  
 もう恋のレベルカンストしてる…。  
 https://mofu-mitsu.github.io/oshi-card-generator/  
 #推し好きすぎる #みりんてゃ""",
