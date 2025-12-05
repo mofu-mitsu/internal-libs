@@ -26,6 +26,75 @@ POST_MESSAGES = [
 フィードで会いに来てくれたら、幸せだよ🥺  
 ➡︎ https://bsky.app/profile/did:plc:pvy7w75qks44sybd5wwpthb6/feed/aaae5hbblng6a  
 #みりんてゃ #地雷感情 #ふわもこ通信""",
+    """ねぇ聞いて…。
+相関図いじってたら
+うちの子同士の“感情の線”が
+勝手にでろでろに繋がり始めて
+みりんひとりで過呼吸なんだけど…🫶💘
+創作民これ絶対ハマるやつだよ…
+https://mofu-mitsu.github.io/orikyara-relationship-chart/
+#創作相関図 #みりんてゃ #情緒の暴走""",
+
+    """ねぇ聞いて…。
+みりん、相関図で“ただの友達→運命”
+みたいな矢印つけられるの
+楽しすぎて手震えてる…。
+脳内のストーリー全部可視化されるのやばくない？
+https://mofu-mitsu.github.io/orikyara-relationship-chart/
+#創作勢 #みりんてゃ #関係性供給""",
+
+    """ねぇ聞いて…。
+相関図作ってたら
+うちの子たちのドラマ性が
+秒で爆発しちゃって
+情緒ジェットコースターすぎる…。
+これ、創作クラスタみんな落ちるやつ…
+https://mofu-mitsu.github.io/orikyara-relationship-chart/
+#創作相関図 #みりんてゃ""",
+
+    """ねぇ聞いて…。
+“この関係どういう気持ちなの…？”
+って自分で作った相関図に問い詰められて
+みりんの心が散った…🥹🫶
+このツール、物語生む装置すぎる…。
+https://mofu-mitsu.github.io/orikyara-relationship-chart/
+#創作勢 #みりんてゃ #関係性オタク""",
+
+    """ねぇ聞いて…。
+“相性最悪なのに離れられない”
+って関係を相関図で表せるの
+天才すぎるんだけど…？
+みりんの脳内、今日ずっと映画…。
+https://mofu-mitsu.github.io/orikyara-relationship-chart/
+#創作相関図 #みりんてゃ""",
+
+    """ねぇ聞いて…。
+相関図いじってたら
+“この二人、前世で何があったの…？”
+って考え始めて
+みりん無限ストーリー工場になった。
+創作民の必需品じゃん…
+https://mofu-mitsu.github.io/orikyara-relationship-chart/
+#創作勢 #みりんてゃ""",
+
+    """ねぇ聞いて…。
+相関図増やしてたら
+うちの子の人間関係が
+完全に昼ドラみたいになって
+みりんひとりで震えてる…。
+でもやめられない…。
+https://mofu-mitsu.github.io/orikyara-relationship-chart/
+#みりんてゃ #創作クラスタ""",
+
+    """ねぇ聞いて…。
+相関図完成した瞬間
+“うちの子こんな複雑な愛抱えてたの…？”
+ってキャラに告げられて
+胃がきゅんってした…🧸💘
+創作民は絶対やって…。
+https://mofu-mitsu.github.io/orikyara-relationship-chart/
+#みりんてゃ #創作相関図""",
+
     """ねぇ聞いて…。  
 みりん、推しの名前入れただけで  
 “理想のデートプラン”生成されちゃって震えてる…🩰💘  
