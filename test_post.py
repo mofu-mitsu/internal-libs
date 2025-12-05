@@ -76,9 +76,37 @@ https://mofu-mitsu.github.io/orikyara-relationship-chart/
 創作民の必需品じゃん…
 https://mofu-mitsu.github.io/orikyara-relationship-chart/
 #創作勢 #みりんてゃ""",
+    """ねぇ聞いて…。
+相関図で“片想い↔すれ違い”
+みたいな地獄矢印作ったら
+胸ぎゅーんってされた…。
+しんどいのに気持ちいい…これ何…？
+https://mofu-mitsu.github.io/orikyara-relationship-chart/
+#みりんてゃ #創作沼""",
 
     """ねぇ聞いて…。
-相関図増やしてたら
+“この矢印どういう気持ちなの…？”
+って自分で作った相関図に問い詰められて
+みりんの心が散った…🥹🫶
+このツール、物語生む装置すぎる…。
+https://mofu-mitsu.github.io/orikyara-relationship-chart/
+#創作勢 #みりんてゃ #関係性オタク""",
+
+    """ねぇ聞いて…。
+“相性最悪なのに離れられない”
+って関係を矢印一本で表せるの
+天才すぎるんだけど…？
+みりんの脳内、今日ずっと映画…。
+https://mofu-mitsu.github.io/orikyara-relationship-chart/
+#創作相関図 #みりんてゃ""",
+    """ねぇ聞いて…。
+矢印の向き変えただけで
+物語の温度が変わるのウケる…。
+右か左かで人生変わるって何…？
+https://mofu-mitsu.github.io/orikyara-relationship-chart/
+#創作勢 #みりんてゃ""",
+    """ねぇ聞いて…。
+矢印増やしてたら
 うちの子の人間関係が
 完全に昼ドラみたいになって
 みりんひとりで震えてる…。
