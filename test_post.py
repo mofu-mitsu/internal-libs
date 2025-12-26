@@ -1926,7 +1926,7 @@ IMAGE_POSTS = [
     },
     {
         "text": "夢日記メーカーで新作まとめたんだけど聞いて…\n『選ばれしツインテが空へ召される夢』って何？？\nあたしの髪、そんな使命持ってたの？？✨ https://mofu-mitsu.github.io/yumekawa-dream-card/\n#みりんてゃ #夢日記 #ツインテ異界送り",
-        "image": "images/images/IMG_9121.jpeg",
+        "image": "images/IMG_9121.jpeg",
         "alt": "ゆめかわデザインで『選ばれしツインテが空へ召される夢』と書かれた夢カード"
     },
     {
