@@ -8,6 +8,7 @@ from pathlib import Path
 import requests
 from PIL import Image
 import io
+from datetime import datetime
 
 # ------------------------------
 # ★ 認証情報（.envに書くよ！）
@@ -45,6 +46,28 @@ def get_weather():
         print(f"⚠️ 気象庁APIエラー: {e}")
         return "くもり"
 
+def get_season():
+    month = datetime.now().month
+    if month in [12, 1, 2]:
+        return "winter"
+    elif month in [3, 4, 5]:
+        return "spring"
+    elif month in [6, 7, 8]:
+        return "summer"
+    else:
+        return "autumn"
+
+def get_lucky_item():
+    season = get_season()
+    if season == "winter":
+        return "ぬくぬくカイロ"
+    elif season == "summer":
+        return "ひんやりジェル"
+    elif season == "spring":
+        return "さくらミスト"
+    else:
+        return "ほっこりブランケット"
+
 # ------------------------------
 # ★ テンプレ辞書
 # ------------------------------
@@ -52,7 +75,7 @@ WEATHER_TEMPLATES = {
     "晴れ": """🌤️ 晴れの日は、ねこがのびのびする日！🐱  
 おひさまの下でおひるねすると、いい夢が見られるかも…？  
 
-🌟今日のラッキーアイテム：ひんやりジェル""",
+🌟今日のラッキーアイテム：{get_lucky_item()}""",
     "くもり": """🌥 くもりの日は、うさぎがぼんやりする日…🐰  
 ぬいぐるみをぎゅっと抱いて、優しい時間をすごしてね♡  
 
