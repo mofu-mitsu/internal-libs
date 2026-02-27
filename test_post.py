@@ -2231,7 +2231,7 @@ IMAGE_POSTS = [
     },
     {
         "text": "Sちゃんのメモ書くと、なんかテスト前の気持ち思い出すwww\n可愛いけど緊張感あるタイプ！ https://cocotte-simple-memo.vercel.app/\n#みりんてゃ #ガリ勉ちゃん",
-        "image": "images/memo_shizuka.png",
+        "image": "images/IMG_9107.jpeg",
         "alt": "メモ：『Sちゃん→真面目。努力型。目立つのイヤそうで可愛い。静かに頑張るタイプの尊さ』"
     },
     {
