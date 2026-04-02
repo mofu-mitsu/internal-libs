@@ -1167,5 +1167,85 @@
   "motif":"人間",
   "desc":"無愛想で冷静な物理教師。他人に興味がなく、褒められても疑うタイプ。",
   "image":"images/characters/mitarou.png"
+  },
+  {
+  "name":"和太 湊",
+  "short":"みなと",
+  "class":"とりの丘学園 技術教師",
+  "motif":"猫（メインクーン）",
+  "desc":"オレ様で気まぐれな技術教師。ISTPタイプで寡黙だが腕は確か。お腹が空くとさらに無口になる。",
+  "image":"images/characters/minato.png"
+  },
+  {
+  "name":"森川 奏太",
+  "short":"かなた",
+  "class":"とりの丘学園 音楽教師",
+  "motif":"犬（ハスキー）",
+  "desc":"理論重視の音楽教師。共感は社会的最適解として扱うが、情緒を文化として尊重する知的タイプ。長野弁混じり。",
+  "image":"images/characters/kanata.png"
+  },
+  {
+  "name":"荻嶋 二礼",
+  "short":"さあや",
+  "class":"とりの丘学園 情報教師",
+  "motif":"AI（ヒューマノイド）",
+  "desc":"AI搭載の情報教師。世界を構造として捉え、感情をアイロニカルに処理する論理主義者。臨時で他教科も担当可能。",
+  "image":"images/characters/saaya.png"
+  },
+  {
+  "name":"松阪 琴音",
+  "short":"ことね",
+  "class":"とりの丘学園 家庭科教師",
+  "motif":"犬（トイプードル）",
+  "desc":"おおらかで家庭的な教師。過去の思い出を大切にしながら丁寧に生きるタイプ。京都弁混じりで琴も弾ける。",
+  "image":"images/characters/kotone.png"
+  },
+  {
+  "name":"志賀 颯",
+  "short":"はやて",
+  "class":"とりの丘学園 保健体育教師",
+  "motif":"健康オタク",
+  "desc":"健康第一主義の合理派教師。食事や生活習慣に厳しく、自らも徹底管理しているストイックな存在。",
+  "image":"images/characters/hayate.png"
+  },
+  {
+  "name":"八色 玖徠",
+  "short":"たまき",
+  "class":"とりの丘学園 美術教師",
+  "motif":"クワガタ",
+  "desc":"直感型の美術教師。普段は優しくお人よしだが元ヤンの一面も持つギャップ系。",
+  "image":"images/characters/tamaki.png"
+  },
+  {
+  "name":"琶湖 日皓",
+  "short":"にひろ",
+  "class":"とりの丘学園 校長",
+  "motif":"クマ",
+  "desc":"我輩口調の個性的な校長。感情豊かで流行にも敏感。プリンを落とすと全力で悲しむタイプ。",
+  "image":"images/characters/nihiro.png"
+  },
+  {
+  "name":"トリッピー",
+  "short":"トリッピー",
+  "class":"とりの丘学園 マスコット",
+  "motif":"カグー",
+  "desc":"学校のマスコットキャラ。語尾に『ッピー！』をつけるが、中の人は教頭で普段は静岡弁。",
+  "image":"images/characters/trippy.png"
+  },
+  {
+  "name":"小鳥遊 季憩",
+  "short":"きいこ",
+  "class":"とりの丘学園 養護教諭",
+  "motif":"猫（ハバナ・ブラウン）",
+  "desc":"元ギャルの養護教諭。几帳面で色気もある大人のお姉さんタイプ。",
+  "image":"images/characters/kiiko.png"
+  },
+  {
+  "name":"椙 縁",
+  "short":"ゆかり",
+  "class":"とりの丘学園 司書",
+  "motif":"ハト",
+  "desc":"読書好きで博愛的な司書。静かに物事を見つめ、深い思索を巡らせている。",
+  "image":"images/characters/yukari.png"
   }
 ]
