@@ -333,7 +333,167 @@
   "class":"とりの丘学園 1-2（担任）",
   "motif":"ユリカモメ",
   "desc":"明るくよく笑う教師。発想が自由で柔軟な性格。",
-  "image":"images/characters/rela.png"
+  "image":"images/characters/rera.png"
+  },
+  {
+  "name":"浅苧 李音",
+  "short":"りのんちゃん",
+  "class":"とりの丘学園 1-3",
+  "motif":"ニシキアナゴ",
+  "desc":"芯が強く努力家な歌姫。負けず嫌いで結果を重視するタイプ。",
+  "image":"images/characters/rinon.png"
+  },
+  {
+  "name":"井之尾 希空",
+  "short":"きそらちゃん",
+  "class":"とりの丘学園 1-3",
+  "motif":"猫",
+  "desc":"人見知りで控えめな性格。大人になることに少し抵抗がある。",
+  "image":"images/characters/kisora.png"
+  },
+  {
+  "name":"牛沢 蒼司",
+  "short":"そうじくん",
+  "class":"とりの丘学園 1-3",
+  "motif":"タカ",
+  "desc":"大胆で自由奔放な性格。場の空気を壊すこともあるトリックスター。",
+  "image":"images/characters/soji.png"
+  },
+  {
+  "name":"大江 浬積",
+  "short":"りつくん",
+  "class":"とりの丘学園 1-3",
+  "motif":"カワセミ",
+  "desc":"美意識の高いナルシスト。明るく振る舞うが繊細な一面もある。",
+  "image":"images/characters/ritsu.png"
+  },
+  {
+  "name":"大野 蓬乃果",
+  "short":"ほのかちゃん",
+  "class":"とりの丘学園 1-3",
+  "motif":"アルパカ",
+  "desc":"好奇心旺盛で自信家。思ったことをはっきり言うタイプ。",
+  "image":"images/characters/honoka.png"
+  },
+  {
+  "name":"自念 頼",
+  "short":"たよりくん",
+  "class":"とりの丘学園 1-3",
+  "motif":"ボロニーズ",
+  "desc":"穏やかで人当たりが良い性格。周囲との関係を大切にする。",
+  "image":"images/characters/tayori.png"
+  },
+  {
+  "name":"素麺 麦",
+  "short":"むぎちゃん",
+  "class":"とりの丘学園 1-3",
+  "motif":"ハムスター",
+  "desc":"元気いっぱいでテンション高め。マイペースで自由な性格。",
+  "image":"images/characters/mugi.png"
+  },
+  {
+  "name":"土市 結衣",
+  "short":"ゆいちゃん",
+  "class":"とりの丘学園 1-3",
+  "motif":"猫",
+  "desc":"甘え上手で独特な雰囲気の少女。感情表現が豊か。",
+  "image":"images/characters/yui.png"
+  },
+  {
+  "name":"二十八 碧",
+  "short":"あおいちゃん",
+  "class":"とりの丘学園 1-3",
+  "motif":"猫",
+  "desc":"物静かで真面目な努力家。落ち着いた雰囲気を持つ。",
+  "image":"images/characters/aoi.png"
+  },
+  {
+  "name":"直宿 夕日",
+  "short":"ゆうひくん",
+  "class":"とりの丘学園 1-3",
+  "motif":"夕方",
+  "desc":"強気でノリの軽い性格。自由奔放でマイペース。",
+  "image":"images/characters/yuhi.png"
+  },
+  {
+  "name":"天王寺 淳志",
+  "short":"あつしくん",
+  "class":"とりの丘学園 1-3",
+  "motif":"天王星人",
+  "desc":"天然でのんびりした性格。前向きで自由な発想の持ち主。",
+  "image":"images/characters/atsushi.png"
+  },
+  {
+  "name":"中井 空羽",
+  "short":"くうちゃん",
+  "class":"とりの丘学園 1-3",
+  "motif":"カラス",
+  "desc":"クールで一人を好むタイプ。周囲と距離を取ることが多い。",
+  "image":"images/characters/kuu.png"
+  },
+  {
+  "name":"永丘 紀臣",
+  "short":"のりおみくん",
+  "class":"とりの丘学園 1-3",
+  "motif":"クマ",
+  "desc":"冷静で皮肉屋な性格。人との距離感を大切にするタイプ。",
+  "image":"images/characters/noriomi.png"
+  },
+  {
+  "name":"仲村 愛梨",
+  "short":"めりちゃん",
+  "class":"とりの丘学園 1-3",
+  "motif":"うさぎ",
+  "desc":"おっとり優しい性格。周囲に気を遣う穏やかな存在。",
+  "image":"images/characters/meri.png"
+  },
+  {
+  "name":"美戸 創至",
+  "short":"そうしくん",
+  "class":"とりの丘学園 1-3",
+  "motif":"火星人",
+  "desc":"発明好きで独自の世界観を持つ思考派タイプ。",
+  "image":"images/characters/soshi.png"
+  },
+  {
+  "name":"桃山 小歌",
+  "short":"こうたくん",
+  "class":"とりの丘学園 1-3",
+  "motif":"アキクサインコ",
+  "desc":"真面目で優等生気質。規律や正しさを重視する。",
+  "image":"images/characters/kouta.png"
+  },
+  {
+  "name":"勇惣 岬咲",
+  "short":"みさきちゃん",
+  "class":"とりの丘学園 1-3",
+  "motif":"合鴨",
+  "desc":"家族思いで優しい性格。不器用ながらも一生懸命。",
+  "image":"images/characters/misaki.png"
+  },
+  {
+  "name":"代々木 渚",
+  "short":"なぎさちゃん",
+  "class":"とりの丘学園 1-3",
+  "motif":"クマ",
+  "desc":"社交的で自由な考えを持つタイプ。自分らしさを大切にする。",
+  "image":"images/characters/nagisa.png"
+  },
+  {
+  "name":"楽得 響",
+  "short":"ひびきくん",
+  "class":"とりの丘学園 1-3",
+  "motif":"ニワトリ",
+  "desc":"声が大きく活発な性格。行動力があり勢いで動くタイプ。",
+  "image":"images/characters/hibiki.png"
+  },
+  {
+  "name":"虻崎 捺江",
+  "short":"なつえ先生",
+  "class":"とりの丘学園 1-3（担任）",
+  "motif":"カワセミ",
+  "desc":"穏やかで優しい教師。自然体でいることを大切にしている。",
+  "image":"images/characters/natsue.png"
   },
   {
   "name":"相原 美里耶",
