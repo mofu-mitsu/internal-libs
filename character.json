@@ -1,5 +1,157 @@
 [
   {
+  "name":"相原 美里耶",
+  "short":"みりやちゃん",
+  "class":"とりの丘学園 2-1",
+  "motif":"番犬",
+  "desc":"動じない性格で忠誠的。大抵のことには惑わされない。レストランでバイトしている。",
+  "image":"images/characters/miriya.png"
+  },
+  {
+  "name":"阿見 一人",
+  "short":"ひとりくん",
+  "class":"とりの丘学園 2-1",
+  "motif":"コウモリ",
+  "desc":"厨二病の俺様系。左腕が疼くとか言い出す極端な性格。",
+  "image":"images/characters/hitori.png"
+  },
+  {
+  "name":"海老ケ迫 決意",
+  "short":"けついくん",
+  "class":"とりの丘学園 2-1",
+  "motif":"エビ",
+  "desc":"面倒見がよく大人っぽい広島男子。水兵部部長兼船長。構造理解優先タイプ。",
+  "image":"images/characters/ketsui.png"
+  },
+  {
+  "name":"岡崎 愛芽里",
+  "short":"あめりちゃん",
+  "class":"とりの丘学園 2-1",
+  "motif":"うさぎ",
+  "desc":"ゆめかわ好きで引っ込み思案。世界を遠くから観測して静かに離脱を選ぶタイプ。",
+  "image":"images/characters/ameri.png"
+  },
+  {
+  "name":"神崎 奨午",
+  "short":"しょうごくん",
+  "class":"とりの丘学園 2-1",
+  "motif":"ボタンインコ",
+  "desc":"真面目で爽やか。場の一体感を作るのが得意な祝祭系男子。",
+  "image":"images/characters/shogo.png"
+  },
+  {
+  "name":"橘定 由子",
+  "short":"ゆこちゃん",
+  "class":"とりの丘学園 2-1",
+  "motif":"キャバリア",
+  "desc":"思慮深いセレブ。周囲の目を気にしすぎる内省型。",
+  "image":"images/characters/yuko.png"
+  },
+  {
+  "name":"霧生 曙",
+  "short":"あきらくん",
+  "class":"とりの丘学園 2-1",
+  "motif":"牧羊犬",
+  "desc":"頑固一徹な天才タイプ。成果や勝敗にこだわる負けず嫌い。",
+  "image":"images/characters/akira.png"
+  },
+  {
+  "name":"久堂 朋己",
+  "short":"ともきくん",
+  "class":"とりの丘学園 2-1",
+  "motif":"犬",
+  "desc":"リーダー気質でこびない性格。成果主義で世界の仕組みに期待するタイプ。",
+  "image":"images/characters/tomoki.png"
+  },
+  {
+  "name":"君国 航",
+  "short":"わたるくん",
+  "class":"とりの丘学園 2-1",
+  "motif":"オオグソクムシ",
+  "desc":"厳格で慎重な完璧主義者。行動原理をルール化するタイプ。",
+  "image":"images/characters/wataru.png"
+  },
+  {
+  "name":"更級 柘榴",
+  "short":"ざくろくん",
+  "class":"とりの丘学園 2-1",
+  "motif":"もやし",
+  "desc":"存在感が薄いが分析的。未来の最悪ケースを常に検証している。",
+  "image":"images/characters/zakuro.png"
+  },
+  {
+  "name":"酒々井 小鳥",
+  "short":"ことりくん",
+  "class":"とりの丘学園 2-1",
+  "motif":"カナリア",
+  "desc":"享楽的で楽な方に流れがち。諦め癖あり。",
+  "image":"images/characters/kotori.png"
+  },
+  {
+  "name":"鈴木 幹菜",
+  "short":"みきなちゃん",
+  "class":"とりの丘学園 2-1",
+  "motif":"猫",
+  "desc":"まきしの双子の妹。優しいが感情にブレーキをかけがち。",
+  "image":"images/characters/mikina.png"
+  },
+  {
+  "name":"寸土 壱芹",
+  "short":"いせりくん",
+  "class":"とりの丘学園 2-1",
+  "motif":"猫",
+  "desc":"とても小柄で竹を割ったような性格。明るくストレート。",
+  "image":"images/characters/iseri.png"
+  },
+  {
+  "name":"猫谷 茉莉亜",
+  "short":"まりあちゃん",
+  "class":"とりの丘学園 2-1",
+  "motif":"猫",
+  "desc":"優しく穏やかな修道女。神や規範に強く依存するタイプ。",
+  "image":"images/characters/maria.png"
+  },
+  {
+  "name":"舟濤 汀",
+  "short":"みぎわちゃん",
+  "class":"とりの丘学園 2-1",
+  "motif":"アジサシ",
+  "desc":"気が利くしっかり者。水兵部副部長でけついに対抗心あり。",
+  "image":"images/characters/migiwa.png"
+  },
+  {
+  "name":"水上 亮吾",
+  "short":"りょうごくん",
+  "class":"とりの丘学園 2-1",
+  "motif":"青虫",
+  "desc":"機械いじりが得意な知識人。水兵部の技術担当。",
+  "image":"images/characters/ryogo.png"
+  },
+  {
+  "name":"恵 時生",
+  "short":"じはちゃん",
+  "class":"とりの丘学園 2-1",
+  "motif":"猫",
+  "desc":"気分屋でわがままな自由人。跳躍した比喩を使うタイプ。",
+  "image":"images/characters/jiha.png"
+  },
+  {
+  "name":"用達 怜",
+  "short":"れいちゃん",
+  "class":"とりの丘学園 2-1",
+  "motif":"カラス",
+  "desc":"完璧な優等生。頭脳明晰で性格も良いがケチャップ愛は強烈。",
+  "image":"images/characters/rei.png"
+  },
+  {
+  "name":"薮崎 芽衣",
+  "short":"めい先生",
+  "class":"とりの丘学園 2-1（担任）",
+  "motif":"猫",
+  "desc":"天然ドジな先生。感受性と価値観に忠実な社会科教師。",
+  "image":"images/characters/mei.png"
+  },
+  {
     "name": "藍河 八重",
     "short": "やえちゃん",
     "class": "とりの丘学園 2-2",
