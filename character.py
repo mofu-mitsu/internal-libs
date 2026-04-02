@@ -2,6 +2,7 @@
 from atproto import Client
 import os
 import json
+import random  # ランダム用に追加
 import re
 import io
 import unicodedata
@@ -38,7 +39,6 @@ def upload_image(client, image_path):
         buffer.seek(0)
         buffer.truncate(0)
         img.convert("RGB").save(buffer, format="JPEG", quality=quality, optimize=True)
-        # 1MB(976KB)制限対策
         if buffer.tell() / 1024 <= 976 or quality <= 20:
             break
         quality -= 5
@@ -51,8 +51,6 @@ def upload_image(client, image_path):
 def generate_facets_from_text(text):
     text_bytes = text.encode("utf-8")
     facets = []
-    
-    # ハッシュタグ検出
     hashtag_pattern = r'#([^\s#]+)'
     for match in re.finditer(hashtag_pattern, text):
         tag = match.group(0)
@@ -63,7 +61,6 @@ def generate_facets_from_text(text):
                 "index": {"byteStart": start, "byteEnd": start + len(tag_bytes)},
                 "features": [{"$type": "app.bsky.richtext.facet#tag", "tag": tag.lstrip("#")}]
             })
-            
     return facets
 
 def normalize_text(text):
@@ -77,15 +74,16 @@ def main():
     with open('character.json', 'r', encoding='utf-8') as f:
         characters = json.load(f)
 
-    # 投稿するキャラを決定（日付ベースで順番に）
-    day_of_year = datetime.now().timetuple().tm_yday
-    char_index = day_of_year % len(characters)
-    char = characters[char_index]
+    # ★ 完全にランダムで選ぶ！
+    char = random.choice(characters)
 
-    # メッセージ作成（チャッピーおすすめ構成）
-    raw_message = f"""【{char['name']}（{char['short']}）】
+    # ★ メッセージ作成（タイトルと世界観の説明を追加）
+    # 冒頭に「なんの投稿か」をわかりやすく入れたよ！
+    raw_message = f"""📖【みりんてゃの学園 キャラ紹介】
+〜とりの丘学園の仲間たち〜
+
+【{char['name']}（{char['short']}）】
 {char['class']}
-
 モチーフ：{char['motif']}
 
 {char['desc']}
