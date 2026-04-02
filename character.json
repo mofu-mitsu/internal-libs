@@ -1,0 +1,154 @@
+[
+  {
+    "name": "藍河 八重",
+    "short": "やえちゃん",
+    "class": "とりの丘学園 2-2",
+    "motif": "ハリネズミ",
+    "desc": "無口で朴念仁。“私とは何で構成されているか”を考え続けるタイプ。他者の視線で自分が変わることを理解しているが迎合しない。感じる前に考えてしまう。",
+    "image": "images/characters/yae.png"
+  },
+  {
+    "name": "味野 灯莉",
+    "short": "あかりちゃん",
+    "class": "とりの丘学園 2-2",
+    "motif": "アライグマ",
+    "desc": "明朗快活で前向き。泣きたい時こそ笑うタイプ。甘えん坊で無防備。ダンスとファッションが好き。ひかりの幼馴染。",
+    "image": "images/characters/akari.png"
+  },
+  {
+    "name": "鼬川 絵丹師",
+    "short": "えにしくん",
+    "class": "とりの丘学園 2-2",
+    "motif": "いたち",
+    "desc": "職人気質でクール。放課後はアトリエで絵を描く。目的よりも“描くことそのもの”が好き。",
+    "image": "images/characters/enishi.png"
+  },
+  {
+    "name": "芋縄 的倭",
+    "short": "まといくん",
+    "class": "とりの丘学園 2-2",
+    "motif": "鷹",
+    "desc": "芯の強い一匹狼。身体感覚が鋭く即物的。牧場育ちで投げ縄が得意。過去に亡くなった兄と同じ名前を持つ。",
+    "image": "images/characters/matoi.png"
+  },
+  {
+    "name": "忍足 鈴",
+    "short": "すずちゃん",
+    "class": "とりの丘学園 2-2",
+    "motif": "猫",
+    "desc": "忍耐強く規律重視。厳しいしつけの中で育ち、“なぜ自分だけ”という違和感を抱えている。",
+    "image": "images/characters/suzu.png"
+  },
+  {
+    "name": "小犬丸 愛凛",
+    "short": "ありんちゃん",
+    "class": "とりの丘学園 2-2",
+    "motif": "犬",
+    "desc": "誰かの役に立つことが嬉しい優しい子。努力家で少し無理しがち。ローファイ音楽が好き。みりんの幼馴染。",
+    "image": "images/characters/arin.png"
+  },
+  {
+    "name": "霜降 柔",
+    "short": "やさしくん",
+    "class": "とりの丘学園 2-2",
+    "motif": "消しゴム",
+    "desc": "体操部で体が柔らかい。物腰も柔らかい。拾われた存在で新しい持ち主と暮らしている。",
+    "image": "images/characters/yasashi.png"
+  },
+  {
+    "name": "春潮楼 塁",
+    "short": "るいくん",
+    "class": "とりの丘学園 2-2",
+    "motif": "キジ",
+    "desc": "気が利くがズレてる空回りタイプ。料理が苦手。姉はチーズ店勤務。",
+    "image": "images/characters/rui.png"
+  },
+  {
+    "name": "鈴木 槙士",
+    "short": "まきしくん",
+    "class": "とりの丘学園 2-2",
+    "motif": "猫",
+    "desc": "天真爛漫で誰とでも仲良くなる。実はクローンという秘密を抱える。テンション高めで明るい。",
+    "image": "images/characters/makishi.png"
+  },
+  {
+    "name": "仲馬 穣",
+    "short": "しげくん",
+    "class": "とりの丘学園 2-2",
+    "motif": "ネズミ",
+    "desc": "照れ屋で繊細。人前で食べるのが苦手。迷惑をかけたくないと考えがち。博多弁。",
+    "image": "images/characters/shige.png"
+  },
+  {
+    "name": "出逢 箱藻",
+    "short": "はこもくん",
+    "class": "とりの丘学園 2-2",
+    "motif": "箱",
+    "desc": "虚ろで俯瞰的。感情や自我が曖昧。何かを考えても結論に辿り着かないタイプ。",
+    "image": "images/characters/hakomo.png"
+  },
+  {
+    "name": "灰住 鎮花",
+    "short": "しずかちゃん",
+    "class": "とりの丘学園 2-2",
+    "motif": "ハイイロテントウ",
+    "desc": "消極的な努力家。完璧主義で間違いを恐れる。家庭環境により常に評価に縛られている。",
+    "image": "images/characters/shizuka.png"
+  },
+  {
+    "name": "萩枝 美琳",
+    "short": "みりんてゃ",
+    "class": "とりの丘学園 2-2",
+    "motif": "黒猫",
+    "desc": "あざとくて可愛いもの大好きな地雷系女子。承認欲求強めで感情豊か。",
+    "image": "images/characters/mirin.png"
+  },
+  {
+    "name": "昆沙丸 柚子",
+    "short": "ゆずちゃん",
+    "class": "とりの丘学園 2-2",
+    "motif": "招き猫",
+    "desc": "神社に住む無口な少女。幸運体質。軽々しく話さない掟を守っている。",
+    "image": "images/characters/yuzu.png"
+  },
+  {
+    "name": "細物 詩温",
+    "short": "しのんくん",
+    "class": "とりの丘学園 2-2",
+    "motif": "鉛筆",
+    "desc": "泣き虫で繊細。責任感が強く他人優先。学校は休みがち。",
+    "image": "images/characters/shinon.png"
+  },
+  {
+    "name": "法華 光里",
+    "short": "ひかりちゃん",
+    "class": "とりの丘学園 2-2",
+    "motif": "レッサーパンダ",
+    "desc": "警戒心が強く嘘を見抜くのが得意。大人ぶっている現実主義者。",
+    "image": "images/characters/hikari.png"
+  },
+  {
+    "name": "柞原 梢",
+    "short": "こずえちゃん",
+    "class": "とりの丘学園 2-2",
+    "motif": "ムササビ",
+    "desc": "はんなりクールな和風美人。静かな芯の強さを持つ。",
+    "image": "images/characters/kozue.png"
+  },
+  {
+    "name": "雪村 大和",
+    "short": "やまとくん",
+    "class": "とりの丘学園 2-2",
+    "motif": "狐",
+    "desc": "冷静で柔軟。目的に向かって最適行動を取るタイプ。かき氷好き。",
+    "image": "images/characters/yamato.png"
+  },
+  {
+    "name": "妻鹿 克己",
+    "short": "かつみ先生",
+    "class": "とりの丘学園 2-2（担任）",
+    "motif": "犬",
+    "desc": "熱血体育教師。情熱的だが押し付けがち。",
+    "image": "images/characters/katsumi.png"
+  }
+]
