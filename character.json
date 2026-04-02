@@ -168,6 +168,174 @@
   "image":"images/characters/chihiro.png"
   },
   {
+  "name":"愛野 麻理",
+  "short":"まりちゃん",
+  "class":"とりの丘学園 1-2",
+  "motif":"キツネ",
+  "desc":"華奢で控えめな物静かな少女。人見知りで人間不信気味。アニメーターを目指している。",
+  "image":"images/characters/mari.png"
+  },
+  {
+  "name":"井漕 舞茅依",
+  "short":"まちえちゃん",
+  "class":"とりの丘学園 1-2",
+  "motif":"猫",
+  "desc":"真面目で挑戦的な性格。丁寧な話し方だが時々名古屋弁や熱いセリフが出る。",
+  "image":"images/characters/machie.png"
+  },
+  {
+  "name":"石原 蛇喜",
+  "short":"へびきくん",
+  "class":"とりの丘学園 1-2",
+  "motif":"蛇",
+  "desc":"沖縄出身の平和主義者。のんびりした性格で暑さに弱くネッククーラーが手放せない。",
+  "image":"images/characters/hebiki.png"
+  },
+  {
+  "name":"岩結 未来",
+  "short":"みらいちゃん",
+  "class":"とりの丘学園 1-2",
+  "motif":"たぬき",
+  "desc":"明るく面倒見が良い優等生。負けず嫌いで努力家な性格。",
+  "image":"images/characters/mirai.png"
+  },
+  {
+  "name":"遠藤 海松",
+  "short":"みるちゃん",
+  "class":"とりの丘学園 1-2",
+  "motif":"ダルメシアン",
+  "desc":"元気でロマンチストなムードメーカー。よく笑い場を盛り上げる。",
+  "image":"images/characters/miru.png"
+  },
+  {
+  "name":"鬼弦 導",
+  "short":"しるべくん",
+  "class":"とりの丘学園 1-2",
+  "motif":"鬼",
+  "desc":"寡黙で無表情な少年。何を考えているか分かりにくいが観察力はある。",
+  "image":"images/characters/shirube.png"
+  },
+  {
+  "name":"柏倉 佑",
+  "short":"ゆうくん",
+  "class":"とりの丘学園 1-2",
+  "motif":"日本スピッツ",
+  "desc":"気弱だが仲間思い。可愛いものが好きで優しい性格。",
+  "image":"images/characters/yuu.png"
+  },
+  {
+  "name":"雲然 翔暖",
+  "short":"かのんくん",
+  "class":"とりの丘学園 1-2",
+  "motif":"イソヒヨドリ",
+  "desc":"人懐っこく明るい性格。モノマネが得意で場を和ませる。",
+  "image":"images/characters/kanon.png"
+  },
+  {
+  "name":"小桂 文太",
+  "short":"ぶんたくん",
+  "class":"とりの丘学園 1-2",
+  "motif":"文鳥",
+  "desc":"少し気怠げだが順応性が高く友達が多い。新聞部部長。",
+  "image":"images/characters/bunta.png"
+  },
+  {
+  "name":"小玉 史子",
+  "short":"ふみこちゃん",
+  "class":"とりの丘学園 1-2",
+  "motif":"文鳥",
+  "desc":"穏やかで優しい性格。話すと安心感を与える存在。",
+  "image":"images/characters/fumiko.png"
+  },
+  {
+  "name":"素麺 米",
+  "short":"こめちゃん",
+  "class":"とりの丘学園 1-2",
+  "motif":"ハムスター",
+  "desc":"のんびりした干物系女子。マイペースで寝るのが大好き。",
+  "image":"images/characters/kome.png"
+  },
+  {
+  "name":"高槁 優侍",
+  "short":"ゆうじくん",
+  "class":"とりの丘学園 1-2",
+  "motif":"ペンギン",
+  "desc":"正義感が強く勇敢な性格。間違いを見過ごせないタイプ。",
+  "image":"images/characters/yuji.png"
+  },
+  {
+  "name":"辻山 郷",
+  "short":"きょうくん",
+  "class":"とりの丘学園 1-2",
+  "motif":"猫",
+  "desc":"普段は大人しいが状況によって強気になる一面もある。",
+  "image":"images/characters/kyo.png"
+  },
+  {
+  "name":"鳥飼 歩",
+  "short":"あゆちゃん",
+  "class":"とりの丘学園 1-2",
+  "motif":"カッコウ",
+  "desc":"元気でおしゃべりな性格。明るく感情表現が豊か。",
+  "image":"images/characters/ayu.png"
+  },
+  {
+  "name":"西 琥博",
+  "short":"こはくくん",
+  "class":"とりの丘学園 1-2",
+  "motif":"ティーカッププードル",
+  "desc":"真面目で勤勉な風紀委員。規律を重んじるタイプ。",
+  "image":"images/characters/kohaku.png"
+  },
+  {
+  "name":"根峯 萠",
+  "short":"めぐむちゃん",
+  "class":"とりの丘学園 1-2",
+  "motif":"アメリカンカール",
+  "desc":"面倒見がよく常識的な性格。頼れる存在。",
+  "image":"images/characters/megumu.png"
+  },
+  {
+  "name":"身浦 柚太允",
+  "short":"ゆたすけくん",
+  "class":"とりの丘学園 1-2",
+  "motif":"熊",
+  "desc":"控えめで優しい性格。周りを静かに見守るタイプ。",
+  "image":"images/characters/yutasuke.png"
+  },
+  {
+  "name":"村瀬 蘇芳",
+  "short":"すおうくん",
+  "class":"とりの丘学園 1-2",
+  "motif":"狐",
+  "desc":"冷静でマイペース。どこか掴みどころのない性格。",
+  "image":"images/characters/suo.png"
+  },
+  {
+  "name":"茂地 榎留愛",
+  "short":"えるあちゃん",
+  "class":"とりの丘学園 1-2",
+  "motif":"カエル",
+  "desc":"はっきり物を言う世話焼きタイプ。相談にもよく乗る。",
+  "image":"images/characters/erua.png"
+  },
+  {
+  "name":"本梶 美花",
+  "short":"みばなちゃん",
+  "class":"とりの丘学園 1-2",
+  "motif":"ホトトギス",
+  "desc":"マイペースで実践的な性格。少しツンデレ気質。",
+  "image":"images/characters/mibana.png"
+  },
+  {
+  "name":"柏木 伶楽",
+  "short":"れら先生",
+  "class":"とりの丘学園 1-2（担任）",
+  "motif":"ユリカモメ",
+  "desc":"明るくよく笑う教師。発想が自由で柔軟な性格。",
+  "image":"images/characters/rela.png"
+  },
+  {
   "name":"相原 美里耶",
   "short":"みりやちゃん",
   "class":"とりの丘学園 2-1",
