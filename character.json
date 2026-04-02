@@ -1,5 +1,173 @@
 [
   {
+  "name":"遠藤 桃花",
+  "short":"ももか",
+  "class":"とりの丘学園 1-1",
+  "motif":"犬",
+  "desc":"元愛犬の存在。負けず嫌いなツンデレでよく吠える。パパに懐いており、セレブのようなポーズをよくする。",
+  "image":"images/characters/momoka.png"
+  },
+  {
+  "name":"近藤 美々香",
+  "short":"みみかちゃん",
+  "class":"とりの丘学園 1-1",
+  "motif":"白猫",
+  "desc":"クールで理性的。世界を概念の集合として捉える内省型で、失敗も構造として分析するタイプ。料理上手。",
+  "image":"images/characters/mimika.png"
+  },
+  {
+  "name":"辻山 妃菜華",
+  "short":"ひなかちゃん",
+  "class":"とりの丘学園 1-1",
+  "motif":"アメリカンショートヘア",
+  "desc":"明るく活発でキャピキャピした性格。島根からの転校生で出雲弁を話す。",
+  "image":"images/characters/hinaka.png"
+  },
+  {
+  "name":"黒見 晃",
+  "short":"ひかるくん",
+  "class":"とりの丘学園 1-1",
+  "motif":"黒猫（元風船）",
+  "desc":"衝動的でお人よし。桃花にちょっかいを出すのが好き。元はハロウィンの風船で穴が空いてしまった存在。",
+  "image":"images/characters/hikaru.png"
+  },
+  {
+  "name":"天雨 聖奈",
+  "short":"せいなちゃん",
+  "class":"とりの丘学園 1-1",
+  "motif":"ピンクのカエル",
+  "desc":"強気で世話焼きな性格。少し強引だが面倒見が良い。体操部所属。",
+  "image":"images/characters/seina.png"
+  },
+  {
+  "name":"市宮 哲",
+  "short":"てつちゃん",
+  "class":"とりの丘学園 1-1",
+  "motif":"黒猫",
+  "desc":"博愛主義で楽観的。『みんな違ってみんな良い』精神の持ち主。実験好きのマッドサイエンティスト。",
+  "image":"images/characters/tetsu.png"
+  },
+  {
+  "name":"右幸 永遠",
+  "short":"とわくん",
+  "class":"とりの丘学園 1-1",
+  "motif":"秋田犬",
+  "desc":"好奇心旺盛でサボり魔。熱しやすく冷めやすい性格。感情に素直に従う快楽追求タイプ。",
+  "image":"images/characters/towa.png"
+  },
+  {
+  "name":"岡田 麻衣",
+  "short":"まいちゃん",
+  "class":"とりの丘学園 1-1",
+  "motif":"黒猫",
+  "desc":"家事が得意な家政婦バイト。嘘を楽しむ捻くれ者。弟のリボンを大切にしている。",
+  "image":"images/characters/mai.png"
+  },
+  {
+  "name":"小路 虎作",
+  "short":"こさくくん",
+  "class":"とりの丘学園 1-1",
+  "motif":"猫",
+  "desc":"自信過剰で単純な性格。大阪出身でお好み焼き屋の息子。明るくノリが良い。",
+  "image":"images/characters/kosaku.png"
+  },
+  {
+  "name":"川曽 虎太郎",
+  "short":"こたろうくん",
+  "class":"とりの丘学園 1-1",
+  "motif":"柴犬",
+  "desc":"優しく知的なヒーロータイプ。超ポジティブで周囲に希望を与える存在。球技部所属。",
+  "image":"images/characters/kotarou.png"
+  },
+  {
+  "name":"雑敷 言",
+  "short":"ことくん",
+  "class":"とりの丘学園 1-1",
+  "motif":"セキセイインコ",
+  "desc":"写真好きで男気のある性格。おおざっぱだが遊び心あり。虚弱体質で風邪をひきやすい。",
+  "image":"images/characters/koto.png"
+  },
+  {
+  "name":"杉山 虎毱",
+  "short":"こまりちゃん",
+  "class":"とりの丘学園 1-1",
+  "motif":"三毛猫",
+  "desc":"こだわりが強く素直な性格。DIYや創作が好きで絵も上手い。仮想世界にも興味あり。",
+  "image":"images/characters/komari.png"
+  },
+  {
+  "name":"園田 藍",
+  "short":"あいちゃん",
+  "class":"とりの丘学園 1-1",
+  "motif":"イソヒヨドリ",
+  "desc":"穏やかな口調の腹黒ドS。敬語でじわじわ攻めてくるタイプ。文画部所属。",
+  "image":"images/characters/ai.png"
+  },
+  {
+  "name":"成政 明流",
+  "short":"あかるくん",
+  "class":"とりの丘学園 1-1",
+  "motif":"猫",
+  "desc":"明るいムードメーカー。お調子者でパーティーハットをよく被る。将来に悩み中。",
+  "image":"images/characters/akaru.png"
+  },
+  {
+  "name":"二瓶 小次郎",
+  "short":"こじろうくん",
+  "class":"とりの丘学園 1-1",
+  "motif":"猫",
+  "desc":"誠実でしっかり者。作曲もピアノもできる音楽の天才。",
+  "image":"images/characters/kojiro.png"
+  },
+  {
+  "name":"速川 楓",
+  "short":"かえでちゃん",
+  "class":"とりの丘学園 1-1",
+  "motif":"猫",
+  "desc":"自己主張が強くまっすぐな性格。自分が一番美しいと思っている自信家。",
+  "image":"images/characters/kaede.png"
+  },
+  {
+  "name":"腹巻 青",
+  "short":"せいくん",
+  "class":"とりの丘学園 1-1",
+  "motif":"ヤマショウビン",
+  "desc":"熱血でリーダー気質。情熱的で常にやる気に満ちている。青い炎のような存在。",
+  "image":"images/characters/sei.png"
+  },
+  {
+  "name":"谷幡 節捺",
+  "short":"せつなちゃん",
+  "class":"とりの丘学園 1-1",
+  "motif":"猫",
+  "desc":"おおらかでマイペース。忘れっぽくカバンはブラックホール。新聞部所属。",
+  "image":"images/characters/setsuna.png"
+  },
+  {
+  "name":"山神 小福",
+  "short":"こふくくん",
+  "class":"とりの丘学園 1-1",
+  "motif":"ポメラニアン",
+  "desc":"山の神として崇められる存在。冷静沈着でクール。山を守りながら写真を撮る。",
+  "image":"images/characters/kofuku.png"
+  },
+  {
+  "name":"勇惣 柾季",
+  "short":"まさきくん",
+  "class":"とりの丘学園 1-1",
+  "motif":"軽鴨",
+  "desc":"物静かで妹思い。母の治療費のために働くしっかり者。優しさと責任感の塊。",
+  "image":"images/characters/masaki.png"
+  },
+  {
+  "name":"砂糖 千尋",
+  "short":"ちひろ先生",
+  "class":"とりの丘学園 1-1（担任）",
+  "motif":"フラミンゴ",
+  "desc":"とても優しく甘い性格の教師。元生徒であり、生徒想いだが比較されるのは苦手。",
+  "image":"images/characters/chihiro.png"
+  },
+  {
   "name":"相原 美里耶",
   "short":"みりやちゃん",
   "class":"とりの丘学園 2-1",
