@@ -496,6 +496,166 @@
   "image":"images/characters/natsue.png"
   },
   {
+  "name":"池里 雪彦",
+  "short":"ゆきひこ",
+  "class":"とりの丘学園 1-4",
+  "motif":"プードル",
+  "desc":"おっちょこちょいで何やっても上手くいかないタイプ。口が軽く、自由帳に謎の落書きをしている。『わち』という一人称を使う不思議な男子。",
+  "image":"images/characters/yukihiko.png"
+  },
+  {
+  "name":"市川 宥暉",
+  "short":"ゆうき",
+  "class":"とりの丘学園 1-4",
+  "motif":"ソマリ猫",
+  "desc":"占い師の男の子。明朗で親しみやすくノリが良いが、どこかうさんくさい雰囲気もある。占いを頼まれると喜ぶ。",
+  "image":"images/characters/yuuki.png"
+  },
+  {
+  "name":"卯瀧 真綾",
+  "short":"まあや",
+  "class":"とりの丘学園 1-4",
+  "motif":"ルリチョウ",
+  "desc":"上品なお嬢様気質のロマンチスト。辛い食べ物が好きでお出かけも大好き。過去の思い出を大切にする伊予弁女子。",
+  "image":"images/characters/maaya.png"
+  },
+  {
+  "name":"槐原 潤",
+  "short":"うるう",
+  "class":"とりの丘学園 1-4",
+  "motif":"イワシャコ",
+  "desc":"マイペースでオタク気質な働き者。手先が器用で優しいが、ぶっきらぼうに見られることもある。自分の価値を『役に立つか』で測る癖がある。",
+  "image":"images/characters/uruu.png"
+  },
+  {
+  "name":"栢島 遥香",
+  "short":"はるか",
+  "class":"とりの丘学園 1-4",
+  "motif":"ウグイス",
+  "desc":"明るくて友達想いな優しい子。好奇心旺盛で少し天然な一面もある。",
+  "image":"images/characters/haruka.png"
+  },
+  {
+  "name":"狩生 彗威",
+  "short":"すい",
+  "class":"とりの丘学園 1-4",
+  "motif":"プレーリードッグ",
+  "desc":"不良気質で勉強嫌いなアウトサイダー。仲間想いな一面もあり、自由奔放に振る舞う。制服はいつも着崩している。",
+  "image":"images/characters/sui.png"
+  },
+  {
+  "name":"後等 綺乙",
+  "short":"あやと",
+  "class":"とりの丘学園 1-4",
+  "motif":"ミヌエット猫",
+  "desc":"のんきでアクティブな農家の息子。勉強は苦手で落ち着きがなく、突拍子もない行動を取ることが多い。",
+  "image":"images/characters/ayato.png"
+  },
+  {
+  "name":"櫻井 甫詞",
+  "short":"みこと",
+  "class":"とりの丘学園 1-4",
+  "motif":"アザラシ",
+  "desc":"陽気で前向きだが内面は冷酷な元暗殺者。常識もあり、気配を消すことが得意な危険人物。",
+  "image":"images/characters/mikoto.png"
+  },
+  {
+  "name":"土川 卓逸",
+  "short":"たいち",
+  "class":"とりの丘学園 1-4",
+  "motif":"ミノムシ",
+  "desc":"目立つことや失敗を極端に恐れる几帳面な男子。変化が苦手で慎重派。寒がりで布団にくるまるのが好き。",
+  "image":"images/characters/taichi.png"
+  },
+  {
+  "name":"손 로이",
+  "short":"ろい",
+  "class":"とりの丘学園 1-4",
+  "motif":"ハツカネズミ",
+  "desc":"韓国から来たスパイ。冷徹で計画的な野心家だが、高所や暗所、水が苦手という弱点を持つ。",
+  "image":"images/characters/roi.png"
+  },
+  {
+  "name":"寺田 山茶花",
+  "short":"さやか",
+  "class":"とりの丘学園 1-4",
+  "motif":"なめこ",
+  "desc":"人付き合いが苦手な心優しい少女。絵を描くのが好きで、静かに自分の世界を大切にしている。",
+  "image":"images/characters/sayaka.png"
+  },
+  {
+  "name":"二瓶 暁",
+  "short":"あかつき",
+  "class":"とりの丘学園 1-4",
+  "motif":"猫",
+  "desc":"頑固で横柄な性格だが内心では劣等感を抱えている。双子の兄との比較に苦しんでいるピアノ男子。",
+  "image":"images/characters/akatsuki.png"
+  },
+  {
+  "name":"暗 援也",
+  "short":"えんや",
+  "class":"とりの丘学園 1-4",
+  "motif":"人狼",
+  "desc":"ヒーロー気取りのナルシスト。支配されることを嫌い、自分こそが世界を救う存在だと信じている。",
+  "image":"images/characters/enya.png"
+  },
+  {
+  "name":"保福 真夜",
+  "short":"まや",
+  "class":"とりの丘学園 1-4",
+  "motif":"マメルリハ",
+  "desc":"感情表現がはっきりしているマイペースな少女。物に強く執着し、捨てることができない性格。",
+  "image":"images/characters/maya.png"
+  },
+  {
+  "name":"御厨 夜",
+  "short":"よる",
+  "class":"とりの丘学園 1-4",
+  "motif":"夜猫",
+  "desc":"気分屋で夜行性な少女。引きこもりがちで遅刻常習犯。暑さにも寒さにも弱い。",
+  "image":"images/characters/yoru.png"
+  },
+  {
+  "name":"満山 渉守",
+  "short":"さだま",
+  "class":"とりの丘学園 1-4",
+  "motif":"サモエド",
+  "desc":"合理主義で防御力の高い男子。警戒心が強いが、仲間を守る優しさも持つ現実主義者。",
+  "image":"images/characters/sadama.png"
+  },
+  {
+  "name":"源口 舵",
+  "short":"かじ",
+  "class":"とりの丘学園 1-4",
+  "motif":"猫",
+  "desc":"自由奔放で物作り好きな少年。突拍子もない行動をするが、自分の信念を曲げない強さを持つ。",
+  "image":"images/characters/kaji.png"
+  },
+  {
+  "name":"恵 愛麗糸",
+  "short":"ありす",
+  "class":"とりの丘学園 1-4",
+  "motif":"猫",
+  "desc":"現実に疲れた思考型少女。退屈を嫌い、他人の本質や構造を見抜く観察者タイプ。",
+  "image":"images/characters/alice.png"
+  },
+  {
+  "name":"吉岡 俊樹",
+  "short":"しゅんき",
+  "class":"とりの丘学園 1-4",
+  "motif":"フクロウ",
+  "desc":"ミステリアスで怠け者な少年。面倒ごとを嫌い、楽をすることを最優先にしている。",
+  "image":"images/characters/shunki.png"
+  },
+  {
+  "name":"野井 零",
+  "short":"ぜろ先生",
+  "class":"とりの丘学園 1-4",
+  "motif":"ヒノキ",
+  "desc":"論理的で冷静な数学教師。感情を抑え込み、思考で全てを処理しようとする知的な人物。",
+  "image":"images/characters/zero.png"
+  },
+  {
   "name":"相原 美里耶",
   "short":"みりやちゃん",
   "class":"とりの丘学園 2-1",
