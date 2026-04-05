@@ -2,52 +2,39 @@
 from atproto import Client
 import os
 import json
-import random  # ランダム用に追加
+import random
 import re
 import io
 import unicodedata
-from datetime import datetime
 from pathlib import Path
 from dotenv import load_dotenv
 from PIL import Image
 
-# 環境変数読み込み
-env_path = Path('.') / '.env'
-load_dotenv(dotenv_path=env_path)
+load_dotenv()
 
 HANDLE = os.getenv('HANDLE')
 APP_PASSWORD = os.getenv('APP_PASSWORD')
 
-# ------------------------------
-# ★ 画像アップロード (圧縮対応)
-# ------------------------------
 def upload_image(client, image_path):
-    if not os.path.exists(image_path):
-        print(f"画像が見つかりません: {image_path}")
+    if not image_path or not os.path.exists(image_path):
+        print(f"画像なしで進行します: {image_path}")
         return None
-    
-    img = Image.open(image_path)
-    max_dimension = 1024
-    if max(img.size) > max_dimension:
-        ratio = max_dimension / max(img.size)
-        new_size = (int(img.width * ratio), int(img.height * ratio))
-        img = img.resize(new_size, Image.LANCZOS)
-
-    buffer = io.BytesIO()
-    quality = 95
-    while True:
+    try:
+        img = Image.open(image_path)
+        img = img.convert("RGB") # JPG用に変換
+        max_dimension = 1024
+        if max(img.size) > max_dimension:
+            ratio = max_dimension / max(img.size)
+            new_size = (int(img.width * ratio), int(img.height * ratio))
+            img = img.resize(new_size, Image.LANCZOS)
+        buffer = io.BytesIO()
+        img.save(buffer, format="JPEG", quality=90)
         buffer.seek(0)
-        buffer.truncate(0)
-        img.convert("RGB").save(buffer, format="JPEG", quality=quality, optimize=True)
-        if buffer.tell() / 1024 <= 976 or quality <= 20:
-            break
-        quality -= 5
-    buffer.seek(0)
-    return client.com.atproto.repo.upload_blob(buffer.read()).blob
+        return client.com.atproto.repo.upload_blob(buffer.read()).blob
+    except Exception as e:
+        print(f"画像処理エラー: {e}")
+        return None
 
-# ------------------------------
-# ★ facets & 正規化
-# ------------------------------
 def generate_facets_from_text(text):
     text_bytes = text.encode("utf-8")
     facets = []
@@ -63,53 +50,54 @@ def generate_facets_from_text(text):
             })
     return facets
 
-def normalize_text(text):
-    return unicodedata.normalize("NFKC", text).strip()
-
-# ------------------------------
-# ★ メイン処理
-# ------------------------------
 def main():
-    # JSON読み込み
     with open('character.json', 'r', encoding='utf-8') as f:
-        characters = json.load(f)
+        all_data = json.load(f)
+    
+    # ★ nameとshortがあるデータだけを抽出（エラー回避！）
+    characters = [c for c in all_data if isinstance(c, dict) and 'name' in c and 'short' in c]
 
-    # ★ 完全にランダムで選ぶ！
+    if not characters:
+        print("有効なキャラクターデータが見つかりませんでした。")
+        return
+
     char = random.choice(characters)
 
-    # ★ メッセージ作成（タイトルと世界観の説明を追加）
-    # 冒頭に「なんの投稿か」をわかりやすく入れたよ！
+    # 念のためキーがあるか確認しながらメッセージ作成
+    name = char.get('name', '不明なキャラ')
+    short = char.get('short', 'なし')
+    cls = char.get('class', 'とりの丘学園')
+    motif = char.get('motif', '不明')
+    desc = char.get('desc', '（紹介文準備中）')
+
     raw_message = f"""📖【みりんてゃの学園 キャラ紹介】
 〜とりの丘学園の仲間たち〜
 
-【{char['name']}（{char['short']}）】
-{char['class']}
-モチーフ：{char['motif']}
+【{name}（{short}）】
+{cls}
+モチーフ：{motif}
 
-{char['desc']}
+{desc}
 
 #みりんてゃ図鑑"""
     
-    message = normalize_text(raw_message)
+    message = unicodedata.normalize("NFKC", raw_message).strip()
 
-    # ログイン
     client = Client()
     client.login(HANDLE, APP_PASSWORD)
 
-    # 画像アップロード
-    image_blob = upload_image(client, char['image'])
+    image_blob = upload_image(client, char.get('image'))
     
     embed = None
     if image_blob:
         embed = {
             "$type": "app.bsky.embed.images",
-            "images": [{"image": image_blob, "alt": f"{char['name']}のイラスト"}]
+            "images": [{"image": image_blob, "alt": f"{name}のイラスト"}]
         }
 
-    # 投稿
     facets = generate_facets_from_text(message)
     client.send_post(text=message, facets=facets if facets else None, embed=embed)
-    print(f"投稿完了: {char['name']}")
+    print(f"投稿成功: {name}")
 
 if __name__ == "__main__":
     main()
