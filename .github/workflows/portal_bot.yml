@@ -1,0 +1,37 @@
+name: Mirintea Portal Bot
+
+on:
+  # ① 定期実行: UTC時間での指定。日本時間(JST)の朝8時と夜20時なら「23, 11」になるよ。
+  # 1日2回、邪魔にならない頻度でポータルの機能を宣伝するゾッ！
+  schedule:
+    - cron: '0 23,11 * * *'
+    
+  # ② GASからの呼び出し（Webhook）: ストーリーが投稿されたら即時実行！
+  repository_dispatch:
+    types: [new_story_posted]
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          
+      - name: Install dependencies
+        run: |
+          pip install atproto requests beautifulsoup4 python-dotenv Pillow
+          
+      - name: Run portal script
+        env:
+          HANDLE: ${{ secrets.HANDLE }}
+          APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
+          # GASから送られてきたデータをPythonに渡す（定期実行時は空になる）
+          STORY_TITLE: ${{ github.event.client_payload.title }}
+          STORY_CHARS: ${{ github.event.client_payload.chars }}
+          STORY_TAG: ${{ github.event.client_payload.tag }}
+        # 先ほど作ったポータル専用のスクリプトを動かす
+        run: python portal.py
