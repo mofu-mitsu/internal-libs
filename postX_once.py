@@ -66,10 +66,9 @@ def main():
             page.fill(textbox_selector, message)
             page.wait_for_timeout(2000) # 人間っぽく一呼吸
 
-            # 投稿ボタン（Postボタン）をクリック！
-            print("ポストボタンをぽちっ！")
-            button_selector = 'button[data-testid="tweetButton"]'
-            page.click(button_selector)
+            # ショートカットキーで投稿する魔法！
+            print("ショートカットキーでぽちっ！")
+            page.keyboard.press("Control+Enter")
             
             # 投稿完了まで待機
             page.wait_for_timeout(5000)
