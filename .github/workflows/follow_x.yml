@@ -1,0 +1,37 @@
+name: X Follow Bot
+
+on:
+  schedule:
+    # 毎日 日本時間の朝9時と夜21時に実行（UTCだと 0 と 12）
+    - cron: '0 0,12 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: x-follow
+  cancel-in-progress: false
+
+jobs:
+  run-follow-bot:
+    runs-on: ubuntu-22.04 # ← libasound2エラー対策済み！
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install playwright playwright-stealth python-dotenv
+          playwright install --with-deps chromium
+
+      - name: Run Follow Bot
+        env:
+          HANDLE: ${{ secrets.HANDLE }}
+          AUTH_TOKEN: ${{ secrets.AUTH_TOKEN }}
+          CT0: ${{ secrets.CT0 }}
+        run: python follow_Xbot.py
