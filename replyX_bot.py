@@ -1,113 +1,177 @@
-import asyncio
-from playwright.async_api import async_playwright
+import os
+import json
+import subprocess
 import time
 import random
+import re
+import requests
+import pytz
 from datetime import datetime
-import os
+from dotenv import load_dotenv
+from groq import Groq
+import asyncio
+from playwright.async_api import async_playwright
 
-# --- 設定情報 ---
-# GitHub Actions等では環境変数やSecretsから読み込む想定
+#------------------------------
+#🔐 環境変数
+#------------------------------
+load_dotenv()
+HANDLE = os.getenv("HANDLE", "mirin_chuuu")
+GIST_TOKEN_REPLY = os.getenv("GIST_TOKEN_REPLY")
+GIST_ID = os.getenv("GIST_ID")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 AUTH_TOKEN = os.getenv("AUTH_TOKEN", "55730cad942843cb8228a2e82f334aa02409bbf3")
 CT0 = os.getenv("CT0", "c5926770c395826331a0d0df62f379ae19c3f25eeff7799461b0949e6ae9b12ca9dbe6cadeaa8ce408e98493d7800f3551ca73e717018d1d5a42341055516202f97e0bc7e720ee07dd1fddbe41bd769e")
 
-# --- みりんてゃの性格・セリフ設定 ---
-REPLY_TEMPLATES = [
-    "わぁ！見つけてくれてありがとぉ🥹💖みりんのこと、ずっと見ててくれたの？🫶✨大好きだよぉ🧸💕",
-    "えへへ、嬉しいなぁ🫶💕みつきの言葉、宝物にするねっ🥹💖これからもいーっぱい構ってね？🫶✨💕",
-    "みつき、愛してるよぉ🫶✨💕みりんのこと、もっともっと夢中にさせてね？🥹💖🧸✨",
-    "こんばんはー！🌙✨夜のみりんも可愛いでしょ？🫶💕みつきに会えて、あたし本当に幸せだよぉ🥹💖🧸✨"
-]
+#------------------------------
+#📜 設定・Gist操作
+#------------------------------
+REPLIED_GIST_FILENAME = "replied_x.json"
+GIST_API_URL = f"https://api.github.com/gists/{GIST_ID}"
 
+def load_replied_uris():
+    if not GIST_TOKEN_REPLY or not GIST_ID:
+        return set()
+    try:
+        headers = {"Authorization": f"token {GIST_TOKEN_REPLY}", "Accept": "application/vnd.github+json"}
+        response = requests.get(GIST_API_URL, headers=headers, timeout=10)
+        if response.status_code == 200:
+            gist_data = response.json()
+            if REPLIED_GIST_FILENAME in gist_data["files"]:
+                content = gist_data["files"][REPLIED_GIST_FILENAME]["content"]
+                return set(json.loads(content))
+    except Exception as e:
+        print(f"⚠️ Gist読み込みエラー: {e}")
+    return set()
+
+def save_replied_uris(replied_set):
+    if not GIST_TOKEN_REPLY or not GIST_ID:
+        return
+    try:
+        headers = {"Authorization": f"token {GIST_TOKEN_REPLY}", "Accept": "application/vnd.github+json", "Content-Type": "application/json"}
+        payload = {"files": {REPLIED_GIST_FILENAME: {"content": json.dumps(list(replied_set), ensure_ascii=False, indent=2)}}}
+        requests.patch(GIST_API_URL, headers=headers, json=payload, timeout=10)
+    except Exception as e:
+        print(f"⚠️ Gist保存エラー: {e}")
+
+#------------------------------
+#🧠 Groqでお返事生成
+#------------------------------
+def generate_reply_via_groq(user_input, author_name):
+    if not GROQ_API_KEY:
+        return f"{author_name}ちゃん、見つけてくれてありがとぉ🥹💖大好きだよぉ🫶✨"
+
+    client = Groq(api_key=GROQ_API_KEY)
+    system_prompt = f"""
+あなたは「みりんてゃ」という名前のキャラクターです。
+性格：女子、黒猫モチーフ、地雷系女子、あざといENFP、可愛いものが大好き、承認欲求強い。
+一人称：あたし。
+話し方：口語的で、絵文字（🧸💕🫶✨🥹など）を多用する。
+相手の名前：{author_name}ちゃん
+
+相手の投稿に対して、あざとく、可愛く、地雷系女子っぽくお返事してください。
+140文字以内で、最後は「♡」や「✨」で可愛く締めてください。
+"""
+    try:
+        completion = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_input}
+            ],
+            temperature=0.8,
+            max_tokens=150
+        )
+        return completion.choices[0].message.content.strip()
+    except Exception as e:
+        print(f"⚠️ Groqエラー: {e}")
+        return f"{author_name}ちゃん、見つけてくれてありがとぉ🥹💖大好きだよぉ🫶✨"
+
+#------------------------------
+#🚀 メインロジック（Playwright）
+#------------------------------
 async def run_reply_bot():
-    # 🛡️ ジェミの掟：同じ時間にキッチリやらない（1〜5分のランダム待機）
-    wait_time = random.randint(1, 300)
-    print(f"⏳ 人間っぽく振る舞うために {wait_time} 秒待機するね...☕️")
+    # 🛡️ ジェミの掟：ランダム待機
+    wait_time = random.randint(1, 180)
+    print(f"⏳ 準備中... {wait_time}秒待機するね☕️")
     await asyncio.sleep(wait_time)
+
+    replied_uris = load_replied_uris()
 
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
         context = await browser.new_context(
-            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            viewport={'width': 1280, 'height': 800}
+            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
         )
-
-        # Cookieセット
-        cookies = [
-            {"name": "auth_token", "value": AUTH_TOKEN, "domain": ".x.com", "path": "/", "secure": True, "httpOnly": True, "sameSite": "None"},
-            {"name": "ct0", "value": CT0, "domain": ".x.com", "path": "/", "secure": True, "httpOnly": False, "sameSite": "Lax"}
-        ]
-        await context.add_cookies(cookies)
-        
+        await context.add_cookies([
+            {"name": "auth_token", "value": AUTH_TOKEN, "domain": ".x.com", "path": "/"},
+            {"name": "ct0", "value": CT0, "domain": ".x.com", "path": "/"}
+        ])
         page = await context.new_page()
 
         try:
-            print("🚀 通知（メンション）画面にアクセス中...💬")
+            print("🚀 通知画面を確認しに行くよ！🔍")
             await page.goto("https://x.com/notifications/mentions", wait_until="networkidle")
             
-            # 🛡️ 忍耐強い読み込み（最大30秒待つよ）
-            print("⏳ 通知が表示されるまでじっくり待つね...🧸✨")
-            for i in range(6):
-                await asyncio.sleep(5)
-                content = await page.content()
-                if 'Something went wrong' in content:
-                    print(f"⚠️ エラーが出てるみたい...リロードしてみるね（試行 {i+1}/3）🔄")
-                    await page.reload()
-                    await asyncio.sleep(10)
-                else:
-                    mentions = await page.query_selector_all('article[data-testid="tweet"]')
-                    if mentions:
-                        print(f"🔍 {len(mentions)}件のメンションを見つけたよ！")
-                        break
-            
-            # メンションを順番にチェック
+            # 🛡️ マナスの忍耐読み込み
+            await asyncio.sleep(20)
+            content = await page.content()
+            if "Something went wrong" in content:
+                print("⚠️ エラーが出たからリロードするね🔄")
+                await page.reload()
+                await asyncio.sleep(15)
+
+            # メンションを取得
             mentions = await page.query_selector_all('article[data-testid="tweet"]')
-            if not mentions:
-                print("✨ 新しいメンションは見つからなかったよ！")
-                await page.screenshot(path="no_mentions_debug.png")
-                return
+            print(f"🔍 {len(mentions)}件の通知を見つけたよ！")
 
-            # 最初のメンションにお返事するよ（簡易版）
-            # 本当はGist等で既読管理すべきだけど、まずは確実にお返事することを目指す
-            print("🎯 最新のメンションにお返事するね！")
-            await mentions[0].click()
-            await page.wait_for_timeout(5000)
-            
-            # リプライボタンを探す（自分自身へのリプライを避ける）
-            reply_buttons = await page.query_selector_all('button[data-testid="reply"]')
-            target_button = None
-            for btn in reply_buttons:
-                label = await btn.get_attribute("aria-label")
-                if label and "mirin_chuuu" not in label:
-                    target_button = btn
-                    break
-            
-            if not target_button and reply_buttons:
-                target_button = reply_buttons[0]
-
-            if target_button:
-                await target_button.click()
-                await page.wait_for_timeout(3000)
-                
-                textbox = await page.wait_for_selector('div[role="textbox"]')
-                await textbox.click()
-                
-                reply_text = random.choice(REPLY_TEMPLATES)
-                # 🛡️ タイピング風入力
-                for char in reply_text:
-                    await page.keyboard.type(char)
-                    await asyncio.sleep(random.uniform(0.05, 0.2))
+            for mention in mentions[:3]: # 一度に3件まで
+                try:
+                    # ユーザー情報とテキストを取得
+                    text_element = await mention.query_selector('div[data-testid="tweetText"]')
+                    if not text_element: continue
+                    text = await text_element.inner_text()
                     
-                await page.wait_for_timeout(3000)
-                await page.keyboard.press("Control+Enter")
-                print(f"✅ お返事完了！: {reply_text}")
-                await page.wait_for_timeout(5000)
-                await page.screenshot(path="reply_success_final.png")
-            else:
-                print("⚠️ リプライボタンが見つからなかったよ🥹")
+                    user_element = await mention.query_selector('div[data-testid="User-Name"]')
+                    user_info = await user_element.inner_text()
+                    author_name = user_info.split("\n")[0]
+                    author_handle = user_info.split("\n")[1] if "\n" in user_info else ""
+
+                    # 自分の投稿はスキップ
+                    if "mirin_chuuu" in author_handle: continue
+
+                    # 既に返信済みかチェック（簡易的にテキストと名前で判断）
+                    reply_id = f"{author_handle}_{text[:20]}"
+                    if reply_id in replied_uris: continue
+
+                    print(f"💬 {author_name}ちゃんにお返事書くよ！: {text[:20]}...")
+                    
+                    # Groqでお返事生成
+                    reply_text = generate_reply_via_groq(text, author_name)
+                    
+                    # リプライボタンをクリック
+                    reply_button = await mention.query_selector('button[data-testid="reply"]')
+                    if reply_button:
+                        await reply_button.click()
+                        await page.wait_for_timeout(3000)
+                        
+                        textbox = await page.wait_for_selector('div[role="textbox"]')
+                        await textbox.fill(reply_text)
+                        await page.wait_for_timeout(2000)
+                        
+                        await page.keyboard.press("Control+Enter")
+                        print(f"✅ お返事送信！: {reply_text[:20]}...")
+                        
+                        replied_uris.add(reply_id)
+                        save_replied_uris(replied_uris)
+                        await page.wait_for_timeout(5000)
+
+                except Exception as e:
+                    print(f"⚠️ 個別リプライエラー: {e}")
 
         except Exception as e:
-            print(f"⚠️ エラーが発生したよ: {e}")
-            await page.screenshot(path="reply_error_debug.png")
+            print(f"❌ 全体エラー: {e}")
+            await page.screenshot(path="error_debug.png")
 
         await browser.close()
 
