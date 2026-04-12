@@ -1,0 +1,32 @@
+name: Like X Bot
+
+on:
+  schedule:
+    # 毎時30分に実行（0分実行の投稿Botと被らないように！）
+    - cron: '30 * * * *'
+  workflow_dispatch:  # 手動実行
+
+jobs:
+  run-like-bot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: リポジトリをチェックアウト
+        uses: actions/checkout@v3
+
+      - name: Pythonをセットアップ
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: 依存関係インストール
+        run: |
+          python -m pip install --upgrade pip
+          pip install playwright
+          playwright install --with-deps chromium
+
+      - name: LikeBotを実行
+        run: python likeX_bot.py
+        env:
+          # 投稿Botと同じCookieの秘密鍵を使い回す！
+          AUTH_TOKEN: ${{ secrets.AUTH_TOKEN }}
+          CT0: ${{ secrets.CT0 }}
