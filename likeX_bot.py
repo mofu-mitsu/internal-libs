@@ -22,7 +22,11 @@ MAX_LIKES_PER_RUN = 5
 def random_sleep(min_sec=3, max_sec=10):
     """人間っぽく待機する関数"""
     time.sleep(random.randint(min_sec, max_sec))
-
+print("👀 人間っぽく画面をスクロールして読んでるフリをするよ…")
+    for _ in range(3):
+        # 画面を少し下にスクロール
+        page.mouse.wheel(0, random.randint(300, 800))
+        random_sleep(2, 5) # じっくり読んでるフリ
 def like_tweets_on_page(page, max_likes):
     """開いているページ上のいいねボタンを探して押す"""
     liked_count = 0
