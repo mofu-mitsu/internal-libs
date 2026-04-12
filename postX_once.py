@@ -2,7 +2,7 @@ import os
 import random
 import time
 from playwright.sync_api import sync_playwright
-
+import stealth_sync
 # 環境変数から秘密のCookieを取得
 AUTH_TOKEN = os.getenv('AUTH_TOKEN')
 CT0 = os.getenv('CT0')
@@ -1071,19 +1071,28 @@ def main():
     print(f"今日のポスト: {message}")
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True) # GitHub上なので画面は見せない
-        context = browser.new_context()
+        # headlessはTrueのままでOK、少しでも人間っぽくするために引数を追加
+        browser = p.chromium.launch(
+            headless=True,
+            args=["--disable-blink-features=AutomationControlled"] # ロボットですよって宣言を消す
+        )
+        context = browser.new_context(
+            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" # 普通のWindowsパソコンのふりをする
+        )
 
-        # 🔑 ここが神ハック！Cookieを直接ブラウザに注入！
+        # Cookieを注入
         context.add_cookies([
             {"name": "auth_token", "value": AUTH_TOKEN, "domain": ".x.com", "path": "/"},
             {"name": "ct0", "value": CT0, "domain": ".x.com", "path": "/"}
         ])
 
         page = context.new_page()
+        
+        # 🧙‍♂️ 最強の魔法「ステルス」を発動！（ロボット検知を回避）
+        stealth_sync(page)
 
         try:
-            # ホームではなく「投稿画面」に直接飛ぶ！（これが一番エラー少ない）
+            # ここから下は元のコードと同じ
             print("Xの投稿画面にアクセス中...")
             page.goto("https://x.com/compose/post")
             
