@@ -1,0 +1,25 @@
+name: みりんてゃ自動投稿
+
+on:
+  schedule:
+    - cron: '0 23 * * *' # 毎日日本時間の朝8時
+    - cron: '0 11 * * *' # 毎日日本時間の夜20時
+  workflow_dispatch: # 手動で動かしたい時用
+
+jobs:
+  mirin-bot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - run: |
+          pip install playwright
+          playwright install chromium
+      - env:
+          AUTH_TOKEN: <LaTex>${{ secrets.AUTH_TOKEN }}
+          CT0: $</LaTex>{{ secrets.CT0 }}
+        run: |
+          python mirin_bot_final.py post
+          python mirin_bot_final.py reply
