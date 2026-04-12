@@ -1,0 +1,58 @@
+name: X Reply Bot
+
+on:
+  schedule:
+    # 毎時30分に実行（投稿botと時間をずらして負荷分散）
+    - cron: '30 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: x-reply
+  cancel-in-progress: false
+
+jobs:
+  run-reply-bot:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Cache HuggingFace models
+        uses: actions/cache@v3
+        with:
+          path: /tmp/hf_cache
+          key: hf-cache-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            hf-cache-
+
+      - name: Clear old cache
+        run: rm -rf ~/.cache/huggingface
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        # atproto等のBlueskyライブラリは不要になったのでPlaywrightを追加
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install playwright torch diffusers accelerate sentencepiece psutil pytz groq huggingface_hub
+          playwright install --with-deps chromium
+
+      - name: Run Reply Bot with Groq
+        env:
+          # --- 既存の環境変数 ---
+          HANDLE: ${{ secrets.HANDLE }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          GIST_TOKEN_REPLY: ${{ secrets.GIST_TOKEN_REPLY }}
+          GIST_ID: 40391085a2e0b8a48935ad0b460cf422
+          HF_TOKEN: ${{ secrets.HF_API_TOKEN }}
+          DEEPAI_API_KEY: ${{ secrets.DEEPAI_API_KEY }}
+          STABLE_HORDE_API_KEY: ${{ secrets.STABLE_HORDE_API_KEY }}
+          # --- ★X用に追加したCookie ---
+          AUTH_TOKEN: ${{ secrets.AUTH_TOKEN }}
+          CT0: ${{ secrets.CT0 }}
+        run: python replyX_bot.py
