@@ -265,22 +265,56 @@ def generate_reply_via_groq(user_input, author_display_name="", author_handle=""
 def get_x_mentions(page):
     print("🔔 Xのメンション通知欄を確認中...")
     page.goto("https://x.com/notifications/mentions")
-    page.wait_for_timeout(5000)
+    
+    # 画面がちゃんと読み込まれるのを最大15秒待つ（これ超大事！）
+    try:
+        page.wait_for_selector('article[data-testid="tweet"]', timeout=15000)
+    except Exception as e:
+        print("⚠️ ツイートが見つからなかったよ…読み込み遅延か、ログイン失敗かも？")
+        return []
+
     mentions = []
     tweets = page.locator('article[data-testid="tweet"]').all()
-    for tweet in tweets[:5]:
+    print(f"🔍 画面上に {len(tweets)} 件のツイート要素を発見したよ！")
+
+    for i, tweet in enumerate(tweets[:5]):
         try:
+            print(f"--- 📝 ツイート {i+1} 件目の解析開始 ---")
+            
+            # URLの取得
             time_element = tweet.locator('a[href*="/status/"]').first
             tweet_url = "https://x.com" + time_element.get_attribute("href")
+            print(f"🔗 URL: {tweet_url}")
+            
+            # テキストの取得
             text_locator = tweet.locator('div[data-testid="tweetText"]')
             text = text_locator.inner_text() if text_locator.count() > 0 else ""
+            print(f"💬 テキスト: {text[:20]}...")
+            
+            # ユーザーハンドルの取得
             handle_locator = tweet.locator('div[dir="ltr"]').filter(has_text="@").first
             author_handle = handle_locator.inner_text().replace("@", "") if handle_locator.count() > 0 else ""
+            
+            # 表示名の取得
             name_locator = tweet.locator('div[data-testid="User-Name"] span').first
             author_display_name = name_locator.inner_text() if name_locator.count() > 0 else author_handle
-            if author_handle.lower() == HANDLE.lower() or not text: continue
+            print(f"👤 ユーザー: {author_display_name} (@{author_handle})")
+            
+            # スキップ判定
+            if author_handle.lower() == HANDLE.lower():
+                print("🛑 自分のツイート（みりんてゃ自身）なのでスキップ！")
+                continue
+            if not text:
+                print("🛑 テキストが空っぽなのでスキップ！")
+                continue
+                
             mentions.append({"url": tweet_url, "text": text, "handle": author_handle, "display_name": author_display_name})
-        except: continue
+            print("✅ このメンションを返信リストに追加したよ！")
+            
+        except Exception as e:
+            print(f"⚠️ このツイートの解析中にエラーが起きてスキップしたよ: {e}")
+            continue
+            
     return mentions
 
 def run_reply_bot():
