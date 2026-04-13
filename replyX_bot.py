@@ -23,10 +23,14 @@ import torch
 from PIL import Image
 from io import BytesIO
 from playwright.sync_api import sync_playwright
-
+from pathlib import Path           # 👈 これが足りなかった！
+from dotenv import load_dotenv     # 👈 これも足りなかった！
 #------------------------------
 #🔐 環境変数
 #------------------------------
+# 環境変数の読み込み設定
+env_path = Path('.') / '.env'
+load_dotenv(dotenv_path=env_path)
 load_dotenv()
 HANDLE = os.getenv("HANDLE") or exit("❌ HANDLEが設定されていません")
 GIST_TOKEN_REPLY = os.getenv("GIST_TOKEN_REPLY") or exit("❌ GIST_TOKEN_REPLYが設定されていません")
