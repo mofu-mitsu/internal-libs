@@ -3,7 +3,6 @@ name: X Follow Bot
 on:
   schedule:
     # 毎日 日本時間の朝9時と夜21時に実行（UTCだと 0 と 12）
-    - cron: '0 0,12 * * *'
   workflow_dispatch:
 
 concurrency:
