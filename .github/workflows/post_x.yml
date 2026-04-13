@@ -2,7 +2,6 @@ name: Post to X Once
 
 on:
   schedule:
-    - cron: '0 */4 * * *'  # 4時間ごとに実行（UTC）
   workflow_dispatch:  # 手動実行もできるように
 
 jobs:
