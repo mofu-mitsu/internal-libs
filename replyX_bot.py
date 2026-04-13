@@ -19,7 +19,6 @@ from dotenv import load_dotenv
 import urllib.parse
 from groq import Groq
 import fcntl
-import torch
 from PIL import Image
 from io import BytesIO
 from playwright.sync_api import sync_playwright
