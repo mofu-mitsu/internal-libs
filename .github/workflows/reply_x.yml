@@ -1,8 +1,6 @@
 name: X Reply Bot
 
 on:
-  schedule:
-    # 毎時30分に実行（投稿botと時間をずらして負荷分散）
   workflow_dispatch:
 
 concurrency:
