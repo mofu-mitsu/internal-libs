@@ -1,0 +1,36 @@
+name: X Tool Post Bot
+
+on:
+  schedule:
+    # 8時間ごとに実行（日本時間の 5:00, 13:00, 21:00）
+    - cron: '0 20,4,12 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: x-tool-post
+  cancel-in-progress: false
+
+jobs:
+  run-tool-post:
+    runs-on: ubuntu-22.04 # ← エラー対策バージョン！
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install playwright python-dotenv
+          playwright install --with-deps chromium
+
+      - name: Run Tool Post Bot
+        env:
+          AUTH_TOKEN: ${{ secrets.AUTH_TOKEN }}
+          CT0: ${{ secrets.CT0 }}
+        run: python toolX_post.py
