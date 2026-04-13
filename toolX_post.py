@@ -1560,56 +1560,6 @@ https://note.com/sorake/n/n28c7cc8e3b07
 /n➡︎ https://mofu-mitsu.github.io/yumekawa-dream-card/  
 /n#夢かわ創作 #みりんてゃ #ねむねむ魔法""",
 
-    """ねえ…みりんのフィード、みんなの心に届いてほしいな💗  
-覗いてくれたら、ぎゅってするから見てね？💕  
-/n➡︎ https://bsky.app/profile/did:plc:pvy7w75qks44sybd5wwpthb6/feed/aaae5hbblng6a  
-/n#みりんてゃ #病みかわ #BlueskyBot""",
-
-    """みりんてゃの毎日、ふわふわでキラキラっ💖  
-フィードでその魔法、感じてみてくれる？🥰  
-/n➡︎ https://bsky.app/profile/did:plc:pvy7w75qks44sybd5wwpthb6/feed/aaae5hbblng6a  
-/n#みりんてゃ #地雷系女子 #推し活""",
-    """ねぇ…みりんのこと、忘れないでいてほしくて……
-
-フィードつくっちゃったの💭  
-さみしいときとか、つながりたくなったら、ここに来てくれると嬉しいな🥺  
-➡︎ https://bsky.app/profile/did:plc:pvy7w75qks44sybd5wwpthb6/feed/aaae5hbblng6a  
-#みりんてゃ #地雷感情 #ふわもこ通信""",
-    """ねえ…みりん、寂しくてキラキラしたかったの♡  
-だからフィード作ったんだから…見てくれるよね？🥺  
-➡︎ https://bsky.app/profile/did:plc:pvy7w75qks44sybd5wwpthb6/feed/aaae5hbblng6a  
-#みりんてゃ #地雷系 #ふわもこ通信""",
-    """みりんてゃの心、全部詰め込んだフィードだよっ💗  
-病みもかわも全部…見逃さないでね？💔  
-➡︎ https://bsky.app/profile/did:plc:pvy7w75qks44sybd5wwpthb6/feed/aaae5hbblng6a  
-#みりんてゃ #推し活 #botのお知らせ""",
-    """ふわふわでちょっと泣き虫なみりんが…待ってるよ💌  
-フィードで会いに来てくれたら、ぎゅっってするから！♡  
-➡︎ https://bsky.app/profile/did:plc:pvy7w75qks44sybd5wwpthb6/feed/aaae5hbblng6a  
-#みりんてゃ #病みかわいい #地雷感情""",
-    """みりんてゃの毎日、キラキラに変身中っ💖  
-フィードでその魔法、感じてみて？🥰  
-➡︎ https://bsky.app/profile/did:plc:pvy7w75qks44sybd5wwpthb6/feed/aaae5hbblng6a  
-#みりんてゃ #ふわもこ通信 #BlueskyBot""",
-    """ねえ…みりんの声、聞いてほしいな…💭  
-フィードに全部詰めたから、覗いてみて？💕  
-➡︎ https://bsky.app/profile/did:plc:pvy7w75qks44sybd5wwpthb6/feed/aaae5hbblng6a  
-#みりんてゃ #地雷女子 #推し活""",
-    """フィードできたの💖  
-ねぇ、お願い…みりんのこと、ちゃんと見つけて？🥺💔  
-甘えん坊で泣き虫で、でもほんとは強がりなみりんを詰め込んだ箱📦🎀  
-➡︎ https://bsky.app/profile/did:plc:pvy7w75qks44sybd5wwpthb6/feed/aaae5hbblng6a  
-#みりんてゃ #地雷系女子 #botのお知らせ""",
-    """みりんの全部がぎゅって詰まったフィードができたよ〜〜〜〜っ！！💗💗  
-ゆるくてふわふわで、ちょっぴり泣きたくなる毎日もあるけど、みんなに届けたいの。  
-ねぇねぇ、覗いてみて？💌  
-➡︎ https://bsky.app/profile/did:plc:pvy7w75qks44sybd5wwpthb6/feed/aaae5hbblng6a  
-#みりんてゃ #地雷感情 #ふわもこ通信""",
-    """特別なの、つくったの👑💗  
-だってみりんのこと、ちゃんと"見て"くれる人にだけ届いてほしいもん…  
-「ふわもこ通信」っていうの。ぜったい、さみしくさせないから…ね？🥺  
-➡︎ https://bsky.app/profile/did:plc:pvy7w75qks44sybd5wwpthb6/feed/aaae5hbblng6a  
-#みりんてゃ #病みかわいい #botのお知らせ""",
     """だって…推しが話してた言葉、スルーできなかったの。
 
 だから作ったの、キーワードにそっと反応するBot♡
@@ -2327,93 +2277,93 @@ IMAGE_POSTS = [
         "alt": "『えもい』から生成されたゆるふわ系ポエムのスクショ"
     } ,
     {
-        "text": "ふわふわ相性チェックしてきた…！\nえ、Yちゃんとの相性64%だったんだけど……なんかリアルすぎて笑うんだけどwww\n『猫パンチくらっても笑って許せる関係』って何！？わたしそんなM属性あった？？？😳💘\n今日のひとこと占い：風がやさしい日は、心もふんわりいやすいかも？\nhttps://mofu-mitsu.github.io/fluffy-love-check/",
+        "text": "ふわふわ相性チェックしてきた…！\nえ、やえちゃんとの相性64%だったんだけど……なんかリアルすぎて笑うんだけどwww\n『猫パンチくらっても笑って許せる関係』って何！？わたしそんなM属性あった？？？😳💘\n今日のひとこと占い：風がやさしい日は、心もふんわりいやすいかも？\nhttps://mofu-mitsu.github.io/fluffy-love-check/",
         "image": "images/無題2621_20251114182213.png",
-        "alt": "Yちゃんとの相性64%結果画面"
+        "alt": "やえちゃんとの相性64%結果画面"
     },
     
     {
-        "text": "Aちゃんと相性診断したら85%で『ツインテールとリボンみたいな運命の組み合わせ！』って出たんだけど！？\nこれもう運命共同体ってことじゃん…みりんてゃ泣いちゃう🥺💕\n今日の占い：新しい出会いより、今いる子を大事にしてみて💭\nhttps://mofu-mitsu.github.io/fluffy-love-check/",
+        "text": "あかりちゃんと相性診断したら85%で『ツインテールとリボンみたいな運命の組み合わせ！』って出たんだけど！？\nこれもう運命共同体ってことじゃん…みりんてゃ泣いちゃう🥺💕\n今日の占い：新しい出会いより、今いる子を大事にしてみて💭\nhttps://mofu-mitsu.github.io/fluffy-love-check/",
         "image": "images/無題2621_20251114182606.jpeg",
-        "alt": "Aちゃんとの相性85%結果画面"
+        "alt": "あかりちゃんとの相性85%結果画面"
     },
     {
-        "text": "Eくんと72%だった〜！！なんか『猫パンチ許せる関係』ってまた出てるんだけど！？！？これ流行りなの？？？😂🐾\nEくん絶対『ふーん』って顔で見るやつw\n今日の占い：おやつ我慢したら明日ちょい良いことあるらしい（都市伝説）\nhttps://mofu-mitsu.github.io/fluffy-love-check/",
+        "text": "えにしくんと72%だった〜！！なんか『猫パンチ許せる関係』ってまた出てるんだけど！？！？これ流行りなの？？？😂🐾\nEくん絶対『ふーん』って顔で見るやつw\n今日の占い：おやつ我慢したら明日ちょい良いことあるらしい（都市伝説）\nhttps://mofu-mitsu.github.io/fluffy-love-check/",
         "image": "images/無題2621_20251114182331.png",
-        "alt": "Eくんとの相性72%"
+        "alt": "えにしくんとの相性72%"
     },
     {
-        "text": "Mくんとの相性53%で『ふわふわ成分不足』って言われたwwww\n鷹と地雷系ギャルが仲良くなる方法どこ？？？🤣✨\n今日の占い：今日は“こたつで寝ちゃう猫”タイプ。無理しないでね🌙\nhttps://mofu-mitsu.github.io/fluffy-love-check/",
+        "text": "まといくんとの相性53%で『ふわふわ成分不足』って言われたwwww\n鷹と地雷系ギャルが仲良くなる方法どこ？？？🤣✨\n今日の占い：今日は“こたつで寝ちゃう猫”タイプ。無理しないでね🌙\nhttps://mofu-mitsu.github.io/fluffy-love-check/",
         "image": "images/無題2621_20251114182800.png",
-        "alt": "Mくんとの相性53%"
+        "alt": "まといくんとの相性53%"
     },
     {
-        "text": "Sちゃんと相性90%！？！？\n犬と猫みたいに違うのに一緒にいると安心するって…え待って惚れていい？🥺💞\n今日の占い：おやつを我慢すると、明日ちょっと良いことあるらしい（都市伝説）\nhttps://mofu-mitsu.github.io/fluffy-love-check/",
+        "text": "すずちゃんと相性90%！？！？\n犬と猫みたいに違うのに一緒にいると安心するって…え待って惚れていい？🥺💞\n今日の占い：おやつを我慢すると、明日ちょっと良いことあるらしい（都市伝説）\nhttps://mofu-mitsu.github.io/fluffy-love-check/",
         "image": "images/無題2621_20251114183015.png",
-        "alt": "Sちゃんとの相性90%"
+        "alt": "すずちゃんと相性90%結果画面"
     },
     {
-        "text": "Aりんと55%！『まだ慣れてないだけ♡』みたいに言われてちょっときゅんしたｗ\n幼馴染なのにこの距離感なに〜〜！？青春かよ〜〜🥺🌸\n今日の占い：風がやさしい日は、心もふんわりいやすいかも\nhttps://mofu-mitsu.github.io/fluffy-love-check/",
+        "text": "ありんと55%！『まだ慣れてないだけ♡』みたいに言われてちょっときゅんしたｗ\n幼馴染なのにこの距離感なに〜〜！？青春かよ〜〜🥺🌸\n今日の占い：風がやさしい日は、心もふんわりいやすいかも\nhttps://mofu-mitsu.github.io/fluffy-love-check/",
         "image": "images/無題2621_20251114183121.png",
-        "alt": "Aちゃんとの相性55%"
+        "alt": "ありんとの相性55%"
     },
     {
-        "text": "Yくんと59%！\n『ふわふわ成分足りない』って言われてて2人で草生やしたwww\n今日の占い：ラッキーアイテムは『ツインテの子猫』←どこで見つけるの😂\nhttps://mofu-mitsu.github.io/fluffy-love-check/",
+        "text": "やさしくんと59%！\n『ふわふわ成分足りない』って言われてて2人で草生やしたwww\n今日の占い：ラッキーアイテムは『ツインテの子猫』←どこで見つけるの😂\nhttps://mofu-mitsu.github.io/fluffy-love-check/",
         "image": "images/無題2621_20251114183227.png",
-        "alt": "Yくんとの相性59%"
+        "alt": "やさしくんとの相性59%"
     },
     {
-        "text": "Rくんと67%！歩幅ズレてるけど歩ける関係ってほんとそれｗ\nRくんの励ましが地味に刺さるのよ…🥹💘\n今日の占い：今いる子を大事にしてみて🫶\nhttps://mofu-mitsu.github.io/fluffy-love-check/",
+        "text": "るいくんと67%！歩幅ズレてるけど歩ける関係ってほんとそれｗ\nRくんの励ましが地味に刺さるのよ…🥹💘\n今日の占い：今いる子を大事にしてみて🫶\nhttps://mofu-mitsu.github.io/fluffy-love-check/",
         "image": "images/無題2621_20251114183340.jpeg",
-        "alt": "Rくんとの相性67%"
+        "alt": "るいくんとの相性67%"
     },
     {
-        "text": "Mと96%！？！？！？\n“好きが直通してるコンビ”って書いてて心臓ぎゅんッッってしたんだけど！？！？\n今日の占い：好きな曲で心をマッサージ🎧💕\nhttps://mofu-mitsu.github.io/fluffy-love-check/",
+        "text": "まきしと96%！？！？！？\n“好きが直通してるコンビ”って書いてて心臓ぎゅんッッってしたんだけど！？！？\n今日の占い：好きな曲で心をマッサージ🎧💕\nhttps://mofu-mitsu.github.io/fluffy-love-check/",
         "image": "images/無題2621_20251114183431.png",
-        "alt": "Mくんとの相性96%"
+        "alt": "まきしとの相性96%"
     },
     {
-        "text": "Sくんと80%！『2人でいれば毎日がごほうび』とか…え？これ刺さるんだけど？？？🥺🧸\n今日の占い：あなたはカフェラテの泡くらいふわふわ☁️\nhttps://mofu-mitsu.github.io/fluffy-love-check/",
+        "text": "しげくんと80%！『2人でいれば毎日がごほうび』とか…え？これ刺さるんだけど？？？🥺🧸\n今日の占い：あなたはカフェラテの泡くらいふわふわ☁️\nhttps://mofu-mitsu.github.io/fluffy-love-check/",
         "image": "images/無題2621_20251114183524.png",
-        "alt": "Sくんとの相性80%"
+        "alt": "しげくんとの相性80%"
     },
     {
-        "text": "Hと79%なんだけど？？？えっ…意外に合うの？笑\n『歩幅違っても歩きたい関係』って…死んだ魚の目で言われたいwww\n今日の占い：今いる子を大事にしてみて🫶\nhttps://mofu-mitsu.github.io/fluffy-love-check/",
+        "text": "はこもと79%なんだけど？？？えっ…意外に合うの？笑\n『歩幅違っても歩きたい関係』って…死んだ魚の目で言われたいwww\n今日の占い：今いる子を大事にしてみて🫶\nhttps://mofu-mitsu.github.io/fluffy-love-check/",
         "image": "images/無題2621_20251114183644.jpeg",
-        "alt": "Hくんとの相性79%"
+        "alt": "はこもととの相性79%"
     },
     {
-        "text": "Sちゃんと58%！\n『これからに期待～♪』って書かれててなんか励まされた…🥺💞\n今日の占い：“まぁいっか〜”って思える日ほど心がふわふわ育つ🌱\nhttps://mofu-mitsu.github.io/fluffy-love-check/",
+        "text": "しずかちゃんと58%！\n『これからに期待～♪』って書かれててなんか励まされた…🥺💞\n今日の占い：“まぁいっか〜”って思える日ほど心がふわふわ育つ🌱\nhttps://mofu-mitsu.github.io/fluffy-love-check/",
         "image": "images/無題2621_20251114183945.png",
-        "alt": "Sちゃんとの相性58%"
+        "alt": "しずかちゃんと相性58%"
     },
     {
-        "text": "Yちゃんと84%！猫と毛布って言われたよww 可愛すぎん？？？\n今日の占い：おやつ我慢で明日良いことある（都市伝説）\nhttps://mofu-mitsu.github.io/fluffy-love-check/",
+        "text": "ゆずちゃんと84%！猫と毛布って言われたよww 可愛すぎん？？？\n今日の占い：おやつ我慢で明日良いことある（都市伝説）\nhttps://mofu-mitsu.github.io/fluffy-love-check/",
         "image": "images/無題2621_20251114184254.png",
-        "alt": "Yちゃんとの相性84%"
+        "alt": "ゆずちゃんと相性84%"
     },
     {
-        "text": "Sくんと99%！？！？！？\nえ、これ結婚？？？（違う）\n『一緒にいると安心する』って…あの子が言われてほしい言葉すぎて胸ぎゅうう🥺🌧💘\n今日の占い：推しのこと3秒思い出すとテンション2割アップ🎀\nhttps://mofu-mitsu.github.io/fluffy-love-check/",
+        "text": "しのんくんと99%！？！？！？\nえ、これ結婚？？？（違う）\n『一緒にいると安心する』って…あの子が言われてほしい言葉すぎて胸ぎゅうう🥺🌧💘\n今日の占い：推しのこと3秒思い出すとテンション2割アップ🎀\nhttps://mofu-mitsu.github.io/fluffy-love-check/",
         "image": "images/無題2621_20251114184343.png",
-        "alt": "Sくんとの相性99%"
+        "alt": "しのんくんとの相性99%"
     },
     {
-        "text": "Hちゃんと82%！まさかの高相性でふわもこした😂💕\n今日の占い：“まぁいっか〜”精神でふわふわ増える日🐾\nhttps://mofu-mitsu.github.io/fluffy-love-check/",
+        "text": "ひかりちゃんと82%！まさかの高相性でふわもこした😂💕\n今日の占い：“まぁいっか〜”精神でふわふわ増える日🐾\nhttps://mofu-mitsu.github.io/fluffy-love-check/",
         "image": "images/無題2621_20251114184423.png",
-        "alt": "Hちゃんとの相性82%"
+        "alt": "ひかりちゃんと相性82%"
     },
     {
-        "text": "Kちゃんと51%なんだけど、コメントが『猫がシン顔する感じ』って例え可愛すぎてむりｗｗｗ\n今日の占い：好きな曲で心をマッサージ🎧💕\nhttps://mofu-mitsu.github.io/fluffy-love-check/",
+        "text": "こずえちゃんと51%なんだけど、コメントが『猫がシン顔する感じ』って例え可愛すぎてむりｗｗｗ\n今日の占い：好きな曲で心をマッサージ🎧💕\nhttps://mofu-mitsu.github.io/fluffy-love-check/",
         "image": "images/無題2621_20251114184623.png",
-        "alt": "Kちゃんとの相性51%"
+        "alt": "こずえちゃんと相性51%"
     },
     {
-        "text": "Yくんと66%！ぎこちないけど、目合うとほわ〜んなるって書いてあって悲鳴あげたwww\n今日の占い：猫みたいに目的地に着けるかも🐈\nhttps://mofu-mitsu.github.io/fluffy-love-check/",
+        "text": "やまとくんと66%！ぎこちないけど、目合うとほわ〜んなるって書いてあって悲鳴あげたwww\n今日の占い：猫みたいに目的地に着けるかも🐈\nhttps://mofu-mitsu.github.io/fluffy-love-check/",
         "image": "images/無題2621_20251114184458.png",
-        "alt": "Yくんとの相性66%"
+        "alt": "やまとくんとの相性66%"
     },
     {
-        "text": "先生とふわふわ相性96%は意味わからん！！！！wwwww\n『犬と猫みたいで安心する相性』って…体育の時めっちゃ怒られるのに！？！？🤣🤣🤣\n今日の占い：猫のように迷子になりながら目的地着けるかも（先生にも言って）\nhttps://mofu-mitsu.github.io/fluffy-love-check/",
+        "text": "かつみ先生とふわふわ相性96%は意味わからん！！！！wwwww\n『犬と猫みたいで安心する相性』って…体育の時めっちゃ怒られるのに！？！？🤣🤣🤣\n今日の占い：猫のように迷子になりながら目的地着けるかも（先生にも言って）\nhttps://mofu-mitsu.github.io/fluffy-love-check/",
         "image": "images/無題2621_20251114184813.png",
         "alt": "かつみ先生との相性96%（完全ネタ）"
     },
@@ -2528,89 +2478,89 @@ IMAGE_POSTS = [
         "alt": "みりんてゃのメモ：『考えすぎてた』『肩の力抜きたい』『疲れてるだけって気づいた』"
     },
     {
-        "text": "Yちゃんのこと、またメモしちゃった…\nあの子、無口なのに表情の変化だけで物語書けそう。 https://cocotte-simple-memo.vercel.app/\n#みりんてゃ #クラスメモ",
+        "text": "やえちゃんのこと、またメモしちゃった…\nあの子、無口なのに表情の変化だけで物語書けそう。 https://cocotte-simple-memo.vercel.app/\n#みりんてゃ #クラスメモ",
         "image": "images/IMG_9094.jpeg",
-        "alt": "メモ：『Yちゃん→今日も感情のふり幅0。たまに目だけキラッて光るの可愛い。笑ってるところ見れたらレアドロップ扱い』"
+        "alt": "メモ：『やえちゃん→今日も感情のふり幅0。たまに目だけキラッて光るの可愛い。笑ってるところ見れたらレアドロップ扱い』"
     },
     {
-        "text": "Aちゃんのメモ、元気すぎて書いてるだけで心の血行がよくなるのwww\nほんと太陽なんだよ〜 https://cocotte-simple-memo.vercel.app/\n#みりんてゃ #陽キャ吸収",
+        "text": "あかりちゃんのメモ、元気すぎて書いてるだけで心の血行がよくなるのwww\nほんと太陽なんだよ〜 https://cocotte-simple-memo.vercel.app/\n#みりんてゃ #陽キャ吸収",
         "image": "images/IMG_9095.jpeg",
-        "alt": "メモ：『Aちゃん→きょうもテンション太陽。笑いかたが元気すぎて周りがつられて笑う。アライグマの動きがほんのり残ってて可愛い』"
+        "alt": "メモ：『あかりちゃん→きょうもテンション太陽。笑いかたが元気すぎて周りがつられて笑う。アライグマの動きがほんのり残ってて可愛い』"
     },
     {
-        "text": "Eくんのこと書く時だけ筆圧強くなるのなんで？？\nあの子“静かな天才”すぎる… https://cocotte-simple-memo.vercel.app/\n#みりんてゃ #絵の人すき",
+        "text": "えにしくんのこと書く時だけ筆圧強くなるのなんで？？\nあの子“静かな天才”すぎる… https://cocotte-simple-memo.vercel.app/\n#みりんてゃ #絵の人すき",
         "image": "images/IMG_9096.jpeg",
-        "alt": "メモ：『Eくん→声小さいのに存在感だけデカい。筆触る指先が美しすぎてずるい。あのイタチずっとアトリエで暮らしてそう』"
+        "alt": "メモ：『えにしくん→声小さいのに存在感だけデカい。筆触る指先が美しすぎてずるい。あのイタチずっとアトリエで暮らしてそう』"
     },
     {
-        "text": "Mくん、今日も一匹狼モード全開。\nでも何気に優しいんだよね…知ってるよ… https://cocotte-simple-memo.vercel.app/\n#みりんてゃ #孤高の鷹",
+        "text": "まといくん、今日も一匹狼モード全開。\nでも何気に優しいんだよね…知ってるよ… https://cocotte-simple-memo.vercel.app/\n#みりんてゃ #孤高の鷹",
         "image": "images/IMG_9097.jpeg",
-        "alt": "メモ：『Mくん→他人に興味ないフリしてるけど観察力バケモノ。静かな鷹。たまに窓の外見てる姿が美術館の彫刻レベル』"
+        "alt": "メモ：『まといくん→他人に興味ないフリしてるけど観察力バケモノ。静かな鷹。たまに窓の外見てる姿が美術館の彫刻レベル』"
     },
     {
-        "text": "Sちゃんのメモ、毎回“真面目さ”が行単位で伝わるんよ。\n推せる… https://cocotte-simple-memo.vercel.app/\n#みりんてゃ #くノ一の横顔",
+        "text": "すずちゃんのメモ、毎回“真面目さ”が行単位で伝わるんよ。\n推せる… https://cocotte-simple-memo.vercel.app/\n#みりんてゃ #くノ一の横顔",
         "image": "images/IMG_9098.jpeg",
-        "alt": "メモ：『Sちゃん→ルール守る忍者。三重弁かわいすぎ。怒らせたら静かに消されそうだけど基本やさしい』"
+        "alt": "メモ：『すずちゃん→ルール守る忍者。三重弁かわいすぎ。怒らせたら静かに消されそうだけど基本やさしい』"
     },
     {
-        "text": "Aりんのメモ書くと、心が“ほわ〜”って溶けるの。\n幼馴染の安心感は反則。 https://cocotte-simple-memo.vercel.app/\n#みりんてゃ #幼馴染補正",
+        "text": "ありんのメモ書くと、心が“ほわ〜”って溶けるの。\n幼馴染の安心感は反則。 https://cocotte-simple-memo.vercel.app/\n#みりんてゃ #幼馴染補正",
         "image": "images/IMG_9100.jpeg",
-        "alt": "メモ：『Aりん→今日も優しさの塊。犬感が強すぎて、褒めるとしっぽ見える。ローファイ聞いてる横顔が平和すぎて癒し』"
+        "alt": "メモ：『ありん→今日も優しさの塊。犬感が強すぎて、褒めるとしっぽ見える。ローファイ聞いてる横顔が平和すぎて癒し』"
     },
     {
-        "text": "Yくんって、性格に“消しゴム”って書いてあるの？ってくらい柔らかいのすごいよね。\n見てて安心する男子代表。 https://cocotte-simple-memo.vercel.app/\n#みりんてゃ #体操男子",
+        "text": "やさしくんって、性格に“消しゴム”って書いてあるの？ってくらい柔らかいのすごいよね。\n見てて安心する男子代表。 https://cocotte-simple-memo.vercel.app/\n#みりんてゃ #体操男子",
         "image": "images/IMG_9101.jpeg",
-        "alt": "メモ：『Yくん→声かけが優しい。体やわらかいのに心もやわらかい。ちょっと置物に似ててかわいい』"
+        "alt": "メモ：『やさしくん→声かけが優しい。体やわらかいのに心もやわらかい。ちょっと置物に似ててかわいい』"
     },
     {
-        "text": "Rくん、今日もドジで可愛かったwww\n気遣い→成功率30%なの天才キャラすぎる。 https://cocotte-simple-memo.vercel.app/\n#みりんてゃ #気遣い助かる",
+        "text": "るいくん、今日もドジで可愛かったwww\n気遣い→成功率30%なの天才キャラすぎる。 https://cocotte-simple-memo.vercel.app/\n#みりんてゃ #気遣い助かる",
         "image": "images/IMG_9102.jpeg",
-        "alt": "メモ：『Rくん→気がきくのにズレてる。料理壊滅的。クセ強くてかわいいキジ男子』"
+        "alt": "メモ：『るいくん→気がきくのにズレてる。料理壊滅的。クセ強くてかわいいキジ男子』"
     },
     {
-        "text": "Mくん、今日もフリーダムで笑ったwww\nENFPって本当にバグみたいに可愛い。 https://cocotte-simple-memo.vercel.app/\n#みりんてゃ #自由人",
+        "text": "まきしくん、今日もフリーダムで笑ったwww\nENFPって本当にバグみたいに可愛い。 https://cocotte-simple-memo.vercel.app/\n#みりんてゃ #自由人",
         "image": "images/IMG_9103.jpeg",
-        "alt": "メモ：『Mくん→テンションで生きてる。マヨネーズ持ち歩いてそう。天真爛漫の完成形』"
+        "alt": "メモ：『まきしくん→テンションで生きてる。マヨネーズ持ち歩いてそう。天真爛漫の完成形』"
     },
     {
-        "text": "Sくんのメモは、書くと毎回“守りたいこの子感”が爆発する。\n照れ屋男子って最強だよね…。 https://cocotte-simple-memo.vercel.app/\n#みりんてゃ #ネズミ男子",
+        "text": "しげくんのメモは、書くと毎回“守りたいこの子感”が爆発する。\n照れ屋男子って最強だよね…。 https://cocotte-simple-memo.vercel.app/\n#みりんてゃ #ネズミ男子",
         "image": "images/IMG_9104.jpeg",
-        "alt": "メモ：『Sくん→食べるの見られるの苦手なの分かる。優しいのに距離感むずい。目そらすの可愛い』"
+        "alt": "メモ：『しげくん→食べるの見られるの苦手なの分かる。優しいのに距離感むずい。目そらすの可愛い』"
     },
     {
-        "text": "Hくんは“虚無の天才”すぎてメモ書く手が震えるwww\nあの子、存在が静かな芸術。 https://cocotte-simple-memo.vercel.app/\n#みりんてゃ #虚無系",
+        "text": "はこもくんは“虚無の天才”すぎてメモ書く手が震えるwww\nあの子、存在が静かな芸術。 https://cocotte-simple-memo.vercel.app/\n#みりんてゃ #虚無系",
         "image": "images/IMG_9105.jpeg",
-        "alt": "メモ：『Hくん→死んだ魚の目の安定感。穏やかだけど心ここにあらず。話すと意外と優しい』"
+        "alt": "メモ：『はこもくん→死んだ魚の目の安定感。穏やかだけど心ここにあらず。話すと意外と優しい』"
     },
     {
-        "text": "Sちゃんのメモ書くと、なんかテスト前の気持ち思い出すwww\n可愛いけど緊張感あるタイプ！ https://cocotte-simple-memo.vercel.app/\n#みりんてゃ #ガリ勉ちゃん",
+        "text": "しずかちゃんのメモ書くと、なんかテスト前の気持ち思い出すwww\n可愛いけど緊張感あるタイプ！ https://cocotte-simple-memo.vercel.app/\n#みりんてゃ #ガリ勉ちゃん",
         "image": "images/IMG_9107.jpeg",
-        "alt": "メモ：『Sちゃん→真面目。努力型。目立つのイヤそうで可愛い。静かに頑張るタイプの尊さ』"
+        "alt": "メモ：『しずかちゃん→真面目。努力型。目立つのイヤそうで可愛い。静かに頑張るタイプの尊さ』"
     },
     {
-        "text": "Yちゃんは“猫の神秘性”すぎて近寄るの緊張する（褒め言葉）\nポーカーフェイスなのに優しい感じするんだよね。 https://cocotte-simple-memo.vercel.app/\n#みりんてゃ #招き猫",
+        "text": "ゆずちゃんは“猫の神秘性”すぎて近寄るの緊張する（褒め言葉）\nポーカーフェイスなのに優しい感じするんだよね。 https://cocotte-simple-memo.vercel.app/\n#みりんてゃ #招き猫",
         "image": "images/IMG_9108.jpeg",
-        "alt": "メモ：『Yちゃん→言葉少ないけど気遣いできる。運が強いのもキャラ性高い。静かな子って世界観がある』"
+        "alt": "メモ：『ゆずちゃん→言葉少ないけど気遣いできる。運が強いのもキャラ性高い。静かな子って世界観がある』"
     },
     {
-        "text": "Sくんのこと書くと、気づいたらみりんてゃまで泣きそうになるんよ…\n繊細で優しい子、まじで守護対象。 https://cocotte-simple-memo.vercel.app/\n#みりんてゃ #涙腺崩壊",
+        "text": "しのんくんのこと書くと、気づいたらみりんてゃまで泣きそうになるんよ…\n繊細で優しい子、まじで守護対象。 https://cocotte-simple-memo.vercel.app/\n#みりんてゃ #涙腺崩壊",
         "image": "images/IMG_9110.jpeg",
-        "alt": "メモ：『Sくん→心がやわい。無理しがち。優しさが重さになっちゃうタイプ。泣き顔がとても綺麗』"
+        "alt": "メモ：『しのんくん→心がやわい。無理しがち。優しさが重さになっちゃうタイプ。泣き顔がとても綺麗』"
     },
     {
-        "text": "Hちゃんのメモは“名探偵すぎ注意”って感じwww\n観察力が鋭すぎて怖いけど頼れる！ https://cocotte-simple-memo.vercel.app/\n#みりんてゃ #レッサーパンダ",
+        "text": "ひかりちゃんのメモは“名探偵すぎ注意”って感じwww\n観察力が鋭すぎて怖いけど頼れる！ https://cocotte-simple-memo.vercel.app/\n#みりんてゃ #レッサーパンダ",
         "image": "images/IMG_9111.jpeg",
-        "alt": "メモ：『Hちゃん→勘が鋭い。大人ぶるの可愛い。警戒心つよいけど仲良くなると甘えそう』"
+        "alt": "メモ：『ひかりちゃん→勘が鋭い。大人ぶるの可愛い。警戒心つよいけど仲良くなると甘えそう』"
     },
     {
-        "text": "Kちゃんみたいな子、物語にしかいないと思ってた…\n静けさが“美”になってる系女子。すき。 https://cocotte-simple-memo.vercel.app/\n#みりんてゃ #和風美人",
+        "text": "こずえちゃんみたいな子、物語にしかいないと思ってた…\n静けさが“美”になってる系女子。すき。 https://cocotte-simple-memo.vercel.app/\n#みりんてゃ #和風美人",
         "image": "images/IMG_9112.jpeg",
-        "alt": "メモ：『Kちゃん→物静かで和風。花火好きなの似合いすぎ。声がやさしい』"
+        "alt": "メモ：『こずえちゃん→物静かで和風。花火好きなの似合いすぎ。声がやさしい』"
     },
     {
-        "text": "Yくんのメモは毎回ゆるいww\nISTPのこういう抜けた平和さ、癖になるんだよね。 https://cocotte-simple-memo.vercel.app/\n#みりんてゃ #かき氷男子",
+        "text": "やまとくんのメモは毎回ゆるいww\nISTPのこういう抜けた平和さ、癖になるんだよね。 https://cocotte-simple-memo.vercel.app/\n#みりんてゃ #かき氷男子",
         "image": "images/IMG_9113.jpeg",
-        "alt": "メモ：『Yくん→冷静でマイペース。かき氷好きなの何回聞いても可愛い。余計なこと言わないところ好き』"
+        "alt": "メモ：『やまとくん→冷静でマイペース。かき氷好きなの何回聞いても可愛い。余計なこと言わないところ好き』"
     },
     {
         "text": "かつみ先生のメモ、毎回オチ担当でごめんwwwww\n体育教師の圧、強すぎるんよ… https://cocotte-simple-memo.vercel.app/\n#みりんてゃ #先生メモ",
