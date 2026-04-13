@@ -9,9 +9,13 @@ from datetime import datetime, timezone, timedelta
 from dotenv import load_dotenv
 from playwright.sync_api import sync_playwright
 import urllib.parse
+from pathlib import Path           # 👈 これが足りなかった！
+from dotenv import load_dotenv     # 👈 これも足りなかった！
 # ------------------------------
 # 🔐 環境変数の読み込み
 # ------------------------------
+env_path = Path('.') / '.env'
+load_dotenv(dotenv_path=env_path)
 load_dotenv()
 AUTH_TOKEN = os.getenv("AUTH_TOKEN") or exit("❌ AUTH_TOKENが設定されていません")
 CT0 = os.getenv("CT0") or exit("❌ CT0が設定されていません")
