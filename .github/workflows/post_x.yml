@@ -1,7 +1,6 @@
 name: Post to X Once
 
 on:
-  schedule:
   workflow_dispatch:  # 手動実行もできるように
 
 jobs:
