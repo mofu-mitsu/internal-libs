@@ -2,11 +2,13 @@ import os
 import random
 import time
 from playwright.sync_api import sync_playwright
-
+from pathlib import Path           # 👈 これが足りなかった！
+from dotenv import load_dotenv     # 👈 これも足りなかった！
 # 環境変数から秘密のCookieを取得
 AUTH_TOKEN = os.getenv('AUTH_TOKEN')
 CT0 = os.getenv('CT0')
-
+env_path = Path('.') / '.env'
+load_dotenv(dotenv_path=env_path)
 # みりんてゃのターゲットキーワード（ハッシュタグ含む）
 TARGET_KEYWORDS = [
     '地雷女', '病み垢', '病みかわ', 'メンヘラ', '量産系', 
