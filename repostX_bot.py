@@ -8,7 +8,6 @@ import re
 from datetime import datetime, timezone, timedelta
 from dotenv import load_dotenv
 from playwright.sync_api import sync_playwright
-from playwright_stealth import stealth_sync
 
 # ------------------------------
 # 🔐 環境変数の読み込み
@@ -158,7 +157,8 @@ def main():
         ])
         
         page = context.new_page()
-        stealth_sync(page)
+        # 🧙‍♂️ ステルス魔法（ロボットですよっていう証拠を消し去る！）
+        page.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
 
         try:
             # ツイートを拾ってくる
