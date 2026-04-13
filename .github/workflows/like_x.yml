@@ -3,7 +3,6 @@ name: Like X Bot
 on:
   schedule:
     # 毎時30分に実行（0分実行の投稿Botと被らないように！）
-    - cron: '30 * * * *'
   workflow_dispatch:  # 手動実行
 
 jobs:
