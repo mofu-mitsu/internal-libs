@@ -3,7 +3,6 @@ import os
 import random
 import time
 from playwright.sync_api import sync_playwright
-from playwright_stealth import stealth_sync
 from dotenv import load_dotenv
 
 # 環境変数の読み込み
@@ -164,7 +163,8 @@ def main():
         ])
         
         page = context.new_page()
-        stealth_sync(page) # 🧙‍♂️ ステルス魔法！
+        # 🧙‍♂️ ステルス魔法（ロボットですよっていう証拠を消し去る！）
+        page.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
 
         try:
             # 1. フォロバ処理
