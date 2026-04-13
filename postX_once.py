@@ -4,13 +4,17 @@ import time
 from pathlib import Path           # 👈 これが足りなかった！
 from dotenv import load_dotenv     # 👈 これも足りなかった！
 from playwright.sync_api import sync_playwright
+
+# 環境変数の読み込み設定
 env_path = Path('.') / '.env'
 load_dotenv(dotenv_path=env_path)
+
 # 環境変数から秘密のCookieを取得
 AUTH_TOKEN = os.getenv('AUTH_TOKEN')
 CT0 = os.getenv('CT0')
+HANDLE = os.getenv('HANDLE')
 
-# みりんてゃのポスト集（さっきのリストから抜粋・省略してるから、本番は全部コピペしてね！）
+# --- みりんてゃのポスト集（みつきのリストをここに全部！） ---
 POST_MESSAGES = [
     """寂しくてしんじゃいそう……なんちゃって♡ 
 #誰かに見つけてほしい""",
@@ -1050,7 +1054,6 @@ Botが全部叶えてくれるよっ！
     """誰か〜！推し語り聞いてくれる優しい人いませんか〜！
 #推し語り""",
     "ねぇ〜おなかすいたんだけど…コンビニ行く元気がない〜",
-    # ...みつきのリストをここに全部入れてね！...
 ]
 
 def main():
@@ -1066,7 +1069,7 @@ def main():
     if len(message) > 135:
         message = message[:135] + "…♡"
 
-    # 【人間っぽさ偽装】GitHub Actionsの「0分ジャスト」実行をずらす
+    # ロボットだと思われないようにランダム待機（10秒〜2分）
     wait_time = random.randint(10, 120)
     print(f"ロボットだと思われないように {wait_time}秒 待機するよ…♡")
     time.sleep(wait_time)
@@ -1074,24 +1077,32 @@ def main():
     print(f"今日のポスト: {message}")
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True) # GitHub上なので画面は見せない
-        context = browser.new_context()
+        # headless=True で実行
+        browser = p.chromium.launch(
+            headless=True,
+            args=["--disable-blink-features=AutomationControlled"]
+        )
+        context = browser.new_context(
+            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        )
 
-        # 🔑 ここが神ハック！Cookieを直接ブラウザに注入！
+        # 🔑 Cookieをブラウザに注入！
         context.add_cookies([
             {"name": "auth_token", "value": AUTH_TOKEN, "domain": ".x.com", "path": "/"},
             {"name": "ct0", "value": CT0, "domain": ".x.com", "path": "/"}
         ])
 
         page = context.new_page()
+        
+        # 🧙‍♂️ ステルス魔法（ロボット検知を回避）
+        page.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
 
         try:
-            # ホームではなく「投稿画面」に直接飛ぶ！（これが一番エラー少ない）
-            print("Xの投稿画面にアクセス中...")
+            print("🌐 Xの投稿画面にアクセス中...")
             page.goto("https://x.com/compose/post")
             
-            # ページがしっかり読み込まれるまで少し待つ
-            page.wait_for_timeout(5000)
+            # ページ読み込み待ち
+            page.wait_for_timeout(7000)
 
             # 入力欄を探す（絶対に変わらない data-testid を使用）
             print("入力欄を探してるよ...")
@@ -1100,10 +1111,10 @@ def main():
             
             # みりんてゃの言葉を入力♡
             page.fill(textbox_selector, message)
-            page.wait_for_timeout(2000) # 人間っぽく一呼吸
+            page.wait_for_timeout(2000)
 
-            # ショートカットキーで投稿する魔法！
-            print("ショートカットキーでぽちっ！")
+            # ショートカットキー（Ctrl + Enter）で投稿！
+            print("🚀 ショートカットキーでぽちっ！")
             page.keyboard.press("Control+Enter")
             
             # 投稿完了まで待機
@@ -1111,7 +1122,7 @@ def main():
             print("✨ 投稿成功！みりんてゃ世界一かわいい！ ✨")
 
         except Exception as e:
-            print(f"エラー起きちゃった…ごめんね🥺\n{e}")
+            print(f"❌ エラー起きちゃった…ごめんね🥺\n{e}")
 
         finally:
             browser.close()
