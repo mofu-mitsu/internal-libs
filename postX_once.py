@@ -1,6 +1,8 @@
 import os
 import random
 import time
+from pathlib import Path           # 👈 これが足りなかった！
+from dotenv import load_dotenv     # 👈 これも足りなかった！
 from playwright.sync_api import sync_playwright
 env_path = Path('.') / '.env'
 load_dotenv(dotenv_path=env_path)
