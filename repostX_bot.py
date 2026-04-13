@@ -8,7 +8,7 @@ import re
 from datetime import datetime, timezone, timedelta
 from dotenv import load_dotenv
 from playwright.sync_api import sync_playwright
-
+import urllib.parse
 # ------------------------------
 # 🔐 環境変数の読み込み
 # ------------------------------
