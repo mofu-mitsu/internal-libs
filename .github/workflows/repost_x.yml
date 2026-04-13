@@ -3,7 +3,6 @@ name: X Repost Bot
 on:
   schedule:
     # 6時間ごと（1日4回）に実行（他のBotと時間がモロ被りしないように15分に設定）
-    - cron: '15 */6 * * *'
   workflow_dispatch:
 
 concurrency:
