@@ -4,7 +4,6 @@ import random
 import time
 from playwright.sync_api import sync_playwright
 from dotenv import load_dotenv
-import urllib.parse
 
 # 環境変数の読み込み
 load_dotenv()
