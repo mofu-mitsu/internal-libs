@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 from playwright.sync_api import sync_playwright
 
 # 環境変数読み込み
+
 env_path = Path('.') / '.env'
 load_dotenv(dotenv_path=env_path)
 
@@ -17,10 +18,27 @@ CT0 = os.getenv('CT0') or exit("❌ CT0がありません")
 # ★ ツール紹介テキスト（ここにみつきのリストを全部入れてね！）
 # ------------------------------
 POST_MESSAGES = [
-    """みりん、寂しくてキラキラ作っちゃった…♡  
-フィードで会いに来てくれたら、幸せだよ🥺  
-➡︎ https://bsky.app/profile/did:plc:pvy7w75qks44sybd5wwpthb6/feed/aaae5hbblng6a  
-#みりんてゃ #地雷感情 #ふわもこ通信""",
+    "とりの丘学園の公式ポータルサイトだよっ♡\n300人以上の生徒のプロフィールや、学園の秘密がたっぷり詰まってるの！遊びに来てね🐾\nhttps://mofu-mitsu.github.io/Torinooka_portal/ #とりの丘学園",
+    
+    # 生徒名簿（応援）
+    "学園の生徒名簿はこちらっ！\nみんなの推しは見つかったかな？プロフから『応援する』ボタンでエールを送ってね♡\nもちろん、みりんてゃ（H2-2）への投票も待ってるよ🐾\nhttps://mofu-mitsu.github.io/Torinooka_portal/chara.html #とりの丘学園",
+    
+    "みんな、今月の人気ランキングはチェックした？👑\n推しキャラの順位を上げるには、名簿から毎日『応援する』を押すのがコツだよっ！\nhttps://mofu-mitsu.github.io/Torinooka_portal/chara.html #とりの丘学園",
+    
+    # 学校生活
+    "とりの丘学園には『水兵部』や『航空部』みたいな変わった部活もあるんだよ！⚓✈️\nみんなはどの部活やシェアハウスが気になる？\nhttps://mofu-mitsu.github.io/Torinooka_portal/life.html #とりの丘学園",
+    
+    # コンテンツ（ミニゲーム）
+    "ひまー？そんな時は『とりの丘ミニゲーム集』で遊んでみてっ！\nいちごメロンパン争奪戦や、のりおみくんのシャッター回避ゲーム…みりんてゃとのソリティア対決もあるよ♡\nhttps://mofu-mitsu.github.io/Torinooka_portal/games.html #とりの丘学園",
+    
+    # 掲示板
+    "学園の自由掲示板だよっ！\nストーリーの感想とか、推しキャラへの愛を自由に叫んでね♡ みりんてゃもこっそり見てるかも…？🐾\nhttps://mofu-mitsu.github.io/Torinooka_portal/bulletin.html #とりの丘学園",
+    
+    # お手紙
+    "生徒のみんなに匿名でお手紙が送れるポストがあるよっ💌\n質問や応援メッセージを送ったら、お返事がもらえるかも！？\nhttps://mofu-mitsu.github.io/Torinooka_portal/letters.html #とりの丘学園",
+    
+    # ストーリー
+    "学園で起きた色んな事件や、みんなの日常の記録が読めちゃう『ストーリー』ページだよっ📖\nタグ検索もできるから、気になる話をチェックしてみてね♡\nhttps://mofu-mitsu.github.io/Torinooka_portal/story.html #とりの丘学園",
     """ねぇ聞いて…。
 相関図いじってたら
 うちの子同士の“感情の線”が
@@ -2575,7 +2593,7 @@ def main():
     print("🚀 ツール紹介Bot（X版）起動！")
 
     # ランダム選択：70%テキスト（URLカード化）、30%画像付き
-    if random.random() < 0.3 and IMAGE_POSTS:
+    if False:
         post_data = random.choice(IMAGE_POSTS)
         message = post_data["text"]
         image_path = post_data["image"]
