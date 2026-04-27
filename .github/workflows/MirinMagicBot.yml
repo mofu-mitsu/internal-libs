@@ -1,9 +1,9 @@
 name: Mirin Magic Bot
 
 on:
-  schedule:
-    - cron: '0 5 * * *'   # JST 14:00 (UTC 5:00)
-    - cron: '0 13 * * *'  # JST 22:00 (UTC 13:00)
+  #schedule:
+  #  - cron: '0 5 * * *'   # JST 14:00 (UTC 5:00)
+  #  - cron: '0 13 * * *'  # JST 22:00 (UTC 13:00)
   workflow_dispatch:  # 手動実行もできるように
 
 jobs:
