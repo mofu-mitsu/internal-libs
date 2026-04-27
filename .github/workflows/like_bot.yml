@@ -1,8 +1,8 @@
 name: Like Bluesky Bot
 
 on:
-  #schedule:
-  #  - cron: '30 * * * *'  # 毎時15分に実行（重複しないように）
+  schedule:
+    - cron: '30 * * * *'  # 毎時15分に実行（重複しないように）
   workflow_dispatch:  # 手動実行もOK
 
 jobs:
