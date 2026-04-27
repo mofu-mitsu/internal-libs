@@ -1,8 +1,8 @@
 name: Bluesky Follow Bot
 
 on:
-  schedule:
-    - cron: '*/10 * * * *'  # 10分毎に実行
+  #schedule:
+  #  - cron: '*/10 * * * *'  # 10分毎に実行
   workflow_dispatch:
 
 jobs:
