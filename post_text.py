@@ -63,6 +63,23 @@ def safe_get_temp(temps):
             return t
 
     return "--"
+
+def get_temp_from_series(data):
+    try:
+        for series in data[0]["timeSeries"]:
+            areas = series.get("areas", [])
+            if not areas:
+                continue
+
+            temps = areas[0].get("temps")
+            if temps:
+                for t in temps:
+                    if t:
+                        return t
+
+        return "--"
+    except:
+        return "--"
 def get_nationwide_weather():
     results = []
 
@@ -74,8 +91,7 @@ def get_nationwide_weather():
             weather = data[0]["timeSeries"][0]["areas"][0]["weathers"][0]
             icon = parse_weather(weather)
 
-            temps = data[0]["timeSeries"][1]["areas"][0].get("temps")
-            temp = safe_get_temp(temps)
+            temp = get_temp_from_series(data)
 
             results.append(f"{name}：{icon} {temp}℃")
 
