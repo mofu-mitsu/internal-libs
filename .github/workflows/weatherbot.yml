@@ -2,7 +2,7 @@ name: 🐾 Weather Bot
 
 on:
   schedule:
-    - cron: '12 12 * * *'  # JST 21:12くらい（＝UTC 12:12）
+    - cron: '20 11 * * *'  # JST 20:20
   workflow_dispatch:  # 手動でも実行できるようにする！
 
 jobs:
