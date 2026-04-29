@@ -145,8 +145,14 @@ WEATHER_TEMPLATES = {
 # ------------------------------
 def upload_image(client, image_path):
     img = Image.open(image_path)
+
+    # ⭐これ追加（超重要）
+    if img.mode != "RGB":
+        img = img.convert("RGB")
+
     buffer = io.BytesIO()
     img.save(buffer, format="JPEG", quality=85)
+
     blob = client.com.atproto.repo.upload_blob(buffer.getvalue())
     return blob.blob
 
