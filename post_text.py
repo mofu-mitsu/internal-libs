@@ -53,7 +53,16 @@ def parse_weather(text):
     if "雨" in text: return "☔"
     if "晴" in text: return "☀️"
     return "☁️"
+def safe_get_temp(temps):
+    if not temps:
+        return "--"
 
+    # Noneじゃない値を探す
+    for t in temps:
+        if t is not None and t != "":
+            return t
+
+    return "--"
 def get_nationwide_weather():
     results = []
 
@@ -66,7 +75,7 @@ def get_nationwide_weather():
             icon = parse_weather(weather)
 
             temps = data[0]["timeSeries"][1]["areas"][0].get("temps")
-            temp = temps[0] if temps and temps[0] else "--"
+            temp = safe_get_temp(temps)
 
             results.append(f"{name}：{icon} {temp}℃")
 
