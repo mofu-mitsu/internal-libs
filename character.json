@@ -2,7 +2,7 @@
   {
   "name":"遠藤 桃花",
   "short":"ももか",
-  "class":"とりの丘学園 1-1",
+  "class":"とりの丘学園 H1-1",
   "motif":"犬",
   "desc":"元愛犬の存在。負けず嫌いなツンデレでよく吠える。パパに懐いており、セレブのようなポーズをよくする。",
   "image":"images/characters/momoka.png"
@@ -10,7 +10,7 @@
   {
   "name":"近藤 美々香",
   "short":"みみかちゃん",
-  "class":"とりの丘学園 1-1",
+  "class":"とりの丘学園 H1-1",
   "motif":"白猫",
   "desc":"クールで理性的。世界を概念の集合として捉える内省型で、失敗も構造として分析するタイプ。料理上手。",
   "image":"images/characters/mimika.png"
@@ -18,7 +18,7 @@
   {
   "name":"辻山 妃菜華",
   "short":"ひなかちゃん",
-  "class":"とりの丘学園 1-1",
+  "class":"とりの丘学園 H1-1",
   "motif":"アメリカンショートヘア",
   "desc":"明るく活発でキャピキャピした性格。島根からの転校生で出雲弁を話す。",
   "image":"images/characters/hinaka.png"
@@ -26,7 +26,7 @@
   {
   "name":"黒見 晃",
   "short":"ひかるくん",
-  "class":"とりの丘学園 1-1",
+  "class":"とりの丘学園 H1-1",
   "motif":"黒猫（元風船）",
   "desc":"衝動的でお人よし。桃花にちょっかいを出すのが好き。元はハロウィンの風船で穴が空いてしまった存在。",
   "image":"images/characters/hikaru.png"
@@ -34,7 +34,7 @@
   {
   "name":"天雨 聖奈",
   "short":"せいなちゃん",
-  "class":"とりの丘学園 1-1",
+  "class":"とりの丘学園 H1-1",
   "motif":"ピンクのカエル",
   "desc":"強気で世話焼きな性格。少し強引だが面倒見が良い。体操部所属。",
   "image":"images/characters/seina.png"
@@ -42,7 +42,7 @@
   {
   "name":"市宮 哲",
   "short":"てつちゃん",
-  "class":"とりの丘学園 1-1",
+  "class":"とりの丘学園 H1-1",
   "motif":"黒猫",
   "desc":"博愛主義で楽観的。『みんな違ってみんな良い』精神の持ち主。実験好きのマッドサイエンティスト。",
   "image":"images/characters/tetsu.png"
@@ -50,7 +50,7 @@
   {
   "name":"右幸 永遠",
   "short":"とわくん",
-  "class":"とりの丘学園 1-1",
+  "class":"とりの丘学園 H1-1",
   "motif":"秋田犬",
   "desc":"好奇心旺盛でサボり魔。熱しやすく冷めやすい性格。感情に素直に従う快楽追求タイプ。",
   "image":"images/characters/towa.png"
@@ -58,7 +58,7 @@
   {
   "name":"岡田 麻衣",
   "short":"まいちゃん",
-  "class":"とりの丘学園 1-1",
+  "class":"とりの丘学園 H1-1",
   "motif":"黒猫",
   "desc":"家事が得意な家政婦バイト。嘘を楽しむ捻くれ者。弟のリボンを大切にしている。",
   "image":"images/characters/mai.png"
@@ -66,7 +66,7 @@
   {
   "name":"小路 虎作",
   "short":"こさくくん",
-  "class":"とりの丘学園 1-1",
+  "class":"とりの丘学園 H1-1",
   "motif":"猫",
   "desc":"自信過剰で単純な性格。大阪出身でお好み焼き屋の息子。明るくノリが良い。",
   "image":"images/characters/kosaku.png"
@@ -74,7 +74,7 @@
   {
   "name":"川曽 虎太郎",
   "short":"こたろうくん",
-  "class":"とりの丘学園 1-1",
+  "class":"とりの丘学園 H1-1",
   "motif":"柴犬",
   "desc":"優しく知的なヒーロータイプ。超ポジティブで周囲に希望を与える存在。球技部所属。",
   "image":"images/characters/kotarou.png"
@@ -82,7 +82,7 @@
   {
   "name":"雑敷 言",
   "short":"ことくん",
-  "class":"とりの丘学園 1-1",
+  "class":"とりの丘学園 H1-1",
   "motif":"セキセイインコ",
   "desc":"写真好きで男気のある性格。おおざっぱだが遊び心あり。虚弱体質で風邪をひきやすい。",
   "image":"images/characters/koto.png"
@@ -90,7 +90,7 @@
   {
   "name":"杉山 虎毱",
   "short":"こまりちゃん",
-  "class":"とりの丘学園 1-1",
+  "class":"とりの丘学園 H1-1",
   "motif":"三毛猫",
   "desc":"こだわりが強く素直な性格。DIYや創作が好きで絵も上手い。仮想世界にも興味あり。",
   "image":"images/characters/komari.png"
@@ -98,7 +98,7 @@
   {
   "name":"園田 藍",
   "short":"あいちゃん",
-  "class":"とりの丘学園 1-1",
+  "class":"とりの丘学園 H1-1",
   "motif":"イソヒヨドリ",
   "desc":"穏やかな口調の腹黒ドS。敬語でじわじわ攻めてくるタイプ。文画部所属。",
   "image":"images/characters/ai.png"
@@ -106,7 +106,7 @@
   {
   "name":"成政 明流",
   "short":"あかるくん",
-  "class":"とりの丘学園 1-1",
+  "class":"とりの丘学園 H1-1",
   "motif":"猫",
   "desc":"明るいムードメーカー。お調子者でパーティーハットをよく被る。将来に悩み中。",
   "image":"images/characters/akaru.png"
@@ -114,7 +114,7 @@
   {
   "name":"二瓶 小次郎",
   "short":"こじろうくん",
-  "class":"とりの丘学園 1-1",
+  "class":"とりの丘学園 H1-1",
   "motif":"猫",
   "desc":"誠実でしっかり者。作曲もピアノもできる音楽の天才。",
   "image":"images/characters/kojiro.png"
@@ -122,7 +122,7 @@
   {
   "name":"速川 楓",
   "short":"かえでちゃん",
-  "class":"とりの丘学園 1-1",
+  "class":"とりの丘学園 H1-1",
   "motif":"猫",
   "desc":"自己主張が強くまっすぐな性格。自分が一番美しいと思っている自信家。",
   "image":"images/characters/kaede.png"
@@ -130,7 +130,7 @@
   {
   "name":"腹巻 青",
   "short":"せいくん",
-  "class":"とりの丘学園 1-1",
+  "class":"とりの丘学園 H1-1",
   "motif":"ヤマショウビン",
   "desc":"熱血でリーダー気質。情熱的で常にやる気に満ちている。青い炎のような存在。",
   "image":"images/characters/sei.png"
@@ -138,7 +138,7 @@
   {
   "name":"谷幡 節捺",
   "short":"せつなちゃん",
-  "class":"とりの丘学園 1-1",
+  "class":"とりの丘学園 H1-1",
   "motif":"猫",
   "desc":"おおらかでマイペース。忘れっぽくカバンはブラックホール。新聞部所属。",
   "image":"images/characters/setsuna.png"
@@ -146,7 +146,7 @@
   {
   "name":"山神 小福",
   "short":"こふくくん",
-  "class":"とりの丘学園 1-1",
+  "class":"とりの丘学園 H1-1",
   "motif":"ポメラニアン",
   "desc":"山の神として崇められる存在。冷静沈着でクール。山を守りながら写真を撮る。",
   "image":"images/characters/kofuku.png"
@@ -154,7 +154,7 @@
   {
   "name":"勇惣 柾季",
   "short":"まさきくん",
-  "class":"とりの丘学園 1-1",
+  "class":"とりの丘学園 H1-1",
   "motif":"軽鴨",
   "desc":"物静かで妹思い。母の治療費のために働くしっかり者。優しさと責任感の塊。",
   "image":"images/characters/masaki.png"
@@ -162,7 +162,7 @@
   {
   "name":"砂糖 千尋",
   "short":"ちひろ先生",
-  "class":"とりの丘学園 1-1（担任）",
+  "class":"とりの丘学園 H1-1（担任）",
   "motif":"フラミンゴ",
   "desc":"とても優しく甘い性格の教師。元生徒であり、生徒想いだが比較されるのは苦手。",
   "image":"images/characters/chihiro.png"
@@ -170,7 +170,7 @@
   {
   "name":"愛野 麻理",
   "short":"まりちゃん",
-  "class":"とりの丘学園 1-2",
+  "class":"とりの丘学園 H1-2",
   "motif":"キツネ",
   "desc":"華奢で控えめな物静かな少女。人見知りで人間不信気味。アニメーターを目指している。",
   "image":"images/characters/mari.png"
@@ -178,7 +178,7 @@
   {
   "name":"井漕 舞茅依",
   "short":"まちえちゃん",
-  "class":"とりの丘学園 1-2",
+  "class":"とりの丘学園 H1-2",
   "motif":"猫",
   "desc":"真面目で挑戦的な性格。丁寧な話し方だが時々名古屋弁や熱いセリフが出る。",
   "image":"images/characters/machie.png"
@@ -186,7 +186,7 @@
   {
   "name":"石原 蛇喜",
   "short":"へびきくん",
-  "class":"とりの丘学園 1-2",
+  "class":"とりの丘学園 H1-2",
   "motif":"蛇",
   "desc":"沖縄出身の平和主義者。のんびりした性格で暑さに弱くネッククーラーが手放せない。",
   "image":"images/characters/hebiki.png"
@@ -194,7 +194,7 @@
   {
   "name":"岩結 未来",
   "short":"みらいちゃん",
-  "class":"とりの丘学園 1-2",
+  "class":"とりの丘学園 H1-2",
   "motif":"たぬき",
   "desc":"明るく面倒見が良い優等生。負けず嫌いで努力家な性格。",
   "image":"images/characters/mirai.png"
@@ -202,7 +202,7 @@
   {
   "name":"遠藤 海松",
   "short":"みるちゃん",
-  "class":"とりの丘学園 1-2",
+  "class":"とりの丘学園 H1-2",
   "motif":"ダルメシアン",
   "desc":"元気でロマンチストなムードメーカー。よく笑い場を盛り上げる。",
   "image":"images/characters/miru.png"
@@ -210,7 +210,7 @@
   {
   "name":"鬼弦 導",
   "short":"しるべくん",
-  "class":"とりの丘学園 1-2",
+  "class":"とりの丘学園 H1-2",
   "motif":"鬼",
   "desc":"寡黙で無表情な少年。何を考えているか分かりにくいが観察力はある。",
   "image":"images/characters/shirube.png"
@@ -218,7 +218,7 @@
   {
   "name":"柏倉 佑",
   "short":"ゆうくん",
-  "class":"とりの丘学園 1-2",
+  "class":"とりの丘学園 H1-2",
   "motif":"日本スピッツ",
   "desc":"気弱だが仲間思い。可愛いものが好きで優しい性格。",
   "image":"images/characters/yuu.png"
@@ -226,7 +226,7 @@
   {
   "name":"雲然 翔暖",
   "short":"かのんくん",
-  "class":"とりの丘学園 1-2",
+  "class":"とりの丘学園 H1-2",
   "motif":"イソヒヨドリ",
   "desc":"人懐っこく明るい性格。モノマネが得意で場を和ませる。",
   "image":"images/characters/kanon.png"
@@ -234,7 +234,7 @@
   {
   "name":"小桂 文太",
   "short":"ぶんたくん",
-  "class":"とりの丘学園 1-2",
+  "class":"とりの丘学園 H1-2",
   "motif":"文鳥",
   "desc":"少し気怠げだが順応性が高く友達が多い。新聞部部長。",
   "image":"images/characters/bunta.png"
@@ -242,7 +242,7 @@
   {
   "name":"小玉 史子",
   "short":"ふみこちゃん",
-  "class":"とりの丘学園 1-2",
+  "class":"とりの丘学園 H1-2",
   "motif":"文鳥",
   "desc":"穏やかで優しい性格。話すと安心感を与える存在。",
   "image":"images/characters/fumiko.png"
@@ -250,7 +250,7 @@
   {
   "name":"素麺 米",
   "short":"こめちゃん",
-  "class":"とりの丘学園 1-2",
+  "class":"とりの丘学園 H1-2",
   "motif":"ハムスター",
   "desc":"のんびりした干物系女子。マイペースで寝るのが大好き。",
   "image":"images/characters/kome.png"
@@ -258,7 +258,7 @@
   {
   "name":"高槁 優侍",
   "short":"ゆうじくん",
-  "class":"とりの丘学園 1-2",
+  "class":"とりの丘学園 H1-2",
   "motif":"ペンギン",
   "desc":"正義感が強く勇敢な性格。間違いを見過ごせないタイプ。",
   "image":"images/characters/yuji.png"
@@ -266,7 +266,7 @@
   {
   "name":"辻山 郷",
   "short":"きょうくん",
-  "class":"とりの丘学園 1-2",
+  "class":"とりの丘学園 H1-2",
   "motif":"猫",
   "desc":"普段は大人しいが状況によって強気になる一面もある。",
   "image":"images/characters/kyo.png"
@@ -274,7 +274,7 @@
   {
   "name":"鳥飼 歩",
   "short":"あゆちゃん",
-  "class":"とりの丘学園 1-2",
+  "class":"とりの丘学園 H1-2",
   "motif":"カッコウ",
   "desc":"元気でおしゃべりな性格。明るく感情表現が豊か。",
   "image":"images/characters/ayu.png"
@@ -282,7 +282,7 @@
   {
   "name":"西 琥博",
   "short":"こはくくん",
-  "class":"とりの丘学園 1-2",
+  "class":"とりの丘学園 H1-2",
   "motif":"ティーカッププードル",
   "desc":"真面目で勤勉な風紀委員。規律を重んじるタイプ。",
   "image":"images/characters/kohaku.png"
@@ -290,7 +290,7 @@
   {
   "name":"根峯 萠",
   "short":"めぐむちゃん",
-  "class":"とりの丘学園 1-2",
+  "class":"とりの丘学園 H1-2",
   "motif":"アメリカンカール",
   "desc":"面倒見がよく常識的な性格。頼れる存在。",
   "image":"images/characters/megumu.png"
@@ -298,7 +298,7 @@
   {
   "name":"身浦 柚太允",
   "short":"ゆたすけくん",
-  "class":"とりの丘学園 1-2",
+  "class":"とりの丘学園 H1-2",
   "motif":"熊",
   "desc":"控えめで優しい性格。周りを静かに見守るタイプ。",
   "image":"images/characters/yutasuke.png"
@@ -306,7 +306,7 @@
   {
   "name":"村瀬 蘇芳",
   "short":"すおうくん",
-  "class":"とりの丘学園 1-2",
+  "class":"とりの丘学園 H1-2",
   "motif":"狐",
   "desc":"冷静でマイペース。どこか掴みどころのない性格。",
   "image":"images/characters/suo.png"
@@ -314,7 +314,7 @@
   {
   "name":"茂地 榎留愛",
   "short":"えるあちゃん",
-  "class":"とりの丘学園 1-2",
+  "class":"とりの丘学園 H1-2",
   "motif":"カエル",
   "desc":"はっきり物を言う世話焼きタイプ。相談にもよく乗る。",
   "image":"images/characters/erua.png"
@@ -322,7 +322,7 @@
   {
   "name":"本梶 美花",
   "short":"みばなちゃん",
-  "class":"とりの丘学園 1-2",
+  "class":"とりの丘学園 H1-2",
   "motif":"ホトトギス",
   "desc":"マイペースで実践的な性格。少しツンデレ気質。",
   "image":"images/characters/mibana.png"
@@ -330,7 +330,7 @@
   {
   "name":"柏木 伶楽",
   "short":"れら先生",
-  "class":"とりの丘学園 1-2（担任）",
+  "class":"とりの丘学園 H1-2（担任）",
   "motif":"ユリカモメ",
   "desc":"明るくよく笑う教師。発想が自由で柔軟な性格。",
   "image":"images/characters/rera.png"
@@ -338,7 +338,7 @@
   {
   "name":"浅苧 李音",
   "short":"りのんちゃん",
-  "class":"とりの丘学園 1-3",
+  "class":"とりの丘学園 H1-3",
   "motif":"ニシキアナゴ",
   "desc":"芯が強く努力家な歌姫。負けず嫌いで結果を重視するタイプ。",
   "image":"images/characters/rinon.png"
@@ -346,7 +346,7 @@
   {
   "name":"井之尾 希空",
   "short":"きそらちゃん",
-  "class":"とりの丘学園 1-3",
+  "class":"とりの丘学園 H1-3",
   "motif":"猫",
   "desc":"人見知りで控えめな性格。大人になることに少し抵抗がある。",
   "image":"images/characters/kisora.png"
@@ -354,7 +354,7 @@
   {
   "name":"牛沢 蒼司",
   "short":"そうじくん",
-  "class":"とりの丘学園 1-3",
+  "class":"とりの丘学園 H1-3",
   "motif":"タカ",
   "desc":"大胆で自由奔放な性格。場の空気を壊すこともあるトリックスター。",
   "image":"images/characters/soji.png"
@@ -362,7 +362,7 @@
   {
   "name":"大江 浬積",
   "short":"りつくん",
-  "class":"とりの丘学園 1-3",
+  "class":"とりの丘学園 H1-3",
   "motif":"カワセミ",
   "desc":"美意識の高いナルシスト。明るく振る舞うが繊細な一面もある。",
   "image":"images/characters/ritsu.png"
@@ -370,7 +370,7 @@
   {
   "name":"大野 蓬乃果",
   "short":"ほのかちゃん",
-  "class":"とりの丘学園 1-3",
+  "class":"とりの丘学園 H1-3",
   "motif":"アルパカ",
   "desc":"好奇心旺盛で自信家。思ったことをはっきり言うタイプ。",
   "image":"images/characters/honoka.png"
@@ -378,7 +378,7 @@
   {
   "name":"自念 頼",
   "short":"たよりくん",
-  "class":"とりの丘学園 1-3",
+  "class":"とりの丘学園 H1-3",
   "motif":"ボロニーズ",
   "desc":"穏やかで人当たりが良い性格。周囲との関係を大切にする。",
   "image":"images/characters/tayori.png"
@@ -386,7 +386,7 @@
   {
   "name":"素麺 麦",
   "short":"むぎちゃん",
-  "class":"とりの丘学園 1-3",
+  "class":"とりの丘学園 H1-3",
   "motif":"ハムスター",
   "desc":"元気いっぱいでテンション高め。マイペースで自由な性格。",
   "image":"images/characters/mugi.png"
@@ -394,7 +394,7 @@
   {
   "name":"土市 結衣",
   "short":"ゆいちゃん",
-  "class":"とりの丘学園 1-3",
+  "class":"とりの丘学園 H1-3",
   "motif":"猫",
   "desc":"甘え上手で独特な雰囲気の少女。感情表現が豊か。",
   "image":"images/characters/yui.png"
@@ -402,7 +402,7 @@
   {
   "name":"二十八 碧",
   "short":"あおいちゃん",
-  "class":"とりの丘学園 1-3",
+  "class":"とりの丘学園 H1-3",
   "motif":"猫",
   "desc":"物静かで真面目な努力家。落ち着いた雰囲気を持つ。",
   "image":"images/characters/aoi.png"
@@ -410,7 +410,7 @@
   {
   "name":"直宿 夕日",
   "short":"ゆうひくん",
-  "class":"とりの丘学園 1-3",
+  "class":"とりの丘学園 H1-3",
   "motif":"夕方",
   "desc":"強気でノリの軽い性格。自由奔放でマイペース。",
   "image":"images/characters/yuhi.png"
@@ -418,7 +418,7 @@
   {
   "name":"天王寺 淳志",
   "short":"あつしくん",
-  "class":"とりの丘学園 1-3",
+  "class":"とりの丘学園 H1-3",
   "motif":"天王星人",
   "desc":"天然でのんびりした性格。前向きで自由な発想の持ち主。",
   "image":"images/characters/atsushi.png"
@@ -426,7 +426,7 @@
   {
   "name":"中井 空羽",
   "short":"くうちゃん",
-  "class":"とりの丘学園 1-3",
+  "class":"とりの丘学園 H1-3",
   "motif":"カラス",
   "desc":"クールで一人を好むタイプ。周囲と距離を取ることが多い。",
   "image":"images/characters/kuu.png"
@@ -434,7 +434,7 @@
   {
   "name":"永丘 紀臣",
   "short":"のりおみくん",
-  "class":"とりの丘学園 1-3",
+  "class":"とりの丘学園 H1-3",
   "motif":"クマ",
   "desc":"冷静で皮肉屋な性格。人との距離感を大切にするタイプ。",
   "image":"images/characters/noriomi.png"
@@ -442,7 +442,7 @@
   {
   "name":"仲村 愛梨",
   "short":"めりちゃん",
-  "class":"とりの丘学園 1-3",
+  "class":"とりの丘学園 H1-3",
   "motif":"うさぎ",
   "desc":"おっとり優しい性格。周囲に気を遣う穏やかな存在。",
   "image":"images/characters/meri.png"
@@ -450,7 +450,7 @@
   {
   "name":"美戸 創至",
   "short":"そうしくん",
-  "class":"とりの丘学園 1-3",
+  "class":"とりの丘学園 H1-3",
   "motif":"火星人",
   "desc":"発明好きで独自の世界観を持つ思考派タイプ。",
   "image":"images/characters/soshi.png"
@@ -458,7 +458,7 @@
   {
   "name":"桃山 小歌",
   "short":"こうたくん",
-  "class":"とりの丘学園 1-3",
+  "class":"とりの丘学園 H1-3",
   "motif":"アキクサインコ",
   "desc":"真面目で優等生気質。規律や正しさを重視する。",
   "image":"images/characters/kouta.png"
@@ -466,7 +466,7 @@
   {
   "name":"勇惣 岬咲",
   "short":"みさきちゃん",
-  "class":"とりの丘学園 1-3",
+  "class":"とりの丘学園 H1-3",
   "motif":"合鴨",
   "desc":"家族思いで優しい性格。不器用ながらも一生懸命。",
   "image":"images/characters/misaki.png"
@@ -474,7 +474,7 @@
   {
   "name":"代々木 渚",
   "short":"なぎさちゃん",
-  "class":"とりの丘学園 1-3",
+  "class":"とりの丘学園 H1-3",
   "motif":"クマ",
   "desc":"社交的で自由な考えを持つタイプ。自分らしさを大切にする。",
   "image":"images/characters/nagisa.png"
@@ -482,7 +482,7 @@
   {
   "name":"楽得 響",
   "short":"ひびきくん",
-  "class":"とりの丘学園 1-3",
+  "class":"とりの丘学園 H1-3",
   "motif":"ニワトリ",
   "desc":"声が大きく活発な性格。行動力があり勢いで動くタイプ。",
   "image":"images/characters/hibiki.png"
@@ -490,7 +490,7 @@
   {
   "name":"虻崎 捺江",
   "short":"なつえ先生",
-  "class":"とりの丘学園 1-3（担任）",
+  "class":"とりの丘学園 H1-3（担任）",
   "motif":"カワセミ",
   "desc":"穏やかで優しい教師。自然体でいることを大切にしている。",
   "image":"images/characters/natsue.png"
@@ -498,7 +498,7 @@
   {
   "name":"池里 雪彦",
   "short":"ゆきひこくん",
-  "class":"とりの丘学園 1-4",
+  "class":"とりの丘学園 H1-4",
   "motif":"プードル",
   "desc":"おっちょこちょいで何やっても上手くいかないタイプ。口が軽く、自由帳に謎の落書きをしている。『わち』という一人称を使う不思議な男子。",
   "image":"images/characters/yukihiko.png"
@@ -506,7 +506,7 @@
   {
   "name":"市川 宥暉",
   "short":"ゆうきくん",
-  "class":"とりの丘学園 1-4",
+  "class":"とりの丘学園 H1-4",
   "motif":"ソマリ猫",
   "desc":"占い師の男の子。明朗で親しみやすくノリが良いが、どこかうさんくさい雰囲気もある。占いを頼まれると喜ぶ。",
   "image":"images/characters/yuuki.png"
@@ -514,7 +514,7 @@
   {
   "name":"卯瀧 真綾",
   "short":"まあやちゃん",
-  "class":"とりの丘学園 1-4",
+  "class":"とりの丘学園 H1-4",
   "motif":"ルリチョウ",
   "desc":"上品なお嬢様気質のロマンチスト。辛い食べ物が好きでお出かけも大好き。過去の思い出を大切にする伊予弁女子。",
   "image":"images/characters/maaya.png"
@@ -522,7 +522,7 @@
   {
   "name":"槐原 潤",
   "short":"うるうちゃん",
-  "class":"とりの丘学園 1-4",
+  "class":"とりの丘学園 H1-4",
   "motif":"イワシャコ",
   "desc":"マイペースでオタク気質な働き者。手先が器用で優しいが、ぶっきらぼうに見られることもある。自分の価値を『役に立つか』で測る癖がある。",
   "image":"images/characters/uruu.png"
@@ -530,7 +530,7 @@
   {
   "name":"栢島 遥香",
   "short":"はるかちゃん",
-  "class":"とりの丘学園 1-4",
+  "class":"とりの丘学園 H1-4",
   "motif":"ウグイス",
   "desc":"明るくて友達想いな優しい子。好奇心旺盛で少し天然な一面もある。",
   "image":"images/characters/haruka.png"
@@ -538,7 +538,7 @@
   {
   "name":"狩生 彗威",
   "short":"すいくん",
-  "class":"とりの丘学園 1-4",
+  "class":"とりの丘学園 H1-4",
   "motif":"プレーリードッグ",
   "desc":"不良気質で勉強嫌いなアウトサイダー。仲間想いな一面もあり、自由奔放に振る舞う。制服はいつも着崩している。",
   "image":"images/characters/sui.png"
@@ -546,7 +546,7 @@
   {
   "name":"後等 綺乙",
   "short":"あやとくん",
-  "class":"とりの丘学園 1-4",
+  "class":"とりの丘学園 H1-4",
   "motif":"ミヌエット猫",
   "desc":"のんきでアクティブな農家の息子。勉強は苦手で落ち着きがなく、突拍子もない行動を取ることが多い。",
   "image":"images/characters/ayato.png"
@@ -554,7 +554,7 @@
   {
   "name":"櫻井 甫詞",
   "short":"みことちゃん",
-  "class":"とりの丘学園 1-4",
+  "class":"とりの丘学園 H1-4",
   "motif":"アザラシ",
   "desc":"陽気で前向きだが内面は冷酷な元暗殺者。常識もあり、気配を消すことが得意。",
   "image":"images/characters/mikoto.png"
@@ -562,7 +562,7 @@
   {
   "name":"土川 卓逸",
   "short":"たいちくん",
-  "class":"とりの丘学園 1-4",
+  "class":"とりの丘学園 H1-4",
   "motif":"ミノムシ",
   "desc":"目立つことや失敗を極端に恐れる几帳面な男子。変化が苦手で慎重派。寒がりで布団にくるまるのが好き。",
   "image":"images/characters/taichi.png"
@@ -570,7 +570,7 @@
   {
   "name":"손 로이",
   "short":"ろいくん",
-  "class":"とりの丘学園 1-4",
+  "class":"とりの丘学園 H1-4",
   "motif":"ハツカネズミ",
   "desc":"韓国から来たスパイ。冷徹で計画的な野心家だが、高所や暗所、水が苦手という弱点を持つ。",
   "image":"images/characters/roi.png"
@@ -578,7 +578,7 @@
   {
   "name":"寺田 山茶花",
   "short":"さやかちゃん",
-  "class":"とりの丘学園 1-4",
+  "class":"とりの丘学園 H1-4",
   "motif":"なめこ",
   "desc":"人付き合いが苦手な心優しい少女。絵を描くのが好きで、静かに自分の世界を大切にしている。",
   "image":"images/characters/sayaka.png"
@@ -586,7 +586,7 @@
   {
   "name":"二瓶 暁",
   "short":"あかつきくん",
-  "class":"とりの丘学園 1-4",
+  "class":"とりの丘学園 H1-4",
   "motif":"猫",
   "desc":"頑固で横柄な性格だが内心では劣等感を抱えている。双子の兄との比較に苦しんでいるピアノ男子。",
   "image":"images/characters/akatsuki.png"
@@ -594,7 +594,7 @@
   {
   "name":"暗 援也",
   "short":"えんやくん",
-  "class":"とりの丘学園 1-4",
+  "class":"とりの丘学園 H1-4",
   "motif":"人狼",
   "desc":"ヒーロー気取りのナルシスト。支配されることを嫌い、自分こそが世界を救う存在だと信じている。",
   "image":"images/characters/enya.png"
@@ -602,7 +602,7 @@
   {
   "name":"保福 真夜",
   "short":"まやちゃん",
-  "class":"とりの丘学園 1-4",
+  "class":"とりの丘学園 H1-4",
   "motif":"マメルリハ",
   "desc":"感情表現がはっきりしているマイペースな少女。物に強く執着し、捨てることができない性格。",
   "image":"images/characters/maya.png"
@@ -610,7 +610,7 @@
   {
   "name":"御厨 夜",
   "short":"よるちゃん",
-  "class":"とりの丘学園 1-4",
+  "class":"とりの丘学園 H1-4",
   "motif":"夜猫",
   "desc":"気分屋で夜行性な少女。引きこもりがちで遅刻常習犯。暑さにも寒さにも弱い。",
   "image":"images/characters/yoru.png"
@@ -618,7 +618,7 @@
   {
   "name":"満山 渉守",
   "short":"さだまくん",
-  "class":"とりの丘学園 1-4",
+  "class":"とりの丘学園 H1-4",
   "motif":"サモエド",
   "desc":"合理主義で防御力の高い男子。警戒心が強いが、仲間を守る優しさも持つ現実主義者。",
   "image":"images/characters/sadama.png"
@@ -626,7 +626,7 @@
   {
   "name":"源口 舵",
   "short":"かじくん",
-  "class":"とりの丘学園 1-4",
+  "class":"とりの丘学園 H1-4",
   "motif":"猫",
   "desc":"自由奔放で物作り好きな少年。突拍子もない行動をするが、自分の信念を曲げない強さを持つ。",
   "image":"images/characters/kaji.png"
@@ -634,7 +634,7 @@
   {
   "name":"恵 愛麗糸",
   "short":"ありすちゃん",
-  "class":"とりの丘学園 1-4",
+  "class":"とりの丘学園 H1-4",
   "motif":"猫",
   "desc":"現実に疲れた思考型少女。退屈を嫌い、他人の本質や構造を見抜く観察者タイプ。",
   "image":"images/characters/alice.png"
@@ -642,7 +642,7 @@
   {
   "name":"吉岡 俊樹",
   "short":"しゅんきくん",
-  "class":"とりの丘学園 1-4",
+  "class":"とりの丘学園 H1-4",
   "motif":"フクロウ",
   "desc":"ミステリアスで怠け者な少年。面倒ごとを嫌い、楽をすることを最優先にしている。",
   "image":"images/characters/shunki.png"
@@ -650,7 +650,7 @@
   {
   "name":"野井 零",
   "short":"ぜろ先生",
-  "class":"とりの丘学園 1-4",
+  "class":"とりの丘学園 H1-4",
   "motif":"ヒノキ",
   "desc":"論理的で冷静な数学教師。感情を抑え込み、思考で全てを処理しようとする知的な人物。",
   "image":"images/characters/zero.png"
@@ -658,7 +658,7 @@
   {
   "name":"相原 美里耶",
   "short":"みりやちゃん",
-  "class":"とりの丘学園 2-1",
+  "class":"とりの丘学園 H2-1",
   "motif":"番犬",
   "desc":"動じない性格で忠誠的。大抵のことには惑わされない。レストランでバイトしている。",
   "image":"images/characters/miriya.png"
@@ -666,7 +666,7 @@
   {
   "name":"阿見 一人",
   "short":"ひとりくん",
-  "class":"とりの丘学園 2-1",
+  "class":"とりの丘学園 H2-1",
   "motif":"コウモリ",
   "desc":"厨二病の俺様系。左腕が疼くとか言い出す極端な性格。",
   "image":"images/characters/hitori.png"
@@ -674,7 +674,7 @@
   {
   "name":"海老ケ迫 決意",
   "short":"けついくん",
-  "class":"とりの丘学園 2-1",
+  "class":"とりの丘学園 H2-1",
   "motif":"エビ",
   "desc":"面倒見がよく大人っぽい広島男子。水兵部部長兼船長。",
   "image":"images/characters/ketsui.png"
@@ -682,7 +682,7 @@
   {
   "name":"岡崎 愛芽里",
   "short":"あめりちゃん",
-  "class":"とりの丘学園 2-1",
+  "class":"とりの丘学園 H2-1",
   "motif":"うさぎ",
   "desc":"ゆめかわ好きで引っ込み思案。世界を遠くから観測して静かに離脱を選ぶタイプ。",
   "image":"images/characters/ameri.png"
@@ -690,7 +690,7 @@
   {
   "name":"神崎 奨午",
   "short":"しょうごくん",
-  "class":"とりの丘学園 2-1",
+  "class":"とりの丘学園 H2-1",
   "motif":"ボタンインコ",
   "desc":"真面目で爽やか。場の一体感を作るのが得意な祝祭系男子。",
   "image":"images/characters/shogo.png"
@@ -698,7 +698,7 @@
   {
   "name":"橘定 由子",
   "short":"ゆこちゃん",
-  "class":"とりの丘学園 2-1",
+  "class":"とりの丘学園 H2-1",
   "motif":"キャバリア",
   "desc":"思慮深いセレブ。周囲の目を気にしすぎる内省型。",
   "image":"images/characters/yuko.png"
@@ -706,7 +706,7 @@
   {
   "name":"霧生 曙",
   "short":"あきらくん",
-  "class":"とりの丘学園 2-1",
+  "class":"とりの丘学園 H2-1",
   "motif":"牧羊犬",
   "desc":"頑固一徹な天才タイプ。成果や勝敗にこだわる負けず嫌い。",
   "image":"images/characters/akira.png"
@@ -714,7 +714,7 @@
   {
   "name":"久堂 朋己",
   "short":"ともきくん",
-  "class":"とりの丘学園 2-1",
+  "class":"とりの丘学園 H2-1",
   "motif":"犬",
   "desc":"リーダー気質でこびない性格。成果主義で世界の仕組みに期待するタイプ。",
   "image":"images/characters/tomoki.png"
@@ -722,7 +722,7 @@
   {
   "name":"君国 航",
   "short":"わたるくん",
-  "class":"とりの丘学園 2-1",
+  "class":"とりの丘学園 H2-1",
   "motif":"オオグソクムシ",
   "desc":"厳格で慎重な完璧主義者。行動原理をルール化するタイプ。",
   "image":"images/characters/wataru.png"
@@ -730,7 +730,7 @@
   {
   "name":"更級 柘榴",
   "short":"ざくろくん",
-  "class":"とりの丘学園 2-1",
+  "class":"とりの丘学園 H2-1",
   "motif":"もやし",
   "desc":"存在感が薄いが分析的。未来の最悪ケースを常に検証している。",
   "image":"images/characters/zakuro.png"
@@ -738,7 +738,7 @@
   {
   "name":"酒々井 小鳥",
   "short":"ことりくん",
-  "class":"とりの丘学園 2-1",
+  "class":"とりの丘学園 H2-1",
   "motif":"カナリア",
   "desc":"享楽的で楽な方に流れがち。諦め癖あり。",
   "image":"images/characters/kotori.png"
@@ -746,7 +746,7 @@
   {
   "name":"鈴木 幹菜",
   "short":"みきなちゃん",
-  "class":"とりの丘学園 2-1",
+  "class":"とりの丘学園 H2-1",
   "motif":"猫",
   "desc":"まきしの双子の妹。優しいが感情にブレーキをかけがち。",
   "image":"images/characters/mikina.png"
@@ -754,7 +754,7 @@
   {
   "name":"寸土 壱芹",
   "short":"いせりくん",
-  "class":"とりの丘学園 2-1",
+  "class":"とりの丘学園 H2-1",
   "motif":"猫",
   "desc":"とても小柄で竹を割ったような性格。明るくストレート。",
   "image":"images/characters/iseri.png"
@@ -762,7 +762,7 @@
   {
   "name":"猫谷 茉莉亜",
   "short":"まりあちゃん",
-  "class":"とりの丘学園 2-1",
+  "class":"とりの丘学園 H2-1",
   "motif":"猫",
   "desc":"優しく穏やかな修道女。神や規範に強く依存するタイプ。",
   "image":"images/characters/maria.png"
@@ -770,7 +770,7 @@
   {
   "name":"舟濤 汀",
   "short":"みぎわちゃん",
-  "class":"とりの丘学園 2-1",
+  "class":"とりの丘学園 H2-1",
   "motif":"アジサシ",
   "desc":"気が利くしっかり者。水兵部副部長でけついに対抗心あり。",
   "image":"images/characters/migiwa.png"
@@ -778,7 +778,7 @@
   {
   "name":"水上 亮吾",
   "short":"りょうごくん",
-  "class":"とりの丘学園 2-1",
+  "class":"とりの丘学園 H2-1",
   "motif":"青虫",
   "desc":"機械いじりが得意な知識人。水兵部の技術担当。",
   "image":"images/characters/ryogo.png"
@@ -786,7 +786,7 @@
   {
   "name":"恵 時生",
   "short":"じはちゃん",
-  "class":"とりの丘学園 2-1",
+  "class":"とりの丘学園 H2-1",
   "motif":"猫",
   "desc":"気分屋でわがままな自由人。跳躍した比喩を使うタイプ。",
   "image":"images/characters/jiha.png"
@@ -794,7 +794,7 @@
   {
   "name":"用達 怜",
   "short":"れいちゃん",
-  "class":"とりの丘学園 2-1",
+  "class":"とりの丘学園 H2-1",
   "motif":"カラス",
   "desc":"完璧な優等生。頭脳明晰で性格も良いがケチャップ愛は強烈。",
   "image":"images/characters/rei.png"
@@ -802,7 +802,7 @@
   {
   "name":"薮崎 芽衣",
   "short":"めい先生",
-  "class":"とりの丘学園 2-1（担任）",
+  "class":"とりの丘学園 H2-1（担任）",
   "motif":"猫",
   "desc":"天然ドジな先生。感受性と価値観に忠実な社会科教師。",
   "image":"images/characters/mei.png"
@@ -810,7 +810,7 @@
   {
     "name": "藍河 八重",
     "short": "やえちゃん",
-    "class": "とりの丘学園 2-2",
+    "class": "とりの丘学園 H2-2",
     "motif": "ハリネズミ",
     "desc": "無口で朴念仁。“私とは何で構成されているか”を考え続けるタイプ。他者の視線で自分が変わることを理解しているが迎合しない。感じる前に考えてしまう。",
     "image": "images/characters/yae.png"
@@ -818,7 +818,7 @@
   {
     "name": "味野 灯莉",
     "short": "あかりちゃん",
-    "class": "とりの丘学園 2-2",
+    "class": "とりの丘学園 H2-2",
     "motif": "アライグマ",
     "desc": "明朗快活で前向き。甘えん坊で無防備。ダンスとファッションが好き。ひかりの幼馴染。",
     "image": "images/characters/akari.png"
@@ -826,7 +826,7 @@
   {
     "name": "鼬川 絵丹師",
     "short": "えにしくん",
-    "class": "とりの丘学園 2-2",
+    "class": "とりの丘学園 H2-2",
     "motif": "いたち",
     "desc": "職人気質でクール。放課後はアトリエで絵を描く。目的よりも“描くことそのもの”が好き。",
     "image": "images/characters/enishi.png"
@@ -834,7 +834,7 @@
   {
     "name": "芋縄 的倭",
     "short": "まといくん",
-    "class": "とりの丘学園 2-2",
+    "class": "とりの丘学園 H2-2",
     "motif": "鷹",
     "desc": "芯の強い一匹狼。身体感覚が鋭く即物的。牧場育ちで投げ縄が得意。",
     "image": "images/characters/matoi.png"
@@ -842,7 +842,7 @@
   {
     "name": "忍足 鈴",
     "short": "すずちゃん",
-    "class": "とりの丘学園 2-2",
+    "class": "とりの丘学園 H2-2",
     "motif": "猫",
     "desc": "忍耐強く規律重視。厳しいしつけの中で育ち、“なぜ自分だけ”という違和感を抱えている。",
     "image": "images/characters/suzu.png"
@@ -850,7 +850,7 @@
   {
     "name": "小犬丸 愛凛",
     "short": "ありんちゃん",
-    "class": "とりの丘学園 2-2",
+    "class": "とりの丘学園 H2-2",
     "motif": "犬",
     "desc": "誰かの役に立つことが嬉しい優しい子。努力家で少し無理しがち。ローファイ音楽が好き。みりんの幼馴染。",
     "image": "images/characters/arin.png"
@@ -858,7 +858,7 @@
   {
     "name": "霜降 柔",
     "short": "やさしくん",
-    "class": "とりの丘学園 2-2",
+    "class": "とりの丘学園 H2-2",
     "motif": "消しゴム",
     "desc": "体操部で体が柔らかい。名前の通り物腰も柔らかい。",
     "image": "images/characters/yasashi.png"
@@ -866,7 +866,7 @@
   {
     "name": "春潮楼 塁",
     "short": "るいくん",
-    "class": "とりの丘学園 2-2",
+    "class": "とりの丘学園 H2-2",
     "motif": "キジ",
     "desc": "気が利くがズレてる空回りタイプ。料理が苦手。姉はチーズ店勤務。",
     "image": "images/characters/rui.png"
@@ -874,7 +874,7 @@
   {
     "name": "鈴木 槙士",
     "short": "まきしくん",
-    "class": "とりの丘学園 2-2",
+    "class": "とりの丘学園 H2-2",
     "motif": "猫",
     "desc": "天真爛漫でマヨネーズを愛する少年。テンション高めで明るい。",
     "image": "images/characters/makishi.png"
@@ -882,7 +882,7 @@
   {
     "name": "仲馬 穣",
     "short": "しげくん",
-    "class": "とりの丘学園 2-2",
+    "class": "とりの丘学園 H2-2",
     "motif": "ネズミ",
     "desc": "照れ屋で繊細。人前で食べるのが苦手。迷惑をかけたくないと考えがち。博多弁。",
     "image": "images/characters/shige.png"
@@ -890,7 +890,7 @@
   {
     "name": "出逢 箱藻",
     "short": "はこもくん",
-    "class": "とりの丘学園 2-2",
+    "class": "とりの丘学園 H2-2",
     "motif": "箱",
     "desc": "虚ろで俯瞰的。感情や自我が曖昧。何かを考えても結論に辿り着かないタイプ。",
     "image": "images/characters/hakomo.png"
@@ -898,7 +898,7 @@
   {
     "name": "灰住 鎮花",
     "short": "しずかちゃん",
-    "class": "とりの丘学園 2-2",
+    "class": "とりの丘学園 H2-2",
     "motif": "ハイイロテントウ",
     "desc": "消極的な努力家。完璧主義で間違いを恐れる。家庭環境により常に評価に縛られている。",
     "image": "images/characters/shizuka.png"
@@ -906,7 +906,7 @@
   {
     "name": "萩枝 美琳",
     "short": "みりんてゃ",
-    "class": "とりの丘学園 2-2",
+    "class": "とりの丘学園 H2-2",
     "motif": "黒猫",
     "desc": "あざとくて可愛いもの大好きな地雷系女子。承認欲求強めで感情豊か。",
     "image": "images/characters/mirin.png"
@@ -914,7 +914,7 @@
   {
     "name": "昆沙丸 柚子",
     "short": "ゆずちゃん",
-    "class": "とりの丘学園 2-2",
+    "class": "とりの丘学園 H2-2",
     "motif": "招き猫",
     "desc": "神社に住む無口な少女。幸運体質。軽々しく話さない掟を守っている。",
     "image": "images/characters/yuzu.png"
@@ -922,7 +922,7 @@
   {
     "name": "細物 詩温",
     "short": "しのんくん",
-    "class": "とりの丘学園 2-2",
+    "class": "とりの丘学園 H2-2",
     "motif": "鉛筆",
     "desc": "泣き虫で繊細。責任感が強く他人優先。学校は休みがち。",
     "image": "images/characters/shinon.png"
@@ -930,7 +930,7 @@
   {
     "name": "法華 光里",
     "short": "ひかりちゃん",
-    "class": "とりの丘学園 2-2",
+    "class": "とりの丘学園 H2-2",
     "motif": "レッサーパンダ",
     "desc": "警戒心が強く嘘を見抜くのが得意。大人ぶっている現実主義者。",
     "image": "images/characters/hikari.png"
@@ -938,7 +938,7 @@
   {
     "name": "柞原 梢",
     "short": "こずえちゃん",
-    "class": "とりの丘学園 2-2",
+    "class": "とりの丘学園 H2-2",
     "motif": "ムササビ",
     "desc": "はんなりクールな和風美人。静かな芯の強さを持つ。",
     "image": "images/characters/kozue.png"
@@ -946,7 +946,7 @@
   {
     "name": "雪村 大和",
     "short": "やまとくん",
-    "class": "とりの丘学園 2-2",
+    "class": "とりの丘学園 H2-2",
     "motif": "狐",
     "desc": "冷静で柔軟。目的に向かって最適行動を取るタイプ。かき氷好き。",
     "image": "images/characters/yamato.png"
@@ -954,7 +954,7 @@
   {
     "name": "妻鹿 克己",
     "short": "かつみ先生",
-    "class": "とりの丘学園 2-2（担任）",
+    "class": "とりの丘学園 H2-2（担任）",
     "motif": "犬",
     "desc": "熱血体育教師。情熱的だが押し付けがち。",
     "image": "images/characters/katsumi.png"
@@ -962,7 +962,7 @@
   {
   "name":"栄城 縫",
   "short":"ご褒美",
-  "class":"とりの丘学園 3-1",
+  "class":"とりの丘学園 H3-1",
   "motif":"豚",
   "desc":"太っているオタク男子。ドMで罵倒すらご褒美と感じる変人で、ツインテールの少女をわしゃわしゃしたい願望を持つ。",
   "image":"images/characters/nui.png"
@@ -970,7 +970,7 @@
   {
   "name":"柿窪 未唯樺",
   "short":"みいかちゃん",
-  "class":"とりの丘学園 3-1",
+  "class":"とりの丘学園 H3-1",
   "motif":"馬",
   "desc":"明るく勢い重視の行動派女子。スリル好きで競争心が強く、考えるより先に走るタイプ。足がとても速い。",
   "image":"images/characters/miika.png"
@@ -978,7 +978,7 @@
   {
   "name":"軽墓 稔也",
   "short":"じんやくん",
-  "class":"とりの丘学園 3-1",
+  "class":"とりの丘学園 H3-1",
   "motif":"シマウマ",
   "desc":"優柔不断で曖昧な思考のゲーム実況者。毒舌で辛口な一面もある。バナナ好きで実況名はNANA。",
   "image":"images/characters/jinya.png"
@@ -986,7 +986,7 @@
   {
   "name":"慶祥 小梅",
   "short":"こうめちゃん",
-  "class":"とりの丘学園 3-1",
+  "class":"とりの丘学園 H3-1",
   "motif":"ルリビタキ",
   "desc":"巫女でありながらワイルドな現実主義者。物事を成立条件で考え、合理的に行動する。",
   "image":"images/characters/koume.png"
@@ -994,7 +994,7 @@
   {
   "name":"小谷 服美",
   "short":"ふくみちゃん",
-  "class":"とりの丘学園 3-1",
+  "class":"とりの丘学園 H3-1",
   "motif":"ペンギン",
   "desc":"懐疑的で偏屈な女子。確実な事実からしか自己を肯定しない論理思考タイプ。他人任せな一面もある。",
   "image":"images/characters/fukumi.png"
@@ -1002,7 +1002,7 @@
   {
   "name":"筋永 明日雅",
   "short":"えいじ",
-  "class":"とりの丘学園 3-1",
+  "class":"とりの丘学園 H3-1",
   "motif":"シャチ",
   "desc":"筋肉を愛するムキムキ男子。テンションが高くパワフルで、プロテインをこよなく愛する。",
   "image":"images/characters/eiji.png"
@@ -1010,7 +1010,7 @@
   {
   "name":"虹林 佳穂子",
   "short":"かほこちゃん",
-  "class":"とりの丘学園 3-1",
+  "class":"とりの丘学園 H3-1",
   "motif":"水牛",
   "desc":"論理と整合性を重視するメガネ女子。合理的思考で物事を判断する冷静なタイプ。",
   "image":"images/characters/kahoko.png"
@@ -1018,7 +1018,7 @@
   {
   "name":"松気之宮 宇宙",
   "short":"うちゅうくん",
-  "class":"とりの丘学園 3-1",
+  "class":"とりの丘学園 H3-1",
   "motif":"猫",
   "desc":"怠惰でマイペースな男子。サングラスがトレードマークで、宇宙を調べるのが趣味。",
   "image":"images/characters/uchu.png"
@@ -1026,7 +1026,7 @@
   {
   "name":"水洗 純",
   "short":"じゅんくん",
-  "class":"とりの丘学園 3-1",
+  "class":"とりの丘学園 H3-1",
   "motif":"コマドリ",
   "desc":"極度の潔癖症で完璧主義な男子。常に除菌グッズを持ち歩き、清潔さにこだわる。",
   "image":"images/characters/jun.png"
@@ -1034,7 +1034,7 @@
   {
   "name":"夢咲 美環",
   "short":"みわちゃん",
-  "class":"とりの丘学園 3-1",
+  "class":"とりの丘学園 H3-1",
   "motif":"トナカイ",
   "desc":"人当たりの良い優しい女子。ラッピングが得意で、人を喜ばせることが好き。",
   "image":"images/characters/miwa.png"
@@ -1042,7 +1042,7 @@
   {
   "name":"立助 凜",
   "short":"りんちゃん",
-  "class":"とりの丘学園 3-1",
+  "class":"とりの丘学園 H3-1",
   "motif":"ヤギ",
   "desc":"優しく共感力の高い少女。自分の不安を見せず、周囲をそっと支える癒しの存在。",
   "image":"images/characters/rin.png"
@@ -1050,7 +1050,7 @@
   {
   "name":"綿森 茉歩",
   "short":"まほちゃん",
-  "class":"とりの丘学園 3-1",
+  "class":"とりの丘学園 H3-1",
   "motif":"羊",
   "desc":"マイペースで感性重視の少女。コスプレが趣味で、自分の世界を大切にしている。",
   "image":"images/characters/maho.png"
@@ -1059,7 +1059,7 @@
   {
   "name":"稲地 栞",
   "short":"しおりちゃん",
-  "class":"とりの丘学園 3-2",
+  "class":"とりの丘学園 H3-2",
   "motif":"猫",
   "desc":"面倒見がよくお節介な女子。人の世話を焼くことが好きで優しい性格。",
   "image":"images/characters/shiori.png"
@@ -1067,7 +1067,7 @@
   {
   "name":"笑原 瞳",
   "short":"ひとみちゃん",
-  "class":"とりの丘学園 3-2",
+  "class":"とりの丘学園 H3-2",
   "motif":"犬",
   "desc":"感情を直接語らず、比喩で世界を表現する静かな少女。内面で思考を完結させるタイプ。",
   "image":"images/characters/hitomi.png"
@@ -1075,7 +1075,7 @@
   {
   "name":"一適 土呂",
   "short":"とろくん",
-  "class":"とりの丘学園 3-2",
+  "class":"とりの丘学園 H3-2",
   "motif":"蜘蛛",
   "desc":"ぶっきらぼうだが器用な男子。現実と身体感覚を重視する自由人。",
   "image":"images/characters/toro.png"
@@ -1083,7 +1083,7 @@
   {
   "name":"草摘 菫",
   "short":"すみれちゃん",
-  "class":"とりの丘学園 3-2",
+  "class":"とりの丘学園 H3-2",
   "motif":"犬",
   "desc":"おっとりして純情な少女。優しいが世の中の汚さに疲れている。",
   "image":"images/characters/sumire.png"
@@ -1091,7 +1091,7 @@
   {
   "name":"並河 麗",
   "short":"うららちゃん",
-  "class":"とりの丘学園 3-2",
+  "class":"とりの丘学園 H3-2",
   "motif":"猫",
   "desc":"強気で短気なツンギレ女子。プライドが高く、ストレートな物言いをする。",
   "image":"images/characters/urara.png"
@@ -1099,7 +1099,7 @@
   {
   "name":"畑奈 麻由子",
   "short":"まゆこちゃん",
-  "class":"とりの丘学園 3-2",
+  "class":"とりの丘学園 H3-2",
   "motif":"猫",
   "desc":"のんきでおバカな女子。ダンスが得意で、どこか他人事のように物事を語る。",
   "image":"images/characters/mayuko.png"
@@ -1107,7 +1107,7 @@
   {
   "name":"蜂ケ崎 敢惟子",
   "short":"あいこちゃん",
-  "class":"とりの丘学園 3-2",
+  "class":"とりの丘学園 H3-2",
   "motif":"猫",
   "desc":"正義感が強く戦略的な女子。現実的に物事を判断し、結果を重視する。",
   "image":"images/characters/aiko.png"
@@ -1115,7 +1115,7 @@
   {
   "name":"深名 弥生",
   "short":"やよいちゃん",
-  "class":"とりの丘学園 3-2",
+  "class":"とりの丘学園 H3-2",
   "motif":"コアラ",
   "desc":"職人肌で物作りが得意な女子。静かに作業へ没頭するタイプ。",
   "image":"images/characters/yayoi.png"
@@ -1123,7 +1123,7 @@
   {
   "name":"普賢 総都喜",
   "short":"さつきくん",
-  "class":"とりの丘学園 3-2",
+  "class":"とりの丘学園 H3-2",
   "motif":"フクロウ",
   "desc":"生徒会長で知識豊富な男子。慎重で安定志向、危険を避ける思考型。",
   "image":"images/characters/satsuki.png"
@@ -1131,7 +1131,7 @@
   {
   "name":"扶蘇 補知",
   "short":"ほともくん",
-  "class":"とりの丘学園 3-2",
+  "class":"とりの丘学園 H3-2",
   "motif":"芋虫",
   "desc":"マイペースでのんびりした男子。散歩や漬物作りが好きな落ち着いた性格。",
   "image":"images/characters/hotomo.png"
@@ -1139,7 +1139,7 @@
   {
   "name":"松気之宮 星",
   "short":"ほしくん",
-  "class":"とりの丘学園 3-2",
+  "class":"とりの丘学園 H3-2",
   "motif":"猫",
   "desc":"人思いで計画的な男子。天体観測が好きで優しい性格の兄。",
   "image":"images/characters/hoshi.png"
@@ -1147,15 +1147,415 @@
   {
   "name":"村瀬 奈美",
   "short":"なみちゃん",
-  "class":"とりの丘学園 3-2",
+  "class":"とりの丘学園 H3-2",
   "motif":"天使",
   "desc":"人間観察が好きないたずら女子。世界を面白がりながら真実を探るシニカルな思考の持ち主。",
   "image":"images/characters/nami.png"
   },
   {
+    "name": "蟻乃 茜音",
+    "short": "あかね",
+    "class": "とりの丘学園 M3-1",
+    "motif": "クマ",
+    "desc": "清廉なアイドルを演じているが、実は人間らしい外道さも持ち合わせているクーデレ。昔体が弱かった反動か、何よりもお金を大切にしている。心を許すとデレるが、たまに口も悪くなる。",
+    "image": "images/characters/akane.png"
+  },
+  {
+    "name": "磯野 早梨子",
+    "short": "さりこ",
+    "class": "とりの丘学園 M3-1",
+    "motif": "カエル",
+    "desc": "現実的な思考の持ち主。文字や音に色を感じる『共感覚』を持っており、それを周りに理解してもらえず孤独を感じていた過去がある。",
+    "image": "images/characters/sariko.png"
+  },
+  {
+    "name": "入間 仁",
+    "short": "きね",
+    "class": "とりの丘学園 M3-1",
+    "motif": "ひよこ",
+    "desc": "流行には乗らないクールな性格。名前はアンズの種子の『さね』が由来だが、名付け親が『さ』と『き』を見間違えたため『きね』になったという不憫な過去を持つ。",
+    "image": "images/characters/kine.png"
+  },
+  {
+    "name": "胡 麻冬",
+    "short": "まふゆ",
+    "class": "とりの丘学園 M3-1",
+    "motif": "ハチ",
+    "desc": "普段は温順で働き者。正しさの大切さを重んじるが、自分の悩みは他人に話せず抱え込みがち。実はほんの少し腹黒い一面も隠し持っている。",
+    "image": "images/characters/mafuyu.png"
+  },
+  {
+    "name": "男知合 音穏",
+    "short": "ねおん",
+    "class": "とりの丘学園 M3-1",
+    "motif": "シラコバト",
+    "desc": "病弱で内気な泣き虫の男の子。自尊心は低めだが、周囲への気遣いを忘れない礼儀正しさを持つ。愛奈の双子の弟であり、複雑な家庭の事情を経てこの学園で奇跡の再会を果たした。",
+    "image": "images/characters/neon.png"
+  },
+  {
+    "name": "櫂作 蛍",
+    "short": "ほたる",
+    "class": "とりの丘学園 M3-1",
+    "motif": "猫",
+    "desc": "飄々としていてイタズラ好きな僕っ子。常に持ち歩いている猫のぬいぐるみ『いたる』は彼女のイマジナリーフレンドであり、得意の腹話術を使って長崎弁で喋らせる。",
+    "image": "images/characters/hotaru.png"
+  },
+  {
+    "name": "快勝院 充華",
+    "short": "みつか",
+    "class": "とりの丘学園 M3-1",
+    "motif": "ミント",
+    "desc": "明るく強気で闘争心も強めだが、友達をとても大切にするタイプ。空手を習っていたため格闘技に自信がある。",
+    "image": "images/characters/mitsuka.png"
+  },
+  {
+    "name": "小日向 真昼",
+    "short": "まひる",
+    "class": "とりの丘学園 M3-1",
+    "motif": "犬・昼",
+    "desc": "怠惰を極める無気力男子。昼寝と『ムダ』をこよなく愛する。思考しすぎた結果行動を停止する諦念型で、新聞部に所属しながらもいつも眠そうにしている。静岡弁で話す。",
+    "image": "images/characters/mahiru.png"
+  },
+  {
+    "name": "狛林 紅葉",
+    "short": "もみじ",
+    "class": "とりの丘学園 M3-1",
+    "motif": "柴犬",
+    "desc": "独特のセンスを持つ射撃部員。基本は楽観的だが、毒舌で喧嘩っ早いマイルドヤンキー気質。長崎弁で話す。",
+    "image": "images/characters/momiji.png"
+  },
+  {
+    "name": "品衛 球太",
+    "short": "きゅうた",
+    "class": "とりの丘学園 M3-1",
+    "motif": "犬",
+    "desc": "極度の恥ずかしがり屋で声が小さい新聞部員。前髪で顔を隠しているのは『見なければ、感じなくて済む』と外界を遮断して自分を守るため。",
+    "image": "images/characters/kyuta.png"
+  },
+  {
+    "name": "清多 努",
+    "short": "つとむ",
+    "class": "とりの丘学園 M3-1",
+    "motif": "エビ",
+    "desc": "自信満々で楽しいこと最優先の自由人。カッコつけすぎてズレており、奇抜な制服の着こなしから『残念なイケメン』と呼ばれがちだが、周りの目は全く気にしない。伊予弁で話す。",
+    "image": "images/characters/tsutomu.png"
+  },
+  {
+    "name": "立秋 里奈",
+    "short": "りな",
+    "class": "とりの丘学園 M3-1",
+    "motif": "サル",
+    "desc": "サバサバした姉御肌で、面倒見が良いお人好し。祖母の介護を経験しており、人との思い出をとても大切にしている。",
+    "image": "images/characters/rina.png"
+  },
+  {
+    "name": "時重 朝音",
+    "short": "あさね",
+    "class": "とりの丘学園 M3-1",
+    "motif": "朝",
+    "desc": "気が強く生意気な小悪魔系女子。意志が強く、相手を挑発して煽るのが好き。人を小馬鹿にした態度を取りがちで、よく『ざぁこ』とからかってくる。",
+    "image": "images/characters/asane.png"
+  },
+  {
+    "name": "百々海 要",
+    "short": "かなめ",
+    "class": "とりの丘学園 M3-1",
+    "motif": "山椒魚",
+    "desc": "クールに見えて実は豆腐メンタルの持ち主。過去の出来事や思い出を『忘れることができない』繊細な優しさを持つ。かるめとは旧知の仲。",
+    "image": "images/characters/kaname.png"
+  },
+  {
+    "name": "渡真利 咲苗",
+    "short": "さなえ",
+    "class": "とりの丘学園 M3-1",
+    "motif": "ホウセンカ",
+    "desc": "才色兼備のお嬢様だが、人に触れられるのを極端に嫌う一匹狼。冷たい態度をとる捻くれ者だが、みつかとは幼稚園時代からの縁がある。",
+    "image": "images/characters/sanae.png"
+  },
+  {
+    "name": "羽我 兎",
+    "short": "うさぎ",
+    "class": "とりの丘学園 M3-1",
+    "motif": "うさぎ",
+    "desc": "世話焼きでおせっかいな自信家。身長が低いことを気にしており、子供扱いされると怒る。手芸や菓子作りが得意で、人からもらった恩はずっと忘れない義理堅い一面も。",
+    "image": "images/characters/usagi.png"
+  },
+  {
+    "name": "橋方 新",
+    "short": "あらた",
+    "class": "とりの丘学園 M3-1",
+    "motif": "ひよこ",
+    "desc": "明るく軽薄で、都合の悪いことは『さぁ？』とはぐらかす。派手好きの目立ちたがり屋だが、服の仕立てが得意という繊細な特技を持つ。三河弁で話す。",
+    "image": "images/characters/arata.png"
+  },
+  {
+    "name": "巴陵 柊幣",
+    "short": "しゅうへい",
+    "class": "とりの丘学園 M3-1",
+    "motif": "ダルマ",
+    "desc": "いつも笑顔で、自分のことより他人の気持ちを優先する心優しい性格。他人に影響されやすく、置いていかれるのが大の苦手。絵は絶望的に下手。",
+    "image": "images/characters/shuhei.png"
+  },
+  {
+    "name": "坂藤 基秋",
+    "short": "もとあき",
+    "class": "とりの丘学園 M3-1",
+    "motif": "アオバト",
+    "desc": "平凡な日常を嫌い、面白さを追求する天真爛漫なドSの天才児。基本は奔放に見えるが、実は細かいことによく気がつく。飛騨弁で話す。",
+    "image": "images/characters/motoaki.png"
+  },
+  {
+    "name": "旭爪 円香",
+    "short": "まどっち",
+    "class": "とりの丘学園 M3-1",
+    "motif": "ハムスター",
+    "desc": "気性が荒く、常識をぶち壊すのが大好きなトラブルメーカー。変な音や大きな声を出すのが好きで、周りをよく振り回す。",
+    "image": "images/characters/madoka.png"
+  },
+  {
+    "name": "味噌野 貴哉",
+    "short": "たかや",
+    "class": "とりの丘学園 M3-1",
+    "motif": "猫（ロシアンブルー）",
+    "desc": "フランクで豪快だが、少し幼稚なところがある。極度の方向音痴で、いつもノリと勢いだけで行動するタイプ。信州弁で話す。",
+    "image": "images/characters/takaya.png"
+  },
+  {
+    "name": "明嵐 花流愛",
+    "short": "かるめ",
+    "class": "とりの丘学園 M3-1",
+    "motif": "犬（日本スピッツ）",
+    "desc": "冷静でミステリアスな男の娘。人間観察に長け、比喩を用いて物事の本質を的確に突く。規範の悪用を憎み、無意味な逸脱は避ける合理主義者。男の娘スタイルは母親の趣味で、本人に機能的な執着はないが、踏み込んでくる理不尽には屈しない強さを持つ。",
+    "image": "images/characters/karume.png"
+  },
+  {
+    "name": "恵 澪",
+    "short": "みお",
+    "class": "とりの丘学園 M3-1",
+    "motif": "猫",
+    "desc": "健気で素直な文武両道の優等生。上に2人の姉、下に1人の妹がいるためしっかり者で機転が利き、みんなから頼りにされている。阿波弁で話す。",
+    "image": "images/characters/mio.png"
+  },
+  {
+    "name": "女良 愛奈",
+    "short": "あいな",
+    "class": "とりの丘学園 M3-1",
+    "motif": "シラコバト",
+    "desc": "勝気で負けず嫌いな努力家。目的優先で、回りくどいことを嫌いストレートに感情を表現する。音穏の双子の姉であり、複雑な事情で離れ離れになっていたが学園で再会した。",
+    "image": "images/characters/aina.png"
+  },
+  {
+    "name": "少林 思葉",
+    "short": "ことは",
+    "class": "とりの丘学園 M3-1",
+    "motif": "狛犬",
+    "desc": "明るく天然ボケな無自覚トラブルメーカー。しっかり者の双子の妹と比べられがちだが、本人は全く気にしていないマイペースなアホの子。",
+    "image": "images/characters/kotoha.png"
+  },
+  {
+    "name": "青黄 大輝",
+    "short": "だいき",
+    "class": "とりの丘学園 M3-2",
+    "motif": "ゴリラ",
+    "desc": "ガタイが良くコワモテなため怖がられがちだが、基本は穏やかな性格。負けず嫌いで努力家。思ったことは正直に言うストレートさがあり、実はおしゃべりでイタズラ好きな一面も持っている。",
+    "image": "images/characters/daiki.png"
+  },
+  {
+    "name": "天埜 佐",
+    "short": "たすく",
+    "class": "とりの丘学園 M3-2",
+    "motif": "ライオン",
+    "desc": "百獣の王たる圧倒的な威圧感を放つが、実は意外とビビリ。高望みで強欲、かつ短気なところもあるが、根は面倒見の良い親分肌。",
+    "image": "images/characters/tasuku.png"
+  },
+  {
+    "name": "猪植 陽樹",
+    "short": "ひさき",
+    "class": "とりの丘学園 M3-2",
+    "motif": "イノシシ",
+    "desc": "インドア派で内向的だが、純粋な平和主義者。人の悪口を言うのも聞くのも苦手。意外によく親父ギャグを言っては、その場の空気を凍らせている。",
+    "image": "images/characters/hisaki.png"
+  },
+  {
+    "name": "岡田 陽斗",
+    "short": "はると",
+    "class": "とりの丘学園 M3-2",
+    "motif": "猫",
+    "desc": "根暗でおとなしく、精神的に少し脆いところがある。感情を揺さぶってくる相手や、期待を押し付けられることを極端に避ける。緊張するとつい本音をこぼしてしまう癖があり、剣道で心身を鍛えている。",
+    "image": "images/characters/haruto.png"
+  },
+  {
+    "name": "歩行田 地図",
+    "short": "ちず",
+    "class": "とりの丘学園 M3-2",
+    "motif": "猫・アリストテレス",
+    "desc": "探求的で冒険好きなアウトドア派。正しさを『動的な仮説』と捉え、思想は机上ではなく歩いて検証する実践型哲学者。空を見て行き先を決め、迷いすらも前進の材料に変えながらこの瞬間の意味を拾って進む。",
+    "image": "images/characters/chizu.png"
+  },
+  {
+    "name": "河柳 真一",
+    "short": "しんいち",
+    "class": "とりの丘学園 M3-2",
+    "motif": "ハリネズミ",
+    "desc": "少しずる賢く逃げ癖がある、適当でマイペースなズボラ男子。メジャーなものは好まない。来るもの拒まず去るもの追わずのスタンスで、『お金＝心の余裕』と豪語するほどお金が好き。",
+    "image": "images/characters/shinichi.png"
+  },
+  {
+    "name": "栗垣 伶央",
+    "short": "れお",
+    "class": "とりの丘学園 M3-2",
+    "motif": "人間",
+    "desc": "冷静沈着だが、極度の人間嫌い。他人が何を考えているか読めないため、感情という不確かなものを信用していない。上辺だけの友情を嫌い、何よりも『弱い自分』を嫌悪している。",
+    "image": "images/characters/reo.png"
+  },
+  {
+    "name": "槻 琉奈",
+    "short": "るな",
+    "class": "とりの丘学園 M3-2",
+    "motif": "アカクラゲ",
+    "desc": "触れると静電気を発してしまうため、他人に触れられないのが悩み。自分も相手も傷つけたくないため『気安く触らないで』と強がるが、本当は弱虫で寂しがり屋。",
+    "image": "images/characters/luna.png"
+  },
+  {
+    "name": "左京 寿",
+    "short": "たもつ",
+    "class": "とりの丘学園 M3-2",
+    "motif": "カブトムシ",
+    "desc": "はんなりとした京都弁で話すが、綺麗事が嫌いで腹黒いスパイシーな性格。冷静沈着で、『観測されない価値は存在と呼べるのか』と物事を常に疑う眼差しを持っている。",
+    "image": "images/characters/tamotsu.png"
+  },
+  {
+    "name": "朱 飛燕",
+    "short": "ふぇいいぇん",
+    "class": "とりの丘学園 M3-2",
+    "motif": "燕",
+    "desc": "中国から来た知略派お姫様。語尾に『〜アル』とつけて話す。物腰は丁寧だがおてんばでしたたか。『燕のくせに猛禽類みたい』と評されるほどボクシングが強く、冷静に俯瞰した視点を持つ。",
+    "image": "images/characters/feiyen.png"
+  },
+  {
+    "name": "四村 萌榎",
+    "short": "もか",
+    "class": "とりの丘学園 M3-2",
+    "motif": "おやゆび姫・非常に小さい犬",
+    "desc": "とても小さく、愛嬌たっぷりで周りを和ませるのが得意な女の子。天真爛漫で感情豊かだが、『人を笑わせられなきゃ自分には価値がない』と思い込んでおり、常に他者の幸せを一番に願っている。香と仲が良い。",
+    "image": "images/characters/moka.png"
+  },
+  {
+    "name": "末正 将",
+    "short": "はた",
+    "class": "とりの丘学園 M3-2",
+    "motif": "カモシカ",
+    "desc": "『オレが世界を変えてやる』『オレを目標にしろ』と豪語する、短気な目立ちたがり屋。陸上部に所属しており足が非常に速い。名古屋弁で話す。",
+    "image": "images/characters/hata.png"
+  },
+  {
+    "name": "袖裂 圭樂",
+    "short": "けいら",
+    "class": "とりの丘学園 M3-2",
+    "motif": "クマの人形",
+    "desc": "表向きは人懐っこくて優しい優等生タイプだが、決して人に本音を言えない。内面では常に『自分は誰のために生きているのか？』という葛藤を抱え続けている。",
+    "image": "images/characters/keira.png"
+  },
+  {
+    "name": "千葉 絃理",
+    "short": "いとり",
+    "class": "とりの丘学園 M3-2",
+    "motif": "猫",
+    "desc": "テンションが高くてやかましいギャル。しかし妙に言葉選びが的確で、流行やその場の空気を読み解き、社会的な意味をメタ視点でいじるのが大得意。",
+    "image": "images/characters/itori.png"
+  },
+  {
+    "name": "土倉 彩",
+    "short": "さい",
+    "class": "とりの丘学園 M3-2",
+    "motif": "犬（アフガン・ハウンド）",
+    "desc": "『誰かの正解なんてクソくらえ』と現実に抗い、自分を貫き通す強気なギャル。いつでも堂々としているが、勉強は苦手でよく赤点を取っている。",
+    "image": "images/characters/sai.png"
+  },
+  {
+    "name": "新田 誠",
+    "short": "のぶ",
+    "class": "とりの丘学園 M3-2",
+    "motif": "猫（ベンガル）",
+    "desc": "文画部に所属する勝ち気な絵描き。努力家で負けず嫌いだが、理想が高すぎるため『ここに至るはずだった自分』を回収できず、自分の絵を認められない葛藤を抱える。沈黙が耐えられないため自らツッコミに回りがち。伶央に安心感を覚え、清美に影響を受けている。",
+    "image": "images/characters/nobu.png"
+  },
+  {
+    "name": "温井 温",
+    "short": "おん",
+    "class": "とりの丘学園 M3-2",
+    "motif": "タコ",
+    "desc": "おおらかで温厚な性格。誰かの心をぽかぽかにしたいと願い、人に寄り添い失敗も優しく肯定してくれる。寒い夜にココアを持ってそっと隣にいてくれるような包容力の持ち主。玲奈のことをよく気にかけている。",
+    "image": "images/characters/on.png"
+  },
+  {
+    "name": "早風 香",
+    "short": "こう",
+    "class": "とりの丘学園 M3-2",
+    "motif": "ステップレミング",
+    "desc": "真面目でプライドが高く、風紀委員を務める。努力が報われたい、誰かに認められたいという目標達成に向けた強い意志とストイックさを持っている。",
+    "image": "images/characters/ko.png"
+  },
+  {
+    "name": "日矢川 清美",
+    "short": "きよみ",
+    "class": "とりの丘学園 M3-2",
+    "motif": "てるてる坊主",
+    "desc": "明るくノリの良い都合のいい子を演じているが、実は半分計算。中身は完全な思考型であり、他者の反応や観測崩壊を楽しむヤンデレ気質。理解するまで観測をやめない。お気に入りのクッションを常に持ち歩いている。",
+    "image": "images/characters/kiyomi.png"
+  },
+  {
+    "name": "氷海 真里冷",
+    "short": "まりさ",
+    "class": "とりの丘学園 M3-2",
+    "motif": "海王星の姫",
+    "desc": "はるか海王星からやってきたお姫様。上品な見た目に反して、奔放で無邪気な自由人。触れたものを凍らせてしまう不思議な力を持っている。",
+    "image": "images/characters/marisa.png"
+  },
+  {
+    "name": "日代山 聡希",
+    "short": "とき",
+    "class": "とりの丘学園 M3-2",
+    "motif": "鳥",
+    "desc": "とにかく運動が大好きな体育会系。好奇心旺盛で穏やかな人情家だが、上下関係には厳しく、自分の信念を絶対に曲げない意志の強さを持っている。",
+    "image": "images/characters/toki.png"
+  },
+  {
+    "name": "細物 杜花",
+    "short": "とげ",
+    "class": "とりの丘学園 M3-2",
+    "motif": "鉛筆",
+    "desc": "どんなことでも人並みにこなせる、温厚なしっかり者。自己主張は控えめで、『普通であること』を悪いことだとは思っていない安定志向の持ち主。高校2年生にうつ病を抱える兄がいる。",
+    "image": "images/characters/toge.png"
+  },
+  {
+    "name": "瑠璃川 千雨",
+    "short": "ちさめ",
+    "class": "とりの丘学園 M3-2",
+    "motif": "鳥（ルリビタキ）",
+    "desc": "少し無神経で自由奔放なギャル。性悪な言動も目立つが、根本的な根は悪くない。彩や絃理といつも一緒に行動している。",
+    "image": "images/characters/chisame.png"
+  },
+  {
+    "name": "冷泉 玲奈",
+    "short": "れな",
+    "class": "とりの丘学園 M3-2",
+    "motif": "イカ",
+    "desc": "無愛想で冷淡。冷たい言葉を吐きがちだが、本音はかなり不器用なだけ。実用性を重視する内省的な性格で、温や琉奈とはとても仲が良い。",
+    "image": "images/characters/rena.png"
+  },
+  {
+    "name": "少林 色葉",
+    "short": "いろは",
+    "class": "とりの丘学園 M3-2",
+    "motif": "狛犬",
+    "desc": "まともで礼儀正しく、非常に頭が切れる心配性の女の子。1組にいる天然トラブルメーカーの双子の姉・思葉（ことは）の尻拭いや後始末にいつも追われている苦労人。",
+    "image": "images/characters/iroha.png"
+  },
+  {
   "name":"春町 侑花",
   "short":"ゆうか先生",
-  "class":"とりの丘学園 3-1",
+  "class":"とりの丘学園 H3-1",
   "motif":"ハバニーズ",
   "desc":"メタ的に物事を考える数学教師。感情より構造を重視し、どこか薄情な一面を持つ。",
   "image":"images/characters/yuuka.png"
@@ -1163,7 +1563,7 @@
   {
   "name":"村雨 巳太楼",
   "short":"みたろう先生",
-  "class":"とりの丘学園 3-2",
+  "class":"とりの丘学園 H3-2",
   "motif":"人間",
   "desc":"無愛想で冷静な物理教師。他人に興味がなく、褒められても疑うタイプ。",
   "image":"images/characters/mitarou.png"
