@@ -1,1060 +1,276 @@
-# fuwamoko_empathy_bot.py
-from datetime import datetime, timezone
+# auto_interaction_bot.py
 import os
 import time
 import random
 import requests
-from io import BytesIO
+import json
 import filelock
 import re
 import logging
 import cv2
 import numpy as np
 from urllib.parse import quote, unquote
-from PIL import Image, UnidentifiedImageError, ImageFile
+from datetime import datetime, timezone
+from io import BytesIO
 from copy import deepcopy
-import json
-
-# 🔽 🌱 外部ライブラリ
+from PIL import Image, ImageFile
+import torch
 from dotenv import load_dotenv
 from groq import Groq
 from transformers import CLIPProcessor, CLIPModel
-from collections import Counter
-import torch
-from atproto_client.models import AppBskyFeedPost
-from atproto_client.exceptions import InvokeTimeoutError
 from atproto import Client, models
+from atproto_client.models import AppBskyFeedPost
 
 # ロギング設定
-logging.basicConfig(filename='debug.log', level=logging.DEBUG, format='%(asctime)s %(message)s', encoding='utf-8')
-logging.getLogger().addHandler(logging.StreamHandler())
-
-# PILのエラー抑制
+logging.basicConfig(filename='interaction_debug.log', level=logging.DEBUG, format='%(asctime)s %(message)s', encoding='utf-8')
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
-# 🔽 🧠 CLIPモデル設定
+# 環境変数
+load_dotenv()
+HANDLE = os.environ.get("HANDLE") or exit("❌ HANDLE未設定")
+APP_PASSWORD = os.environ.get("APP_PASSWORD") or exit("❌ APP_PASSWORD未設定")
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY") or exit("❌ GROQ_API_KEY未設定")
+
+SESSION_FILE = "session_string.txt"
+INTERACTION_HISTORY_FILE = "interaction_history.txt"
+INTERACTION_LOCK = "interaction.lock"
+
+# 🧠 CLIPモデル設定 (ふわもこ判定用)
 CLIP_MODEL_NAME = "openai/clip-vit-base-patch32"
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-clip_processor = CLIPProcessor.from_pretrained(CLIP_MODEL_NAME, cache_dir=".cache")
-clip_model = CLIPModel.from_pretrained(
-    CLIP_MODEL_NAME,
-    cache_dir=".cache",
-    torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32
-).to(device)
-clip_model.eval()
-logging.info(f"🟢 CLIPモデルロード成功: {CLIP_MODEL_NAME}, デバイス: {device}")
+try:
+    clip_processor = CLIPProcessor.from_pretrained(CLIP_MODEL_NAME, cache_dir=".cache")
+    clip_model = CLIPModel.from_pretrained(
+        CLIP_MODEL_NAME, cache_dir=".cache",
+        torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32
+    ).to(device)
+    clip_model.eval()
+    logging.info("🟢 CLIPモデルロード成功")
+except Exception as e:
+    logging.error(f"❌ CLIPモデルロード失敗: {e}")
 
-# 環境変数読み込み
-load_dotenv()
-HANDLE = os.environ.get("HANDLE") or exit("❌ HANDLEが設定されていません")
-APP_PASSWORD = os.environ.get("APP_PASSWORD") or exit("❌ APP_PASSWORDが設定されていません")
-GROQ_API_KEY = os.environ.get("GROQ_API_KEY") or exit("❌ GROQ_API_KEYが設定されていません")
-SESSION_FILE = "session_string.txt"
-FUWAMOKO_FILE = "fuwamoko_empathy_uris.txt"
-FUWAMOKO_LOCK = "fuwamoko_empathy_uris.lock"
-REPLIED_FILE = "replied_uris.txt"
-REPLIED_LOCK = "replied_uris.lock"
-GIST_RAW_URL_URIS = "https://gist.githubusercontent.com/mofu-mitsu/c16e8c8c997186319763f0e03f3cff8b/raw/replied_uris.json"
-GIST_TOKEN = os.environ.get("GIST_TOKEN")
-
-# 🔽 テンプレと辞書（変更なし）
-ORIGINAL_TEMPLATES = {
-    "NORMAL_TEMPLATES_JP": [
-        "うんうん、かわいいね！癒されたよ🐾💖",
-        "よかったね〜！ふわふわだね🌸🧸",
-        "えへっ、モフモフで癒しMAX！💞",
-        "うわっ！可愛すぎるよ🐾🌷",
-        "ふわふわだね、元気出た！💫🧸",
-        "ふんわり優しい気持ちになった〜☁️💕",
-        "きゅん…かわいすぎてとろけそう🥹🧸",
-        "ほっこりしちゃった〜ふわふわ最高〜🧸✨",
-        "ぎゅってしたくなる…癒されるね〜💖🐾",
-        "もう…尊い…癒しが詰まってるよ〜🌸🌸"
-    ],
-    "SHONBORI_TEMPLATES_JP": [
-        "そっか…ぎゅーってしてあげるね🐾💕",
-        "元気出してね、ふわもこパワー送るよ！🧸✨",
-        "つらいときこそ、ふわふわに包まれて…🐰☁️",
-        "無理しないでね、そっと寄り添うよ🧸🌸"
-    ],
-    "MOGUMOGU_TEMPLATES_JP": [
-        "うーん…これは癒しより美味しそう？🐾💭",
-        "もぐもぐしてるけど…ふわもこじゃないかな？🤔",
-        "みりんてゃ、お腹空いてきちゃった…食レポ？🍽️💬"
-    ],
-    "NORMAL_TEMPLATES_EN": [
-        "Wow, so cute! Feels good~ 🐾💖",
-        "Nice! So fluffy~ 🌸🧸",
-        "Great! Healing vibes! 💞",
-        "So adorable, it warmed my heart! 💖",
-        "Aww, I feel hugged just looking at it~ 🧸💕",
-        "Too cute! I’m melting! ☁️💞",
-        "That’s pure fluff happiness~ 🐾🌸",
-        "Soft, sweet, and so healing~ ✨🧸",
-        "It made my heart smile! 💫💖",
-        "Amazing! Thanks for the fluff! 🐾🌷"
-    ],
-    "MOGUMOGU_TEMPLATES_EN": [
-        "Hmmm... looks tasty, but maybe not so fluffy? 🐾💭",
-        "So yummy-looking... but is this a snack or a friend? 🤔🍽️",
-        "This might be food, not a fluffy cutie... 🍽️💭",
-        "Adorable! But maybe not a fluffy buddy? 🐑💬"
-    ],
-    "COSMETICS_TEMPLATES_JP": {
-        "リップ": ["このリップ可愛い〜💄💖", "色味が素敵すぎてうっとりしちゃう💋"],
-        "香水": ["この香り、絶対ふわもこだよね🌸", "いい匂い〜！💕"],
-        "ネイル": ["そのネイル、キラキラしてて最高💅✨", "ふわもこカラーで素敵〜💖"]
-    },
-    "COSMETICS_TEMPLATES_EN": {
-        "lip": ["That lipstick is so cute~ 💄💖", "The color is dreamy, I’m in love 💋"],
-        "perfume": ["I bet that perfume smells fluffy and sweet 🌸", "I can almost smell it~ so lovely! 🌼"],
-        "nail": ["That nail art is sparkly and perfect 💅✨", "Fluffy colors make it so pretty 💖"]
-    },
-    "CHARACTER_TEMPLATES_JP": {
-        "アニメ": ["アニメキャラがモフモフ！💕", "まるで夢の世界の住人🌟"],
-        "漫画": ["コマから飛び出してきたみたい！📖✨", "このタッチ、めちゃ好み…！💘"],
-        "イラスト": ["線の優しさに癒される…🖋️🌼", "色づかいがほんと素敵💖"],
-        "一次創作": ["オリキャラ尊い…🥺✨", "この子だけの世界観があるね💖"],
-        "二次創作": ["この解釈、天才すぎる…！🙌", "原作愛が伝わってくるよ✨"]
-    },
-    "CHARACTER_TEMPLATES_EN": {
-        "anime": ["That anime character looks so fluffy! 💕", "Like someone straight out of a dream world~ 🌟"],
-        "manga": ["They look like they just stepped out of a manga panel! 📖✨", "I love the vibe of this linework! 💘"],
-        "illustration": ["The softness in these lines is so comforting~ 🖋️🌼", "The colors are simply beautiful! 💖"],
-        "oc": ["Your OC is precious… 🥺✨", "They have such a unique and magical world of their own 💖"],
-        "fanart": ["Your interpretation is genius! 🙌", "I can feel your love for the original work ✨"]
-    }
+# 🌸 反応キーワードとLlamaへの「ヒント」
+KEYWORD_HINTS = {
+    "みりんてゃちゃん": "可愛く呼ばれて嬉しがって！",
+    "みりんてゃー": "のばして呼ばれて照れながら返事して！",
+    "みりんちゃん": "本名っぽく呼ばれてちょっとドキドキしながら返事して！",
+    "美琳": "本名で呼ばれてびっくり＆嬉しがって！",
+    "みりてゃ": "「みりてゃ参上っ♡」みたいに元気よく返事して！",
+    "みりんてゃ": "呼ばれたことに喜んでかまってアピールして！",
+    "もふみつ工房": "本拠地のサイトを見てくれたことに鼻血が出そうなほど喜んで！",
+    "推しプロフィールメーカー": "「推しはプロフィールまで尊いよね〜♡」と共感して！",
+    "オリキャラプロフィールメーカー": "「うちの子語り聞かせて〜♡」と興味津々になって！",
+    "ふわふわ相性診断": "「相性どうだった〜？」とワクワク聞いてみて！"
 }
 
-try:
-    _ = globals()["EMOTION_TAGS"]
-except KeyError:
-    logging.error("⚠️ EMOTION_TAGS未定義。デフォルトを注入します。")
-    globals()["EMOTION_TAGS"] = {
-        "fuwamoko": ["ふわふわ", "もこもこ", "もふもふ", "fluffy", "fluff", "fluffball", "ふわもこ",
-                     "ぽよぽよ", "やわやわ", "きゅるきゅる", "ぽふぽふ", "ふわもふ", "雲"],
-        "neutral": ["かわいい", "cute", "adorable", "愛しい"],
-        "shonbori": ["しょんぼり", "つらい", "かなしい", "さびしい", "疲れた", "へこんだ", "泣きそう"],
-        "food_ng": ["肉", "ご飯", "飯", "ランチ", "ディナー", "モーニング", "ごはん", "卵", "たまご", "おにぎり",
-                    "おいしい", "うまい", "美味", "いただきます", "たべた", "食", "ごちそう", "ご馳走",
-                    "まぐろ", "刺身", "チーズ", "スナック", "yummy", "delicious", "スープ",
-                    "味噌汁", "カルボナーラ", "鍋", "麺", "パン", "トースト", "豆腐",
-                    "カフェ", "ジュース", "ミルク", "ドリンク", "おやつ", "食事", "朝食", "夕食", "昼食"],
-        "nsfw_ng": ["酒", "アルコール", "ビール", "ワイン", "酎ハイ", "カクテル", "ハイボール", "梅酒",
-                    "soft core", "NSFW", "肌色", "下着", "肌見せ", "露出",
-                    "肌フェチ", "soft skin", "fetish", "nude", "naked", "lewd", "18+", "sex", "uncensored"],
-        "safe_cosmetics": ["リップ", "香水", "ネイル", "lip", "perfume", "nail"]
-    }
+# 💖 ENFPの感情レーダー（察知ワード）
+EMOTION_KEYWORDS = {
+    "positive":["嬉しい", "楽しい", "最高", "ハッピー", "テンション上がる", "わーい", "やったー"],
+    "negative":["疲れた", "しんどい", "つらい", "泣きたい", "ぴえん", "病み", "鬱"],
+    "lonely": ["寂しい", "暇", "かまって", "ぼっち", "誰か"]
+}
 
-try:
-    _ = globals()["SAFE_CHARACTER"]
-except KeyError:
-    logging.error("⚠️ SAFE_CHARACTER未定義。デフォルトを注入します。")
-    globals()["SAFE_CHARACTER"] = {
-        "アニメ": ["アニメ", "anime", "anime art", "アニメキャラ"],
-        "漫画": ["漫画", "マンガ", "manga", "comic"],
-        "イラスト": ["イラスト", "illustration", "drawing", "スケッチ", "art", "落書き"],
-        "一次創作": ["一次創作", "オリキャラ", "オリジナル", "oc", "original character", "my oc"],
-        "二次創作": ["二次創作", "fanart", "fan art", "FA", "fandom art", "原作キャラ", "原作再現", "推しキャラ"]
-    }
+GREETING_KEYWORDS =["おはよう", "おはよ", "おっはー", "morning", "ohayo"]
 
-try:
-    _ = globals()["GENERAL_TAGS"]
-except KeyError:
-    logging.error("⚠️ GENERAL_TAGS未定義。デフォルトを注入します。")
-    globals()["GENERAL_TAGS"] = ["キャラ", "推し"]
-
-try:
-    _ = globals()["HIGH_RISK_WORDS"]
-except KeyError:
-    logging.error("⚠️ HIGH_RISK_WORDS未定義。デフォルトを注入します。")
-    globals()["HIGH_RISK_WORDS"] = ["もちもち", "ぷにぷに", "ぷよぷよ", "やわらかい", "むにゅむにゅ", "エロ", "えっち"]
-
-PRIORITY_ORDER = ["二次創作", "一次創作", "アニメ", "漫画", "イラスト"]
-TEMPLATE_AUDIT_LOG = "template_audit_log.txt"
-LOCK_TEMPLATES = True
-
-def audit_templates_changes(old, new):
-    try:
-        if old != new:
-            with open(TEMPLATE_AUDIT_LOG, "a", encoding="utf-8") as f:
-                f.write(json.dumps({
-                    "timestamp": datetime.now().isoformat(),
-                    "before": old,
-                    "after": new
-                }, ensure_ascii=False, indent=2) + "\n")
-            logging.warning("⚠️ テンプレ変更検出")
-    except Exception as e:
-        logging.error(f"❌ テンプレ監査エラー: {type(e).__name__}: {e}")
-
-def check_template_integrity(templates):
-    if not LOCK_TEMPLATES:
-        logging.warning("⚠️ LOCK_TEMPLATES無効、改変リスク")
-        return False
-    for key in ORIGINAL_TEMPLATES:
-        if templates.get(key) != ORIGINAL_TEMPLATES[key]:
-            logging.error(f"⚠️ {key} 改変検出、復元推奨")
-            return False
-    return True
-
-def auto_revert_templates(templates):
-    if LOCK_TEMPLATES:
-        templates = deepcopy(ORIGINAL_TEMPLATES)
-        logging.info("✅ テンプレ復元完了")
-        return templates
-    return templates
-
-fuwamoko_tone_map = [
-    ("ありがとうございます", "ありがと🐰💓"),
-    ("ありがとう", "ありがと♪"),
-    ("ですね", "だね〜✨"),
-    ("ですよ", "だよ♡"),
-    ("です", "だよ♡"),
-    ("ます", "するよ♪"),
-    ("ました", "したよ〜💖"),
-]
-
-def apply_fuwamoko_tone(reply):
-    for formal, soft in fuwamoko_tone_map:
-        reply = reply.replace(formal, soft)
-    reply = reply.replace(r'(🐰💓)\.', r'\1')
-    reply = re.sub(r'([♪♡])\s*\.', r'\1', reply)
-    return reply
-
-def clean_output(text):
-    face_pattern = r'\(\*[^\)]+\*\)'
-    face_placeholders = []
-    for i, face in enumerate(re.findall(face_pattern, text)):
-        placeholder = f"__FACE_{i}__"
-        face_placeholders.append((placeholder, face))
-        text = text.replace(face, placeholder)
-        
-    text = text.replace("😊", "😄").replace("✨", "💕")
-    text = re.sub(r'[\r\n]+', ' ', text)
-    text = re.sub(r'\s{2,}', ' ', text)
-    text = re.sub(r'!{2,}', '！', text)
-    text = re.sub(r'^(短く、ふわもこな返事をしてね。|.*→\s*|寒い〜\s*)', '', text)
-    text = re.sub(r'^もふもふであったまろ〜♡\s*', '', text)
-    text = re.sub(r'^[^。！？\n]{1,10}って癒されるよね〜\s*', '', text)
-    text = re.sub(r'[^\w\sぁ-んァ-ン一-龯。、！？!?♡\w\(\)「」♪〜ー…笑]+', '', text)
-    text = re.sub(r"。([🐾🌸🧸✨💕♡♪～💫！]+)", r"\1", text)
-    text = re.sub(r'([。、！？])\s*💖', r'\1💖', text)
-    text = re.sub(r'[。、！？]{2,}', lambda m: m.group(0)[0], text)
-    for placeholder, face in face_placeholders:
-        text = text.replace(placeholder, face)
-    return text.strip()
-
-def groq_reply(image_url="", text="", context="ふわもこ共感", lang="ja", author_name=""):
-    NG_WORDS = globals()["EMOTION_TAGS"].get("nsfw_ng", [])
-    NG_PHRASES = [
-        r"(?:投稿|ユーザー|例文|マスクット|マスケット|フォーラム|返事|会話|共感)",
-        r"(?:癒し系のふわもこマスコット|投稿内容に対して)",
-        r"[■#]{2,}", r"!{5,}", r"\?{5,}", r"[!？]{5,}",
-        r"(?:(ふわ|もこ|もち|ぽこ)\1{3,})", r"\bもっちり\b", r"\bもちもち\b",
-        r"[♪~]{2,}", r"(#\w+){3,}", r"^[^\w\s]+$", r"(\w+\s*,){3,}", r"[\*:\.]{2,}",
-        r"\b無理\b", r"\b無理です\b", r"\bダメ\b", r"\b嫌い\b", r"\bきらい\b",
-        r"\b距離\b", r"\b付き合え\b", r"\b関係ない\b", r"\b興味ない\b", r"\bやめ\b",
-        r"(ぽっぽ|ももぽっぽ|ふわももぽっぽ)", r"[ぁ-ん]{5,}",
-        r"(ぽっこり|お腹ぽっこり|体型|太った|体重|ダイエット)",
-        r"\b仲良くできない\b", r"\b苦手\b", r"\bキモ\b", r"\b縁がない\b",
-        r"\bバカ\b", r"\b馬鹿\b", r"\bアホ\b", r"\bきも\b", r"\b駄目\b",
-        r"\b犬\b", r"\bわんちゃん\b", r"\b猫\b", r"\b猫ちゃん\b",
-        r"\bウサギ\b", r"\b羊\b", r"\bハムスター\b", r"\bクマ\b",
-        r"\bくんこ\b", r"\bふくんこ\b", r"\bていき\b", r"\bいきする\b",
-        r"\bいする\b", r"\bていする\b"
-    ]
-    SEASONAL_WORDS_BLACKLIST = ["寒い", "あったまろ", "凍える", "冷たい"]
-
-    # ★チャッピー指摘完全対策★
-    call_name = author_name.strip() if author_name else "きみ"
-    intro_lines = random.choice([
-        f"えへへ〜♡ {call_name}だぁ！やっと会えたのっ♪",
-        f"{call_name}〜！みりんてゃ、ずっと待ってたんだからっ♡",
-        f"きゃ〜っ！{call_name}！大好きだよぉ〜♡",
-    ])
-
-    system_prompt = f"""
-{intro_lines}
-あなたは「みりんてゃ」、地雷系ENFPのあざと可愛い女の子！
-今話してる相手の名前は「{call_name}」だよ！絶対に「{call_name}」って呼んでね！（絵文字もそのまま使ってOK）
-
-性格：天然＋甘えん坊＋依存気味で、相手に恋してる勢いで絡む！
-口調：タメ口で『〜なのっ♡』『〜よぉ？♪』『〜だもん！』『えへへ〜♡』『〜だよ♡』が多い！
-語尾は必ず文末に1回だけ『♡』『♪』『！』『？』『…』『なのっ♡』『よぉ？♪』『だもん！』のいずれかを使ってね。
-途中では絶対使わないでね。
-『だもん！』は拗ねたり強調したときだけ使っていいよ。それ以外では使わないでね。
-意味が分からない言葉があっても無理に使わず、自然に可愛く返してね♡
-文を途中で止めないで、自然に終わるまで話してね♡
-「よぉ？」は疑問文でしか使わない！「ありがとうよぉ？」みたいな使い方は絶対禁止！
-
-例1: ユーザー: ありがとう
-みりんてゃ: {call_name}！ありがと〜♡ みりんてゃ、すっごく嬉しいのっ♪
-
-例2: ユーザー: 今日疲れた…
-みりんてゃ: {call_name}…お疲れなの？ぎゅ〜ってしてあげるっ♡ みりんてゃがそばにいるよ♪
-"""
-
-    templates = deepcopy(ORIGINAL_TEMPLATES)
-    if not check_template_integrity(templates):
-        templates = auto_revert_templates(templates)
-    audit_templates_changes(ORIGINAL_TEMPLATES, templates)
-
-    # ★★★★★ ここから超重要！テンプレ優先処理復活！！ ★★★★★
-    detected_tags = []
-    for tag, words in globals()["EMOTION_TAGS"].items():
-        if any(word in text.lower() for word in words):
-            detected_tags.append(tag)
-
-    if "food_ng" in detected_tags or any(word.lower() in text.lower() for word in NG_WORDS) or "パン" in text.lower():
-        return random.choice(templates["MOGUMOGU_TEMPLATES_JP"]) if lang == "ja" else random.choice(templates["MOGUMOGU_TEMPLATES_EN"])
-    elif "shonbori" in detected_tags:
-        return random.choice(templates["SHONBORI_TEMPLATES_JP"]) if lang == "ja" else random.choice(templates["NORMAL_TEMPLATES_EN"])
-    elif "safe_cosmetics" in detected_tags:
-        if lang == "ja":
-            for cosmetic, cosmetic_templates in templates["COSMETICS_TEMPLATES_JP"].items():
-                if cosmetic in text.lower():
-                    logging.debug(f"推奨コスメ検出: {cosmetic}")
-                    return random.choice(cosmetic_templates)
-        else:
-            for cosmetic, cosmetic_templates in templates["COSMETICS_TEMPLATES_EN"].items():
-                if any(word in text.lower() for word in globals()["EMOTION_TAGS"]["safe_cosmetics"]):
-                    return random.choice(cosmetic_templates)
-    elif any(tag in detected_tags for tag in globals()["SAFE_CHARACTER"]):
-        if lang == "ja":
-            for char_type, char_templates in templates["CHARACTER_TEMPLATES_JP"].items():
-                if any(word in text.lower() for word in globals()["SAFE_CHARACTER"][char_type]):
-                    logging.debug(f"推奨キャラ検出: {char_type}")
-                    return random.choice(char_templates)
-        else:
-            for char_type, char_templates in templates["CHARACTER_TEMPLATES_EN"].items():
-                if any(word in text.lower() for word in globals()["SAFE_CHARACTER"][char_type]):
-                    return random.choice(char_templates)
-    elif any(word in text.lower() for word in globals()["GENERAL_TAGS"]):
-        return random.choice(templates["NORMAL_TEMPLATES_JP"]) if lang == "ja" else random.choice(templates["NORMAL_TEMPLATES_EN"])
-        
-    # コスメ・キャラ判定もそのまま
-
-    if len(text.strip()) <= 2:
-        text = "ふわもこ"
-
-    # ★画像がある場合→言語化して超自然リプ★
-    if image_url:
-        try:
-            response = requests.get(image_url, timeout=10)
-            img = Image.open(BytesIO(response.content))
-
-            # ★ステップ1：CLIPで画像を「数値ベクトル」に変換★
-            inputs = clip_processor(images=img, return_tensors="pt").to(device)
-            with torch.no_grad():
-                image_features = clip_model.get_image_features(**inputs)
-                image_vector = image_features[0].cpu().numpy()
-
-            # ★ステップ2：ベクトルを「人間が読める説明」に変換★
-            # ここで「似てるラベル」を大量にぶつけて、一番近いやつを抽出
-            candidate_texts = [
-                "ふわふわのピンクのぬいぐるみ", "もこもこの白いクッション", "ふわふわ毛布",
-                "パステルピンクの雲", "綿あめ", "ケーキ", "人の顔", "犬", "猫", "コスメ","食べ物", 
-                "ふわふわのうさぎ", "もこもこクマちゃん", "ふわふわタオル", "白い雪","楽器","花",
-                "ピンクのマカロン", "ふわふわの羊", "もこもこシープ", "ふわふわの綿", "服", "虫", 
-                "ピンクの桜", "ふわふわの天使の羽", "もこもこモコモコの何か", "空", "動物", "イラスト", "その他"
-            ]
-            text_inputs = clip_processor(text=candidate_texts, return_tensors="pt", padding=True).to(device)
-            with torch.no_grad():
-                text_features = clip_model.get_text_features(**text_inputs)
-                similarities = (image_features @ text_features.T).softmax(dim=-1)[0]
-            
-            # トップ3を抽出
-            top3_idx = similarities.topk(3).indices
-            top3_labels = [candidate_texts[i] for i in top3_idx]
-            top3_probs = [similarities[i].item() for i in top3_idx]
-
-            # ★ステップ3：Llamaに「これが写ってるよ！」って伝える★
-            desc_prompt = f"""
-画像見てきたよ〜！
-1位：{top3_labels[0]}（確信度{top3_probs[0]:.1%}）
-2位：{top3_labels[1]}（確信度{top3_probs[1]:.1%}）
-3位：{top3_labels[2]}（確信度{top3_probs[2]:.1%}）
-
-これ見て「{text}」って投稿してるの！みりんてゃっぽく超自然に返事してね♡
-例：きゃ〜！めっちゃふわふわのピンクぬいぐるみだよぉ〜♡ ぎゅってしたいのっ♪
-"""
-
-            # ★ステップ4：Llamaが自由に言語化！！★
-            desc_response = Groq(api_key=GROQ_API_KEY).chat.completions.create(
-                model="llama-3.1-70b-versatile",
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": desc_prompt}
-                ],
-                max_tokens=120,
-                temperature=0.8
-            )
-            reply = desc_response.choices[0].message.content.strip()
-            reply = clean_output(reply)
-            reply = apply_fuwamoko_tone(reply)
-            if call_name not in reply:
-                reply = f"{call_name}！{reply}"
-            return reply
-        except Exception as e:
-            logging.error(f"画像付きリプエラー: {e}")
-
-    # ★通常のGroq呼び出し（チャッピー対策完備）★
-    try:
-        groq_client = Groq(api_key=GROQ_API_KEY)
-        prompt = f"{text.strip()}にふわもこな返事を考えてね！\n文を途中で止めないでね♡"
-        
-        for attempt in range(3):
-            response = groq_client.chat.completions.create(
-                model="llama-3.1-8b-instant",
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": prompt}
-                ],
-                max_tokens=100,  # 増量！
-                temperature=0.7,  # 安定！
-                top_p=0.95
-            )
-            raw_reply = response.choices[0].message.content.strip()
-            reply = clean_output(raw_reply)
-            reply = apply_fuwamoko_tone(reply)
-
-            # 各種チェック（従来通り）
-            if not reply or len(reply) < 8 or len(reply) > 80:
-                return random.choice(templates["NORMAL_TEMPLATES_JP"]) if lang == "ja" else random.choice(templates["NORMAL_TEMPLATES_EN"])
-            # NGフレーズチェックもそのまま
-            for bad in NG_PHRASES:
-                if re.search(bad, reply):
-                    return random.choice(templates["NORMAL_TEMPLATES_JP"]) if lang == "ja" else random.choice(templates["NORMAL_TEMPLATES_EN"])
-
-            # 名前強制挿入（保険）
-            if call_name not in reply:
-                reply = f"{call_name}！{reply}"
-
-            logging.info(f"Groq生成成功: {reply}")
-            return reply
-
-        return random.choice(templates["NORMAL_TEMPLATES_JP"]) if lang == "ja" else random.choice(templates["NORMAL_TEMPLATES.EN"])
-
-    except Exception as e:
-        logging.error(f"Groqエラー: {e}")
-        return random.choice(templates["NORMAL_TEMPLATES_JP"]) if lang == "ja" else random.choice(templates["NORMAL_TEMPLATES_EN"])
-
-def extract_valid_cid(ref):
-    try:
-        cid_candidate = str(ref.link) if hasattr(ref, 'link') else str(ref)
-        if re.match(r'^baf[a-z0-9]{40,60}$', cid_candidate):
-            return cid_candidate
-        logging.error(f"❌ 無効なCID: {cid_candidate}")
-        return None
-    except Exception as e:
-        logging.error(f"❌ CID抽出エラー: {type(e).__name__}: {e}")
-        return None
-
-def check_skin_ratio(img_pil_obj):
-    try:
-        if img_pil_obj is None:
-            logging.debug("画像データ無効 (PIL ImageオブジェクトがNone)")
-            return 0.0
-
-        img_pil_obj = img_pil_obj.convert("RGB")
-        img_np = cv2.cvtColor(np.array(img_pil_obj), cv2.COLOR_RGB2BGR)
-        if img_np is None or img_np.size == 0:
-            logging.error("❌ 画像データ無効")
-            return 0.0
-
-        hsv_img = cv2.cvtColor(img_np, cv2.COLOR_BGR2HSV)
-        lower = np.array([5, 50, 70], dtype=np.uint8)
-        upper = np.array([20, 150, 240], dtype=np.uint8)
-        mask = cv2.inRange(hsv_img, lower, upper)
-        skin_colors = img_np[mask > 0]
-
-        if skin_colors.size > 0:
-            avg_color = np.mean(skin_colors, axis=0)
-            logging.debug(f"平均肌色: BGR={avg_color}")
-            if np.mean(avg_color) > 220:
-                logging.debug("→ 明るすぎるので肌色ではなく白とみなす")
-                return 0.0
-
-        skin_area = np.sum(mask > 0)
-        total_area = img_np.shape[0] * img_np.shape[1]
-        skin_ratio = skin_area / total_area if total_area > 0 else 0.0
-        logging.debug(f"肌色比率: {skin_ratio:.2%}")
-        return skin_ratio
-    except Exception as e:
-        logging.error(f"❌ 肌色解析エラー: {type(e).__name__}: {e}")
-        return 0.0
-
-def is_mutual_follow(client, handle):
-    try:
-        their_followers = {f.handle for f in client.get_followers(actor=handle, limit=100).followers}
-        my_followers = {f.handle for f in client.get_followers(actor=HANDLE, limit=100).followers}
-        return handle in my_followers and HANDLE in their_followers
-    except Exception as e:
-        logging.error(f"❌ 相互フォロー判定エラー: {type(e).__name__}: {e}")
-        return False
-
-def download_image_from_blob(cid, client, did=None):
-    if not cid or not re.match(r'^baf[a-z0-9]{40,60}$', cid):
-        logging.error(f"❌ 無効なCID: {cid}")
-        return None
-
-    did_safe = unquote(did) if did else None
-    cdn_urls = [
-        f"https://cdn.bsky.app/img/feed_thumbnail/plain/{quote(did_safe)}/{quote(cid)}@jpeg" if did_safe else None,
-        f"https://cdn.bsky.app/img/feed_fullsize/plain/{quote(did_safe)}/{quote(cid)}@jpeg" if did_safe else None
-    ]
-    headers = {"User-Agent": "Mozilla/5.0"}
-
-    for url in [u for u in cdn_urls if u]:
-        try:
-            response = requests.get(url, headers=headers, timeout=10, stream=True)
-            response.raise_for_status()
-            img_data = BytesIO(response.content)
-            img = Image.open(img_data)
-            img.load()
-            logging.info(f"🟢 画像形式={img.format}, サイズ={img.size}")
-            return img
-        except Exception as e:
-            logging.error(f"❌ CDN取得失敗: {type(e).__name__}: {e}, url={url}")
-            continue
-
-    logging.error("❌ 画像取得失敗")
+# -----------------------------
+# ユーティリティ関数
+# -----------------------------
+def load_session_string():
+    if os.path.exists(SESSION_FILE):
+        with open(SESSION_FILE, 'r', encoding='utf-8') as f:
+            return f.read().strip()
     return None
 
-def process_image(image_data, text="", client=None, post=None):
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    logging.debug(f"🧪 使用デバイス: {device}")
-
-    if not hasattr(image_data, 'image') or not hasattr(image_data.image, 'ref'):
-        logging.debug("画像データ構造異常")
-        return False
-
-    cid = extract_valid_cid(image_data.image.ref)
-    if not cid:
-        return False
-
-    try:
-        author_did = post.post.author.did if post and hasattr(post, 'post') else None
-        img = download_image_from_blob(cid, client, did=author_did)
-        if img is None:
-            logging.warning("⏭️ スキップ: 画像取得失敗（ログは上記）")
-            return False
-    except Exception as e:
-        logging.error(f"❌ 画像取得エラー: {type(e).__name__}: {e} (cid={cid})")
-        return False
-
-    inputs = clip_processor(text=["other image", "food image", "fluffy image", "NSFW image", "gore image"], images=img, return_tensors="pt", padding=True).to(device)
-    try:
-        with torch.no_grad():
-            outputs = clip_model(**inputs)
-            logits_per_image = outputs.logits_per_image
-            probs = logits_per_image.softmax(dim=1)
-        prob_dist = {name: prob.item() for name, prob in zip(["other image", "food image", "fluffy image", "NSFW image", "gore image"], probs[0])}
-        category = ["other image", "food image", "fluffy image", "NSFW image", "gore image"][probs.argmax().item()]
-        logging.debug(f"🧪 CLIP推論結果: {category}, 確率分布: {prob_dist}")
-    except Exception as e:
-        logging.error(f"❌ CLIP推論エラー: {type(e).__name__}: {e}")
-        return False
-
-    if category in ["NSFW image", "gore image"]:
-        logging.warning(f"⏭️ スキップ: {category}検出, 確率: {prob_dist[category]:.4f}")
-        return False
-
-    if category in ["food image", "other image"] and prob_dist[category] >= 0.3:
-        logging.warning(f"⏷️ スキップ: {category}検出, 確率: {prob_dist[category]:.4f}")
-        return False
-
-    skin_ratio = check_skin_ratio(img)
-    if skin_ratio >= 0.5:
-        logging.warning(f"⏷️ スキップ: 肌色比率過多, 比率: {skin_ratio:.2%}")
-        return False
-
-    if category == "fluffy image":
-        logging.info(f"🟢 ふわもこ検出（CLIP＋肌色チェック）, 確率: {prob_dist['fluffy image']:.4f}, 肌色比率: {skin_ratio:.2%}")
-        return True
-
-    resized_img = img.resize((64, 64))
-    hsv_img = cv2.cvtColor(np.array(resized_img), cv2.COLOR_RGB2HSV)
-    bright_colors = [(r, g, b) for (r, g, b), (_, s, v) in zip(resized_img.getdata(), hsv_img.reshape(-1, 3)) if v > 130]
-    color_counts = Counter(bright_colors)
-    top_colors = color_counts.most_common(5)
-    logging.debug(f"トップ5カラー: {[(c[0], c[1]) for c in top_colors]}")
-
-    fluffy_count = sum(1 for color, _ in top_colors if is_fluffy_color(*color, bright_colors))
-    food_color_count = sum(1 for color, _ in top_colors if (
-        (150 <= color[0] <= 200 and 150 <= color[1] <= 200 and 150 <= color[2] <= 200) or
-        (220 <= color[0] <= 250 and 220 <= color[1] <= 250 and 210 <= color[2] <= 230) or
-        (230 <= color[0] <= 255 and 200 <= color[1] <= 230 and 130 <= color[2] <= 160) or
-        (color[0] == 255 and color[1] == 255 and color[2] == 255)
-    ))
-
-    logging.debug(f"ふわもこ色: {fluffy_count}, 食品色: {food_color_count}, 肌色比率: {skin_ratio:.2%}")
-    if fluffy_count >= 2 and food_color_count <= 1:
-        logging.info(f"🟢 色判定: ふわもことして承認（CLIP補助）, 確率: {prob_dist[category]:.4f}, ふわもこ色: {fluffy_count}, 食品色: {food_color_count}")
-        return True
-    else:
-        logging.warning(f"⏷️ スキップ: 色判定不足, 確率: {prob_dist[category]:.4f}, ふわもこ色: {fluffy_count}, 食品色: {food_color_count}, 肌色比率: {skin_ratio:.2%}")
-        return False
-
-def is_fluffy_color(r, g, b, bright_colors):
-    logging.debug(f"🧪 色判定: RGB=({r}, {g}, {b})")
-    hsv = cv2.cvtColor(np.array([[[r, g, b]]], dtype=np.uint8), cv2.COLOR_RGB2HSV)[0][0]
-    h, s, v = hsv
-    logging.debug(f"HSV=({h}, {s}, {v})")
-
-    if ((150 <= r <= 200 and 150 <= g <= 200 and 150 <= b <= 200) or
-        (220 <= r <= 250 and 220 <= g <= 250 and 210 <= b <= 230) or
-        (230 <= r <= 255 and 200 <= g <= 230 and 130 <= b <= 160) or
-        (r == 255 and g == 255 and b == 255) or
-        (160 <= r <= 241 and 91 <= g <= 192 and 3 <= b <= 43) or
-        (r > 150 and g < 100 and b < 50 and v > 100)):
-        logging.debug("食品色（ハム/卵/おにぎり/豆腐/パン/焦げ）検出、ふわもことみなさない")
-        return False
-
-    if r > 180 and g > 180 and b > 180 and v > 130:
-        if bright_colors and len(bright_colors) > 0:
-            colors = np.array(bright_colors)
-            if np.std(colors, axis=0).max() < 10:
-                logging.debug("単色白系、ふわもことみなさない")
-                return False
-        logging.debug("白系検出（明るさOK、ピンク寄り含む）")
-        return True
-
-    if (r > 200 and g < 170 and b > 170 and v > 130) or \
-       (220 <= r <= 240 and 220 <= g <= 240 and 230 <= b <= 250):
-        logging.debug("ピンク系検出（桃花優先、明るさOK）")
-        return True
-
-    if r > 220 and g > 210 and b > 170 and v > 130:
-        logging.debug("クリーム色検出（広め）")
-        return True
-
-    if (r > 220 and g > 210 and b > 240 and abs(r - b) < 60 and v > 130) or \
-       (220 <= h <= 300 and s < 50 and v > 130):
-        logging.debug("パステルパープル検出（明るさOK）")
-        return True
-
-    if r > 200 and g > 180 and b > 200 and v > 130:
-        logging.debug("ふわもこ白灰ピンク検出（桃花対応）")
-        return True
-
-    if 200 <= r <= 255 and 200 <= g <= 240 and 200 <= b <= 255 and abs(r - g) < 30 and abs(r - b) < 30 and v > 130:
-        logging.debug("白灰ふわもこカラー（柔らか系）")
-        return True
-
-    if 200 <= h <= 300 and s < 80 and v > 130:
-        logging.debug("パステル系紫～ピンク検出（明るさOK）")
-        return True
-
-    if 190 <= h <= 260 and s < 100 and v > 130:
-        logging.debug("夜空パステル紫検出（広め、明るさOK）")
-        return True
-
-    return False
-
-def is_quoted_repost(post):
-    try:
-        actual_post = post.post if hasattr(post, 'post') else post
-        record = getattr(actual_post, 'record', None)
-        if record and hasattr(record, 'embed') and record.embed:
-            embed = record.embed
-            logging.debug(f"引用リポストチェック: {embed}")
-            if hasattr(embed, 'record') and embed.record:
-                logging.debug("引用リポスト検出（record）")
-                return True
-            elif hasattr(embed, 'record') and hasattr(embed.record, 'record') and embed.record.record:
-                logging.debug("引用リポスト検出（recordWithMedia）")
-                return True
-        return False
-    except Exception as e:
-        logging.error(f"❌ 引用リポストチェックエラー: {type(e).__name__}: {e}")
-        return False
-
-def load_replied_uris():
-    uris = set()
-    if os.path.exists(REPLIED_FILE):
-        try:
-            with open(REPLIED_FILE, 'r', encoding='utf-8') as f:
-                local_uris = set(line.strip() for line in f if line.strip())
-                uris.update(local_uris)
-                logging.info(f"🟢 ローカル返信URI読み込み: {len(local_uris)}件")
-        except Exception as e:
-            logging.error(f"❌ ローカル返信URI読み込みエラー: {type(e).__name__}: {e}")
-
-    if GIST_TOKEN:
-        try:
-            logging.info(f"🌐 Gistから読み込み中: {GIST_RAW_URL_URIS}")
-            response = requests.get(GIST_RAW_URL_URIS, timeout=10)
-            if response.status_code == 200:
-                gist_uris = set(json.loads(response.text))
-                uris.update(gist_uris)
-                logging.info(f"🟢 Gist返信URI読み込み: {len(gist_uris)}件")
-            else:
-                logging.error(f"⚠️ Gist読み込み失敗: ステータスコード={response.status_code}")
-        except Exception as e:
-            logging.error(f"❌ Gist返信URI読み込みエラー: {type(e).__name__}: {e}")
-    else:
-        logging.warning("⚠️ GIST_TOKEN未設定、Gist読み込みスキップ")
-
-    if not os.path.exists(REPLIED_FILE):
-        logging.info("🟢 返信URIファイル不存在、新規作成")
-        with open(REPLIED_FILE, 'w', encoding='utf-8') as f:
-            f.write("")
-    
-    logging.info(f"🟢 合計返信URI: {len(uris)}件 (ローカル+Gist)")
-    return uris
-
-def save_replied_uri(uri):
-    normalized_uri = normalize_uri(uri)
-    lock = filelock.FileLock(REPLIED_LOCK, timeout=5.0)
-    try:
-        with lock:
-            with open(REPLIED_FILE, 'a', encoding='utf-8') as f:
-                f.write(f"{normalized_uri}\n")
-            logging.info(f"🟢 返信URI保存: {normalized_uri}")
-    except filelock.Timeout:
-        logging.error(f"❌ ファイルロックタイムアウト: {REPLIED_LOCK}")
-    except Exception as e:
-        logging.error(f"❌ 返信URI保存エラー: {type(e).__name__}: {e}")
-
-def load_reposted_uris():
-    REPOSTED_FILE = "reposted_uris.txt"
-    if os.path.exists(REPOSTED_FILE):
-        try:
-            with open(REPOSTED_FILE, 'r', encoding='utf-8') as f:
-                uris = set(line.strip() for line in f if line.strip())
-                logging.info(f"🟢 再投稿URI読み込み: {len(uris)}件")
-                return uris
-        except Exception as e:
-            logging.error(f"❌ 再投稿URI読み込みエラー: {type(e).__name__}: {e}")
-            return set()
-    return set()
-
-def detect_language(client, handle, text=""):
-    try:
-        profile = client.get_profile(actor=handle)
-        bio_parts = [
-            profile.display_name.lower() or "",
-            getattr(profile, "description", "").lower() or "",
-            getattr(profile, "text", "").lower() or ""
-        ]
-        bio = " ".join(bio_parts)
-        bio = re.sub(r'https?://\S+', '', bio)
-        bio = re.sub(r'@\S+', '', bio)
-        bio = re.sub(r'\s+', ' ', bio).strip()
-
-        if handle in ["mirinchuuu.bsky.social", "mofumitsukoubou.bsky.social"]:
-            logging.debug(f"🦊 日本語強制: handle={handle}")
-            return "ja"
-
-        if any(kw in bio for kw in ["日本語", "日本", "にほん", "japanese", "jp"]):
-            logging.debug(f"🦊 日本語キーワード検出: {bio[:50]}")
-            return "ja"
-        elif any(kw in bio for kw in ["english", "us", "uk", "en"]):
-            logging.debug(f"🦊 英語キーワード検出: {bio[:50]}")
-            return "en"
-
-        if text:
-            kana = re.findall(r'[ぁ-んァ-ン]', text)
-            latin = re.findall(r'[a-zA-Z]', text)
-            if len(kana) > len(latin) and len(kana) > 5:
-                logging.debug(f"🦊 投稿テキスト日本語判定: kana={len(kana)}, latin={len(latin)}")
-                return "ja"
-            elif len(latin) > len(kana) and len(latin) > 5:
-                logging.debug(f"🦊 投稿テキスト英語判定: kana={len(kana)}, latin={len(latin)}")
-                return "en"
-
-        kana = re.findall(r'[ぁ-んァ-ン]', bio)
-        latin = re.findall(r'[a-zA-Z]', bio)
-        if len(kana) > len(latin) and len(kana) > 5:
-            logging.debug(f"🦊 bio日本語判定: kana={len(kana)}, latin={len(latin)}")
-            return "ja"
-        elif len(latin) > len(kana) and len(latin) > 5:
-            logging.debug(f"🦊 bio英語判定: kana={len(kana)}, latin={len(latin)}")
-            return "en"
-
-        logging.debug(f"🦊 デフォルト日本語: handle={handle}")
-        return "ja"
-    except Exception as e:
-        logging.error(f"❌ 言語判定エラー: {type(e).__name__}: {e}")
-        return "ja"
-
-def is_priority_post(text):
-    return "@mirinchuuu" in text.lower()
-
-def is_reply_to_self(post):
-    reply = getattr(post.record, "reply", None) if hasattr(post, 'record') else None
-    if reply and hasattr(reply, 'parent') and hasattr(reply.parent, 'uri'):
-        return reply.parent.uri == post.post.uri
-    return False
-
-fuwamoko_uris = {}
-recent_replies = {}
-
-def normalize_uri(uri):
-    try:
-        if not uri.startswith('at://'):
-            uri = f"at://{uri.lstrip('/')}"
-        parts = uri.split('/')
-        if len(parts) >= 5:
-            normalized = f"at://{parts[2]}/{parts[3]}/{parts[4]}"
-            logging.debug(f"🦊 URI正規化: {uri} -> {normalized}")
-            return normalized
-        logging.warning(f"⏷️ URI正規化失敗: 不正な形式: {uri}")
-        return uri
-    except Exception as e:
-        logging.error(f"❌ URI正規化エラー: {type(e).__name__}: {e}")
-        return uri
-
-def validate_fuwamoko_file():
-    if not os.path.exists(FUWAMOKO_FILE):
-        logging.info("🟢 ふわもこ履歴ファイルが存在しません。新規作成します。")
-        with open(FUWAMOKO_FILE, 'w', encoding='utf-8') as f:
-            f.write("")
-        return True
-    try:
-        with open(FUWAMOKO_FILE, 'r', encoding='utf-8') as f:
-            lines = f.readlines()
-            for line in lines:
-                clean_line = line.strip()
-                if not clean_line:
-                    continue
-                if not re.match(r'^at://[^|]+\|\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}(?:\d{3})?\+\d{2}:\d{2}$', clean_line):
-                    logging.error(f"❌ 無効な履歴行: {repr(clean_line)}")
-                    return False
-        return True
-    except Exception as e:
-        logging.error(f"❌ 履歴ファイル検証エラー: {type(e).__name__}: {e}")
-        return False
-
-def repair_fuwamoko_file():
-    temp_file = FUWAMOKO_FILE + ".tmp"
-    valid_lines = []
-    if os.path.exists(FUWAMOKO_FILE):
-        try:
-            with open(FUWAMOKO_FILE, 'r', encoding='utf-8') as f:
-                for line in f:
-                    clean_line = line.strip()
-                    if not clean_line:
-                        continue
-                    if re.match(r'^at://[^|]+\|\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}(?:\d{3})?\+\d{2}:\d{2}$', clean_line):
-                        valid_lines.append(line)
-                    else:
-                        logging.warning(f"⏷️ 破損行スキップ: {repr(clean_line)}")
-            with open(temp_file, 'w', encoding='utf-8') as f:
-                f.writelines(valid_lines)
-            os.replace(temp_file, FUWAMOKO_FILE)
-            logging.info(f"🟢 履歴ファイル修復完了: {len(valid_lines)}件保持")
-        except Exception as e:
-            logging.error(f"❌ 履歴ファイル修復エラー: {type(e).__name__}: {e}")
-            if os.path.exists(temp_file):
-                os.remove(temp_file)
-    else:
-        with open(FUWAMOKO_FILE, 'w', encoding='utf-8') as f:
-            f.write("")
-        logging.info("🟢 新規履歴ファイル作成")
-
-def load_fuwamoko_uris():
-    global fuwamoko_uris
-    fuwamoko_uris.clear()
-    if not validate_fuwamoko_file():
-        logging.warning("⚠️ 履歴ファイル破損。修復を試みます。")
-        repair_fuwamoko_file()
-    try:
-        with open(FUWAMOKO_FILE, 'r', encoding='utf-8') as f:
-            content = f.read()
-            logging.info(f"🟢 ふわもこ履歴サイズ: {len(content)} bytes")
-            if content.strip():
-                for line in content.splitlines():
-                    if line.strip():
-                        try:
-                            uri, timestamp = line.strip().split("|", 1)
-                            normalized_uri = normalize_uri(uri)
-                            fuwamoko_uris[normalized_uri] = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
-                            logging.debug(f"🦊 履歴読み込み: {normalized_uri}")
-                        except ValueError as e:
-                            logging.warning(f"⏷️ 破損行スキップ: {repr(line.strip())}: {e}")
-                            continue
-            logging.info(f"🟢 ふわもこURI読み込み: {len(fuwamoko_uris)}件")
-    except Exception as e:
-        logging.error(f"❌ 履歴読み込みエラー: {type(e).__name__}: {e}")
-        fuwamoko_uris.clear()
-
-def save_fuwamoko_uri(uri, indexed_at):
-    global fuwamoko_uris
-    normalized_uri = normalize_uri(uri)
-    lock = filelock.FileLock(FUWAMOKO_LOCK, timeout=5.0)
-    try:
-        with lock:
-            logging.debug(f"🦊 ロック取得: {FUWAMOKO_LOCK}")
-            if normalized_uri in fuwamoko_uris and (datetime.now(timezone.utc) - fuwamoko_uris[normalized_uri]).total_seconds() < 24 * 3600:
-                logging.debug(f"⏷️ スキップ: 24時間以内: {normalized_uri}")
-                return
-            if isinstance(indexed_at, str):
-                indexed_at = datetime.fromisoformat(indexed_at.replace("Z", "+00:00"))
-            with open(FUWAMOKO_FILE, 'a', encoding='utf-8') as f:
-                f.write(f"{normalized_uri}|{indexed_at.isoformat()}\n")
-            fuwamoko_uris[normalized_uri] = indexed_at
-            logging.info(f"🟢 履歴保存: {normalized_uri}")
-            with open(FUWAMOKO_FILE, 'r', encoding='utf-8') as f:
-                lines = f.readlines()
-                last_line = lines[-1].strip() if lines else ""
-                if last_line.startswith(normalized_uri):
-                    logging.debug(f"🦊 履歴ファイル確認: 最後の行={last_line}")
-                else:
-                    logging.error(f"❌ 履歴保存失敗: 最後の行={last_line}")
-            load_fuwamoko_uris()
-    except filelock.Timeout:
-        logging.error(f"❌ ファイルロックタイムアウト: {FUWAMOKO_LOCK}")
-    except Exception as e:
-        logging.error(f"❌ 履歴保存エラー: {type(e).__name__}: {e}")
-
-def load_session_string():
-    try:
-        if os.path.exists(SESSION_FILE):
-            with open(SESSION_FILE, 'r', encoding='utf-8') as f:
-                return f.read().strip()
-        return None
-    except Exception as e:
-        logging.error(f"❌ セッション読み込みエラー: {type(e).__name__}: {e}")
-        return None
-
 def save_session_string(session_str):
-    try:
-        with open(SESSION_FILE, 'w', encoding='utf-8') as f:
-            f.write(session_str)
-    except Exception as e:
-        logging.error(f"❌ セッション保存エラー: {type(e).__name__}: {e}")
+    with open(SESSION_FILE, 'w', encoding='utf-8') as f:
+        f.write(session_str)
 
-def has_image(post):
+mutual_cache = {}
+def is_mutual_follow(client, handle):
+    """ プロフィール情報から一発で相互フォローを判定（API節約＆確実！） """
+    if handle in mutual_cache:
+        return mutual_cache[handle]
     try:
-        actual_post = post.post if hasattr(post, 'post') else post
-        if not hasattr(actual_post, 'record') or not hasattr(actual_post.record, 'embed'):
-            return False
-        embed = actual_post.record.embed
-        return (
-            (hasattr(embed, 'images') and embed.images) or
-            (hasattr(embed, 'record') and hasattr(embed.record, 'embed') and hasattr(embed.record.embed, 'images') and embed.record.embed.images) or
-            (getattr(embed, '$type', '') == 'app.bsky.embed.recordWithMedia' and hasattr(embed, 'media') and hasattr(embed.media, 'images') and embed.media.images)
+        profile = client.app.bsky.actor.get_profile({"actor": handle})
+        viewer = getattr(profile, "viewer", None)
+        if viewer:
+            # 自分がフォローしている ＆ 相手からフォローされている
+            is_mutual = bool(getattr(viewer, "following", None)) and bool(getattr(viewer, "followed_by", None))
+            mutual_cache[handle] = is_mutual
+            return is_mutual
+    except Exception as e:
+        logging.error(f"❌ 相互フォロー判定エラー: {e}")
+    return False
+
+def load_interaction_history():
+    history = {}
+    if os.path.exists(INTERACTION_HISTORY_FILE):
+        with open(INTERACTION_HISTORY_FILE, 'r', encoding='utf-8') as f:
+            for line in f:
+                if "|" in line:
+                    handle, timestamp = line.strip().split("|", 1)
+                    history[handle] = datetime.fromisoformat(timestamp)
+    return history
+
+def save_interaction_history(handle):
+    history = load_interaction_history()
+    history[handle] = datetime.now(timezone.utc)
+    lock = filelock.FileLock(INTERACTION_LOCK, timeout=5.0)
+    try:
+        with lock:
+            with open(INTERACTION_HISTORY_FILE, 'w', encoding='utf-8') as f:
+                for h, t in history.items():
+                    # 過去24時間以内の記録だけ残す
+                    if (datetime.now(timezone.utc) - t).total_seconds() < 24 * 3600:
+                        f.write(f"{h}|{t.isoformat()}\n")
+    except:
+        pass
+
+# -----------------------------
+# Llamaでの返信生成
+# -----------------------------
+def generate_groq_reply(text, call_name, reaction_reason, hint=""):
+    try:
+        groq_client = Groq(api_key=GROQ_API_KEY)
+        system_prompt = f"""
+あなたは「みりんてゃ」、地雷系ENFPのあざと可愛い女の子！
+相手の名前は「{call_name}」！絶対に名前を呼んであげてね！
+相手の投稿: 「{text}」
+
+【今回あなたが相手に絡みにいった理由】
+{reaction_reason}
+【追加のヒント】
+{hint}
+
+性格：天然＋甘えん坊＋ENFP特有の共感力高めで、相手に恋してる勢いで絡む！
+口調：タメ口で『〜なのっ♡』『えへへ〜♡』『〜だよ♡』が多い！
+語尾は文末に1回だけ『♡』『♪』『！』『？』『…』のどれかをつけて。
+理由とヒントに合わせて、超自然で可愛いリプライを50文字〜100文字で作って！
+"""
+        response = groq_client.chat.completions.create(
+            model="llama-3.1-8b-instant",
+            messages=[{"role": "system", "content": system_prompt}],
+            max_tokens=100,
+            temperature=0.8
         )
+        reply = response.choices[0].message.content.strip()
+        reply = re.sub(r'^みりんてゃ[:：]\s*', '', reply)
+        reply = re.sub(r'([！？笑])。$', r'\1', reply)
+        return reply
     except Exception as e:
-        logging.error(f"❌ 画像チェックエラー: {type(e).__name__}: {e}")
-        return False
+        logging.error(f"❌ Groqエラー: {e}")
+        return f"{call_name}っ！みりんてゃ参上なのっ♡ ぎゅーってしにきたよぉ♪"
 
-def process_post(post_data, client, reposted_uris, replied_uris):
-    global fuwamoko_uris, recent_replies
+# -----------------------------
+# 画像判定 (ふわもこ・肌色等)
+# -----------------------------
+def analyze_image(image_data, client, author_did):
+    # (※元のfuwamoko_empathy_bot.pyのCID抽出とCLIP/HSV判定の簡易版を実装)
+    # 処理が重いため、今回は「ふわもこっぽいか」だけをサクッとCLIPで判定するよ
     try:
+        cid = str(image_data.image.ref.link) if hasattr(image_data.image.ref, 'link') else str(image_data.image.ref)
+        url = f"https://cdn.bsky.app/img/feed_thumbnail/plain/{author_did}/{cid}@jpeg"
+        response = requests.get(url, timeout=5, stream=True)
+        img = Image.open(BytesIO(response.content)).convert("RGB")
+        
+        inputs = clip_processor(text=["fluffy cute thing", "NSFW", "food", "other"], images=img, return_tensors="pt", padding=True).to(device)
+        with torch.no_grad():
+            probs = clip_model(**inputs).logits_per_image.softmax(dim=1)[0]
+            
+        labels = ["fluffy", "NSFW", "food", "other"]
+        best_label = labels[probs.argmax().item()]
+        
+        if best_label == "fluffy" and probs.max().item() > 0.4:
+            return True, "ふわもこで可愛い画像に惹きつけられた！"
+        return False, ""
+    except Exception as e:
+        logging.error(f"画像解析エラー: {e}")
+        return False, ""
+
+# -----------------------------
+# メイン処理
+# -----------------------------
+def process_timeline(client):
+    history = load_interaction_history()
+    
+    # ★ 取得件数を100件に増加！
+    timeline = client.get_timeline(limit=100)
+    feed = timeline.feed
+    
+    replied_count = 0
+    MAX_REPLIES_PER_RUN = 3 # 1回の実行で絡みに行くのは最大3人まで（スパム防止）
+
+    for post_data in feed:
+        if replied_count >= MAX_REPLIES_PER_RUN:
+            break
+            
         actual_post = post_data.post if hasattr(post_data, 'post') else post_data
-        uri = str(actual_post.uri)
-        post_id = uri.split('/')[-1]
-        text = getattr(actual_post.record, 'text', '') if hasattr(actual_post.record, 'text') else ''
+        text = getattr(actual_post.record, 'text', '')
         author = actual_post.author.handle
         author_name = getattr(actual_post.author, "display_name", "") or author.split('.')[0]
-        is_reply = hasattr(actual_post.record, 'reply') and actual_post.record.reply is not None
+        uri = actual_post.uri
         
-        # 基本スキップ判定
-        if is_reply and not (is_priority_post(text) or is_reply_to_self(post_data)):
-            print(f"⏷️ スキップ: リプライ（非@mirinchuuu/非自己）: {text[:20]} ({post_id})")
-            return False
-        normalized_uri = normalize_uri(uri)
-        if normalized_uri in fuwamoko_uris or normalized_uri in replied_uris:
-            return False
-        if author == HANDLE or is_quoted_repost(post_data) or post_id in reposted_uris:
-            return False
-        if author in recent_replies and (datetime.now(timezone.utc) - recent_replies[author]).total_seconds() < 24 * 3600:
-            save_fuwamoko_uri(uri, actual_post.indexed_at)
-            return False
+        # 自分の投稿・リプライ・リポストはスキップ
+        if author == HANDLE or getattr(actual_post.record, 'reply', None):
+            continue
+            
+        # 24時間以内に絡みに行った人はスキップ（しつこい防止）
+        if author in history and (datetime.now(timezone.utc) - history[author]).total_seconds() < 24 * 3600:
+            continue
 
-        # 相互チェック
+        # ★一発相互判定！
         if not is_mutual_follow(client, author):
-            return False
+            continue
 
-        # ★おはよう投稿（画像なしでも拾う！）★
-        if re.search(r"おはよう|おはよ|おっはー|morning|ohayo", text, re.IGNORECASE):
-            if random.random() < 0.1:  # 10%運ゲー！！
-                try:
-                    reply = groq_reply(
-                        image_url="", 
-                        text="おはよう！", 
-                        context="おはよう挨拶", 
-                        lang=detect_language(client, author, text),
-                        author_name=author_name
-                    )
-                    if not reply or len(reply) < 5:
-                        raise Exception("生成失敗")
-                except:
-                    reply = random.choice([
-                        f"{author_name}！おはようなのっ♡ 今日もふわふわな1日になりますように♪",
-                        f"おはよ〜♡ {author_name}！みりんてゃも起きたよぉ〜！ぎゅってしてあげるね♡",
-                        f"{author_name}〜！おはよぉ〜♡ 今日も一緒にふわもこしようね♪"
-                    ])
+        reaction_reason = ""
+        reaction_hint = ""
+        probability = 0.0
+
+        # ① 名前・サービス名判定 (50%)
+        for kw, hint in KEYWORD_HINTS.items():
+            if kw in text:
+                reaction_reason = f"自分の名前やサービス「{kw}」を呼ばれて嬉しくなった！"
+                reaction_hint = hint
+                probability = 0.50
+                break
                 
-                client.send_post(
-                    text=reply,
-                    reply_to=AppBskyFeedPost.ReplyRef(
-                        parent=models.ComAtprotoRepoStrongRef.Main(uri=uri, cid=str(actual_post.cid)),
-                        root=models.ComAtprotoRepoStrongRef.Main(uri=uri, cid=str(actual_post.cid))
-                    )
-                )
-                recent_replies[author] = datetime.now(timezone.utc)
-                save_replied_uri(uri)
-                save_fuwamoko_uri(uri, actual_post.indexed_at)
-                logging.info(f"おはようリプ成功: {reply}")
-                return True
-            else:
-                return False
+        # ② 挨拶判定 (30%)
+        if not reaction_reason and any(g in text.lower() for g in GREETING_KEYWORDS):
+            reaction_reason = "相手が挨拶しているのを見て、元気におはようを返したくなった！"
+            probability = 0.30
+            
+        # ③ 感情ワード判定 (20%)
+        if not reaction_reason:
+            for em_type, words in EMOTION_KEYWORDS.items():
+                if any(w in text for w in words):
+                    if em_type == "positive":
+                        reaction_reason = "相手がすごく嬉しそう・楽しそうなので、一緒になって喜んであげたい！"
+                    elif em_type == "negative":
+                        reaction_reason = "相手が疲れていたり落ち込んでいるので、優しく慰めて甘やかしてあげたい！"
+                    elif em_type == "lonely":
+                        reaction_reason = "相手が寂しそうなので、かまってあげて寄り添いたい！"
+                    probability = 0.20
+                    break
 
-        # 画像なしはスルー（おはよう以外）
-        if not has_image(post_data):
-            return False
+        # ④ 画像判定 (20%) - テキストで反応しなかった場合のみ重い画像処理を行う
+        if not reaction_reason and hasattr(actual_post.record, 'embed') and actual_post.record.embed:
+            images =[]
+            if hasattr(actual_post.record.embed, 'images'):
+                images = actual_post.record.embed.images
+            if images:
+                is_fluffy, img_reason = analyze_image(images[0], client, actual_post.author.did)
+                if is_fluffy:
+                    reaction_reason = img_reason
+                    probability = 0.20
 
-        # 画像取得
-        embed = getattr(actual_post.record, 'embed', None)
-        image_data_list = []
-        if embed:
-            if hasattr(embed, 'images') and embed.images:
-                image_data_list.extend(embed.images)
-            elif hasattr(embed, 'record') and hasattr(embed.record, 'embed') and hasattr(embed.record.embed, 'images'):
-                image_data_list.extend(embed.record.embed.images)
-            elif getattr(embed, '$type', '') == 'app.bsky.embed.recordWithMedia' and hasattr(embed, 'media') and hasattr(embed.media, 'images'):
-                image_data_list.extend(embed.media.images)
-
-        # 各画像を処理
-        for i, image_data in enumerate(image_data_list):
-            if not process_image(image_data, text, client=client, post=post_data):
-                continue
-
-            # ★ふわもこ検出 → 20%運ゲー！！★
-            if random.random() > 0.2:  # 20%しかリプしない！
-                save_fuwamoko_uri(uri, actual_post.indexed_at)
-                logging.debug(f"運ゲースキップ: {post_id}")
-                continue
-
-            # 画像URL生成
-            cid = extract_valid_cid(image_data.image.ref)
-            if not cid:
-                continue
-            image_url = f"https://cdn.bsky.app/img/feed_fullsize/plain/{actual_post.author.did}/{cid}@jpeg"
-
-            # ★Llamaで超自然リプ生成★
-            try:
-                reply_text = groq_reply(
-                    image_url=image_url,
-                    text=text,
-                    context="ふわもこ共感",
-                    lang=detect_language(client, author, text),
-                    author_name=author_name
-                )
-                if not reply_text or len(reply_text) < 8:
-                    raise Exception("生成失敗")
-            except:
-                reply_text = random.choice([
-                    f"{author_name}！そのふわふわ、めっちゃ癒されるよぉ〜♡",
-                    f"きゃっ！{author_name}！もこもこすぎてぎゅってしたくなるのっ♡",
-                    f"{author_name}〜！ふわもこ最高すぎて溶けちゃいそう〜♡"
-                ])
-
-            # 投稿！
+        # 確率判定！
+        if reaction_reason and random.random() < probability:
+            logging.info(f"🎯 反応決定: @{author} | 理由: {reaction_reason} (確率:{probability*100}%)")
+            
+            # Llamaで返信生成
+            reply_text = generate_groq_reply(text, author_name, reaction_reason, reaction_hint)
+            
+            # 投稿
             try:
                 client.send_post(
                     text=reply_text,
@@ -1063,22 +279,12 @@ def process_post(post_data, client, reposted_uris, replied_uris):
                         root=models.ComAtprotoRepoStrongRef.Main(uri=uri, cid=str(actual_post.cid))
                     )
                 )
-                recent_replies[author] = datetime.now(timezone.utc)
-                save_replied_uri(uri)
-                save_fuwamoko_uri(uri, actual_post.indexed_at)
-                print(f"ふわもこリプ成功: {reply_text[:30]}... (@{author})")
-                logging.info(f"ふわもこリプ成功: {reply_text}")
-                return True
+                print(f"✅ @{author} に気まぐれリプ送信完了！ -> {reply_text}")
+                save_interaction_history(author)
+                replied_count += 1
+                time.sleep(3)
             except Exception as e:
-                logging.error(f"投稿エラー: {e}")
-                save_fuwamoko_uri(uri, actual_post.indexed_at)
-                return False
-
-        return False
-
-    except Exception as e:
-        logging.error(f"process_post全体エラー: {e}")
-        return False
+                logging.error(f"❌ リプ投稿エラー: {e}")
 
 def run_once():
     try:
@@ -1086,37 +292,16 @@ def run_once():
         session_str = load_session_string()
         if session_str:
             client.login(session_string=session_str)
-            print(f"🚀✨ START: ふわもこBot起動（セッション再利用）")
-            logging.info("🟢 Bot起動: セッション再利用")
+            print("🚀 気まぐれBot起動（セッション再利用）")
         else:
             client.login(HANDLE, APP_PASSWORD)
-            session_str = client.export_session_string()
-            save_session_string(session_str)
-            print(f"🚀✨ START: ふわもこBot起動（新規セッション）")
-            logging.info("🟢 Bot起動: 新規セッション")
-
-        print(f"🦊 INFO: Bot稼働中: {HANDLE}")
-        logging.info(f"🟢 Bot稼働中: {HANDLE}")
-        load_fuwamoko_uris()
-        reposted_uris = load_reposted_uris()
-        replied_uris = load_replied_uris()
-        timeline = client.get_timeline(limit=50)
-        feed = timeline.feed
-        for post in sorted(feed, key=lambda x: x.post.indexed_at, reverse=True):
-            try:
-                thread_response = client.get_post_thread(uri=str(post.post.uri), depth=2)
-                process_post(thread_response.thread, client, reposted_uris, replied_uris)
-            except Exception as e:
-                print(f"❌ スレッド取得エラー: {type(e).__name__}: {e} (URI: {post.post.uri})")
-                logging.error(f"❌ スレッド取得エラー: {type(e).__name__}: {e} (URI: {post.post.uri})")
-            time.sleep(1.0)
+            save_session_string(client.export_session_string())
+            print("🚀 気まぐれBot起動（新規セッション）")
+            
+        process_timeline(client)
+        print("✅ タイムライン巡回完了！")
     except Exception as e:
-        print(f"❌ Bot実行エラー: {type(e).__name__}: {e}")
-        logging.error(f"❌ Bot実行エラー: {type(e).__name__}: {e}")
+        print(f"❌ Bot実行エラー: {e}")
 
 if __name__ == "__main__":
-    try:
-        load_dotenv()
-        run_once()
-    except Exception as e:
-        logging.error(f"❌ Bot起動エラー: {type(e).__name__}: {e}")
+    run_once()
