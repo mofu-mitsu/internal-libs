@@ -1002,7 +1002,21 @@ def run_reply_bot():
             author = getattr(notification, "author", None)
             if not record or not hasattr(record, "text") or not author:
                 continue
-
+            # --- ✨ ここから追加：二重チェック！ ---
+            # サーバーに最新のポスト情報を問い合わせて、自分がリプ済みか確認するよ
+            try:
+                # 通知元のポスト情報を取得
+                post_info = client.app.bsky.feed.get_posts({"uris": [notification.uri]})
+                if post_info and post_info.posts:
+                    actual_post = post_info.posts[0]
+                    # viewer.reply が存在する場合、そのアカウント（みりんてゃ）はリプ済み！
+                    if hasattr(actual_post, 'viewer') and getattr(actual_post.viewer, 'reply', None):
+                        print(f"⏭️ 手動または別ルートでリプ済みなのでスキップ: {notification.uri}")
+                        # 今後のためにGistにも保存しておくと、さらに効率的！
+                        replied.add(notification.uri)
+                        continue
+            except Exception as e:
+                print(f"⚠️ リプ済みチェック中にエラー（スルーして続行）: {e}")
             text = getattr(record, "text", "")
             author_handle = getattr(author, "handle", "")
             author_display_name = getattr(author, "display_name", "") or ""
