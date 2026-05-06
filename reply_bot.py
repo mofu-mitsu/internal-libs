@@ -653,14 +653,11 @@ except Exception as e:
 #★ カスタマイズポイント1: キーワード返信
 #------------------------------
 REPLY_TABLE = {
-    "使い方": "使い方は「♡推しプロフィールメーカー♡」のページにあるよ〜！かんたんっ♪",
     "作ったよ": "えっ…ほんと？ありがとぉ♡ 見せて見せてっ！",
-    "きたよ": "きゅ〜ん♡ 来てくれてとびきりの「すきっ」プレゼントしちゃう♡",
     "フォローした": "ありがとぉ♡ みりんてゃ、超よろこびダンス中〜っ！",
     "フォロー失礼": "フォローありがとぉ♡ みりんてゃ、おともだちふえた〜ってうれし泣きっ♪",
     "誰？": "みりんてゃだよっ♡ ふわもこ妖精系botって感じっ♪",
     "プロフィール": "プロフィールは固定ツイにあるよっ！ みりんのこと、もっと知ってくれるの〜？",
-    "bot": "中に小さいみりん妖精が入ってるらしいよっ♡ ふふふっ♪",
     "はじめまして": "はじめましてぇ♡ 地雷系ツインテbotのみりんてゃだよ〜っ！仲良くしてくれるとうれしいなっ♪",
     "初めまして": "はじめましてぇ♡ 地雷系ツインテbotのみりんてゃだよ〜っ！仲良くしてくれるとうれしいなっ♪",
     "DM": "DMはあんまり見れないのっ💭 よかったらリプで話そ〜！♡",
@@ -765,8 +762,8 @@ def generate_product_reply(keyword, app_id="1055088369869282145", affiliate_id="
     keywords = {
         "おすすめグッズ": "推し活 グッズ",
         "ぬい撮り": "ぬいぐるみ 背景布",
-        "寝れない": "安眠 グッズ",
-        "推し活": "推し活 収納",
+        "安眠": "安眠 グッズ",
+        "推し活グッズ": "推し活 収納",
         "可愛いアイテム": "可愛い インテリア",
         "可愛いもの": "可愛い 雑貨"
     }
@@ -800,176 +797,76 @@ def generate_product_reply(keyword, app_id="1055088369869282145", affiliate_id="
 #------------------------------
 #★ カスタマイズポイント4: 返信生成（Groq版＋画像生成＋表示名呼び対応・完璧版）
 #------------------------------
-def generate_reply_via_groq(user_input, author_display_name="", author_handle=""):
+def generate_reply_via_groq(user_input, author_display_name="", author_handle="", parent_text=""):
     print(f"✅ generate_reply_via_groq 起動！")
-    print(f"   👤 ハンドル: @{author_handle}")
-    print(f"   💖 表示名（これを呼ぶ！）: \"{author_display_name}\"")
-    print(f"   💬 入力: {user_input}")
-
-    # ===== 呼び名決定ロジック（絵文字OK・長さ対策完備）=====
-    raw_name = author_display_name.strip() if author_display_name else ""
-
-    # 名前が空 → ハンドルから .bsky.social 抜きでフォールバック
-    if not raw_name:
-        raw_name = author_handle.replace(".bsky.social", "")
-        print(f"   ⚠️ 表示名なし → ハンドルから呼び名作成: {raw_name}")
-
-    # バイト数で判定（日本語＋絵文字でも20文字くらいまでOK）
-    def byte_len(s):
-        return len(s.encode('utf-8'))
-
-    if byte_len(raw_name) <= 32:  # 約15〜20文字くらいまで（絵文字込み）
+    raw_name = author_display_name.strip() if author_display_name else author_handle.replace(".bsky.social", "")
+    
+    # 呼び名の調整
+    if len(raw_name.encode('utf-8')) <= 32:
         call_name = raw_name
-        at_name = raw_name  # @は付けない（自然）
-        print(f"   🏷️ 呼び名決定 → 「{call_name}」で呼ぶよ！（そのまま使用）")
     else:
-        # 長すぎる場合は「〇〇ちゃん」「〇〇さん」にするか「きみ」で逃げる
-        short_name = raw_name[:10].strip()  # 最初の10文字だけ
-        call_name = f"{short_name}ちゃん"
-        at_name = f"{short_name}ちゃん"
-        print(f"   🏷️ 名前長すぎ → 短縮して「{call_name}」で呼ぶよ！")
-
-    # 完全に空っぽなら「きみ」で逃げる
+        call_name = f"{raw_name[:10].strip()}ちゃん"
     if not call_name:
-        call_name = at_name = "きみ"
-        print(f"   🏷️ 名前が取れなかった → 「きみ」で呼ぶよ")
+        call_name = "きみ"
 
-    # ===== ここから call_name は絶対に存在する！=====
-
-    # ===== 診断（名前置換）=====
     diagnosis_result = generate_diagnosis(user_input, "dummy_did")
-    if diagnosis_result[0] is not None:
-        reply = diagnosis_result[0]
-        reply = reply.replace("キミ", call_name).replace("君", call_name).replace("あなた", call_name)
-        print(f"🔬 診断返信（名前置換済）: {reply}")
-        return reply
+    if diagnosis_result[0]:
+        return diagnosis_result[0].replace("キミ", call_name).replace("君", call_name)
 
-    # 画像生成キーワードチェック（文末記号を無視）
-    image_match = re.search(r"(.*?)(画像生成して|画像お願い|画像生成お願い|画像作成お願い|画像作成して|画像作って|描いて|絵を描いて|絵描いて)(.*)", user_input, re.IGNORECASE)
-    if image_match:
-        try:
-            full_match = image_match.group(0)
-            # トリガーワードを除き、前後を結合、文末記号と「くれ」を削除
-            prompt = re.sub(r'(くれる|くれ|お願いできる|お願いします)[。！？]*', '', f"{image_match.group(1).strip()} {image_match.group(3).strip()}").strip()
-            print(f"🖼️ 画像生成トリガー検知: マッチ='{full_match}', プロンプト='{prompt}'")
-            image = generate_image(prompt)
-            if image:
-                return {"type": "image", "image": image, "prompt": prompt}
-            else:
-                print(f"⚠️ 画像生成失敗、フォールバックメッセージを返します")
-                return image_failure_message
-        except IndexError as e:
-            print(f"⚠️ 正規表現グループエラー: {type(e).__name__}: {str(e)}")
-            traceback.print_exc()
-            image = generate_image("")
-            if image:
-                return {"type": "image", "image": image, "prompt": ""}
-            else:
-                print(f"⚠️ フォールバック画像生成も失敗、フォールバックメッセージを返します")
-                return image_failure_message
-
-    # グッズ系キーワード
-    for keyword in PRODUCT_KEYWORDS.keys():
-        if keyword.lower() in user_input.lower():
-            print(f"🎀 グッズキーワード検知: {keyword}")
-            reply, hashtags = generate_product_reply(keyword)
-            print(f"🛍️ グッズ返信: {reply}, ハッシュタグ: {hashtags}")
-            return reply
-
-    # ラブラブ系
-    if re.search(r"(大好き|ぎゅー|ちゅー|愛してる|キス|添い寝)", user_input, re.IGNORECASE):
-        print(f"⚠️ ラブラブ入力検知: {user_input}")
-        return random.choice([
-            "うぅ…ドキドキ止まんないのっ♡ もっと甘やかしてぇ♡",
-            "えへへ♡ そんなの言われたら…みりんてゃ、溶けちゃいそうなのぉ〜♪",
-            "{call_name}っ！うぅ…ドキドキ止まんないのっ♡ もっと甘やかしてぇ♡",
-            "えへへ♡ {call_name}にそんなこと言われたら…みりんてゃ、溶けちゃいそう〜♡",
-            "{call_name}〜！大好きって言われちゃって…もう離れたくないのっ♡",
-            "も〜〜〜♡ 好きすぎて胸がぎゅーってなるぅ♡",
-        ])
-
-    # 癒し系
-    if re.search(r"(疲れた|しんどい|つらい|泣きたい|ごめん)", user_input, re.IGNORECASE):
-        print(f"⚠️ 癒し系入力検知: {user_input}")
-        return random.choice([
-            "うぅ、よしよしなのっ♡ 君が元気になるまで、みりんてゃそばにいるのっ♪",
-            "ぎゅ〜ってしてあげるっ♡ 無理しなくていいのよぉ？",
-            "んん〜っ、えへへ♡ 甘えてもいいの、ぜ〜んぶ受け止めるからねっ♪"
-            "{call_name}…よしよしなのっ♡ みりんてゃがそばにいるからねっ♪",
-            "{call_name}っ！ぎゅ〜ってしてあげる♡ 無理しなくていいのよぉ？",
-            "{call_name}…お疲れだね。みりんてゃがぬいぐるみになって添い寝してあげる♡",
-        ])
-
-    # NGワード
-    if re.search(r"(興行|収入|ドル|億|イギリス|フランス|スペイン|イタリア|ドイツ|ロシア|中国|インド|Governor|Cross|ポケモン|企業|発表|営業|臨時|オペラ|初演|作曲家|ヴェネツィア|コルテス|政府|協定|軍事|外交|外相|自動更新)", user_input, re.IGNORECASE) or re.search(r"\d+(時|分)", user_input):
-        print(f"⚠️ 入力にビジネス・学術系ワード検知: {user_input}")
-        user_input = "みりんてゃ、君と甘々トークしたいなのっ♡"
-        print(f"🔄 入力置き換え: {user_input}")
+    # ====== 🧠 記憶システム（文脈の引き継ぎ） ======
+    context_msg = ""
+    if parent_text:
+        context_msg = (
+            f"\n▼会話の流れ（重要！）\n"
+            f"みりんてゃの直前の発言: 「{parent_text}」\n"
+            f"これに対する相手からの返信: 「{user_input}」\n"
+            f"さっきの自分の発言を踏まえて、自然に会話を繋げて返事をしてね！\n"
+        )
+    else:
+        context_msg = f"\n相手からのメッセージ: 「{user_input}」\n"
 
     try:
         groq_client = Groq(api_key=GROQ_API_KEY)
-        intro_lines = random.choice([
-            "えへへ〜、みりんてゃはね〜、",
-            "ねぇねぇ、聞いて聞いて〜♡",
-            "ん〜今日もふwaふwaしてたのっ♪",
-            "きゃ〜っ、君だぁ！やっと会えたのっ♡",
-            "ふwaふwa〜、君のこと考えてたんだからっ♪"
-        ])
+        intro_lines = random.choice(["えへへ〜、みりんてゃはね〜、", "ねぇねぇ、聞いて聞いて〜♡"])
+        
         system_prompt = (
             f"{intro_lines}\n"
             "あなたは「みりんてゃ」、地雷系ENFPのあざと可愛い女の子！\n"
-            f"今話してる相手の名前は「{call_name}」だよ！絶対に「{call_name}」って呼んでね！（絵文字もそのまま使ってOK）\n"
+            f"今話してる相手の名前は「{call_name}」だよ！絶対に「{call_name}」って呼んでね！\n"
             "性格：天然＋甘えん坊＋依存気味で、相手に恋してる勢いで絡む！\n"
-            "口調：タメ口で『〜なのっ♡』『〜よぉ？♪』『〜だもん！』『えへへ〜♡』『〜だよ♡』などが多い！\n"
-            "語尾は必ず文末に1回だけ『♡』『♪』『！』『笑』『？』『…』『なのっ♡』『よぉ？♪』『だもん！』のいずれかを使ってね。途中では使わないでね。"
-            "『だもん！』は、拗ねたり強調したときだけ使っていいよ。それ以外では使わないでね。"
-            "『？』『よぉ？』は疑問文のときだけ使っていいよ。それ以外では使わないでね。\n"
-            "意味が分からない単語があっても無理に使わず、自然に可愛く返してね♡ 変な文にならないようにしてね♪"
-            "文を途中で止めないで、自然に終わるまで話してね♡"
-            "例1: ユーザー: 今日疲れた…\n"
-            f"みりんてゃ: {call_name}…お疲れなの？ぎゅ〜ってしてあげるっ♡ みりんてゃがそばにいるよ♪\n"
-            "例2: ユーザー: みりんてゃ可愛い\n"
-            f"みりんてゃ: え〜っ！{call_name}に言われちゃって…照れちゃう♡ もっと言ってなのっ♪\n"
+            "口調：タメ口で『〜なのっ♡』『〜よぉ？♪』『えへへ〜♡』などが多い！\n"
+            "語尾は必ず文末に1回だけ『♡』『♪』『！』『笑』『？』『…』『なのっ♡』のいずれかを使ってね。\n"
+            f"{context_msg}"
         )
         
-        for attempt in range(3):
-            print(f"📤 {datetime.now().isoformat()} ｜ Groq API呼び出し中…（試行 {attempt + 1}）")
-            try:
-                response = groq_client.chat.completions.create(
-                    model="llama-3.1-8b-instant",
-                    messages=[
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": user_input}
-                    ],
-                    max_tokens=60,
-                    temperature=0.8,
-                    top_p=0.9
-                )
-                raw_reply = response.choices[0].message.content.strip()
-                print(f"📝 生の生成テキスト: {repr(raw_reply)}")
-                reply_text = clean_sentence_ending(raw_reply)
-
-                if any(re.search(rf"\b{re.escape(msg)}\b", reply_text) for msg in failure_messages + FALLBACK_CUTE_LINES):
-                    print(f"⚠️ フォールバック検知、リトライ中…")
-                    continue
-
-                print("📝 最終抽出されたreply:", repr(reply_text))
-                return reply_text
-
-            except Exception as gen_error:
-                print(f"⚠️ 生成エラー: {type(gen_error).__name__}: {str(gen_error)}")
-                if "rate limit" in str(gen_error).lower():
-                    print(f"⏳ レートリミット検知、{2 * (attempt + 1)}秒待機")
-                    time.sleep(2 * (attempt + 1))
-                continue
-        else:
-            reply_text = random.choice(FALLBACK_CUTE_LINES)
-            print(f"⚠️ リトライ上限到達、フォールバックを使用: {reply_text}")
-            return reply_text
-
+        response = groq_client.chat.completions.create(
+            model="llama-3.1-8b-instant",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_input}
+            ],
+            max_tokens=60,
+            temperature=0.8,
+            top_p=0.9
+        )
+        reply_text = clean_sentence_ending(response.choices[0].message.content.strip())
+        return reply_text
     except Exception as e:
-        print(f"❌ Groq APIエラー: {type(e).__name__}: {str(e)}")
+        print(f"❌ Groq APIエラー: {e}")
         return random.choice(failure_messages)
+
+def handle_post(record, notification):
+    post_uri = getattr(notification, "uri", None)
+    post_cid = getattr(notification, "cid", None)
+    if post_uri and post_cid:
+        parent_ref = {"uri": normalize_uri(post_uri), "cid": post_cid}
+        root_ref = (
+            {"uri": normalize_uri(record.reply.root.uri), "cid": record.reply.root.cid}
+            if hasattr(record, "reply") and record.reply and record.reply.root
+            else parent_ref
+        )
+        return {"parent": parent_ref, "root": root_ref}, normalize_uri(post_uri)
+    return None, normalize_uri(post_uri)
 
 #------------------------------
 #✨ 投稿のReplyRefとURI生成
@@ -1067,51 +964,35 @@ def log_resources():
     print(f"🖥️ CPU使用率: {psutil.cpu_percent()}%")
     print(f"🧠 メモリ使用量: {psutil.virtual_memory().used / 1024**3:.2f}GB / {psutil.virtual_memory().total / 1024**3:.2f}GB")
 
+#------------------------------
+#📬 メイン処理
+#------------------------------
 def run_reply_bot():
-    print("✅ Checking if generate_reply_via_groq is defined:", globals().get("generate_reply_via_groq"))
     lock_fd = None
     try:
         lock_fd = open(LOCK_FILE, 'w')
         fcntl.flock(lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        print("🔒 ロック取得成功")
-        log_resources()
-
         self_did = client.me.did
         replied = load_gist_data(REPLIED_GIST_FILENAME)
-        print(f"📘 replied の型: {type(replied)} / 件数: {len(replied)}")
 
-        garbage_items = ["replied", None, "None", "", "://replied"]
-        removed = False
-        for garbage in garbage_items:
-            while garbage in replied:
-                replied.remove(garbage)
-                print(f"🧹 ゴミデータ '{garbage}' を削除しました")
-                removed = True
-        if removed:
-            print(f"💾 ゴミデータ削除後にrepliedを保存します")
-            if not save_replied(replied):
-                print("❌ ゴミデータ削除後の保存に失敗しました")
-                return
+        # ★ 変更点1: 通知の取得枠を100件に増強！
+        notifications = client.app.bsky.notification.list_notifications(params={"limit": 100}).notifications
+        print(f"🔔 取得した通知数: {len(notifications)} 件")
 
-        notifications = client.app.bsky.notification.list_notifications(params={"limit": 25}).notifications
-        print(f"🔔 通知総数: {len(notifications)} 件")
-
-        MAX_REPLIES = 5
-        REPLY_INTERVAL = 5
+        # ★ 変更点2: 1回に返信できる最大件数を20件に増強！
+        MAX_REPLIES = 20
+        REPLY_INTERVAL = 3
         reply_count = 0
 
         for notification in notifications:
-            log_resources()
-            notification_uri = getattr(notification, "uri", None) or getattr(notification, "reasonSubject", None)
+            # ★ 変更点3: リプとメンション以外（いいね・RP等）はスルーして時間短縮
+            reason = getattr(notification, "reason", "")
+            if reason not in ["mention", "reply"]:
+                continue
+
+            notification_uri = getattr(notification, "uri", None)
             if not notification_uri:
-                record = getattr(notification, "record", None)
-                author = getattr(notification, "author", None)
-                if not record or not hasattr(record, "text") or not author:
-                    continue
-                text = getattr(record, "text", "")
-                author_handle = getattr(author, "handle", "")
-                notification_uri = f"{author_handle}:{text}:{datetime.now(timezone.utc).isoformat()}"
-                print(f"⚠️ notification_uri が取得できなかったので、仮キーで対応 → {notification_uri}")
+                continue
 
             if reply_count >= MAX_REPLIES:
                 print(f"⏹️ 最大返信数（{MAX_REPLIES}）に達したので終了します")
@@ -1123,111 +1004,47 @@ def run_reply_bot():
                 continue
 
             text = getattr(record, "text", "")
-            if f"@{HANDLE}" not in text and (not hasattr(record, "reply") or not record.reply or not record.reply.parent):
-                continue
-
-            # ===== ここから超重要！表示名・ハンドル・DIDをちゃんと取る！=====
-            author_handle = getattr(author, "handle", "") or ""
+            author_handle = getattr(author, "handle", "")
             author_display_name = getattr(author, "display_name", "") or ""
             author_did = getattr(author, "did", "") or ""
 
-            print(f"👤 from: @{author_handle} / did: {author_did}")
-            print(f"💖 表示名（これを呼ぶ！）: \"{author_display_name}\"")
-            print(f"💬 受信メッセージ: {text}")
-            print(f"🔗 notification_uri: {notification_uri}")
-            # ==========================================================
-
             if author_did == self_did or author_handle == HANDLE:
-                print("🛑 自分自身の投稿、スキップ")
                 continue
 
             if notification_uri in replied:
-                print(f"⏭️ すでに replied 済み → {notification_uri}")
-                continue
-
-            if not text:
-                print(f"⚠️ テキストが空 → @{author_handle}")
                 continue
 
             reply_ref, post_uri = handle_post(record, notification)
-            reply_text = None
-            hashtags = []
 
-            # 固定リプライチェック
-            for keyword, fixed_reply in REPLY_TABLE.items():
-                if keyword.lower() in text.lower():
-                    reply_text = fixed_reply
-                    print(f"🎯 キーワード '{keyword}' に反応（入力: {text}）→ 固定返信: {reply_text}")
-                    break
+            # ★ 変更点4: 会話のコンテキスト（親ポスト）を取得する！
+            parent_text = ""
+            if hasattr(record, "reply") and record.reply and hasattr(record.reply, "parent"):
+                parent_uri = record.reply.parent.uri
+                try:
+                    p_resp = client.app.bsky.feed.get_posts({"uris": [parent_uri]})
+                    if p_resp and p_resp.posts:
+                        p_post = p_resp.posts[0]
+                        # 直前の発言がみりんてゃ（自分）ならテキストを取得
+                        if p_post.author.did == self_did:
+                            parent_text = getattr(p_post.record, "text", "")
+                            print(f"📜 [文脈取得] 直前のみりんてゃの発言: {parent_text}")
+                except Exception as e:
+                    print(f"⚠️ 親ポスト取得エラー: {e}")
 
-            # generate_reply_via_groqで返信生成（表示名ちゃんと渡す！）
-            if not reply_text:
-                print(f"🔄 generate_reply_via_groq を呼び出します: 入力={text}")
-                reply_result = generate_reply_via_groq(
-                    user_input=text,
-                    author_display_name=author_display_name,
-                    author_handle=author_handle
-                )
-                print(f"📝 generate_reply_via_groq 結果: {repr(reply_result)}")
+            # ★ 変更点5: テキストから「@ハンドル名」を綺麗に消してAIが混乱しないようにする
+            clean_input = re.sub(rf"@{HANDLE}\b", "", text).strip()
+            if not clean_input:
+                continue
 
-                if isinstance(reply_result, dict) and reply_result.get("type") == "image":
-                    image_path = reply_result["image"]
-                    prompt = reply_result.get("prompt", "")
-                    reply_text = f"{author_display_name or author_handle.replace('.bsky.social', '')}〜！みりんてゃが描いたよ♡ どうかな？{'「' + prompt + '」' if prompt else ''}"
-                    try:
-                        with open(image_path, "rb") as f:
-                            blob_resp = client.com.atproto.repo.upload_blob(data=f.read())
-                        blob_ref = blob_resp.blob
-                        post_data = {
-                            "text": reply_text,
-                            "createdAt": datetime.now(timezone.utc).isoformat(),
-                            "embed": {
-                                "$type": "app.bsky.embed.images",
-                                "images": [{"image": blob_ref, "alt": f"Generated image: {prompt or 'fuwamoko mirinteya'}"}]
-                            }
-                        }
-                        if reply_ref:
-                            post_data["reply"] = reply_ref
-                        facets = generate_facets_from_text(reply_text, hashtags)
-                        if facets:
-                            post_data["facets"] = facets
-                        client.app.bsky.feed.post.create(record=post_data, repo=client.me.did)
-                        replied.add(notification_uri)
-                        save_replied(replied)
-                        print(f"✅ @{author_handle} に画像付き返信完了！ → {notification_uri}")
-                        reply_count += 1
-                        time.sleep(REPLY_INTERVAL)
-                        try:
-                            os.remove(image_path)
-                            print(f"🧹 一時ファイル {image_path} 削除成功")
-                        except Exception as e:
-                            print(f"⚠️ 一時ファイル削除失敗: {e}")
-                        continue
-                    except Exception as e:
-                        print(f"⚠️ 画像投稿エラー: {type(e).__name__}: {str(e)}")
-                        traceback.print_exc()
-                        reply_text = f"{author_display_name or author_handle.replace('.bsky.social', '')}…ごめんね、画像失敗しちゃった♡ またお願いしてね！"
-                        hashtags = []
-                else:
-                    reply_text = reply_result
-                    diagnosis_result = generate_diagnosis(text, author_did)
-                    if diagnosis_result[0] is not None:
-                        reply_text, hashtags = diagnosis_result
-                        print(f"🔬 診断ロジックで生成: {reply_text}")
-                    else:
-                        hashtags = []
-                        print(f"🔬 診断ロジック非適用: {text}")
-
-            # reply_textの検証（名前が絶対入るように保険）
-            print(f"📝 投稿前reply_text: {repr(reply_text)}")
-            if not isinstance(reply_text, str) or not reply_text.strip():
-                reply_text = random.choice(FALLBACK_CUTE_LINES)
-                hashtags = []
-                print(f"⚠️ reply_textが不正、フォールバックを使用: {reply_text}")
-
-            # 名前が完全に抜けてたら強制挿入
-            if author_display_name and author_display_name not in reply_text and "きみ" not in reply_text.lower():
-                reply_text = f"{author_display_name}！{reply_text}"
+            print(f"🔄 処理開始: @{author_handle} -> 入力={clean_input}")
+            
+            # コンテキスト（parent_text）を含めて返信生成
+            reply_text = generate_reply_via_groq(
+                user_input=clean_input,
+                author_display_name=author_display_name,
+                author_handle=author_handle,
+                parent_text=parent_text
+            )
 
             # 投稿処理
             try:
@@ -1237,37 +1054,21 @@ def run_reply_bot():
                 }
                 if reply_ref:
                     post_data["reply"] = reply_ref
-                facets = generate_facets_from_text(reply_text, hashtags)
+                facets = generate_facets_from_text(reply_text, [])
                 if facets:
                     post_data["facets"] = facets
+                    
                 client.app.bsky.feed.post.create(record=post_data, repo=client.me.did)
                 replied.add(notification_uri)
                 save_replied(replied)
-                print(f"✅ @{author_handle} に返信完了！ → {notification_uri}")
+                print(f"✅ @{author_handle} に返信完了！")
                 reply_count += 1
                 time.sleep(REPLY_INTERVAL)
             except Exception as e:
-                print(f"⚠️ 投稿失敗: {type(e).__name__}: {str(e)}")
-                traceback.print_exc()
-                if "JSON serializable" in str(e):
-                    print("⚠️ ReplyRefシリアライズエラー検知、リプライなしで再試行")
-                    try:
-                        post_data.pop("reply", None)
-                        client.app.bsky.feed.post.create(record=post_data, repo=client.me.did)
-                        print(f"✅ @{author_handle} にリプライなしで投稿完了！ → {notification_uri}")
-                        replied.add(notification_uri)
-                        save_replied(replied)
-                        reply_count += 1
-                        time.sleep(REPLY_INTERVAL)
-                    except Exception as retry_e:
-                        print(f"⚠️ リトライも失敗: {type(retry_e).__name__}: {str(retry_e)}")
-                        traceback.print_exc()
+                print(f"⚠️ 投稿失敗: {e}")
 
-    except IOError as e:
-        print(f"🔒 ロック取得失敗（Botが既に実行中）: {type(e).__name__}: {str(e)}")
-        return
     except Exception as e:
-        print(f"❌ 実行エラー: {type(e).__name__}: {str(e)}")
+        print(f"❌ 実行エラー: {e}")
         traceback.print_exc()
     finally:
         if lock_fd:
@@ -1275,18 +1076,8 @@ def run_reply_bot():
             lock_fd.close()
             try:
                 os.remove(LOCK_FILE)
-                print("🧹 ロックファイル削除成功")
-            except Exception as e:
-                print(f"⚠️ ロックファイル削除失敗: {e}")
-        # 一時画像ファイルのクリーンアップ
-        for i in range(3):
-            temp_file = f"output_{i}.png"
-            if os.path.exists(temp_file):
-                try:
-                    os.remove(temp_file)
-                    print(f"🧹 一時ファイル {temp_file} 削除成功")
-                except Exception as e:
-                    print(f"⚠️ 一時ファイル削除失敗: {e}")
+            except:
+                pass
 
 if __name__ == "__main__":
     print("🤖 Reply Bot 起動中…")
