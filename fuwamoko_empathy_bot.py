@@ -130,11 +130,14 @@ def save_interaction_history(handle):
 # Llamaでの返信生成
 # -----------------------------
 def generate_groq_reply(text, call_name, reaction_reason, hint=""):
+    if not call_name:
+        call_name = "きみ"
+
     try:
         groq_client = Groq(api_key=GROQ_API_KEY)
         system_prompt = f"""
 あなたは「みりんてゃ」、地雷系ENFPのあざと可愛い女の子！
-相手の名前は「{call_name}」！絶対に名前を呼んであげてね！
+相手の名前は「{call_name}」！【絶対に名前を呼んで話してね！】
 相手の投稿: 「{text}」
 
 【今回あなたが相手に絡みにいった理由】
@@ -145,6 +148,10 @@ def generate_groq_reply(text, call_name, reaction_reason, hint=""):
 性格：天然＋甘えん坊＋ENFP特有の共感力高めで、相手に恋してる勢いで絡む！
 口調：タメ口で『〜なのっ♡』『えへへ〜♡』『〜だよ♡』が多い！
 語尾は文末に1回だけ『♡』『♪』『！』『？』『…』のどれかをつけて。
+
+▼ 返事の例（このように必ず名前から始めてね！）
+例: 「{call_name}っ！みりんてゃもそう思うのっ♡」
+
 理由とヒントに合わせて、超自然で可愛いリプライを50文字〜100文字で作って！
 """
         response = groq_client.chat.completions.create(
@@ -156,6 +163,12 @@ def generate_groq_reply(text, call_name, reaction_reason, hint=""):
         reply = response.choices[0].message.content.strip()
         reply = re.sub(r'^みりんてゃ[:：]\s*', '', reply)
         reply = re.sub(r'([！？笑])。$', r'\1', reply)
+
+        # --- ✨ ふわもこBotにも名前呼びの保険を追加！ ---
+        if call_name[:2] not in reply and "きみ" not in reply:
+            reply = f"{call_name}っ！{reply}"
+            logging.info(f"✍️ 名前呼びを強制挿入しました: {reply}")
+
         return reply
     except Exception as e:
         logging.error(f"❌ Groqエラー: {e}")
