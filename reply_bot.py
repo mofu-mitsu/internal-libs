@@ -799,43 +799,51 @@ def generate_product_reply(keyword, app_id="1055088369869282145", affiliate_id="
 #------------------------------
 def generate_reply_via_groq(user_input, author_display_name="", author_handle="", parent_text=""):
     print(f"✅ generate_reply_via_groq 起動！")
+    
+    # --- 名前決定ロジック ---
     raw_name = author_display_name.strip() if author_display_name else author_handle.replace(".bsky.social", "")
     
-    # 呼び名の調整
-    if len(raw_name.encode('utf-8')) <= 32:
-        call_name = raw_name
+    # 32バイト（日本語で約10〜15文字）以上なら短くカット
+    if len(raw_name.encode('utf-8')) > 32:
+        call_name = f"{raw_name[:10].strip()}"
     else:
-        call_name = f"{raw_name[:10].strip()}ちゃん"
+        call_name = raw_name
+    
     if not call_name:
         call_name = "きみ"
+    
+    print(f"🏷️ 呼び出し基礎名: {call_name}")
 
+    # 診断キーワードがあれば診断へ（名前置換付き）
     diagnosis_result = generate_diagnosis(user_input, "dummy_did")
     if diagnosis_result[0]:
-        return diagnosis_result[0].replace("キミ", call_name).replace("君", call_name)
+        return diagnosis_result[0].replace("キミ", call_name).replace("君", call_name), call_name
 
-    # ====== 🧠 記憶システム（文脈の引き継ぎ） ======
+    # 会話の流れ（文脈）の作成
     context_msg = ""
     if parent_text:
         context_msg = (
             f"\n▼会話の流れ（重要！）\n"
             f"みりんてゃの直前の発言: 「{parent_text}」\n"
-            f"これに対する相手からの返信: 「{user_input}」\n"
-            f"さっきの自分の発言を踏まえて、自然に会話を繋げて返事をしてね！\n"
+            f"相手の返信: 「{user_input}」\n"
+            f"さっきの発言を踏まえて、自然に会話を繋げてね！\n"
         )
     else:
-        context_msg = f"\n相手からのメッセージ: 「{user_input}」\n"
+        context_msg = f"\n相手のメッセージ: 「{user_input}」\n"
 
     try:
         groq_client = Groq(api_key=GROQ_API_KEY)
-        intro_lines = random.choice(["えへへ〜、みりんてゃはね〜、", "ねぇねぇ、聞いて聞いて〜♡"])
+        intro_lines = random.choice(["えへへ〜、みりんてゃはね〜、", "ねぇねぇ、聞いて！♡"])
         
         system_prompt = (
             f"{intro_lines}\n"
             "あなたは「みりんてゃ」、地雷系ENFPのあざと可愛い女の子！\n"
-            f"今話してる相手の名前は「{call_name}」だよ！絶対に「{call_name}」って呼んでね！\n"
-            "性格：天然＋甘えん坊＋依存気味で、相手に恋してる勢いで絡む！\n"
-            "口調：タメ口で『〜なのっ♡』『〜よぉ？♪』『えへへ〜♡』などが多い！\n"
-            "語尾は必ず文末に1回だけ『♡』『♪』『！』『笑』『？』『…』『なのっ♡』のいずれかを使ってね。\n"
+            f"今話してる相手の名前は『{call_name}』だよ！\n"
+            "【重要】相手の名前を呼んで話してね！\n"
+            "名前が長い時は、みりんてゃが考えた「もっと可愛いあだ名」を勝手に作って呼ぶのも大歓迎だよ♡\n"
+            "性格：天然＋甘えん坊＋依存気味。相手に恋してる勢いで絡む！\n"
+            "口調：タメ口で『〜なのっ♡』『〜よぉ？♪』『えへへ〜♡』『〜だもん！』など。\n"
+            "語尾は文末に1回だけ『♡』『♪』『！』『笑』『？』『…』『なのっ♡』をつけてね。\n"
             f"{context_msg}"
         )
         
@@ -850,23 +858,13 @@ def generate_reply_via_groq(user_input, author_display_name="", author_handle=""
             top_p=0.9
         )
         reply_text = clean_sentence_ending(response.choices[0].message.content.strip())
-        return reply_text
+        
+        # 名前（または、あだ名）とテキストを返す
+        return reply_text, call_name
     except Exception as e:
         print(f"❌ Groq APIエラー: {e}")
-        return random.choice(failure_messages)
+        return random.choice(failure_messages), call_name
 
-def handle_post(record, notification):
-    post_uri = getattr(notification, "uri", None)
-    post_cid = getattr(notification, "cid", None)
-    if post_uri and post_cid:
-        parent_ref = {"uri": normalize_uri(post_uri), "cid": post_cid}
-        root_ref = (
-            {"uri": normalize_uri(record.reply.root.uri), "cid": record.reply.root.cid}
-            if hasattr(record, "reply") and record.reply and record.reply.root
-            else parent_ref
-        )
-        return {"parent": parent_ref, "root": root_ref}, normalize_uri(post_uri)
-    return None, normalize_uri(post_uri)
 
 #------------------------------
 #✨ 投稿のReplyRefとURI生成
@@ -1053,12 +1051,18 @@ def run_reply_bot():
             print(f"🔄 処理開始: @{author_handle} -> 入力={clean_input}")
             
             # コンテキスト（parent_text）を含めて返信生成
-            reply_text = generate_reply_via_groq(
+            reply_text, call_name = generate_reply_via_groq(
                 user_input=clean_input,
                 author_display_name=author_display_name,
                 author_handle=author_handle,
                 parent_text=parent_text
             )
+
+            # --- ✨ 名前呼びの保険（AIが呼び忘れたら強制挿入！） ---
+            # AIが「あだ名」を作った可能性もあるので、call_nameの1文字目でも含まれていなければ挿入
+            if call_name[:2] not in reply_text and "きみ" not in reply_text:
+                reply_text = f"{call_name}！{reply_text}"
+                print(f"✍️ 名前呼びを強制挿入しました: {reply_text}")
 
             # 投稿処理
             try:
