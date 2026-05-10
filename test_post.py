@@ -3549,6 +3549,87 @@ IMAGE_POSTS = [
         "text": "かつみ先生のメモ、毎回オチ担当でごめんwwwww\n体育教師の圧、強すぎるんよ… https://cocotte-simple-memo.vercel.app/\n#みりんてゃ #先生メモ",
         "image": "images/IMG_9114.jpeg",
         "alt": "メモ：『かつみ先生→声デカ。博多弁が強風。やる気押しつけがち。でもたまにいいこと言う。汗量多い』"
+    },
+    {
+        "text": "みりんね、新しい顔文字作っちゃった♡\n૮꒰ ˶• ༝ •˶꒱ა こんな感じの、自分だけの可愛い子…✨\nパーツ組み合わせるだけで無限に量産できるの、知ってた？\n➡ https://mofu-mitsu.github.io/kaomoji-maker/\n#顔文字メーカー #みりんてゃ",
+        "image": "images/IMG_2963.jpeg",  # 完成した顔文字のスクショ
+        "alt": "顔文字メーカーで作ったみりんてゃ風の地雷系顔文字"
+    },
+    {
+        "text": "目とか耳とか装飾を全部自分で選べるの、ふつうに楽しすぎる…🥹\nみりんてゃっぽい黒猫顔文字も、量産系のうるうる顔文字も思いのまま♡\n➡ https://mofu-mitsu.github.io/kaomoji-maker/\n#顔文字 #みりんてゃ",
+        "image": "images/IMG_2964.jpeg",  # 編集画面のスクショ（パーツ選択中）
+        "alt": "顔文字メーカーの編集画面、パーツを組み合わせている様子"
+    },
+    {
+        "text": "顔文字、こんなに作っちゃった♡\n左から地雷系、ゆめかわ系、量産系、黒猫系…\n気分でTPO別に使い分けるとちょっと楽しいよ🫶\n➡ https://mofu-mitsu.github.io/kaomoji-maker/\n#顔文字メーカー #地雷系 #みりんてゃ",
+        "image": "images/IMG_2965.jpeg",  # 複数の顔文字を並べた画像
+        "alt": "顔文字メーカーで作った様々なジャンルの顔文字コレクション"
+    },
+    {
+        "text": "みりんの今日の色、こんなのだったよ…🎨\n触ってる時間で色の深度が変わるの、ちょっと運命感じない？♡\n1658万通りから出てくる、君だけの1色だよ。\n➡ https://mofu-mitsu.github.io/chroma-log/\n#深層心理カラー診断 #みりんてゃ",
+        "image": "images/IMG_2966",  # 自分の診断結果カラー画面
+        "alt": "深層心理カラー診断の結果画面"
+    },
+    {
+        "text": "ねぇ、これ見て🥹\n触れてた時間でこんな色が浮かび上がるんだよ…\nなんか、自分の感情が可視化された気分。\n➡ https://mofu-mitsu.github.io/chroma-log/\n#カラー診断 #みりんてゃ",
+        "image": "images/IMG_2966.jpeg",  # 別の色の診断結果
+        "alt": "深層心理カラー診断"
+    },
+    {
+        "text": "cocotteでメモ書いたら、みりんてゃの心がふわっと整理された♡ シンプルすぎて依存しそう…\nhttps://cocotte-simple-memo.vercel.app/\n#みりんてゃ #メモ魔",
+        "image": "images/IMG_9041.jpeg",
+        "alt": "みりんてゃがcocotteで可愛いメモ書いてるスクショ♡"
+    },
+    {
+        "text": "管理人さんがみりんの学生証つくってくれたの…♡\n2年2組のH2213って数字、なんかかわいくない？🎀\n地雷系でENFPのあざとさもばっちり写ってて、みりん、ちょっと照れてるんだけど🥺💗\n3/20生まれでB型で東京の子って、覚えてくれたら…うれしいな。\n➡ https://mofu-mitsu.github.io/Character-Student-ID-Factory/\n#みりんてゃ #学生証 #地雷系 #ENFP女子",
+        "image": "images/IMG_9571.png",
+        "alt": "キャラ学生証ファクトリーで作った地雷系ENFPのみりんてゃの学生証画像"
+    },
+    {
+        "text": "オリキャラのプロフィール、ちゃんと"形"にしてあげると、なんかその子のこと、もっと好きになるんだよね🫶\nみりんてゃのプロフィール、こんな感じに仕上がりました♡\n➡ https://mofu-mitsu.github.io/orikyara-profile-maker2/\n#オリキャラ #みりんてゃ",
+        "image": "images/IMG_2426.png",  # みりんてゃプロフィール画像
+        "alt": "オリキャラプロフィールメーカー2で作ったみりんてゃのプロフィール画像"
+    },
+    {
+        "text": "冷蔵庫に卵とキャベツしかない日、ある…？🥲\n先駆シェフに丸投げしたら、ちゃんと献立提案してくれたよ🍳✨\nもう一人で悩まなくていいの、これ革命じゃない？\n➡ https://mofu-mitsu.github.io/kondate-maker/\n#献立メーカー #献立",
+        "image": "images/IMG_2973.jpeg",  # 献立メーカーの結果画面
+        "alt": "先駆シェフの献立メーカーで提案された献立画面"
+    },
+
+    {
+        "text": "キーワードからエモい言葉になるの、ちょっと魔法みたいじゃない？🌙\n気持ち言えない夜に、みりんこれ結構すき…♡\n➡ https://emopost-maker.pages.dev/\n#ポエム #みりんてゃ",
+        "image": "images/mirintya_poem_1778403164772.png",  # エモポストの生成結果スクショ
+        "alt": "今夜のエモポストメーカーで生成されたエモい文章の結果画面"
+    },
+    {
+        "text": "冷蔵庫の中身だけでごはん考えるの無理〜って日に、先駆シェフ呼べるの助かる🍳\n➡ https://mofu-mitsu.github.io/kondate-maker/\n#献立 #みりんてゃ",
+        "image": "images/IMG_2972.jpeg",  # 食材入力→結果が見えるスクショ
+        "alt": "先駆シェフの献立メーカーで食材から献立を提案している画面"
+    },
+    {
+        "text": "うちの子の設定、ちゃんと形にすると急に愛着増すんだよね🎀\nみりんてゃのプロフィール、こんな感じ♡\n➡ https://mofu-mitsu.github.io/orikyara-profile-maker2/\n#オリキャラ #みりんてゃ",
+        "image": "images/IMG_2426.png",  # プロフィール完成画像
+        "alt": "オリキャラプロフィールメーカー2で作った完成プロフィール画像"
+    },
+    {
+        "text": "学生証って、なんかロマンあるよね…？🥹\n学校名もロゴも自由に作れるから、うちの子を学園に通わせたくなるの♡\n➡ https://mofu-mitsu.github.io/Character-Student-ID-Factory/\n#創作 #みりんてゃ",
+        "image": "images/IMG_9571.png",  # 学生証完成画像
+        "alt": "キャラ学生証ファクトリーで作ったオリジナル学生証の完成画像"
+    },
+    {
+        "text": "みりんてゃ、ついに声を手に入れたの🎤💕\n黒猫っぽくてちょいあざとめを目指したUTAU音源だよ♡\n➡ https://torisproject.booth.pm/items/8268069\n#UTAU #みりんてゃ",
+        "image": "images/IMG_2716.png",  # BOOTHページや音源紹介画像のスクショ
+        "alt": "地雷系黒猫みりんてゃのUTAU音源紹介画像"
+    },
+    {
+        "text": "顔文字って、自分だけの"顔"みたいでかわいいよね🎀\nパーツ組み合わせて遊べるの、ずっとやっちゃう…♡\n➡ https://mofu-mitsu.github.io/kaomoji-maker/\n#顔文字 #みりんてゃ",
+        "image": "images/IMG_2963.jpeg",  # 作成した顔文字のスクショ
+        "alt": "顔文字メーカーで作ったみりんてゃの可愛い顔文字"
+    },
+    {
+        "text": "みりんてゃの世界、実は診断もゲームもメーカーも結構あるんだよ🫶\n気分でのぞいて好きなの見つけてって〜♡\n➡ https://mofu-mitsu.github.io/contents.html\n#創作ツール #みりんてゃ",
+        "image": "images/IMG_2974.png",  # ポータル一覧のスクショ
+        "alt": "Torinooka World公式ポータルに並んだ複数のツール一覧画面"
     }
     # ここに10〜20個追加（オリキャラ、夢日記とかも）
     # 画像は事前にツール開いて、みりんてゃ風に入力→スクショ→images/に保存
