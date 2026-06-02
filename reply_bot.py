@@ -979,6 +979,18 @@ def run_reply_bot():
         self_did = client.me.did
         replied = load_gist_data(REPLIED_GIST_FILENAME)
 
+        # --- ✨ 最強の三重チェック：自分の最近の投稿履歴を取得！ ---
+        my_recent_replies = set()
+        try:
+            my_feed = client.app.bsky.feed.get_author_feed({'actor': self_did, 'limit': 50})
+            for item in my_feed.feed:
+                if hasattr(item.post.record, 'reply') and item.post.record.reply:
+                    parent_uri = item.post.record.reply.parent.uri
+                    my_recent_replies.add(parent_uri)
+            print(f"🔍 みりんてゃの最近のリプライ先 {len(my_recent_replies)} 件を記憶したよ！")
+        except Exception as e:
+            print(f"⚠️ 自分の投稿履歴の取得に失敗: {e}")
+
         # ★ 変更点1: 通知の取得枠を100件に増強！
         notifications = client.app.bsky.notification.list_notifications(params={"limit": 100}).notifications
         print(f"🔔 取得した通知数: {len(notifications)} 件")
@@ -997,6 +1009,12 @@ def run_reply_bot():
             notification_uri = getattr(notification, "uri", None)
             if not notification_uri:
                 continue
+
+            if notification_uri in my_recent_replies:
+                print(f"⏭️ 自分の履歴にリプ済みの記録があるからスキップ！: {notification_uri}")
+                replied.add(notification_uri)
+                continue
+            # -----------------------------------
 
             if reply_count >= MAX_REPLIES:
                 print(f"⏹️ 最大返信数（{MAX_REPLIES}）に達したので終了します")
