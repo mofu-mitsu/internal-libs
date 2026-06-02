@@ -953,6 +953,9 @@ def log_resources():
 #------------------------------
 #📬 メイン処理
 #------------------------------
+#------------------------------
+#📬 メイン処理
+#------------------------------
 def run_reply_bot():
     lock_fd = None
     try:
@@ -973,19 +976,32 @@ def run_reply_bot():
         except Exception as e:
             print(f"⚠️ 自分の投稿履歴の取得に失敗: {e}")
 
-        # ★ 変更点1: 通知の取得枠を100件に増強！
-        notifications = client.app.bsky.notification.list_notifications(params={"limit": 100}).notifications
-        print(f"🔔 取得した通知数: {len(notifications)} 件")
+        # --- ✨ 修正3：通知を最大300件まで遡って探すように強化！（埋もれ防止） ---
+        notifications = []
+        cursor = None
+        try:
+            for _ in range(3):  # 100件 × 3ページ ＝ 最大300件まで探すよ！
+                params = {"limit": 100}
+                if cursor:
+                    params["cursor"] = cursor
+                resp = client.app.bsky.notification.list_notifications(params=params)
+                notifications.extend(resp.notifications)
+                cursor = getattr(resp, "cursor", None)
+                if not cursor:
+                    break
+            print(f"🔔 取得した通知数: {len(notifications)} 件")
+        except Exception as e:
+            print(f"⚠️ 通知の取得中にエラー: {e}")
+        # --------------------------------------------------------
 
-        # ★ 変更点2: 1回に返信できる最大件数を20件に増強！
         MAX_REPLIES = 20
         REPLY_INTERVAL = 3
         reply_count = 0
 
         for notification in notifications:
-            # ★ 変更点3: リプとメンション以外（いいね・RP等）はスルーして時間短縮
+            # --- ✨ 修正2：引用リポスト (quote) も拾うように追加！ ---
             reason = getattr(notification, "reason", "")
-            if reason not in ["mention", "reply"]:
+            if reason not in ["mention", "reply", "quote"]:
                 continue
 
             notification_uri = getattr(notification, "uri", None)
@@ -1006,21 +1022,20 @@ def run_reply_bot():
             author = getattr(notification, "author", None)
             if not record or not hasattr(record, "text") or not author:
                 continue
-            # --- ✨ ここから追加：二重チェック！ ---
-            # サーバーに最新のポスト情報を問い合わせて、自分がリプ済みか確認するよ
+
+            # --- ✨ 二重チェック！：手動または別ルートでリプ済みか確認 ---
             try:
-                # 通知元のポスト情報を取得
                 post_info = client.app.bsky.feed.get_posts({"uris": [notification.uri]})
                 if post_info and post_info.posts:
                     actual_post = post_info.posts[0]
                     # viewer.reply が存在する場合、そのアカウント（みりんてゃ）はリプ済み！
                     if hasattr(actual_post, 'viewer') and getattr(actual_post.viewer, 'reply', None):
                         print(f"⏭️ 手動または別ルートでリプ済みなのでスキップ: {notification.uri}")
-                        # 今後のためにGistにも保存しておくと、さらに効率的！
                         replied.add(notification.uri)
                         continue
             except Exception as e:
                 print(f"⚠️ リプ済みチェック中にエラー（スルーして続行）: {e}")
+                
             text = getattr(record, "text", "")
             author_handle = getattr(author, "handle", "")
             author_display_name = getattr(author, "display_name", "") or ""
@@ -1051,8 +1066,12 @@ def run_reply_bot():
 
             # ★ 変更点5: テキストから「@ハンドル名」を綺麗に消してAIが混乱しないようにする
             clean_input = re.sub(rf"@{HANDLE}\b", "", text).strip()
+            
+            # --- ✨ 修正1：「@のみ」の無言リプ対策！ ---
             if not clean_input:
-                continue
+                clean_input = "みりんてゃ！"  # AIに「名前を呼ばれたよ！」と錯覚させる
+                print("💡 本文が空っぽ（@のみ）だったので、「みりんてゃ！」で代用します")
+            # ------------------------------------------
 
             print(f"🔄 処理開始: @{author_handle} -> 入力={clean_input}")
             
@@ -1065,7 +1084,6 @@ def run_reply_bot():
             )
 
             # --- ✨ 名前呼びの保険（AIが呼び忘れたら強制挿入！） ---
-            # AIが「あだ名」を作った可能性もあるので、call_nameの1文字目でも含まれていなければ挿入
             if call_name[:2] not in reply_text and "きみ" not in reply_text:
                 reply_text = f"{call_name}！{reply_text}"
                 print(f"✍️ 名前呼びを強制挿入しました: {reply_text}")
