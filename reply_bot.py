@@ -99,35 +99,31 @@ def normalize_uri(uri):
 #------------------------------
 #📁 Gist操作
 #------------------------------
+
 def load_gist_data(filename):
     print(f"🌐 Gistデータ読み込み開始 → URL: {GIST_API_URL}")
-    for attempt in range(5):  # ★リトライを5回に
+    headers = {
+        "Authorization": f"token {GIST_TOKEN_REPLY}",
+        "Accept": "application/vnd.github+json"
+    }
+    for attempt in range(5):
         try:
-            curl_command = [
-                "curl", "-X", "GET", GIST_API_URL,
-                "-H", f"Authorization: token {GIST_TOKEN_REPLY}",
-                "-H", "Accept: application/vnd.github+json"
-            ]
-            result = subprocess.run(curl_command, capture_output=True, text=True)
-            print(f"📥 試行 {attempt + 1} レスポンスステータス: {result.returncode}")
-            if result.returncode != 0:
-                raise Exception(f"Gist読み込み失敗: {result.stderr}")
-            gist_data = json.loads(result.stdout)
-            if filename in gist_data["files"]:
+            response = requests.get(GIST_API_URL, headers=headers, timeout=10)
+            print(f"📥 試行 {attempt + 1} レスポンスステータス: {response.status_code}")
+            if response.status_code != 200:
+                raise Exception(f"Gist読み込み失敗: {response.text}")
+            
+            gist_data = response.json()
+            if filename in gist_data.get("files", {}):
                 replied_content = gist_data["files"][filename]["content"]
-                print(f"📄 生の{filename}内容:\n{replied_content[:500]}...")
                 if filename == REPLIED_GIST_FILENAME:
                     raw_uris = json.loads(replied_content)
                     replied = set(uri for uri in (normalize_uri(u) for u in raw_uris) if uri)
                     print(f"✅ {filename} をGistから読み込みました（件数: {len(replied)}）")
-                    if replied:
-                        print("📁 最新URI一覧（正規化済み）:")
-                        for uri in list(replied)[-5:]:
-                            print(f" - {uri}")
                     return replied
                 else:
                     data = json.loads(replied_content)
-                    print(f"✅ {filename} をGistから読み込みました（件数: {len(data)}）")
+                    print(f"✅ {filename} をGistから読み込みました")
                     return data
             else:
                 print(f"⚠️ Gist内に {filename} が見つかりませんでした")
@@ -135,76 +131,62 @@ def load_gist_data(filename):
         except Exception as e:
             print(f"⚠️ 試行 {attempt + 1} でエラー: {e}")
             if attempt < 4:
-                print(f"⏳ リトライします（{attempt + 2}/5）")
                 time.sleep(2)
             else:
-                print("❌ 最大リトライ回数に達しました")
                 return set() if filename == REPLIED_GIST_FILENAME else {}
 
 def save_replied(replied_set):
     print("💾 Gist保存準備中...")
     cleaned_set = set(uri for uri in replied_set if normalize_uri(uri))
-    for attempt in range(5):  # ★リトライを5回に
+    content = json.dumps(list(cleaned_set), ensure_ascii=False, indent=2)
+    payload = {"files": {REPLIED_GIST_FILENAME: {"content": content}}}
+    headers = {
+        "Authorization": f"token {GIST_TOKEN_REPLY}",
+        "Accept": "application/vnd.github+json"
+    }
+    
+    for attempt in range(5):
         try:
-            content = json.dumps(list(cleaned_set), ensure_ascii=False, indent=2)
-            payload = {"files": {REPLIED_GIST_FILENAME: {"content": content}}}
-            curl_command = [
-                "curl", "-X", "PATCH", GIST_API_URL,
-                "-H", f"Authorization: token {GIST_TOKEN_REPLY}",
-                "-H", "Accept: application/vnd.github+json",
-                "-H", "Content-Type: application/json",
-                "-d", json.dumps(payload, ensure_ascii=False)
-            ]
-            result = subprocess.run(curl_command, capture_output=True, text=True)
-            print(f"📥 試行 {attempt + 1} レスポンスステータス: {result.returncode}")
-            if result.returncode == 0:
+            # curlの代わりにrequestsを使うから、長さ制限なし！
+            response = requests.patch(GIST_API_URL, headers=headers, json=payload, timeout=15)
+            print(f"📥 試行 {attempt + 1} レスポンスステータス: {response.status_code}")
+            if response.status_code == 200:
                 print(f"💾 replied.json をGistに保存しました（件数: {len(cleaned_set)}）")
                 time.sleep(2)
-                new_replied = load_gist_data(REPLIED_GIST_FILENAME)
-                if cleaned_set.issubset(new_replied):
-                    print("✅ 保存内容が正しく反映されました")
-                    return True
-                else:
-                    raise Exception("保存内容の反映に失敗")
+                return True
             else:
-                raise Exception(f"Gist保存失敗: {result.stderr}")
+                raise Exception(f"Gist保存失敗: {response.text}")
         except Exception as e:
             print(f"⚠️ 試行 {attempt + 1} でエラー: {e}")
             if attempt < 4:
-                print(f"⏳ リトライします（{attempt + 2}/5）")
                 time.sleep(2)
             else:
-                print("❌ 最大リトライ回数に達しました")
                 return False
 
 def save_gist_data(filename, data):
     print(f"💾 Gist保存準備中 → File: {filename}")
-    for attempt in range(5):  # ★リトライを5回に
+    content = json.dumps(data, ensure_ascii=False, indent=2)
+    payload = {"files": {filename: {"content": content}}}
+    headers = {
+        "Authorization": f"token {GIST_TOKEN_REPLY}",
+        "Accept": "application/vnd.github+json"
+    }
+    
+    for attempt in range(5):
         try:
-            content = json.dumps(data, ensure_ascii=False, indent=2)
-            payload = {"files": {filename: {"content": content}}}
-            curl_command = [
-                "curl", "-X", "PATCH", GIST_API_URL,
-                "-H", f"Authorization: token {GIST_TOKEN_REPLY}",
-                "-H", "Accept: application/vnd.github+json",
-                "-H", "Content-Type: application/json",
-                "-d", json.dumps(payload, ensure_ascii=False)
-            ]
-            result = subprocess.run(curl_command, capture_output=True, text=True)
-            print(f"📥 試行 {attempt + 1} レスポンスステータス: {result.returncode}")
-            if result.returncode == 0:
+            response = requests.patch(GIST_API_URL, headers=headers, json=payload, timeout=15)
+            print(f"📥 試行 {attempt + 1} レスポンスステータス: {response.status_code}")
+            if response.status_code == 200:
                 print(f"💾 {filename} をGistに保存しました")
                 time.sleep(2)
                 return True
             else:
-                raise Exception(f"Gist保存失敗: {result.stderr}")
+                raise Exception(f"Gist保存失敗: {response.text}")
         except Exception as e:
             print(f"⚠️ 試行 {attempt + 1} でエラー: {e}")
             if attempt < 4:
-                print(f"⏳ リトライします（{attempt + 2}/5）")
                 time.sleep(2)
             else:
-                print("❌ 最大リトライ回数に達しました")
                 return False
 
 #------------------------------
