@@ -9,8 +9,9 @@ from PIL import Image
 from atproto import Client
 
 # 🔑 環境変数から取得（GitHub Secretsに登録してね！）
-BSKY_HANDLE = os.environ.get("BSKY_HANDLE")
-BSKY_APP_PASSWORD = os.environ.get("BSKY_APP_PASSWORD")
+# 💡 みつきのSecrets（HANDLE, APP_PASSWORD）の名前に完全に合わせました！これでエラーは消えます！
+BSKY_HANDLE = os.environ.get("HANDLE")
+BSKY_APP_PASSWORD = os.environ.get("APP_PASSWORD")
 
 NOTE_RSS_URL = "https://note.com/mirin_chuuu/rss"
 
