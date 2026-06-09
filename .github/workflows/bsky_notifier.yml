@@ -27,7 +27,7 @@ jobs:
 
       - name: Run notifier script
         env:
-          BSKY_HANDLE: ${{ secrets.BSKY_HANDLE }}
-          BSKY_APP_PASSWORD: ${{ secrets.BSKY_APP_PASSWORD }}
+          HANDLE: ${{ secrets.HANDLE }}
+          APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
         run: |
           python bsky_note_notifier.py
