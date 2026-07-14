@@ -58,10 +58,6 @@ APP_PASSWORD = os.environ['APP_PASSWORD']
 GIST_TOKEN = os.environ["GIST_TOKEN"]
 print(f"🪪 現在のGIST_TOKEN: {GIST_TOKEN[:8]}...（先頭8文字だけ表示）")
 
-# Blueskyにログイン
-client = Client()
-client.login(HANDLE, APP_PASSWORD)
-
 # Gist URL（直書き）
 GIST_RAW_URL_URIS = "https://gist.githubusercontent.com/mofu-mitsu/c16e8c8c997186319763f0e03f3cff8b/raw/replied_uris.json"
 GIST_ID_URIS = "c16e8c8c997186319763f0e03f3cff8b"
@@ -228,8 +224,6 @@ def generate_facets_from_text(text, hashtags):
         facets.append(facet)
     return facets
 
-# 投稿を確認して返信
-# ... (既存コードは省略)
 
 def run_once():
     try:
@@ -237,8 +231,15 @@ def run_once():
         client.login(HANDLE, APP_PASSWORD)
         print("📨 投稿を確認中…")
 
-        timeline = client.app.bsky.feed.get_timeline(params={"limit": 20})
-        feed = timeline.feed
+        # --- ✨ エラー回避のバリア！ ---
+        try:
+            timeline = client.app.bsky.feed.get_timeline(params={"limit": 20})
+            feed = timeline.feed
+        except Exception as e:
+            print(f"⚠️ タイムライン取得エラー（Blueskyの新しい仕様が原因かも）: {e}")
+            print("💡 GitHub Actionsで 'pip install --upgrade atproto' を実行してね！今回は安全にスキップするよ。")
+            return
+        # -----------------------------
 
         replied_uris = load_replied_uris()
         replied_texts = load_replied_texts()
@@ -246,48 +247,28 @@ def run_once():
         fuwamoko_uris = load_fuwamoko_uris()
 
         for post in feed:
-            time.sleep(random.uniform(10, 20))  # 間隔を10-20秒に拡張
+            time.sleep(random.uniform(10, 20))
             text = getattr(post.post.record, "text", None)
             uri = str(post.post.uri)
             post_id = uri.split('/')[-1]
             author = post.post.author.handle
 
-            replied_uris = load_replied_uris()
-            replied_post_ids = set(uri.split('/')[-1] for uri in replied_uris)
-            reposted_post_ids = set(uri.split('/')[-1] for uri in reposted_uris)
-            fuwamoko_post_ids = set(uri.split('/')[-1] for uri in fuwamoko_uris)
+            replied_post_ids = set(u.split('/')[-1] for u in replied_uris)
+            reposted_post_ids = set(u.split('/')[-1] for u in reposted_uris)
+            fuwamoko_post_ids = set(u.split('/')[-1] for u in fuwamoko_uris)
 
             print(f"📝 処理対象URI: {uri}")
-            print(f"📄 保存済みURI読み込み完了 → 件数: {len(replied_uris)}")
-            print(f"🗂 保存済みテキスト読み込み完了 → 件数: {len(replied_texts)}")
-            if reposted_uris:
-                print(f"📂 りぽりんBotの履歴 → 件数: {len(reposted_uris)}")
-            if fuwamoko_uris:
-                print(f"🐾 ふわもこBotの履歴 → 件数: {len(fuwamoko_uris)}")
 
             # スキップ条件
             if author == HANDLE or post_id in replied_post_ids or post_id in fuwamoko_post_ids or not text:
-                if post_id in replied_post_ids:
-                    print(f"⏩ スキップ（既にリプ済み）→ @{author}: {text}")
-                    print(f"    🔁 スキップ理由：ID一致 → {post_id}")
-                elif post_id in fuwamoko_post_ids:
-                    print(f"⏩ スキップ（ふわもこBotでリプ済み）→ @{author}: {text}")
-                elif author == HANDLE:
-                    print(f"⏩ スキップ（自分の投稿）→ @{author}: {text}")
-                elif not text:
-                    print(f"⏩ スキップ（テキストなし）→ @{author}")
                 continue
             if hasattr(post.post.record, "reply") and post.post.record.reply is not None:
-                print(f"📭 スキップ（リプライ投稿）→ @{author}: {text}")
                 continue
             if post_id in reposted_post_ids:
-                print(f"⏩ スキップ（リポスト済み）→ @{author}: {text}")
                 continue
             if hasattr(post, 'reason') and getattr(post.reason, '$type', None) == 'app.bsky.feed.defs#reasonRepost':
-                print(f"🔁 リポストをスキップ → @{author}: {text}")
                 continue
             if is_quoted_repost(post):
-                print(f"📬 引用リポストをスキップ → @{author}: {text}")
                 continue
 
             print(f"👀 チェック中 → @{author}: {text}")
@@ -328,12 +309,13 @@ def run_once():
                 replied_texts[text] = True
                 save_replied_texts(replied_texts)
                 print(f"✅ 返信しました → @{author}")
-                print(f"📁 保存されたURI一覧（最新5件）: {list(replied_uris)[-5:]}")
             except Exception as e:
                 print(f"⚠️ 返信エラー: {e}")
 
     except InvokeTimeoutError:
         print("⚠️ APIタイムアウト！Bluesky側の応答がないか、接続に時間がかかりすぎたみたい。")
+    except Exception as e:
+        print(f"❌ 予期せぬエラーで停止しました: {e}")
 
 if __name__ == "__main__":
     run_once()
