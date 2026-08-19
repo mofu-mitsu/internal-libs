@@ -187,7 +187,7 @@ def generate_poem(trend_word, mood):
             print(f"📤 {datetime.now(timezone('Asia/Tokyo')).isoformat()} ｜ Groq呼び出し中…（試行 {attempt + 1}）")
             try:
                 response = groq_client.chat.completions.create(
-                    model="openai/gpt-oss-120b",
+                    model="qwen/qwen3.6-27b",
                     messages=[
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": prompt}

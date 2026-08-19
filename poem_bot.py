@@ -96,7 +96,7 @@ def generate_mirin_poem_content(tl_content):
 ・口調：あざと可愛いタメ口（〜なのっ♡、〜だよぉ♪）。
 """
         response = groq_client.chat.completions.create(
-            model="openai/gpt-oss-120b",
+            model="qwen/qwen3.6-27b",
             messages=[{"role": "system", "content": system_prompt.format(tl_content=tl_content[:2000])}],
             max_tokens=150,
             temperature=0.9

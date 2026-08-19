@@ -156,7 +156,7 @@ def generate_groq_reply(text, call_name, reaction_reason, hint=""):
 """
         # "openai/gpt-oss-20b" または "qwen/qwen3.6-27b"
         response = groq_client.chat.completions.create(
-            model="openai/gpt-oss-20b",
+            model="qwen/qwen3.6-27b",
             messages=[{"role": "system", "content": system_prompt}],
             max_tokens=150,  # ★トークン枠を拡大！
             temperature=0.8

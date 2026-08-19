@@ -94,7 +94,7 @@ def generate_poem(weather, day_of_week, temp_min, temp_max, pop):
         # "openai/gpt-oss-20b" (高速・軽量)
         # "openai/gpt-oss-120b" (表現力高め)
         # "qwen/qwen3.6-27b" (日本語がかなり自然)
-        MODEL_NAME = "openai/gpt-oss-20b"
+        MODEL_NAME = "qwen/qwen3.6-27b"
 
         for attempt in range(3):
             print(f"📤 {datetime.now(timezone('Asia/Tokyo')).isoformat()} ｜ Groq API呼び出し中…（試行 {attempt + 1}）")
