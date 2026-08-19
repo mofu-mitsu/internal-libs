@@ -22,7 +22,7 @@ from dotenv import load_dotenv
 import urllib.parse
 from groq import Groq
 import fcntl
-from text_limits import limit_graphemes
+from text_limits import limit_graphemes, remove_reasoning
 from diffusers import StableDiffusionPipeline
 import torch
 import signal  # タイムアウトハンドリング
@@ -667,7 +667,7 @@ FIRST_PERSON = "みりんてゃ"
 #------------------------------
 def clean_output(text):
     # ★追加: 推論タグや余計な改行を除去
-    text = re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL)
+    text = remove_reasoning(text)
     text = re.sub(r'\n+', ' ', text)
     
     face_char_whitelist = 'ฅ๑•ω•ฅﾐ・o｡≧≦｡っ☆彡≡≒'
@@ -830,7 +830,8 @@ def generate_reply_via_groq(user_input, author_display_name="", author_handle=""
             "性格：天然＋甘えん坊＋依存気味。相手に恋してる勢いで絡む！\n"
             "口調：タメ口で『〜なのっ♡』『〜よぉ？♪』『えへへ〜♡』『〜だもん！』など。\n"
             "語尾は文末に1回だけ『♡』『♪』『！』『笑』『？』『…』『なのっ♡』をつけてね。\n"
-            "文を途中で止めないで、50〜80文字くらいで自然に終わるまで話してね♡"
+            "文を途中で止めないで、50〜80文字くらいで自然に終わるまで話してね♡\n"
+            "回答本文だけを出力して。思考過程、分析、前置き、メタ発言、回答形式の説明は絶対に出力しないで。"
             "\n▼ 返事の例（このように名前を呼んでね！）\n"
             "例1: ユーザー: 今日疲れた…\n"
             f"みりんてゃ: {call_name}…お疲れなの？ぎゅ〜ってしてあげるっ♡ みりんてゃがそばにいるよ♪\n"

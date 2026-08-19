@@ -20,8 +20,8 @@ from groq import Groq
 from transformers import CLIPProcessor, CLIPModel
 from atproto import Client, models
 from atproto_client.models import AppBskyFeedPost
-from text_limits import limit_graphemes, remove_reasoning
 from text_limits import limit_graphemes
+from text_limits import limit_graphemes, remove_reasoning
 
 # ロギング設定
 logging.basicConfig(filename='interaction_debug.log', level=logging.DEBUG, format='%(asctime)s %(message)s', encoding='utf-8')
