@@ -1,0 +1,40 @@
+さっきさ
+
+✅ 環境変数読み込み完了: HANDLE=mirinchu...
+🔑 GROQ_API_KEY: 'gsk_ysu...
+🤖 Emotion Bot 起動中…
+DEBUG: Attempting login with HANDLE: ***
+DEBUG: Login successful
+DEBUG: Weather API response status: 200
+DEBUG: Selected area: 東京地方, Raw weather data: 晴れ　時々　くもり　多摩西部　では　昼過ぎ　から　夕方　雨
+DEBUG: POP: 10%, Temp: 34-34℃
+DEBUG: Prompt: 雨の水曜日、降水確率10%、気温34-34℃。みりんてゃが空を見上げて、ふわっと浮かんだやさしい詩を一言でつぶやき、その続きをそっとつぶやく。
+📤 2026-08-19T12:01:32.055165+09:00 ｜ Groq API呼び出し中…（試行 1）
+DEBUG: Raw Output: 
+DEBUG: After clean_poem: みりんてゃ、優しい風に誘われて詩を届けるよ…。そっと待っていてね♡
+DEBUG: Sentence split: ['みりんてゃ、優しい風に誘われて詩を届けるよ…', 'そっと待っていてね']
+DEBUG: Final Poem: みりんてゃ、優しい風に誘われて詩を届けるよ…。そっと待っていてね♡
+DEBUG: Selected spot: 池袋 (Tokyo)
+DEBUG: Posted message: 池袋の雨の水曜日。みりんてゃ、優しい風に誘われて詩を届けるよ…。そっと待っていてね♡
+投稿しました: 池袋の雨の水曜日。みりんてゃ、優しい風に誘われて詩を届けるよ…。そっと待っていてね♡
+
+Paste August 19, 2026 - 12:01PM
+17,834 tokens
+🔍 handle_post - reply_ref: parent=at://did:plc:lmntwwwhxvedq3r4retqishb/app.bsky.feed.post/3mtfq5vdtik2j, root=at://did:plc:pvy7w75qks44sybd5wwpthb6/app.bsky.feed.post/3mtfef54czf23
+📜 [文脈取得] 直前のみりんてゃの発言: M&2K（みりんてゃ！think Heres a thinking process 1  Analyze User Input     User says 「モデル変えてみたけどどうだろう？」 I tried changing the model what do you think?     Context The previous message from みりんてゃ was 「M2K（みりんてゃ！みりんてゃ、君にドキドキなのっ♡ ね、もっとお話しよ？」     The user is responding to that mentioning they changed the model…
+🔄 処理開始: @mofumitsukoubou.bsky.social -> 入力=直ったかな？
+✅ generate_reply_via_groq 起動！
+🏷️ 呼び出し基礎名: M&2K（みりんてゃ
+DEBUG: Groq Raw Output: <think>
+Here's a thinking process:
+Analyze User Input:
+User says: 「直ったかな？」 (Did it fix it? / Is it fixed now?)
+Context: The user previously mentioned changing a model ("モデル変えてみたけどどうだろう？"). みりんてゃ's previous response was something like "M&2K（みりんてゃ！みりんてゃ、君にドキドキなのっ♡ ね、もっとお話しよ？". Now the user asks if it's fixed.
+I need to respond in character as みりんてゃ (mirintya), a地雷系ENFP (Jirai-kei ENFP) girl who is naturally clumsy, clingy, slightly dependent, and acts like she's in love with the user.
+Key constraints:
+Must start
+✍️ 名前呼びを強制挿入しました: M&2K（みりんてゃ！みりんてゃ、君にドキドキなのっ♡ ね、もっとお話しよ？
+💾 Gist保存準備中...
+↑まだこうなってるんだけど
+
+reasoning_effort="none",ってちゃんと入れてくれた？

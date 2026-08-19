@@ -103,6 +103,7 @@ def generate_poem(weather, day_of_week, temp_min, temp_max, pop):
             try:
                 response = groq_client.chat.completions.create(
                     model=MODEL_NAME,
+                    reasoning_effort="none",
                     messages=[
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": prompt}

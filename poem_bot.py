@@ -99,6 +99,7 @@ def generate_mirin_poem_content(tl_content):
 """
         response = groq_client.chat.completions.create(
             model="qwen/qwen3.6-27b",
+            reasoning_effort="none",
             messages=[{"role": "system", "content": system_prompt.format(tl_content=tl_content[:2000])}],
             max_tokens=150,
             temperature=0.9
