@@ -22,6 +22,7 @@ from dotenv import load_dotenv
 import urllib.parse
 from groq import Groq
 import fcntl
+from text_limits import limit_graphemes
 from diffusers import StableDiffusionPipeline
 import torch
 import signal  # タイムアウトハンドリング
@@ -915,7 +916,7 @@ def post_replies_to_bluesky():
                         blob_resp = client.com.atproto.repo.upload_blob(data=f.read())
                     blob_ref = blob_resp.blob
                     post_data = {
-                        "text": reply_text,
+                        "text": limit_graphemes(reply_text),
                         "createdAt": datetime.now(timezone.utc).isoformat(),
                         "embed": {
                             "$type": "app.bsky.embed.images",
@@ -944,6 +945,7 @@ def post_replies_to_bluesky():
                     traceback.print_exc()
                     reply_text = "ごめん…画像生成失敗しちゃった♡ また試してみてね！"
                     hashtags = []
+            reply = limit_graphemes(reply)
             client.send_post(text=reply, reply_to={"uri": post["post_id"]})
             print(f"📤 投稿成功: {reply}")
         except Exception as e:
@@ -1097,6 +1099,7 @@ def run_reply_bot():
 
             # 投稿処理
             try:
+                reply_text = limit_graphemes(reply_text)
                 post_data = {
                     "text": reply_text,
                     "createdAt": datetime.now(timezone.utc).isoformat(),

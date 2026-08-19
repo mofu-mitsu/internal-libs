@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 from atproto import Client
 from groq import Groq
 from dotenv import load_dotenv
+from text_limits import limit_graphemes
 
 # 環境変数
 load_dotenv()
@@ -124,6 +125,7 @@ def run_poem_bot():
     
     # 全部まとめて正規化
     full_text = normalize_text(f"{title}\n\n{poem_body}\n\n{hashtag}")
+    full_text = limit_graphemes(full_text)
     
     # Facets生成（タグを青くする）
     facets = generate_facets_from_text(full_text, [hashtag])

@@ -20,6 +20,7 @@ from groq import Groq
 from transformers import CLIPProcessor, CLIPModel
 from atproto import Client, models
 from atproto_client.models import AppBskyFeedPost
+from text_limits import limit_graphemes
 
 # ロギング設定
 logging.basicConfig(filename='interaction_debug.log', level=logging.DEBUG, format='%(asctime)s %(message)s', encoding='utf-8')
@@ -289,6 +290,7 @@ def process_timeline(client):
             
             # 投稿
             try:
+                reply_text = limit_graphemes(reply_text)
                 client.send_post(
                     text=reply_text,
                     reply_to=AppBskyFeedPost.ReplyRef(

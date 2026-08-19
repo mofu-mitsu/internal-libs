@@ -8,6 +8,7 @@ import re
 import unicodedata  # ←標準import！
 from pytz import timezone
 from groq import Groq
+from text_limits import limit_graphemes
 import random
 import time
 # Selenium
@@ -260,6 +261,7 @@ def main():
 
         # 正規化
         normalized_text = unicodedata.normalize("NFKC", message)
+        normalized_text = limit_graphemes(normalized_text)
 
         # facets生成
         facets = generate_facets(normalized_text, [tag_name])

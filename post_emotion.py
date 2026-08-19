@@ -8,6 +8,7 @@ from datetime import datetime
 import re
 from pytz import timezone
 from groq import Groq
+from text_limits import limit_graphemes
 import random
 import time
 
@@ -243,6 +244,7 @@ def main():
             spot = random.choice(tokyo_spots)
             print(f"DEBUG: Selected spot: {spot} (Tokyo)")
         message = f"{spot}の{weather}の{day_of_week}。{message}"
+        message = limit_graphemes(message)
 
         client.send_post(text=message)
         print(f"DEBUG: Posted message: {message}")
