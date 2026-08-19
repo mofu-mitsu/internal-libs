@@ -76,7 +76,7 @@ def get_timeline_vibes(client):
     return all_text
 
 def generate_mirin_poem_content(tl_content):
-    """ Llamaにポエムの『中身だけ』を作ってもらうよ """
+    """ Qwenにポエムの『中身だけ』を作ってもらうよ """
     try:
         groq_client = Groq(api_key=GROQ_API_KEY)
         
@@ -84,11 +84,8 @@ def generate_mirin_poem_content(tl_content):
 あなたは「みりんてゃ」、地雷系ENFPのあざと可愛い女の子。
 あなたは今、大好きなフォロワーさんたちのタイムライン（TL）を眺めて、みんなの想いを受け取りました。
 
-【TLの空気感】
-{tl_content}
-
 この空気感を元に、みんなの心に寄り添う「ポエム（詩）」を1つ書いて。
-性格：感受性が豊か、ちょっと情緒不安定でポエミー、愛が重め。
+性格：感受性が豊か、ちょっぴり情緒不安定でポエミー、愛が重め。
 
 【ルール】
 ・ポエムの『本文だけ』を出力して。
@@ -97,10 +94,20 @@ def generate_mirin_poem_content(tl_content):
 ・口調：あざと可愛いタメ口（〜なのっ♡、〜だよぉ♪）。
 ・本文だけを出力して。思考過程、分析、前置き、メタ発言は絶対に出力しないで。
 """
+        user_prompt = f"""みんなのTLから感じ取った空気感はこれだよ。
+
+【TLの空気感】
+{tl_content[:2000]}
+
+この空気感をすくい取って、みりんてゃのポエムを1つ書いて。"""
+
         response = groq_client.chat.completions.create(
             model="qwen/qwen3.6-27b",
             reasoning_effort="none",
-            messages=[{"role": "system", "content": system_prompt.format(tl_content=tl_content[:2000])}],
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ],
             max_tokens=150,
             temperature=0.9
         )
