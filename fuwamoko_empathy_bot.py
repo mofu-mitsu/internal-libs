@@ -158,7 +158,7 @@ def generate_groq_reply(text, call_name, reaction_reason, hint=""):
         response = groq_client.chat.completions.create(
             model="openai/gpt-oss-20b",
             messages=[{"role": "system", "content": system_prompt}],
-            max_completion_tokens=200,  # ★トークン枠を拡大！
+            max_tokens=150,  # ★トークン枠を拡大！
             temperature=0.8
         )
         reply = response.choices[0].message.content.strip()
