@@ -35,9 +35,13 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install torch diffusers accelerate sentencepiece psutil pytz groq huggingface_hub
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install torch diffusers accelerate sentencepiece psutil pytz huggingface_hub
+
+      - name: Check Groq SDK version
+        run: |
+          python -m pip show groq
 
       - name: Run Reply Bot with Groq
         env:
