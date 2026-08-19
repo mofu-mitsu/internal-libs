@@ -845,7 +845,7 @@ def generate_reply_via_groq(user_input, author_display_name="", author_handle=""
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_input}
             ],
-            max_completion_tokens=180,  # ★ここを拡張！
+            max_tokens=180,  # ★ max_tokens に戻す（数値は180）
             temperature=0.75,
             top_p=0.9
         )
