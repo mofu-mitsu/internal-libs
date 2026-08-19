@@ -836,7 +836,7 @@ def generate_reply_via_groq(user_input, author_display_name="", author_handle=""
         )
         
         response = groq_client.chat.completions.create(
-            model="llama-3.1-8b-instant",
+            model="openai/gpt-oss-20b",
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_input}
