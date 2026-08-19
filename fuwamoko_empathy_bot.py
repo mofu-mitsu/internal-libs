@@ -155,7 +155,7 @@ def generate_groq_reply(text, call_name, reaction_reason, hint=""):
 理由とヒントに合わせて、超自然で可愛いリプライを50文字〜100文字で作って！
 """
         response = groq_client.chat.completions.create(
-            model="llama-3.1-8b-instant",
+            model="openai/gpt-oss-20b",
             messages=[{"role": "system", "content": system_prompt}],
             max_tokens=100,
             temperature=0.8
