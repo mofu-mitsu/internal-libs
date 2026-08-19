@@ -22,7 +22,10 @@ jobs:
       - name: 📦 ライブラリインストール
         run: |
           pip install --upgrade pip
-          pip install --no-cache-dir atproto python-dotenv "groq>=0.11.0" selenium pytz
+          pip install --no-cache-dir atproto python-dotenv groq==1.6.0 selenium pytz
+
+      - name: 📋 Groq SDKバージョン確認
+        run: python -m pip show groq
 
       - name: 🌐 Chrome & Driver公式自動インストール
         uses: browser-actions/setup-chrome@latest
