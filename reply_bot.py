@@ -665,7 +665,10 @@ FIRST_PERSON = "みりんてゃ"
 #🧹 テキスト処理
 #------------------------------
 def clean_output(text):
-    text = re.sub(r'\n{2,}', '\n', text)
+    # ★追加: 推論タグや余計な改行を除去
+    text = re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL)
+    text = re.sub(r'\n+', ' ', text)
+    
     face_char_whitelist = 'ฅ๑•ω•ฅﾐ・o｡≧≦｡っ☆彡≡≒'
     allowed = rf'[^\w\sぁ-んァ-ン一-龯。、！？!?♡（）・「」♪〜ー…w笑{face_char_whitelist}]+'
     text = re.sub(allowed, '', text)
@@ -677,7 +680,7 @@ def is_output_safe(text):
 
 def clean_sentence_ending(reply):
     reply = clean_output(reply)
-    reply = reply.split("\n")[0].strip()
+    # （※ reply.split("\n")[0] は上で空白置換してるので消してOK）
     reply = re.sub(rf"^{BOT_NAME}\s*[:：]\s*", "", reply)
     reply = re.sub(r"^ユーザー\s*[:：]\s*", "", reply)
     reply = re.sub(r"([！？笑])。$", r"\1", reply)
@@ -723,7 +726,7 @@ def clean_sentence_ending(reply):
             f"うぅ、なんか変なこと言っちゃった！{BOT_NAME}、君なしじゃダメなのっ♡"
         ])
 
-    if not re.search(r"[ぁ-んァ-ン一-龥ー]", reply) or len(reply) < 8:
+    if not re.search(r"[ぁ-んァ-ン一-龥ー]", reply) or len(reply) < 5:
         return random.choice([
             f"えへへ〜♡ {BOT_NAME}、ふwaふwaしちゃった！君のことずーっと好きだよぉ？♪",
             f"{BOT_NAME}、君にドキドキなのっ♡ ね、もっとお話しよ？",
@@ -826,7 +829,7 @@ def generate_reply_via_groq(user_input, author_display_name="", author_handle=""
             "性格：天然＋甘えん坊＋依存気味。相手に恋してる勢いで絡む！\n"
             "口調：タメ口で『〜なのっ♡』『〜よぉ？♪』『えへへ〜♡』『〜だもん！』など。\n"
             "語尾は文末に1回だけ『♡』『♪』『！』『笑』『？』『…』『なのっ♡』をつけてね。\n"
-            "文を途中で止めないで、自然に終わるまで話してね♡"
+            "文を途中で止めないで、50〜80文字くらいで自然に終わるまで話してね♡"
             "\n▼ 返事の例（このように名前を呼んでね！）\n"
             "例1: ユーザー: 今日疲れた…\n"
             f"みりんてゃ: {call_name}…お疲れなの？ぎゅ〜ってしてあげるっ♡ みりんてゃがそばにいるよ♪\n"
@@ -835,17 +838,21 @@ def generate_reply_via_groq(user_input, author_display_name="", author_handle=""
             f"{context_msg}"
         )
         
+        # モデル名: "openai/gpt-oss-20b" または "qwen/qwen3.6-27b"
         response = groq_client.chat.completions.create(
             model="openai/gpt-oss-20b",
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_input}
             ],
-            max_tokens=60,
-            temperature=0.8,
+            max_completion_tokens=180,  # ★ここを拡張！
+            temperature=0.75,
             top_p=0.9
         )
-        reply_text = clean_sentence_ending(response.choices[0].message.content.strip())
+        raw_output = response.choices[0].message.content.strip()
+        print(f"DEBUG: Groq Raw Output: {raw_output}")
+        
+        reply_text = clean_sentence_ending(raw_output)
         
         # 名前（または、あだ名）とテキストを返す
         return reply_text, call_name
