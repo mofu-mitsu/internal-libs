@@ -13,6 +13,7 @@ transformers==4.36.2
 torch==2.0.1
 sentencepiece==0.2.0
 accelerate==0.21.0
+groq==1.6.0
 psutil==5.9.8  # みつきの他Bot用に必須
 pillow==10.4.0
 opencv-python==4.8.1.78  # ← バージョン固定もオススメ（最新版だと不具合出ることもある）
