@@ -8,7 +8,7 @@ from datetime import datetime
 import re
 from pytz import timezone
 from groq import Groq
-from text_limits import limit_graphemes
+from text_limits import limit_graphemes, remove_reasoning
 import random
 import time
 
@@ -89,6 +89,7 @@ def generate_poem(weather, day_of_week, temp_min, temp_max, pop):
             "禁止：ニュース、政治、ビジネス、固有名詞（国、企業、場所など）、性的・過激な表現はNG！\n"
             "注意：以下のワードは絶対禁止→「政府」「協定」「韓国」「外交」「経済」「契約」「軍事」「情報」「外相」「更新」「ちゅぱ」「ペロペロ」「ぐちゅ」「ぬぷ」「ビクビク」「お前」「あなた」\n"
             "例：雷の土曜日。そっときみを想うよ…♡"
+            "回答本文だけを出力して。思考過程、分析、前置き、メタ発言は絶対に出力しないで。\n"
         )
 
         # 切り替え候補:
@@ -110,7 +111,7 @@ def generate_poem(weather, day_of_week, temp_min, temp_max, pop):
                     temperature=0.7,
                     top_p=0.9
                 )
-                generated_poem = response.choices[0].message.content.strip()
+                generated_poem = remove_reasoning(response.choices[0].message.content)
                 print(f"DEBUG: Raw Output: {generated_poem}")
 
                 # NGワードチェックとクリーニング

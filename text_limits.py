@@ -1,6 +1,7 @@
 """Bluesky投稿の書記素数を安全に制限するユーティリティ。"""
 
 import unicodedata
+import re
 
 
 _VARIATION_SELECTORS = {chr(codepoint) for codepoint in range(0xFE00, 0xFE10)}
@@ -49,3 +50,31 @@ def limit_graphemes(text, maximum=300):
     suffix = "…"
     kept = max(0, maximum - 1)
     return "".join(clusters[:kept]).rstrip() + suffix
+
+
+_REASONING_MARKERS = (
+    "thinking process",
+    "analyze user input",
+    "analysis:",
+    "chain of thought",
+    "思考過程",
+    "思考プロセス",
+    "回答のみを出力",
+)
+
+
+def remove_reasoning(text):
+    """Remove visible Qwen reasoning and return only a plausible answer."""
+    text = re.sub(r"<think\b[^>]*>.*?</think>", "", text, flags=re.IGNORECASE | re.DOTALL)
+    text = re.sub(r"<think\b[^>]*>.*$", "", text, flags=re.IGNORECASE | re.DOTALL)
+    text = re.sub(r"</think>", "", text, flags=re.IGNORECASE)
+
+    lowered = text.lower()
+    if any(marker in lowered for marker in _REASONING_MARKERS):
+        final_match = re.search(
+            r"(?:final answer|最終回答|回答)\s*[:：]\s*(.+)$",
+            text,
+            flags=re.IGNORECASE | re.DOTALL,
+        )
+        return final_match.group(1).strip() if final_match else ""
+    return text.strip()

@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from atproto import Client
 from groq import Groq
 from dotenv import load_dotenv
-from text_limits import limit_graphemes
+from text_limits import limit_graphemes, remove_reasoning
 
 # 環境変数
 load_dotenv()
@@ -95,6 +95,7 @@ def generate_mirin_poem_content(tl_content):
 ・140文字以内。TLの内容を具体的に説明するのではなく、その「感情」や「季節感」をすくい取って詩的に表現して。
 ・性格：感受性豊か、情緒不安定、愛が重め。
 ・口調：あざと可愛いタメ口（〜なのっ♡、〜だよぉ♪）。
+・本文だけを出力して。思考過程、分析、前置き、メタ発言は絶対に出力しないで。
 """
         response = groq_client.chat.completions.create(
             model="qwen/qwen3.6-27b",
@@ -102,7 +103,7 @@ def generate_mirin_poem_content(tl_content):
             max_tokens=150,
             temperature=0.9
         )
-        return response.choices[0].message.content.strip()
+        return remove_reasoning(response.choices[0].message.content)
     except Exception as e:
         print(f"❌ Groqエラー: {e}")
         return "みんなの想い、ふわふわ届いたよ♡\nみりんてゃは、ずっとキミの味方なのっ♡"

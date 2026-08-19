@@ -8,7 +8,7 @@ import re
 import unicodedata  # ←標準import！
 from pytz import timezone
 from groq import Groq
-from text_limits import limit_graphemes
+from text_limits import limit_graphemes, remove_reasoning
 import random
 import time
 # Selenium
@@ -182,6 +182,7 @@ def generate_poem(trend_word, mood):
             "例：「ねむねむ」な朝に『寒波』って言葉見つけて…きみのぬくもり、恋しいな♡\n"
             "禁止：ニュース、政治、ビジネス、固有名詞（国・企業・人名など）、性的・過激な表現は絶対NG！\n"
             "注意：以下のワードは禁止→「政府」「選挙」「戦争」「死」「殺」「犯罪」「逮捕」「ちゅぱ」「ペロペロ」「お前」「あなた」"
+            "回答本文だけを出力して。思考過程、分析、前置き、メタ発言は絶対に出力しないで。"
         )
 
         for attempt in range(3):
@@ -197,7 +198,7 @@ def generate_poem(trend_word, mood):
                     temperature=0.7,
                     top_p=0.9
                 )
-                generated_poem = response.choices[0].message.content.strip()
+                generated_poem = remove_reasoning(response.choices[0].message.content)
                 print(f"DEBUG: Raw Output: {generated_poem}")
 
                 cleaned_poem = clean_poem(generated_poem)
