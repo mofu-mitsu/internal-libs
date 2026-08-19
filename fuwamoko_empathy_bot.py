@@ -127,7 +127,7 @@ def save_interaction_history(handle):
         pass
 
 # -----------------------------
-# Llamaでの返信生成
+# Llamaでの返信生成（Groq版）
 # -----------------------------
 def generate_groq_reply(text, call_name, reaction_reason, hint=""):
     if not call_name:
@@ -154,13 +154,17 @@ def generate_groq_reply(text, call_name, reaction_reason, hint=""):
 
 理由とヒントに合わせて、超自然で可愛いリプライを50文字〜100文字で作って！
 """
+        # "openai/gpt-oss-20b" または "qwen/qwen3.6-27b"
         response = groq_client.chat.completions.create(
             model="openai/gpt-oss-20b",
             messages=[{"role": "system", "content": system_prompt}],
-            max_tokens=100,
+            max_completion_tokens=200,  # ★トークン枠を拡大！
             temperature=0.8
         )
         reply = response.choices[0].message.content.strip()
+
+        # ★追加: 推論タグの除去と整形
+        reply = re.sub(r'<think>.*?</think>', '', reply, flags=re.DOTALL).strip()
         reply = re.sub(r'^みりんてゃ[:：]\s*', '', reply)
         reply = re.sub(r'([！？笑])。$', r'\1', reply)
 
