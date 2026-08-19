@@ -90,17 +90,23 @@ def generate_poem(weather, day_of_week, temp_min, temp_max, pop):
             "例：雷の土曜日。そっときみを想うよ…♡"
         )
 
+        # 切り替え候補:
+        # "openai/gpt-oss-20b" (高速・軽量)
+        # "openai/gpt-oss-120b" (表現力高め)
+        # "qwen/qwen3.6-27b" (日本語がかなり自然)
+        MODEL_NAME = "openai/gpt-oss-20b"
+
         for attempt in range(3):
             print(f"📤 {datetime.now(timezone('Asia/Tokyo')).isoformat()} ｜ Groq API呼び出し中…（試行 {attempt + 1}）")
             try:
                 response = groq_client.chat.completions.create(
-                    model="openai/gpt-oss-20b",
+                    model=MODEL_NAME,
                     messages=[
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": prompt}
                     ],
-                    max_tokens=50,
-                    temperature=0.6,
+                    max_completion_tokens=150,  # 50だと途中で切れるので150に拡張！
+                    temperature=0.7,
                     top_p=0.9
                 )
                 generated_poem = response.choices[0].message.content.strip()
@@ -122,8 +128,11 @@ def generate_poem(weather, day_of_week, temp_min, temp_max, pop):
                 sentences = re.split(r'[。！？♡♪]', cleaned_poem)
                 sentences = [s.strip() for s in sentences if s.strip()]
                 print(f"DEBUG: Sentence split: {sentences}")
+                
+                # 文の数が足りない場合や長すぎる場合のチェック
                 if len(sentences) < 2:
                     print(f"DEBUG: Invalid poem format: Too few sentences - Poem: {cleaned_poem}")
+                    # 形式が崩れても最低限中身があれば通すか、フォールバックにするか調整してね
                     return random.choice(fallback_poems)
                 if len(sentences[0]) > 30:
                     print(f"DEBUG: Invalid poem format: First sentence too long - Poem: {cleaned_poem}")
