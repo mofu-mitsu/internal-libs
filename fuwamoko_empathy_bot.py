@@ -20,6 +20,7 @@ from groq import Groq
 from transformers import CLIPProcessor, CLIPModel
 from atproto import Client, models
 from atproto_client.models import AppBskyFeedPost
+from text_limits import limit_graphemes, remove_reasoning
 from text_limits import limit_graphemes
 
 # ロギング設定
@@ -154,6 +155,7 @@ def generate_groq_reply(text, call_name, reaction_reason, hint=""):
 例: 「{call_name}っ！みりんてゃもそう思うのっ♡」
 
 理由とヒントに合わせて、超自然で可愛いリプライを50文字〜100文字で作って！
+回答本文だけを出力して。思考過程、分析、前置き、メタ発言、回答形式の説明は絶対に出力しないで。
 """
         # "openai/gpt-oss-20b" または "qwen/qwen3.6-27b"
         response = groq_client.chat.completions.create(
@@ -165,7 +167,7 @@ def generate_groq_reply(text, call_name, reaction_reason, hint=""):
         reply = response.choices[0].message.content.strip()
 
         # ★追加: 推論タグの除去と整形
-        reply = re.sub(r'<think>.*?</think>', '', reply, flags=re.DOTALL).strip()
+        reply = remove_reasoning(reply)
         reply = re.sub(r'^みりんてゃ[:：]\s*', '', reply)
         reply = re.sub(r'([！？笑])。$', r'\1', reply)
 
