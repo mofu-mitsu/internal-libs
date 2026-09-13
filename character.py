@@ -15,13 +15,52 @@ load_dotenv()
 HANDLE = os.getenv('HANDLE')
 APP_PASSWORD = os.getenv('APP_PASSWORD')
 
-def upload_image(client, image_path):
-    if not image_path or not os.path.exists(image_path):
-        print(f"画像なしで進行します: {image_path}")
+
+def resolve_image_path(image_path):
+    """画像パスを解決する。
+
+    character.json に書かれたパスを最優先し、見つからない場合は
+    ファイル名だけを取り出して images/characters/ と images/ も探す。
+    """
+    if not image_path:
         return None
+
+    path = Path(image_path)
+    candidates = [
+        path,
+        Path('images/characters') / path.name,
+        Path('images') / path.name,
+    ]
+
+    # 重複を避けつつ、最初に存在するものを返す
+    seen = set()
+    for candidate in candidates:
+        candidate = candidate.resolve()
+        if candidate in seen:
+            continue
+        seen.add(candidate)
+        if candidate.is_file():
+            return str(candidate)
+
+    return None
+
+
+def upload_image(client, image_path, character_name):
+    """画像をアップロードする。画像がなければ例外で処理を停止する。"""
+    resolved_path = resolve_image_path(image_path)
+
+    if not resolved_path:
+        raise FileNotFoundError(
+            f"画像が見つかりません: {character_name}\n"
+            f"指定されたパス: {image_path}\n"
+            f"確認した場所: 指定パス / images/characters/ / images/"
+        )
+
+    print(f"画像を使用します: {resolved_path}")
+
     try:
-        img = Image.open(image_path)
-        img = img.convert("RGB") # JPG用に変換
+        img = Image.open(resolved_path)
+        img = img.convert("RGB")  # JPG用に変換
         max_dimension = 1024
         if max(img.size) > max_dimension:
             ratio = max_dimension / max(img.size)
@@ -32,8 +71,8 @@ def upload_image(client, image_path):
         buffer.seek(0)
         return client.com.atproto.repo.upload_blob(buffer.read()).blob
     except Exception as e:
-        print(f"画像処理エラー: {e}")
-        return None
+        raise RuntimeError(f"画像処理・アップロードエラー ({character_name}): {e}") from e
+
 
 def generate_facets_from_text(text):
     text_bytes = text.encode("utf-8")
@@ -50,25 +89,39 @@ def generate_facets_from_text(text):
             })
     return facets
 
+
 def main():
     with open('character.json', 'r', encoding='utf-8') as f:
         all_data = json.load(f)
-    
-    # ★ nameとshortがあるデータだけを抽出（エラー回避！）
+
+    # nameとshortがあるデータだけを抽出（エラー回避！）
     characters = [c for c in all_data if isinstance(c, dict) and 'name' in c and 'short' in c]
 
     if not characters:
-        print("有効なキャラクターデータが見つかりませんでした。")
-        return
+        raise RuntimeError("有効なキャラクターデータが見つかりませんでした。")
 
     char = random.choice(characters)
 
-    # 念のためキーがあるか確認しながらメッセージ作成
     name = char.get('name', '不明なキャラ')
     short = char.get('short', 'なし')
     cls = char.get('class', 'とりの丘学園')
     motif = char.get('motif', '不明')
     desc = char.get('desc', '（紹介文準備中）')
+    image_path = char.get('image')
+
+    # 画像がない投稿は絶対に行わない。
+    # loginや投稿処理より前にチェックしておくことで、Actionsも失敗扱いになる。
+    if not image_path:
+        raise FileNotFoundError(
+            f"{name} の画像パスが character.json にありません。"
+        )
+
+    if not resolve_image_path(image_path):
+        raise FileNotFoundError(
+            f"{name} の画像ファイルが見つかりません。\n"
+            f"character.json の指定: {image_path}\n"
+            f"指定パス、images/characters/、images/ を確認しました。"
+        )
 
     raw_message = f"""📖【みりんてゃの学園 キャラ紹介】
 〜とりの丘学園の仲間たち〜
@@ -80,24 +133,23 @@ def main():
 {desc}
 
 #みりんてゃ図鑑"""
-    
+
     message = unicodedata.normalize("NFKC", raw_message).strip()
 
     client = Client()
     client.login(HANDLE, APP_PASSWORD)
 
-    image_blob = upload_image(client, char.get('image'))
-    
-    embed = None
-    if image_blob:
-        embed = {
-            "$type": "app.bsky.embed.images",
-            "images": [{"image": image_blob, "alt": f"{name}のイラスト"}]
-        }
+    image_blob = upload_image(client, image_path, name)
+
+    embed = {
+        "$type": "app.bsky.embed.images",
+        "images": [{"image": image_blob, "alt": f"{name}のイラスト"}]
+    }
 
     facets = generate_facets_from_text(message)
     client.send_post(text=message, facets=facets if facets else None, embed=embed)
     print(f"投稿成功: {name}")
+
 
 if __name__ == "__main__":
     main()
