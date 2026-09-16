@@ -156,9 +156,9 @@ def generate_groq_reply(text, call_name, reaction_reason, hint=""):
 理由とヒントに合わせて、超自然で可愛いリプライを50文字〜100文字で作って！
 回答本文だけを出力して。思考過程、分析、前置き、メタ発言、回答形式の説明は絶対に出力しないで。
 """
-        # "openai/gpt-oss-20b" または "qwen/qwen3.6-27b"
+        # "openai/gpt-oss-20b" または "qwen/qwen3.8-27b"
         response = groq_client.chat.completions.create(
-            model="qwen/qwen3.6-27b",
+            model="qwen/qwen3.8-27b",
             reasoning_effort="none",
             messages=[{"role": "system", "content": system_prompt}],
             max_tokens=150,  # ★トークン枠を拡大！
