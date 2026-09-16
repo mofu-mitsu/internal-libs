@@ -95,15 +95,14 @@ def generate_poem(weather, day_of_week, temp_min, temp_max, pop):
         # 切り替え候補:
         # "openai/gpt-oss-20b" (高速・軽量)
         # "openai/gpt-oss-120b" (表現力高め)
-        # "qwen/qwen3.6-27b" (日本語がかなり自然)
-        MODEL_NAME = "qwen/qwen3.6-27b"
+        # "qwen/qwen3.8-27b" (日本語がかなり自然)
+        MODEL_NAME = "qwen/qwen3.8-27b"
 
         for attempt in range(3):
             print(f"📤 {datetime.now(timezone('Asia/Tokyo')).isoformat()} ｜ Groq API呼び出し中…（試行 {attempt + 1}）")
             try:
                 response = groq_client.chat.completions.create(
                     model=MODEL_NAME,
-                    reasoning_effort="none",
                     messages=[
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": prompt}
