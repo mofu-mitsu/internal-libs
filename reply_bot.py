@@ -840,9 +840,9 @@ def generate_reply_via_groq(user_input, author_display_name="", author_handle=""
             f"{context_msg}"
         )
         
-        # モデル名: "openai/gpt-oss-20b" または "qwen/qwen3.6-27b"
+        # モデル名: "openai/gpt-oss-20b" または "qwen/qwen3.8-27b"
         response = groq_client.chat.completions.create(
-            model="qwen/qwen3.6-27b",
+            model="qwen/qwen3.8-27b",
             reasoning_effort="none",
             messages=[
                 {"role": "system", "content": system_prompt},
