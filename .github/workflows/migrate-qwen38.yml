@@ -1,0 +1,50 @@
+name: Migrate Mirin bots to Qwen 3.8
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Update model settings
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          files = [
+              "poem_bot.py",
+              "post_emotion.py",
+              "post_trend.py",
+              "reply_bot.py",
+              "fuwamoko_empathy_bot.py",
+          ]
+
+          for name in files:
+              path = Path(name)
+              text = path.read_text(encoding="utf-8")
+              text = text.replace("qwen/qwen3.6-27b", "qwen/qwen3.8-27b")
+              text = text.replace('                    reasoning_effort="none",\n', '')
+              text = text.replace('                reasoning_effort="none",\n', '')
+              path.write_text(text, encoding="utf-8")
+          PY
+
+      - name: Commit model migration
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add poem_bot.py post_emotion.py post_trend.py reply_bot.py fuwamoko_empathy_bot.py
+          git diff --cached --quiet && exit 0
+          git commit -m "Migrate Mirin bots to Qwen 3.8"
+          git push
+
+      - name: Remove temporary workflow
+        run: |
+          git rm .github/workflows/migrate-qwen38.yml
+          git commit -m "Remove temporary Qwen migration workflow"
+          git push
