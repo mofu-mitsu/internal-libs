@@ -103,8 +103,7 @@ def generate_mirin_poem_content(tl_content):
 この空気感をすくい取って、みりんてゃのポエムを1つ書いて。"""
 
         response = groq_client.chat.completions.create(
-            model="qwen/qwen3.6-27b",
-            reasoning_effort="none",
+            model="qwen/qwen3.8-27b",
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt}
