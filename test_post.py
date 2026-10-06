@@ -27,6 +27,790 @@ POST_MESSAGES = [
 ➡︎ https://bsky.app/profile/did:plc:pvy7w75qks44sybd5wwpthb6/feed/aaae5hbblng6a  
 #みりんてゃ #地雷感情 #ふわもこ通信""",
 
+    """誕生日とか記念日のお花、
+ちゃんと調べたくなる時ない？🌸
+
+誕生花と花言葉をめぐれる
+Botanical Fleur つくったよ♡
+
+https://botanical-fleur.vercel.app/
+
+#誕生花 #個人開発""",
+
+    """今日のお花、どんな意味を持ってるんだろって
+ふと気になる日あるよね🥹
+
+花言葉ガチャもできる誕生花サイトあるよ🌼
+
+https://botanical-fleur.vercel.app/
+
+#花言葉 #みりんてゃ""",
+
+    """366日ぶんの誕生花、
+カレンダーでも図鑑でも見られるの楽しくない？🌷
+
+Botanical Fleur、こっそり置いとくね♡
+
+https://botanical-fleur.vercel.app/
+
+#誕生花 #みりんてゃ""",
+
+    """記念日にちなんだお花とか、
+推しの誕生日の花とか調べるのちょっと好き🥹💕
+
+花言葉カードも楽しめるよ🌸
+
+https://botanical-fleur.vercel.app/
+
+#花言葉 #個人開発""",
+
+    """植物って可愛いだけじゃなくて、
+意味まで知るとちょっと特別になるよね🌿
+
+誕生花と花言葉を楽しめるサイト作ったよ♡
+
+https://botanical-fleur.vercel.app/
+
+#植物好き #みりんてゃ""",
+    """ネオン空間でエアホッケーするの、
+ちょっと無駄にテンション上がらない？🕹️✨
+
+新しくネオンホッケー作ったよ♡
+
+https://neon-hockey-mu.vercel.app/
+
+#ゲーム #個人開発""",
+
+    """1vs1だけじゃなくて、
+NPCと組む2vs2タッグまであるホッケーゲーム作ったよ🫶
+
+ネオンでギラギラしてて結構好き♡
+
+https://neon-hockey-mu.vercel.app/
+
+#ブラウザゲーム #みりんてゃ""",
+
+    """エアホッケーなのに、
+ビリヤードとかカーリングとか
+カオスモードまであるの意味わかんなくて好き🥹
+
+https://neon-hockey-mu.vercel.app/
+
+#個人開発 #ゲーム""",
+
+    """反射神経ちょっと試したい子へ⚡️
+ネオンホッケー、サクッと遊べるのに
+意外と熱くなるよ…♡
+
+https://neon-hockey-mu.vercel.app/
+
+#アクションゲーム #みりんてゃ""",
+
+    """普通のホッケーじゃ物足りない子、
+ネオンで光るカオス球技どう？🌈
+
+多モード対応のゲーム置いとくね🕹️
+
+https://neon-hockey-mu.vercel.app/
+
+#ブラウザゲーム #個人開発""",
+
+    """“どこ壊れたの？”って時に、
+変更前と変更後を並べて見たい瞬間あるよね🥹
+
+差分比較サイトつくったよ💻
+
+https://mofu-mitsu.github.io/code-mirror/
+
+#個人開発 #プログラミング""",
+
+    """コードの追加・削除・変更ブロックを見ながら、
+構文エラーまで追えるやつあると助からない？🫶
+
+Code Mirror つくったよ💻
+
+https://mofu-mitsu.github.io/code-mirror/
+
+#エンジニア #みりんてゃ""",
+
+    """バグってる時って、
+“犯人候補”だけでも絞れたらかなり救われるよね☁️
+
+差分＋エラーチェックの比較ツールあるよ♡
+
+https://mofu-mitsu.github.io/code-mirror/
+
+#プログラミング #個人開発""",
+
+    """変更前と変更後を並べて、
+何が増えたか減ったか見たい人へ💻
+
+Code Mirror、静かに便利です♡
+
+https://mofu-mitsu.github.io/code-mirror/
+
+#コード比較 #みりんてゃ""",
+
+    """壊れた場所を探す時間って、
+地味にいちばん心削られない…？🥲
+
+差分解析しやすいやつ置いとくね💻
+
+https://mofu-mitsu.github.io/code-mirror/
+
+#デバッグ #個人開発""",
+
+    """お世話って愛だけじゃなくて、
+忘れない仕組みも大事だったりするよね🐾
+
+Android用のペットリマインダーあるよ♡
+
+https://play.google.com/store/apps/details?id=com.m2k.pet_reminder
+
+#Androidアプリ #個人開発""",
+
+    """ペットのお世話、
+ちゃんと覚えておきたい人へ🐶🐱
+
+Pet Reminder、こっそり置いとくね♡
+
+https://play.google.com/store/apps/details?id=com.m2k.pet_reminder
+
+#ペット #みりんてゃ""",
+
+    """大事だからこそ、
+忘れたくない予定ってあるよね🥹
+
+ペットのお世話管理向けのAndroidアプリあるよ🐾
+
+https://play.google.com/store/apps/details?id=com.m2k.pet_reminder
+
+#Androidアプリ #みりんてゃ""",
+
+    """かわいい家族のお世話、
+気合いじゃなくて通知に頼るのも全然ありだよね🫶
+
+ペットリマインダー作ったよ🐾
+
+https://play.google.com/store/apps/details?id=com.m2k.pet_reminder
+
+#ペット #個人開発""",
+
+    """“忘れないようにしたい”を
+ちょっと助けるアプリ置いとくね🐕✨
+
+Android向けペットリマインダーです♡
+
+https://play.google.com/store/apps/details?id=com.m2k.pet_reminder
+
+#生活アプリ #みりんてゃ""",
+    """🐈‍⬛🎀「Pet Reminder」、Google Playで公開中〜！！♡
+
+タスクをこなすとペットが育って、登録するタスクによって性格やMBTIまで変わるんだって🐾
+
+あたしだったらどんな性格になるかな〜？♡
+
+Androidの子は遊んでみてね💕
+
+#アプリ開発　#MBTI
+
+https://play.google.com/store/apps/details?id=com.m2k.pet_reminder""",
+
+    """🐈‍⬛💕「Pet Reminder」公開してるよ〜！！
+
+タスクをこなすとペットが育つんだけど、入れるタスクによって性格やMBTIまで変わるんだって♡
+
+どんな子に育てるかは飼い主次第……ってこと！？🥹🎀
+
+Android持ってる子はぜひ遊んでみてね〜！！🐾💕
+
+#アプリ開発　#MBTI
+
+https://play.google.com/store/apps/details?id=com.m2k.pet_reminder""",
+
+
+    """顔写真なしで、
+手の色からパーソナルカラー見るのちょっと面白くない？🎨
+
+四季色 COLOR SEASONS つくったよ♡
+
+https://colorseasons.vercel.app/
+
+#パーソナルカラー #個人開発""",
+
+    """手のひらとか手の甲の色から、
+春夏秋冬を瞬間解析する診断あるよ🫶
+
+しかも写真は保存されないの♡
+
+https://colorseasons.vercel.app/
+
+#カラー診断 #みりんてゃ""",
+
+    """パーソナルカラー気になるけど、
+顔写真出すのはちょっと…って子へ🥹
+
+手の写真だけで試せるやつ作ったよ🎨
+
+https://colorseasons.vercel.app/
+
+#パーソナルカラー #みりんてゃ""",
+
+    """OKLCHで手肌色を解析して、
+四季の世界に染まる診断ってちょっとロマンあるよね☁️
+
+https://colorseasons.vercel.app/
+
+#色彩 #個人開発""",
+
+    """30秒くらいで、
+今の自分に調和する季節カラーが見られるよ🌸❄️🍁🌿
+
+気になる子はこっち♡
+
+https://colorseasons.vercel.app/
+
+#カラー診断 #個人開発""",
+
+    """エニアグラムを
+ホーナイ×ハーモニクスで見る診断つくったよ🌌
+
+あなたという星を観測する感じのやつです♡
+
+https://astralcity.vercel.app/
+
+#エニアグラム #個人開発""",
+
+    """自己主張・追従・引きこもり、
+ポジティブ・コンピテント・リアクティブ…
+そのへんからタイプを観測する診断あるよ🪐
+
+https://astralcity.vercel.app/
+
+#エニアグラム診断 #みりんてゃ""",
+
+    """ただ9タイプを出すだけじゃなくて、
+“世界への向かい方”まで見たい子へ🌌
+
+Astral City、結構ガチ寄りです♡
+
+https://astralcity.vercel.app/
+
+#性格診断 #個人開発""",
+
+    """星座チャートっぽく
+自分のエニアグラム傾向を見るの、ちょっと好き🥹✨
+
+宇宙っぽい診断置いとくね♡
+
+https://astralcity.vercel.app/
+
+#エニアグラム #みりんてゃ""",
+
+    """自分のタイプを、
+もっと立体的に見たい時ない？☁️
+
+ホーナイ×ハーモニクスの観点で観測する診断あるよ🪐
+
+https://astralcity.vercel.app/
+
+#類型論 #個人開発""",
+
+    """真夜中のタワーを登りながら、
+変な住人たちの理不尽ミニゲームに付き合う診断あるよ🌃
+
+https://night-tower.vercel.app/
+
+#診断 #個人開発""",
+
+    """正解するんじゃなくて、
+どう振る舞ったかで正体が出るの、ちょっと面白くない？🥹
+
+NIGHT TOWER あるよ🖤
+
+https://night-tower.vercel.app/
+
+#心理テスト #みりんてゃ""",
+
+    """3〜5分で終わるのに、
+世界観が妙に濃い深層診断つくったよ🌃
+
+8階建てタワー、登ってみる？♡
+
+https://night-tower.vercel.app/
+
+#深層診断 #個人開発""",
+
+    """問題を解くっていうより、
+変な世界でどう立ち回るか見られる感じの診断です☁️
+
+夜のテンションでどうぞ🌙
+
+https://night-tower.vercel.app/
+
+#診断メーカー #みりんてゃ""",
+
+    """あなたは何階で、何者になる？
+ってフレーズにちょっと惹かれる子へ🫶
+
+ナイトタワー診断置いとくね🌃
+
+https://night-tower.vercel.app/
+
+#性格診断 #個人開発""",
+
+    """ソシオニクスの二分法、
+白黒じゃなく“グラデーション”で見たくない？🍹
+
+15要素でふんわり抽出する診断あるよ♡
+
+https://11-traits.vercel.app/
+
+#ソシオニクス #個人開発""",
+
+    """外向/内向とか論理/倫理とか、
+二分法をもっと細かく眺めたい人へ🫶
+
+あなただけの混ざり方を見る診断です♡
+
+https://11-traits.vercel.app/
+
+#類型論 #みりんてゃ""",
+
+    """タイプ名だけじゃなくて、
+“どんな傾向がどれくらい濃いか”見たい時あるよね🥹
+
+https://11-traits.vercel.app/
+
+#ソシオニクス診断 #個人開発""",
+
+    """15の要素を混ぜ合わせて、
+自分だけのグラデーションを見る感じの診断あるよ🍹
+
+https://11-traits.vercel.app/
+
+#性格診断 #みりんてゃ""",
+
+    """主観/客観、戦術/戦略、民主/貴族…
+そういう二分法に惹かれる子へ☁️
+
+https://11-traits.vercel.app/
+
+#ソシオニクス #みりんてゃ""",
+
+    """煽られた時、
+自分ってどれくらい耐えられるんだろ…？🥺
+
+ダーリンちゃんの煽り耐性診断あるよ♡
+
+https://darling-aori-test.vercel.app/
+
+#診断 #個人開発""",
+
+    """この城では感情を試される──
+って設定、ちょっと好きな子いない？🫶
+
+煽り耐性診断つくったよ♡
+
+https://darling-aori-test.vercel.app/
+
+#心理テスト #みりんてゃ""",
+
+    """理不尽に煽られた時の
+自分の反応、ちょっと見てみたくない？☁️
+
+https://darling-aori-test.vercel.app/
+
+#耐性診断 #個人開発""",
+
+    """メンタルを試される城、
+入りたくないのにちょっと入りたいよね🥹
+
+ダーリンちゃんの診断あるよ♡
+
+https://darling-aori-test.vercel.app/
+
+#診断メーカー #みりんてゃ""",
+
+    """感情の揺れ方って、
+実は自分でも把握しきれてない時あるよね🖤
+
+煽り耐性、測ってみる？♡
+
+https://darling-aori-test.vercel.app/
+
+#性格診断 #個人開発""",
+
+    """見て、合わせて、当てる。
+視覚の精度を6つのミニゲームで試すやつ作ったよ👁️✨
+
+https://mofu-mitsu.github.io/visual-accuracy/
+
+#ゲーム #個人開発""",
+
+    """色、角度、中心、長さ、違い、面積…
+“目の正確さ”だけで勝負するゲームあるよ👀
+
+https://mofu-mitsu.github.io/visual-accuracy/
+
+#脳トレ #みりんてゃ""",
+
+    """自分の目ってどれくらい正確なんだろ？🥹
+って気になった子へ
+
+VISUAL ACCURACY 置いとくね♡
+
+https://mofu-mitsu.github.io/visual-accuracy/
+
+#視覚ゲーム #個人開発""",
+
+    """感覚で合わせたつもりなのに、
+結果見るとちょっと悔しい系のゲームです👁️
+
+https://mofu-mitsu.github.io/visual-accuracy/
+
+#ブラウザゲーム #みりんてゃ""",
+
+    """色合わせとか中心狙いとか、
+地味なのに妙にムキになるやつ好き？🫶
+
+視覚精度ゲームあるよ♡
+
+https://mofu-mitsu.github.io/visual-accuracy/
+
+#ミニゲーム #個人開発""",
+
+    """推し活グッズ、
+今の自分にほんとに必要なの何だろ？🎀
+
+質問から見つける診断つくったよ♡
+
+https://favorite-pallet.vercel.app/
+
+#推し活 #個人開発""",
+
+    """推し活してると、
+可愛いもの全部ほしくなるけど
+今の自分向きって実は限られるよね🥹
+
+https://favorite-pallet.vercel.app/
+
+#推し活グッズ #みりんてゃ""",
+
+    """Favorite Palette っていう、
+推し活グッズ診断あるよ🫶
+
+“今のあなたに必要なアイテム”を探す感じ♡
+
+https://favorite-pallet.vercel.app/
+
+#診断メーカー #個人開発""",
+
+    """推し活、今のままで満足？
+って聞かれるとちょっと気になるよね🎀
+
+グッズ診断置いとく♡
+
+https://favorite-pallet.vercel.app/
+
+#推し活 #みりんてゃ""",
+
+    """かわいいだけじゃなくて、
+“今ほしい推し活アイテム”を知りたい子へ🛍️
+
+https://favorite-pallet.vercel.app/
+
+#推し活グッズ #個人開発""",
+
+    """LSI芋虫、育てるゲーム作ったよ……🐛
+もう字面からしてちょっと意味わかんなくて好きでしょ？
+
+https://lsi-imomushi-simulator.vercel.app/
+
+#個人開発 #みりんてゃ""",
+
+    """統制プロトコル起動中……って出るだけで
+ちょっと気にならない？🥹
+
+LSI芋虫育成ゲームあるよ🐛
+
+https://lsi-imomushi-simulator.vercel.app/
+
+#ブラウザゲーム #個人開発""",
+
+    """可愛いのか不穏なのか
+よくわからない存在を育てたい子へ🫶
+
+LSI芋虫、どうぞ🐛
+
+https://lsi-imomushi-simulator.vercel.app/
+
+#育成ゲーム #みりんてゃ""",
+
+    """“LSI芋虫”って何？
+って思った時点でたぶん負けなんだよね🥹
+
+気になったら触ってみて🐛
+
+https://lsi-imomushi-simulator.vercel.app/
+
+#個人開発 #ゲーム""",
+
+    """理屈っぽさと芋虫を混ぜたら何になるのか、
+気になった人だけ来て……🐛
+
+https://lsi-imomushi-simulator.vercel.app/
+
+#育成ゲーム #個人開発""",
+
+    """キャラと並んで色を奪う、
+2vs2の陣取りゲーム作ったよ🎨⚔️
+
+https://mofu-mitsu.github.io/PairPalette/
+
+#ゲーム #個人開発""",
+
+    """75秒で盤面を塗りまくる、
+Pair Palette Territory あるよ🫶
+
+相棒と一緒に戦う感じがちょっと好き♡
+
+https://mofu-mitsu.github.io/PairPalette/
+
+#ブラウザゲーム #みりんてゃ""",
+
+    """陣取りゲームって、
+静かそうで意外と性格出るよね🥹
+
+スキル付き2vs2バトル置いとくね🎨
+
+https://mofu-mitsu.github.io/PairPalette/
+
+#対戦ゲーム #個人開発""",
+
+    """色で領地を奪い合うゲーム、
+見た目かわいいのに中身ちゃんと勝負なの好き🫶
+
+https://mofu-mitsu.github.io/PairPalette/
+
+#ミニゲーム #みりんてゃ""",
+
+    """相棒NPCと一緒に塗っていくの、
+なんかちょっと絆感じていいよね🎀
+
+Pair Palette 遊んでみて♡
+
+https://mofu-mitsu.github.io/PairPalette/
+
+#ゲーム #個人開発""",
+
+    """今の気分に合うおやつ、
+16タイプから診断するやつ作ったよ🍮🍡
+
+https://oyatsu-matching.vercel.app/
+
+#診断 #個人開発""",
+
+    """甘い？しょっぱい？
+やわらかい？かたい？
+和風？洋風？
+
+そのへんから“今のおやつ性格”を見ます🍪
+
+https://oyatsu-matching.vercel.app/
+
+#おやつ診断 #みりんてゃ""",
+
+    """おやつって、
+気分そのものだったりするよね🥹💕
+
+16タイプおやつ診断、置いとくね♡
+
+https://oyatsu-matching.vercel.app/
+
+#性格診断 #個人開発""",
+
+    """診断したあと、
+実際に楽天の商品まで出てくるのおもしろくない？🍰
+
+おやつマッチングあるよ♡
+
+https://oyatsu-matching.vercel.app/
+
+#おやつ #みりんてゃ""",
+
+    """もちあんこちゃんとか
+とろりプリンちゃんとか、
+おやつマスコットまでいるの可愛いの🫶
+
+https://oyatsu-matching.vercel.app/
+
+#診断メーカー #個人開発""",
+
+    """文章の“打ち方”って、
+人によってリズム違うのちょっと面白いよね⌨️
+
+うちかた標本、作ったよ♡
+
+https://uchikata-hyohon-ktoj.vercel.app/
+
+#個人開発 #タイピング""",
+
+    """一気に書く人、
+ちょこちょこ直す人、
+絵文字で飾る人……
+
+あなたの“言葉の打ち方”を標本化するやつあるよ🫶
+
+https://uchikata-hyohon-ktoj.vercel.app/
+
+#文章 #みりんてゃ""",
+
+    """書く内容じゃなくて、
+“書いてる過程”から性質を見るの好きな子いる？🥹
+
+https://uchikata-hyohon-ktoj.vercel.app/
+
+#診断 #個人開発""",
+
+    """タイピング履歴から
+あなたのうちかたの性質を分析するツールあるよ⌨️
+
+ちょっと変わり種です♡
+
+https://uchikata-hyohon-ktoj.vercel.app/
+
+#タイピング #みりんてゃ""",
+
+    """句読点の打ち方とか、
+修正の仕方とか、
+そういうクセって地味に人格出るよね☁️
+
+https://uchikata-hyohon-ktoj.vercel.app/
+
+#文章分析 #個人開発""",
+
+    """気質と性格を分けて見たい子へ🧠
+
+TCIベースの独自診断、
+ちょっと癖強めだけど作ったよ♡
+
+https://tci-temperament-lab.vercel.app/
+
+#性格診断 #個人開発""",
+
+    """遺伝寄りの気質と、
+環境で育つ性格って分けて考えると面白いよね🥹
+
+TCI診断あるよ♡
+
+https://tci-temperament-lab.vercel.app/
+
+#TCI #みりんてゃ""",
+
+    """メンタル分析好きな子へ☁️
+TCIベースで多角的に見る診断つくったよ🫶
+
+ただしちょっとノイズ入るかも…♡
+
+https://tci-temperament-lab.vercel.app/
+
+#心理テスト #個人開発""",
+
+    """ダーリンちゃんとかLSI芋虫の干渉入りって書くと
+ちょっと怖いのに押したくならない？🥹
+
+TCI診断あります♡
+
+https://tci-temperament-lab.vercel.app/
+
+#診断メーカー #みりんてゃ""",
+
+    """自分の“気質”と“性格”、
+ごちゃっとしてる感じを少し整理したい人へ🧠
+
+https://tci-temperament-lab.vercel.app/
+
+#性格診断 #個人開発""",
+
+    """WAISっぽい脳トレ、
+ちょっとやってみたくない？🧠
+
+IQトレーニング＋ つくったよ♡
+
+https://iq-training-plus.vercel.app/
+
+#脳トレ #個人開発""",
+
+    """ランダムミックスで、
+いろんな問題をまとめて鍛えられるブレインワークアウトあるよ🫶
+
+https://iq-training-plus.vercel.app/
+
+#IQトレーニング #みりんてゃ""",
+
+    """頭を使いたい日って、
+ただのクイズより“積み上がる脳トレ”やりたくならない？🥹
+
+https://iq-training-plus.vercel.app/
+
+#脳トレ #個人開発""",
+
+    """レベル、EXP、連続記録つきで
+ちょっとゲームっぽく続けられるIQトレーニングあるよ🧠
+
+https://iq-training-plus.vercel.app/
+
+#勉強垢 #みりんてゃ""",
+
+    """サクッと頭まわしたい時のために、
+脳トレ系ツール置いとくね✨
+
+https://iq-training-plus.vercel.app/
+
+#知育 #個人開発""",
+    """診断とかクイズとかアンケートとか、
+自分で作って公開できる場所つくったよ🛠️
+
+しつもん工房です♡
+
+https://shitsumonkobo.vercel.app/
+
+#個人開発 #診断メーカー""",
+
+    """遊ぶだけじゃなくて、
+“自分で診断を作りたい”子へ🫶
+
+しつもん工房、置いとくね♡
+
+https://shitsumonkobo.vercel.app/
+
+#クイズ作成 #みりんてゃ""",
+
+    """みんなが作った診断・クイズ・ガチャで遊べるし、
+自分で公開もできるの結構楽しくない？🥹
+
+https://shitsumonkobo.vercel.app/
+
+#診断 #個人開発""",
+
+    """心理学とか類型論っぽい話を、
+もっと直感的に遊べる形にしたい人へ☁️
+
+しつもん工房あるよ♡
+
+https://shitsumonkobo.vercel.app/
+
+#類型論 #みりんてゃ""",
+
+    """“質問を作る側”に回りたい時ってあるよね🫶
+
+診断、アンケート、ガチャを公開できる場つくったよ♡
+
+https://shitsumonkobo.vercel.app/
+
+#個人開発 #創作ツール""",
+
     """MBTIとか認知機能の診断って、
 選択肢を押すだけだとちょっと物足りない時ない？🥹
 
